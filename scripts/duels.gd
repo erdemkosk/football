@@ -1,4 +1,15 @@
 extends RefCounted
+const OPEN_GAP := 1.05
+const POKE_REACH := 1.35
+const OPEN_POKE_REACH := 1.72
+const POKE_BALL := 0.32
+const OPEN_POKE_BALL := 0.46
+const POKE_BODY_SLACK := 0.10
+const OPEN_POKE_BODY_SLACK := 0.38
+const STEAL_REACH := 0.72
+const OPEN_STEAL_REACH := 1.02
+const STEAL_MARGIN := 0.18
+const OPEN_STEAL_MARGIN := 0.06
 var game
 var attempts: Dictionary = {}
 var feint_side := 1.0
@@ -23,8 +34,29 @@ func shield_direction(index: int) -> Vector3:
 			direction=((p.position-q.position)*Vector3(1,0,1)).normalized()
 	return direction
 
+func ball_opened(owner: int) -> bool:
+	if owner<0: return true
+	var p=game.players[owner]
+	if p.active_sprint: return true
+	return game.flat_distance(p.position,game.ball.position)>OPEN_GAP
+
+func steal_reach(owner: int) -> float:
+	return OPEN_STEAL_REACH if ball_opened(owner) else STEAL_REACH
+
+func steal_margin(owner: int) -> float:
+	return OPEN_STEAL_MARGIN if ball_opened(owner) else STEAL_MARGIN
+
+func poke_reach(owner: int) -> float:
+	return OPEN_POKE_REACH if ball_opened(owner) else POKE_REACH
+
+func poke_ball_radius(owner: int) -> float:
+	return OPEN_POKE_BALL if ball_opened(owner) else POKE_BALL
+
+func poke_body_slack(owner: int) -> float:
+	return OPEN_POKE_BODY_SLACK if ball_opened(owner) else POKE_BODY_SLACK
+
 func ball_exposed(challenger: int,owner: int) -> bool:
-	if owner<0 or not game.players[owner].protecting: return true
+	if owner<0 or ball_opened(owner) or not game.players[owner].protecting: return true
 	var a: Vector3=game.players[challenger].position*Vector3(1,0,1)
 	var b: Vector3=game.ball.position*Vector3(1,0,1)
 	var body: Vector3=game.players[owner].position*Vector3(1,0,1)
@@ -70,7 +102,8 @@ func resolve(delta: float) -> void:
 		if attempts[i]<0.12: continue
 		attempts.erase(i)
 		var a: Vector3=p.position*Vector3(1,0,1)
-		var end: Vector3=a+p.facing*1.35
+		var owner: int=game.dribbler
+		var end: Vector3=a+p.facing*poke_reach(owner)
 		var ball: Vector3=game.ball.position*Vector3(1,0,1)
 		var victim := -1
 		var body_distance := INF
@@ -81,8 +114,8 @@ func resolve(delta: float) -> void:
 			if Geometry3D.get_closest_point_to_segment(body,a,end).distance_to(body)<0.43 and a.distance_to(body)<body_distance:
 				victim=j
 				body_distance=a.distance_to(body)
-		var reaches_ball: bool=Geometry3D.get_closest_point_to_segment(ball,a,end).distance_to(ball)<0.32 and game.ball.position.y<0.75
-		if reaches_ball and (victim<0 or a.distance_to(ball)<body_distance+0.1) and ball_exposed(i,game.dribbler):
+		var reaches_ball: bool=Geometry3D.get_closest_point_to_segment(ball,a,end).distance_to(ball)<poke_ball_radius(owner) and game.ball.position.y<0.75
+		if reaches_ball and (victim<0 or a.distance_to(ball)<body_distance+poke_body_slack(owner)) and ball_exposed(i,owner):
 			game.strike(i,p.facing*4.8+Vector3.UP*0.15,0,false,"ball_tackle")
 		elif victim>=0 and body_distance<1.05:
 			game.tackle_impact(i,victim)
@@ -94,12 +127,12 @@ func switch_choice() -> int:
 		threat=game.players[game.dribbler].position+game.players[game.dribbler].velocity*0.5
 	var best := -1
 	var best_cost := INF
-	var input := Vector3(float(Input.is_physical_key_pressed(KEY_RIGHT))-float(Input.is_physical_key_pressed(KEY_LEFT)),0,float(Input.is_physical_key_pressed(KEY_DOWN))-float(Input.is_physical_key_pressed(KEY_UP)))
+	var input: Vector3=game.movement_input()
 	for i in range(1,11):
 		var p=game.players[i]
 		if not p.visible or i==game.controlled: continue
 		var cost: float=game.flat_distance(p.position,threat)
-		if game.last_touch==1 and p.position.z>threat.z: cost-=3.0
+		if game.last_touch==1 and p.position.z*game.attack_sign(1)>threat.z*game.attack_sign(1): cost-=3.0
 		if p.action_timer>0: cost+=10
 		cost+=(1-p.energy)*2
 		var relative: Vector3=(p.position-game.players[game.controlled].position)*Vector3(1,0,1)

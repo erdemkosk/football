@@ -43,6 +43,7 @@ func _ready() -> void:
 	grain.rings=3
 	var splash_mat := StandardMaterial3D.new()
 	splash_mat.vertex_color_use_as_albedo=true
+	splash_mat.vertex_color_is_srgb=true
 	splash_mat.roughness=0.35
 	spray=instances(grain,splash_mat,SPRAY_LIMIT)
 	for i in range(SPRAY_LIMIT):
@@ -108,7 +109,13 @@ func grip_at(point: Vector3) -> float:
 
 func ball_drag(point: Vector3) -> float:
 	# Wet intact grass skids; churned earth absorbs motion.
-	return 1.15-wetness*0.28+mud_at(point)*2.8
+	return 2.0-wetness*0.38+mud_at(point)*3.6
+
+func ball_rolling_damping(point: Vector3) -> float:
+	return 0.12+mud_at(point)*0.22
+
+func ball_air_drag() -> float:
+	return 0.0026+rain*0.0006
 
 func ball_bounce(point: Vector3) -> float:
 	return 0.56-wetness*0.1-mud_at(point)*0.17
@@ -149,11 +156,7 @@ func apply_look() -> void:
 	game.stadium.grass.set_shader_parameter("wetness",wetness)
 	game.stadium.grass.set_shader_parameter("weather_clock",clock)
 	game.stadium.grass.set_shader_parameter("rain",rain)
-	game.stadium.sun.light_energy=lerpf(0.9,0.62,rain)
-	game.stadium.sun.shadow_opacity=lerpf(0.52,0.22,rain)
-	game.stadium.env.ambient_light_energy=lerpf(0.5,0.66,rain)
-	game.stadium.env.ambient_light_color=Color("d4e1ee").lerp(Color("a8bdcf"),rain)
-	game.stadium.env.background_color=Color("a7bbc2").lerp(Color("728894"),rain)
+	game.stadium.light_rig.apply_weather(rain)
 
 func player_step(player, _delta: float) -> void:
 	if not player.visible or game.state in ["menu","paused","finished"]: return

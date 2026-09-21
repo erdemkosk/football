@@ -38,7 +38,7 @@ func scenario(team: int) -> void:
 	var momentum: Vector3=game.ball.linear_velocity
 	game.goal(team)
 	check(game.ball.position==original and game.ball.linear_velocity==momentum and not game.ball.freeze,"Goal preserves the moving physical ball")
-	check(game.celebration.scorer==scorer and game.celebration.group.size()==6,"Scorer is joined by five nearby teammates")
+	check(game.celebration.scorer==scorer and game.celebration.group.size()==10,"Every outfield teammate joins the scorer")
 	check(game.stadium.crowd.event_duration>=10 and game.stadium.crowd.material.get_shader_parameter("event_team")==float(team),"Scoring supporters receive a sustained goal celebration")
 	var max_step := 0.0
 	var max_ball_step := 0.0
@@ -58,7 +58,7 @@ func scenario(team: int) -> void:
 			max_height=maxf(max_height,game.players[scorer].position.y)
 			var near := 0
 			for i in game.celebration.group:
-				if game.flat_distance(game.players[i].position,game.celebration.gathering)<3: near+=1
+				if game.flat_distance(game.players[i].position,game.celebration.gathering)<4.0: near+=1
 			grouped=maxi(grouped,near)
 			if goal_frames==600: await capture("celebration-%d" % team)
 			if goal_frames==720 and visual:
@@ -86,8 +86,8 @@ func scenario(team: int) -> void:
 			if game.restart_type!="SANTRA": break
 		if game.state=="set_piece": ready=true; break
 		if frame%1800==0: print("GOAL %d %.1fs state=%s phase=%s" % [team,frame/120.0,game.state,game.set_pieces.recovery.phase])
-	check(grouped>=4 and max_height>0.3,"Teammates physically gather and the scorer jumps off the ground")
-	check(goal_frames>=1020 and goal_frames<=1442,"Celebration remains visible before the walk back to kickoff")
+	check(grouped>=8 and max_height>0.3,"Teammates physically gather and the scorer jumps off the ground")
+	check(goal_frames>=1440 and goal_frames<=2282,"Celebration remains visible before the walk back to kickoff")
 	check(max_step<0.35 and max_ball_step<0.6,"Players and ball remain continuous through celebration and return")
 	check(ready and game.restart_type=="SANTRA" and game.restart_team==1-team,"The conceding team receives a protected centre kickoff")
 	check("carry" in phases and "place" in phases and game.ball.held_by==null and game.flat_distance(game.ball.position,Vector3.ZERO)<0.3,"A player retrieves the same ball and places it at centre")
@@ -121,7 +121,25 @@ func run() -> void:
 	await physics_frame
 	await scenario(0)
 	await scenario(1)
+	game.start_match(false,false)
+	game.set_physics_process(false)
+	game.set_process(false)
+	game.goal(0)
+	check(game.state=="goal" and game.score==[1,0],"A fresh goal is waiting on the celebration")
+	game._input(key(KEY_SPACE,true))
+	check(game.state=="set_piece" and game.restart_type=="SANTRA" and game.restart_team==1,"Space skips the celebration and opens the conceding kickoff")
+	check(game.celebration.group.is_empty() and game.flat_distance(game.ball.position,Vector3.ZERO)<0.4,"Skip places the same ball at centre without a walk-back")
+	var lined := true
+	for i in range(22):
+		if i==game.set_pieces.taker: continue
+		var p=game.players[i]
+		lined=lined and p.position.z*(1 if p.team==0 else -1)>=0
+		if p.team==0: lined=lined and game.flat_distance(p.position,Vector3.ZERO)>=9.15
+	check(lined,"Skip puts both teams into a legal kickoff shape")
 	game.start_match(true)
+	game.goal(0)
+	game._input(key(KEY_SPACE,true))
+	check(game.training and game.state=="playing" and game.celebration.group.is_empty(),"Practice skip returns directly to shooting")
 	game.goal(0)
 	for i in range(480): await tick()
 	check(game.training and game.state=="playing" and game.celebration.group.is_empty(),"Practice returns directly to shooting without a kickoff sequence")

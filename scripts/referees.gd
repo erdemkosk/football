@@ -87,7 +87,7 @@ func restart(kind: String,team: int,point: Vector3) -> void:
 	elif kind in ["KORNER","KALE VURUŞU"]: assistant_index=1 if point.z<0 else 2
 
 func offside(attacking_team: int,point: Vector3) -> void:
-	assistant_index=1 if attacking_team==0 else 2
+	assistant_index=1 if game.attack_sign(attacking_team)<0 else 2
 	assistant_stop_z=actors[assistant_index].position.z
 	decision="OFSAYT"
 	decision_point=point
@@ -96,9 +96,9 @@ func offside(attacking_team: int,point: Vector3) -> void:
 	actors[assistant_index].zone=0 if width<21.3 else (1 if width<42.7 else 2)
 	actors[assistant_index].signal_pose("flag_up")
 
-func show_card(point: Vector3,second_yellow: bool) -> void:
+func show_card(point: Vector3,second_yellow: bool,direct: bool=false) -> void:
 	card_point=point
-	card_queue.assign(["yellow","red"] if second_yellow else ["yellow"])
+	card_queue.assign(["red"] if direct else (["yellow","red"] if second_yellow else ["yellow"]))
 	card_stage="approach"
 	card_age=0
 
@@ -152,7 +152,7 @@ func update(delta: float) -> void:
 	decision_age+=delta
 	signal_time=maxf(0,signal_time-delta)
 	var ball: Vector3=game.ball.position
-	var forward := -1.0 if game.last_touch==0 else 1.0
+	var forward: float = game.attack_sign(game.last_touch)
 	var follow := Vector3(clampf(ball.x*0.4-7,-24,24),0,clampf(ball.z-forward*9,-42,42))
 	if game.state in ["restart","set_piece"]:
 		follow=game.restart_point+Vector3(-6 if game.restart_point.x>0 else 6,0,-forward*5)
@@ -160,14 +160,16 @@ func update(delta: float) -> void:
 		follow.z=clampf(follow.z,-45,45)
 	if decision=="GOL": follow=Vector3(-8,0,0)
 	if game.state=="finished": follow=actors[0].position
+	if game.state=="halftime": follow=Vector3(29,0,0)
 	var look: Vector3=ball-actors[0].position
 	var pose := "indirect" if indirect_pending else ""
-	if signal_time>0: pose="whistle"
+	if decision=="AVANTAJ" and decision_age<3: pose="advantage"
+	elif signal_time>0: pose="whistle"
 	elif decision=="GOL": pose="goal"; look=Vector3.ZERO-actors[0].position
-	elif decision=="BİTİŞ" and decision_age<2.5: pose="full_time"
+	elif decision in ["BİTİŞ","DEVRE"] and decision_age<2.5: pose="full_time"
 	elif game.state in ["restart","set_piece"] and not indirect_pending:
 		pose="penalty" if decision=="PENALTI" else "point"
-		look=game.restart_point-actors[0].position if decision=="PENALTI" else Vector3(0,0,-1 if decision_team==0 else 1)
+		look=game.restart_point-actors[0].position if decision=="PENALTI" else Vector3(0,0,game.attack_sign(decision_team))
 	if card_stage!="":
 		follow=card_point+Vector3(2.2,0,1.2)
 		look=card_point-actors[0].position
@@ -187,7 +189,7 @@ func update(delta: float) -> void:
 	targets[0]=follow
 	move_actor(actors[0],follow,look,delta)
 	for i in [1,2]:
-		var attack_team := 0 if i==1 else 1
+		var attack_team := (0 if i==1 else 1) if game.half==1 else (1 if i==1 else 0)
 		var end := -1.0 if i==1 else 1.0
 		var line: float=game.rules.offside_line(attack_team)
 		targets[i]=Vector3(-33.2 if i==1 else 33.2,0,end*clampf(line,0,50))
@@ -200,7 +202,7 @@ func update(delta: float) -> void:
 				flag_pose="flag_up" if decision_age<1.0 else "offside_zone"
 			elif decision=="TAÇ":
 				flag_pose="flag_direction"
-				flag_look=Vector3(0,0,-1 if decision_team==0 else 1)
+				flag_look=Vector3(0,0,game.attack_sign(decision_team))
 			elif decision=="KORNER": flag_pose="flag_corner"
 			elif decision=="KALE VURUŞU": flag_pose="flag_goal_kick"
 		actors[i].signal_pose(flag_pose)

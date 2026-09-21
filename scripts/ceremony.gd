@@ -64,6 +64,7 @@ func begin() -> void:
 	game.ball.active=false
 	game.ball.visible=false
 	game.toast_timer=0
+	game.match_camera.cinematic()
 	camera_at=Vector3(36,1.2,0)
 	camera_eye=Vector3(20,8,14)
 	camera_size=24
@@ -143,7 +144,8 @@ func finish(skipped: bool) -> void:
 	game.boundary_grace=0.5
 	game.kick_lock=0.3
 	game.camera_focus=Vector3.ZERO
-	game.camera.size=114 if game.tactical else game.zoom
+	game.match_camera.apply_projection()
+	game.camera.size=game.match_camera.play_size(game.zoom)
 	game.update_camera(0)
 	game.referees.whistle()
 	game.announce("İLK DÜDÜK  ·  HÜCUM YÖNÜ ↑")

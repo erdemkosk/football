@@ -27,11 +27,12 @@ func run() -> void:
 	game.update_control(0.8)
 	var p=game.players[9]
 	p.animate(1.0/120)
-	check(p.right_leg.rotation.x< -0.5 and p.shot_preparation>0.5,"Charging visibly draws the shooting leg back")
+	check(absf(p.right_leg.rotation.x-p.left_leg.rotation.x)<0.01 and p.shot_preparation>0.5,"Standing charge keeps both feet in a grounded stance")
 	var heading: Vector3=game.shot_direction
+	var prepared_leg: Vector3=p.right_leg.rotation
 	game.shoot()
 	p.animate(1.0/120)
-	check(p.right_leg.rotation.x>1 and p.kick_timer>0.4,"Ball release immediately starts a strong follow-through")
+	check(p.kick_timer>0.4 and p.right_leg.rotation.distance_to(prepared_leg)<0.001,"Ball release starts the kick without snapping the leg to full extension")
 	check(game.feedback.last_kind=="shot" and game.feedback.event_count==1 and game.ball.pending_kick,"The shot sound and camera cue are triggered by the actual strike")
 	await frames(3)
 	check(Vector3(game.ball.linear_velocity.x,0,game.ball.linear_velocity.z).normalized().dot(heading)>0.999,"Impact feedback preserves the player's chosen shot heading")

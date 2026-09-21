@@ -33,10 +33,10 @@ func scenario(kind: String,team: int,point: Vector3,ball_pos: Vector3,velocity: 
 	var closest=INF
 	for i in range(22):
 		var p=game.players[i]
-		if not p.visible or p.team!=team or p.keeper!=(kind=="KALE VURUŞU"): continue
-		var distance=p.position.distance_to(before)
+		if not p.visible or p.dismissed: continue
+		var distance=game.flat_distance(p.position,before)
 		if distance<closest: expected=i; closest=distance
-	check(game.set_pieces.taker==expected,kind+": nearest eligible teammate goes to the actual ball")
+	check(game.set_pieces.recovery.collector==expected,kind+": nearest player from either team goes to the actual ball")
 	var phases: Array[String]=[]
 	var max_step=0.0
 	var previous: Vector3=before
@@ -50,16 +50,16 @@ func scenario(kind: String,team: int,point: Vector3,ball_pos: Vector3,velocity: 
 		var recovery=game.set_pieces.recovery
 		var held_before=game.ball.held_by!=null
 		var ball_before: Vector3=game.ball.position
-		var hand_before: Vector3=game.players[expected].hand_center()
+		var hand_before: Vector3=game.players[recovery.worker].hand_center()
 		game._physics_process(1.0/120)
 		if not held_before and game.ball.held_by!=null:
-			acquired_nearby=acquired_nearby and hand_before.distance_to(ball_before)<0.65
+			acquired_nearby=acquired_nearby and hand_before.distance_to(ball_before)<(0.9 if recovery.phase=="carry" else 0.65)
 		await physics_frame
 		max_step=maxf(max_step,previous.distance_to(game.ball.position))
 		previous=game.ball.position
 		walk_distance+=old_player.distance_to(game.players[expected].position)
 		old_player=game.players[expected].position
-		if recovery.phase=="retrieve" and before.distance_to(game.ball.position)>0.5: moving_before_pickup=true
+		if recovery.phase in ["watch","retrieve"] and before.distance_to(game.ball.position)>0.5: moving_before_pickup=true
 		if not recovery.phase in phases: phases.append(recovery.phase)
 		if visual and kind=="TAÇ" and recovery.phase!=last_phase and recovery.phase in ["retrieve","pickup","carry","raise"]:
 			await capture("recovery-"+recovery.phase)

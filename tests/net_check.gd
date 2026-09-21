@@ -14,15 +14,28 @@ func shot(p: Vector3,v: Vector3,count: int=150) -> Dictionary:
 	var peak := 0.0
 	var farthest := 0.0
 	var peak_speed := 0.0
+	var recoil := 0.0
+	var spread := 0.0
+	var wide_spread := 0.0
+	var aftershock := 0.0
 	for i in range(count):
 		await physics_frame
 		peak=maxf(peak,game.stadium.nets[0 if p.z<0 else 1].max_deformation())
+		if i>=96: aftershock=maxf(aftershock,game.stadium.nets[0 if p.z<0 else 1].max_deformation())
 		farthest=maxf(farthest,absf(game.ball.position.z))
 		if i>10: peak_speed=maxf(peak_speed,game.ball.linear_velocity.length())
-		if visual and i==25 and v.z< -25:
+		var rear: Dictionary=game.stadium.nets[0 if p.z<0 else 1].panels[0]
+		for node in range(rear.offset.size()):
+			recoil=maxf(recoil,-rear.offset[node])
+			if Vector2(rear.rest[node].x-p.x,rear.rest[node].y-p.y).length()>0.85: spread=maxf(spread,absf(rear.offset[node]))
+			if Vector2(rear.rest[node].x-p.x,rear.rest[node].y-p.y).length()>1.6: wide_spread=maxf(wide_spread,absf(rear.offset[node]))
+		if visual and i==25 and v.z< -25 and p.y>1.0:
 			await RenderingServer.frame_post_draw
 			root.get_texture().get_image().save_png("res://tests/net-impact.png")
-	var result={"deformation":peak,"farthest":farthest,"speed":game.ball.linear_velocity.length(),"position":game.ball.position,"contacts":game.stadium.nets[0 if p.z<0 else 1].impact_count,"peak_speed":peak_speed}
+		if visual and v.z< -25 and p.y>1.0 and i in [8,20,55,90,140]:
+			await RenderingServer.frame_post_draw
+			root.get_texture().get_image().save_png("res://tests/sefc-net-%03d.png" % i)
+	var result={"deformation":peak,"farthest":farthest,"speed":game.ball.linear_velocity.length(),"position":game.ball.position,"contacts":game.stadium.nets[0 if p.z<0 else 1].impact_count,"peak_speed":peak_speed,"recoil":recoil,"spread":spread,"wide_spread":wide_spread,"aftershock":aftershock}
 	print(result)
 	return result
 func run() -> void:
@@ -37,11 +50,16 @@ func run() -> void:
 	for p in game.players: p.collision_layer=0; p.visible=false
 	game.camera.position=Vector3(8,5,-43)
 	game.camera.look_at(Vector3(0,1,-52))
+	game.camera.projection=Camera3D.PROJECTION_ORTHOGONAL
 	game.camera.size=11
 	var weak=await shot(Vector3(0,1,-51),Vector3(0,1,-8))
 	var strong=await shot(Vector3(0.8,1.1,-50.8),Vector3(0,2,-32))
 	check(strong.contacts>0 and strong.deformation>0.10,"Ball contact physically deforms the rear net")
 	check(strong.deformation>weak.deformation*1.15,"A hard shot stretches the net more than a soft shot")
+	check(strong.spread>0.16,"The surrounding net has a pronounced wave outside the ball footprint")
+	check(strong.recoil>0.10,"The net visibly vibrates back past rest after catching the ball")
+	check(strong.wide_spread>0.035,"Impact travels more than 1.6 metres across the surrounding net")
+	check(strong.aftershock>0.06,"A strong shot still visibly shakes the net after 0.8 seconds")
 	check(strong.farthest<53.5 and strong.position.z< -50,"Hard shot remains in the goal without tunnelling through the net")
 	check(strong.speed<8 and strong.peak_speed<33,"Net dissipates shot energy without an explosive rebound")
 	check(game.stadium.nets[1].max_deformation()==0,"The untouched opposite goal remains still")

@@ -67,6 +67,34 @@ func run() -> void:
 	game.camera.look_at(player.position+Vector3(0,0.9,0))
 	game.camera.size=4.5
 	await capture("player-running")
+	player.position=Vector3(0,0,-20)
+	player.velocity=Vector3.ZERO
+	player.reset_stamina()
+	player.sprinting=false
+	player.desired=Vector3.FORWARD
+	await simulate(player,18)
+	var launched := Vector2(player.velocity.x,player.velocity.z).length()
+	check(launched>5.2,"A press reaches running speed in a short stride")
+	player.desired=Vector3.ZERO
+	await simulate(player,18)
+	var coasting := Vector2(player.velocity.x,player.velocity.z).length()
+	check(coasting>launched*0.55,"Releasing input coasts instead of stopping immediately")
+	await simulate(player,120)
+	check(Vector2(player.velocity.x,player.velocity.z).length()<1.2,"Released movement still comes to rest")
+	player.position=Vector3(0,0,-16)
+	player.velocity=Vector3.ZERO
+	player.reset_stamina()
+	player.desired=Vector3.FORWARD
+	player.sprinting=true
+	await simulate(player,24)
+	var wound := Vector2(player.velocity.x,player.velocity.z).length()
+	check(wound>5.0 and wound<8.2,"Sprint needs a wind-up after the first running stride")
+	await simulate(player,72)
+	var full_sprint := Vector2(player.velocity.x,player.velocity.z).length()
+	check(full_sprint>8.5,"Sustained sprint still reaches top speed")
+	player.sprinting=false
+	await simulate(player,18)
+	check(Vector2(player.velocity.x,player.velocity.z).length()>full_sprint*0.7,"Releasing sprint keeps surplus speed instead of snapping to a jog")
 	var south=game.players[0]
 	south.visible=true
 	south.position=Vector3(0,0,43)
@@ -84,7 +112,12 @@ func run() -> void:
 	game.ball.place(Vector3(2.8,1.1,-35),Vector3(0,1,-25))
 	await frames(4)
 	game.update_ai(1.0/120.0)
-	check(keeper.pose=="dive" and keeper.action_timer>0,"An incoming corner shot triggers an AI dive")
+	check(keeper.pose!="dive","An incoming shot cannot trigger a zero-latency AI dive")
+	for tick in range(48):
+		game.update_ai(1.0/120.0)
+		await simulate(keeper,1)
+		if keeper.pose=="dive": break
+	check(keeper.pose=="dive" and keeper.action_timer>0,"After reading an incoming corner shot the AI physically dives")
 	await simulate(keeper,40)
 	game.reset_practice()
 	check(keeper.pose=="run" and keeper.action_timer==0 and keeper.velocity==Vector3.ZERO and keeper.body_collision.rotation.length()<0.01,"Practice reset restores a diving keeper to the ready stance")

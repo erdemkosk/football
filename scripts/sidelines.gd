@@ -2,6 +2,7 @@ extends Node3D
 const G = preload("res://scripts/geometry.gd")
 const Actor = preload("res://scripts/sideline_actor.gd")
 var actors: Array[Node3D] = []
+var team_labels: Array[Label3D] = []
 var clock := 0.0
 var event_kind := ""
 var event_team := 0
@@ -40,6 +41,7 @@ func build_dugout(team: int) -> void:
 	for depth in [-1.03,0.99]: G.block(shelter,Vector3(10.55,0.14,0.08),Vector3(0,2.31,depth),frame)
 	G.block(shelter,Vector3(10.48,0.26,0.065),Vector3(0,2.29,-1.05),trim)
 	var label := Label3D.new()
+	team_labels.append(label)
 	label.text = "KIYI SPOR  ·  YEDEK KULÜBESİ" if team==0 else "ATLAS FC  ·  YEDEK KULÜBESİ"
 	label.font_size = 48
 	label.pixel_size = 0.0035

@@ -56,6 +56,11 @@ func animate(delta: float) -> void:
 		if gesture in ["whistle","full_time"]:
 			left_arm.rotation=Vector3(1.60,-0.98,0)
 			left_elbow.rotation.x=1.12
+		elif gesture=="advantage":
+			left_arm.rotation=Vector3(1.1,0,-0.25)
+			right_arm.rotation=Vector3(1.1,0,0.25)
+			left_elbow.rotation.x=0.1
+			right_elbow.rotation.x=0.1
 		elif gesture in ["point","penalty","goal"]:
 			right_arm.rotation=Vector3(PI*0.5,0,0)
 			right_elbow.rotation.x=0.05

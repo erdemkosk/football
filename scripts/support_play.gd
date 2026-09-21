@@ -3,27 +3,50 @@ var game
 var runs: Dictionary = {}
 var targets: Dictionary = {}
 var roles: Dictionary = {}
+const ONE_TWO_DISTANCE := 12.0
+const ONE_TWO_TIME := 3.0
 
 func reset() -> void:
 	runs.clear()
 	targets.clear()
 	roles.clear()
 
-func passed(passer: int,receiver: int) -> void:
+func passed(passer: int,receiver: int,one_two: bool=false) -> void:
 	if receiver<0 or game.players[passer].keeper: return
+	if receiver in runs and runs[receiver].receiver==passer: end_run(receiver)
 	runs[passer]={"receiver":receiver,"time":3.6,"origin":game.players[passer].position}
+	if one_two:
+		var p=game.players[passer]
+		var target: Vector3=p.position+Vector3(clampf(-p.position.x,-4,4),0,game.attack_sign(p.team)*9)
+		target.x=clampf(target.x,-29,29); target.z=clampf(target.z,-46,46)
+		runs[passer].merge({"explicit":true,"time":ONE_TWO_TIME,"target":target,"previous":p.position,"distance":0.0},true)
+		p.call_timer=ONE_TWO_TIME
+		p.call_label.text="VERKAÇ"
+
+func end_run(index: int) -> void:
+	if game.players[index].call_label.text=="VERKAÇ": game.players[index].call_timer=0
+	runs.erase(index)
+	targets.erase(index)
+	roles.erase(index)
 
 func update(delta: float) -> void:
 	for i in runs.keys():
 		runs[i].time-=delta
-		if runs[i].time<=0 or not game.players[i].visible or game.last_touch!=game.players[i].team: runs.erase(i)
+		var p=game.players[i]
+		if runs[i].time<=0 or not p.visible or p.dismissed or game.last_touch!=p.team:
+			end_run(i)
+			continue
+		if runs[i].get("explicit",false):
+			runs[i].distance+=game.flat_distance(p.position,runs[i].previous)
+			runs[i].previous=p.position
+			if runs[i].distance>=ONE_TWO_DISTANCE or game.flat_distance(p.position,runs[i].target)<0.8 or game.dribbler==i or (game.controlled==i and game.movement_input().length()>0.1): end_run(i)
 	targets.clear()
 	roles.clear()
 	var owner: int=game.dribbler if game.dribbler>=0 else game.nearest_to_ball(1.4)
 	var team: int=game.players[owner].team if owner>=0 else game.last_touch
 	if owner<0 and game.ai_pass_time[team]<=0: return
 	var ball: Vector3=game.ball.position
-	var forward := -1.0 if team==0 else 1.0
+	var forward: float = game.attack_sign(team)
 	var line: float=game.rules.offside_line(team)-0.8
 	var wing := absf(ball.x)>14
 	var side := signf(ball.x)
@@ -33,6 +56,12 @@ func update(delta: float) -> void:
 		var target: Vector3=p.home+Vector3(ball.x*0.18,0,ball.z*0.35+forward*7)
 		var role := "support"
 		if i in runs:
+			if runs[i].get("explicit",false):
+				target=runs[i].target
+				target.z=forward*minf(target.z*forward,maxf(0,line))
+				targets[i]=target
+				roles[i]="one_two"
+				continue
 			target=runs[i].origin+Vector3(3 if p.position.x<ball.x else -3,0,forward*13)
 			role="give_go"
 		elif wing and ball.z*forward> -15 and p.number in [2,5] and signf(p.home.x)==side:
@@ -73,8 +102,8 @@ func return_option(holder: int) -> int:
 		var p=game.players[i]
 		var distance: float=game.flat_distance(p.position,game.ball.position)
 		if distance<4 or distance>23: continue
-		var forward := -1.0 if p.team==0 else 1.0
+		var forward: float = game.attack_sign(p.team)
 		if p.position.z*forward>game.rules.offside_line(p.team)-0.2: continue
-		var route=game.Passing.plan(game.ball.position,p.position,p.velocity,false)
+		var route=game.Passing.plan(game.ball.position,p.position,p.velocity,false,game.weather)
 		if game.Passing.risk(game.ball.position,route,p.team,game.players)<0.35: return i
 	return -1

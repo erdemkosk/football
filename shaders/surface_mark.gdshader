@@ -1,5 +1,6 @@
 shader_type spatial;
 render_mode unshaded, cull_disabled, shadows_disabled;
+#include "res://shaders/color_space.gdshaderinc"
 uniform float clock = 0.0;
 uniform float lifetime = 180.0;
 varying vec4 ink;
@@ -16,6 +17,6 @@ void fragment() {
   edge=1.0-smoothstep(0.5,ragged,abs(uv.x));
   tread=0.68+0.1*sin(ground.x*21.0+ground.y*15.0);
  }
- ALBEDO=ink.rgb;
+ ALBEDO=palette_color(ink.rgb);
  ALPHA=ink.a*edge*tread*(1.0-smoothstep(lifetime*0.7,lifetime,clock-born));
 }

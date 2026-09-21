@@ -41,6 +41,11 @@ func run() -> void:
 		if fan.phase.g>=0.5: away_count+=1
 	check(away_count>0 and away_count<crowd.fans.size()/2,"Away supporters occupy their own minority section")
 	await capture("crowd-calm")
+	if visual:
+		advance(0.35)
+		await capture("crowd-idle-moving")
+		advance(1.2)
+		await capture("crowd-idle-chant")
 	advance(1,Vector3(0,0,-44),Vector3(0,0,-22),true)
 	check(crowd.danger>0.7,"Support builds during a dangerous attacking position")
 	await capture("crowd-anticipation")

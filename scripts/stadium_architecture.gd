@@ -1,4 +1,5 @@
 extends Node3D
+var team_captions: Array[Label3D] = []
 ## One continuous stadium shell, with the playing surface kept unobstructed.
 const G = preload("res://scripts/geometry.gd")
 var stone := G.material(Color("626e6c"))
@@ -10,11 +11,20 @@ var glass := G.material(Color("657f82"),0.32)
 var score_labels: Array[Label3D] = []
 var clock_labels: Array[Label3D] = []
 var display_text := ""
+var lamp_glass := G.material(Color("a2b0ab"),0.28)
+var floodlight_mounts: Array[Vector3] = []
+var hedge := G.material(Color("40594a"))
+var city_blocks := 0
+var district: Node3D
 
 func build(crowd) -> void:
 	name = "StadiumArchitecture"
-	G.block(self,Vector3(244,0.18,270),Vector3(0,-0.82,0),G.material(Color("3a493f")))
-	G.block(self,Vector3(154,0.3,196),Vector3(0,-0.63,0),G.material(Color("555d58")))
+	# Thin roof sheets still shade the seating below, without self-shadow banding.
+	roof.disable_receive_shadows=true
+	var forecourt=G.block(self,Vector3(244,0.18,270),Vector3(0,-0.82,0),G.material(Color("3a493f")))
+	var paving=G.block(self,Vector3(154,0.3,196),Vector3(0,-0.63,0),G.material(Color("555d58")))
+	forecourt.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	paving.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	for side in [-1,1]:
 		grandstand(crowd,side*PI*0.5,112,53,8.6,63,47,164)
 		grandstand(crowd,0 if side>0 else PI,99,69,6.9,82,65,126)
@@ -67,6 +77,7 @@ func grandstand(crowd,angle: float,width: float,start: float,base: float,back: f
 	var translucent = G.material(Color(0.4,0.55,0.53,0.22),0.6)
 	translucent.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 	translucent.cull_mode = BaseMaterial3D.CULL_DISABLED
+	translucent.disable_receive_shadows=true
 	for i in range(panels):
 		var t0 = float(i)/panels-0.5
 		var t1 = float(i+1)/panels-0.5
@@ -99,13 +110,33 @@ func grandstand(crowd,angle: float,width: float,start: float,base: float,back: f
 	# Roof-mounted luminaires replace isolated poles inside the bowl.
 	for x in range(-int(width/2)+5,int(width/2),14):
 		var light = G.block(stand,Vector3(2.5,0.35,0.65),Vector3(x,15.55,lip+0.8),charcoal)
-		for i in range(4): G.block(light,Vector3(0.45,0.09,0.44),Vector3(-0.86+i*0.57,-0.2,0),frame)
+		for i in range(4): G.block(light,Vector3(0.45,0.09,0.44),Vector3(-0.86+i*0.57,-0.2,0),lamp_glass)
+		# Raised roof banks spread light across the turf at a steeper angle.
+		if not is_end and x in [-37,33]:
+			floodlight_bank(stand,x,lip)
 	if is_end:
 		scoreboard(stand,Vector3(0,12.8,lip+0.25))
 		for x in [-5,5]: G.rod(stand,Vector3(x,15,lip+0.25),Vector3(x,16.1,lip+0.25),0.07,frame)
 	var title = label(stand,"K I Y I   A R E N A",Vector3(0,15.3,back+0.37),0.034,Color("e5dfc8"))
 	title.outline_size = 0
 	title.double_sided = false
+
+func floodlight_bank(stand: Node3D,x: float,lip: float) -> void:
+	var head := Vector3(x,32,lip+0.8)
+	G.rod(stand,Vector3(x,16,lip+2.8),head,0.14,frame)
+	for side in [-1,1]:
+		G.rod(stand,Vector3(x+side*2.4,16.3,lip+6),head+Vector3(0,-4,0),0.075,frame)
+	var bank := Node3D.new()
+	stand.add_child(bank)
+	bank.position=head
+	var target := Vector3(-signf(bank.global_position.x)*5,0,bank.global_position.z*0.28)
+	bank.look_at(target)
+	G.block(bank,Vector3(4.5,1.65,0.26),Vector3.ZERO,charcoal)
+	for row in range(2):
+		for column in range(6):
+			G.block(bank,Vector3(0.58,0.56,0.05),Vector3(-1.75+column*0.7,-0.37+row*0.74,-0.17),lamp_glass)
+	# Start beyond the glass, so the real emitter never shadows itself.
+	floodlight_mounts.append(bank.global_position-bank.global_basis.z*0.24)
 
 func roof_panel(parent: Node3D,a: Vector3,b: Vector3,c: Vector3,d: Vector3,mat: Material) -> MeshInstance3D:
 	var surface = SurfaceTool.new()
@@ -128,9 +159,12 @@ func player_tunnel() -> void:
 	var tunnel = Node3D.new()
 	add_child(tunnel)
 	tunnel.name = "PlayerTunnel"
-	G.block(tunnel,Vector3(12.3,0.03,5.4),Vector3(39.2,0.035,0),G.material(Color("334944")))
+	var entrance_floor=G.block(tunnel,Vector3(12.3,0.03,5.4),Vector3(39.2,0.035,0),G.material(Color("334944")))
+	entrance_floor.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	for z in [-3,3]: G.block(tunnel,Vector3(21,3.3,0.23),Vector3(49.15,1.65,z),trim)
-	G.block(tunnel,Vector3(21,0.25,6.3),Vector3(49.15,3.38,0),stone)
+	var tunnel_cover=stone.duplicate()
+	tunnel_cover.disable_receive_shadows=true
+	G.block(tunnel,Vector3(21,0.25,6.3),Vector3(49.15,3.38,0),tunnel_cover)
 	G.block(tunnel,Vector3(0.15,3.3,6),Vector3(59.65,1.65,0),charcoal)
 	G.block(tunnel,Vector3(0.26,0.6,6.6),Vector3(38.65,3.32,0),trim)
 	var sign = label(tunnel,"KIYI ARENA",Vector3(38.49,3.32,0),0.015,Color("e5dfc8"))
@@ -145,7 +179,7 @@ func scoreboard(parent: Node3D,pos: Vector3) -> void:
 	display.rotation.y = PI
 	G.block(display,Vector3(13,4.5,0.4),Vector3.ZERO,trim)
 	G.block(display,Vector3(12.5,4.0,0.08),Vector3(0,0,0.25),charcoal)
-	label(display,"KIYI       DEPLASMAN",Vector3(0,1.3,0.31),0.017,Color("a7c3c0"))
+	team_captions.append(label(display,"KIYI       DEPLASMAN",Vector3(0,1.3,0.31),0.017,Color("a7c3c0")))
 	score_labels.append(label(display,"0   :   0",Vector3(0,0.05,0.31),0.043,Color("f1ead5")))
 	clock_labels.append(label(display,"00:00",Vector3(0,-1.35,0.31),0.016,Color("b3c8bc")))
 
@@ -180,7 +214,14 @@ func exterior() -> void:
 		# Low planted beds frame the forecourt without hiding the building.
 		for x in [-47,47]:
 			G.block(self,Vector3(19,0.7,4),Vector3(x,-0.12,side*96),stone)
-			G.block(self,Vector3(18.5,0.75,3.5),Vector3(x,0.52,side*96),G.material(Color("40594a")))
+			G.block(self,Vector3(18.5,0.75,3.5),Vector3(x,0.52,side*96),hedge)
+	cityscape()
+
+func cityscape() -> void:
+	district=preload("res://scripts/stadium_district.gd").new()
+	add_child(district)
+	district.build()
+	city_blocks=district.building_count
 
 func label(parent: Node3D,text: String,pos: Vector3,pixel: float,color: Color) -> Label3D:
 	var node = Label3D.new()

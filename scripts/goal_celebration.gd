@@ -7,9 +7,11 @@ var gathering := Vector3.ZERO
 var targets: Dictionary = {}
 var group: Array[int] = []
 var next_jump: Dictionary = {}
+var gathered_age := 0.0
 
 func clear() -> void:
 	age=0
+	gathered_age=0
 	scorer=-1
 	targets.clear()
 	group.clear()
@@ -30,7 +32,7 @@ func begin(team: int) -> void:
 	var side := -1.0 if game.players[scorer].position.x<0 else 1.0
 	# The away end is in the south-east corner; celebrate toward those fans.
 	if team==1: side=1
-	gathering=Vector3(side*24,0,-41 if team==0 else 41)
+	gathering=Vector3(side*21,0,game.attack_sign(team)*38)
 	var teammates: Array[int] = []
 	for i in range(game.players.size()):
 		var p=game.players[i]
@@ -46,12 +48,14 @@ func begin(team: int) -> void:
 	teammates.sort_custom(func(a,b): return game.flat_distance(game.players[a].position,gathering)<game.flat_distance(game.players[b].position,gathering))
 	group.append(scorer)
 	targets[scorer]=gathering
-	for j in range(mini(5,teammates.size())):
+	for j in range(teammates.size()):
 		var index: int=teammates[j]
 		group.append(index)
-		var angle := TAU*j/5.0
-		targets[index]=gathering+Vector3(cos(angle),0,sin(angle))*1.7
+		var inner := j<5
+		var angle := TAU*(j if inner else j-5)/(5.0 if inner else maxf(1,teammates.size()-5))+ (0.0 if inner else 0.4)
+		targets[index]=gathering+Vector3(cos(angle),0,sin(angle))*(1.65 if inner else 3.05)
 	for i in group: next_jump[i]=2.0+(i%5)*0.23
+	game.match_camera.cinematic()
 
 func update(delta: float) -> void:
 	age+=delta
@@ -86,9 +90,21 @@ func update(delta: float) -> void:
 			if look.length()>0.1:
 				p.facing=look.normalized()
 				p.rig.rotation.y=lerp_angle(p.rig.rotation.y,atan2(-p.facing.x,-p.facing.z),1-exp(-delta*10))
-	if (age>8.5 and arrived>=4) or age>12:
+	if arrived>=maxi(4,group.size()-2): gathered_age+=delta
+	if (age>12 and gathered_age>3.0) or age>19:
 		clear()
 		game.begin_restart("SANTRA",1-game.goal_team,Vector3.ZERO)
+
+func skip() -> void:
+	if game.state!="goal": return
+	clear()
+	if game.training:
+		game.reset_practice()
+		game.state="playing"
+		game.ball.active=true
+		return
+	game.begin_restart("SANTRA",1-game.goal_team,Vector3.ZERO)
+	game.set_pieces.snap_ready()
 
 func update_camera(delta: float) -> void:
 	var player_focus: Vector3=game.players[scorer].position if scorer>=0 else gathering
@@ -96,7 +112,7 @@ func update_camera(delta: float) -> void:
 	focus.y=0
 	game.camera_focus=game.camera_focus.lerp(focus,1-exp(-delta*2.2))
 	var close := smoothstep(1.5,4.0,age)
-	game.camera.size=lerpf(game.camera.size,lerpf(36,24,close),1-exp(-delta*1.8))
+	game.camera.size=lerpf(game.camera.size,lerpf(38,29,close),1-exp(-delta*1.8))
 	var offset := Vector3(0,52,38).lerp(Vector3(-signf(gathering.x)*20,24,-signf(gathering.z)*24),close)
 	game.camera.position=game.camera.position.lerp(game.camera_focus+offset,1-exp(-delta*2.8))
 	game.camera.look_at(game.camera_focus)

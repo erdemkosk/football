@@ -5,6 +5,7 @@ func run() -> void:
 	game=load("res://main.tscn").instantiate()
 	root.add_child(game)
 	await physics_frame
+	if "--rain" in OS.get_cmdline_user_args(): game.weather.select(2,true)
 	game.start_match()
 	var restarts=0
 	var goals=0

@@ -13,6 +13,7 @@ var event_kind := ""
 var wave_age := 100.0
 var wave_cooldown := 0.0
 var danger := 0.0
+var home_attack := -1.0
 var excitement := 0.0
 var cloth := [Color("23363a"),Color("34434c"),Color("29483f"),Color("4b5554"),Color("647267"),Color("706654"),Color("76524d"),Color("a2a493"),Color("536a79"),Color("393933")]
 var skins := [Color("ba9073"),Color("aa7b59"),Color("755340"),Color("c4a18b"),Color("916443")]
@@ -46,6 +47,7 @@ func build(parent: Node3D) -> void:
 	box(chair,Vector3(0.49,0.45,0.085),Vector3(0,0.66,0.19))
 	var seat_material := G.material(Color("a0aba3"))
 	seat_material.vertex_color_use_as_albedo = true
+	seat_material.vertex_color_is_srgb = true
 	instances(parent,"Seats",chair.commit(),chairs,chair_colors,[],seat_material)
 	material.shader = load("res://shaders/crowd.gdshader")
 	var cheering := person_meshes(3)
@@ -79,6 +81,7 @@ func build(parent: Node3D) -> void:
 	reset()
 
 func reset() -> void:
+	home_attack=-1.0
 	clock = 0
 	event_age = 100
 	event_duration = 0
@@ -89,6 +92,10 @@ func reset() -> void:
 	excitement = 0
 	material.set_shader_parameter("danger",0.0)
 	material.set_shader_parameter("event_duration",0.0)
+	material.set_shader_parameter("event_strength",0.0)
+	material.set_shader_parameter("event_goal",false)
+	material.set_shader_parameter("event_entrance",false)
+	material.set_shader_parameter("event_style",0)
 	material.set_shader_parameter("event_age",event_age)
 	material.set_shader_parameter("wave_age",wave_age)
 	material.set_shader_parameter("crowd_time",clock)
@@ -96,14 +103,16 @@ func reset() -> void:
 func react(kind: String,team: int,location: Vector3) -> void:
 	# A pass or save must not cut off an ongoing goal celebration.
 	if event_kind=="goal" and event_age<event_duration and kind!="goal": return
-	if kind=="shot" and event_age<1.2: return
+	if kind=="shot" and event_kind=="shot" and event_age<0.35: return
+	if kind=="tackle" and event_age<1.0: return
 	event_kind = kind
 	event_age = 0
-	event_duration = 6.0 if kind=="entrance" else (12.0 if kind=="goal" else (2.6 if kind=="save" else 1.8))
+	event_duration = {"entrance":6.0,"goal":19.0,"shot":3.8,"save":4.5,"miss":3.5,"tackle":2.8}.get(kind,2.5)
+	material.set_shader_parameter("event_style",{"shot":1,"save":2,"miss":3,"tackle":4}.get(kind,0))
 	material.set_shader_parameter("event_team",float(team))
 	material.set_shader_parameter("event_goal",kind=="goal")
 	material.set_shader_parameter("event_entrance",kind=="entrance")
-	material.set_shader_parameter("event_strength",1.0 if kind=="goal" else (0.8 if kind=="save" else 0.48))
+	material.set_shader_parameter("event_strength",1.0 if kind in ["goal","save"] else (0.9 if kind=="shot" else 0.75))
 	material.set_shader_parameter("event_duration",event_duration)
 	material.set_shader_parameter("event_age",0.0)
 	if kind=="goal" and team==0: start_wave(location,3.5)
@@ -120,7 +129,7 @@ func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int
 	event_age += delta
 	wave_age += delta
 	wave_cooldown = maxf(0,wave_cooldown-delta)
-	var forward := -1.0 if team==0 else 1.0
+	var forward := home_attack if team==0 else -home_attack
 	var target := 0.0
 	if playing and ball_position.z*forward>28 and absf(ball_position.x)<24:
 		target = clampf((ball_position.z*forward-28)/19,0,1)
@@ -128,7 +137,7 @@ func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int
 	danger = lerpf(danger,target,1-exp(-delta*(3.5 if target>danger else 1.3)))
 	if playing and late_close_match and team==0 and danger>0.65 and event_age>3:
 		start_wave(ball_position)
-	excitement = maxf(danger*0.55,(1.0 if event_kind=="goal" else 0.55)*clampf((event_duration-event_age)/1.5,0,1))
+	excitement = maxf(danger*0.55,(1.0 if event_kind=="goal" else 0.82)*clampf((event_duration-event_age)/1.5,0,1))
 	material.set_shader_parameter("crowd_time",clock)
 	material.set_shader_parameter("event_age",event_age)
 	material.set_shader_parameter("wave_age",wave_age)
@@ -136,21 +145,37 @@ func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int
 	material.set_shader_parameter("danger_team",float(team))
 
 func instances(parent: Node3D,label: String,mesh: Mesh,transforms: Array,colors: Array,phases: Array,mat: Material) -> void:
+	# A stadium-wide MultiMesh draws every fan even when only one stand is visible.
+	# Local batches keep every seat and animation, while enabling frustum culling.
+	var sections: Dictionary = {}
+	for i in range(transforms.size()):
+		var at: Vector3=transforms[i].origin
+		var cell := Vector2i(floori(at.x/20.0),floori(at.z/20.0))
+		if not sections.has(cell): sections[cell]=[]
+		sections[cell].append(i)
+	mesh.surface_set_material(0,mat)
+	var section := 0
+	for indices in sections.values():
+		instance_section(parent,label if section==0 else "%s_sector%d" % [label,section],mesh,transforms,colors,phases,indices)
+		section+=1
+
+func instance_section(parent: Node3D,label: String,mesh: Mesh,transforms: Array,colors: Array,phases: Array,indices: Array) -> void:
 	var multi := MultiMesh.new()
 	multi.transform_format = MultiMesh.TRANSFORM_3D
 	multi.use_colors = true
 	multi.use_custom_data = not phases.is_empty()
 	multi.mesh = mesh
-	mesh.surface_set_material(0,mat)
-	multi.instance_count = transforms.size()
-	for i in range(transforms.size()):
-		multi.set_instance_transform(i,transforms[i])
-		multi.set_instance_color(i,colors[i])
-		if not phases.is_empty(): multi.set_instance_custom_data(i,phases[i])
+	multi.instance_count = indices.size()
+	for i in range(indices.size()):
+		var source: int=indices[i]
+		multi.set_instance_transform(i,transforms[source])
+		multi.set_instance_color(i,colors[source])
+		if not phases.is_empty(): multi.set_instance_custom_data(i,phases[source])
 	var node := MultiMeshInstance3D.new()
 	node.name = label
 	node.multimesh = multi
 	node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	if not phases.is_empty(): node.extra_cull_margin=0.8
 	parent.add_child(node)
 
 func person_meshes(pose: int) -> Dictionary:

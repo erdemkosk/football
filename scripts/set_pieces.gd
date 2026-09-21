@@ -13,6 +13,8 @@ var button := 0
 var ready_age := 0.0
 var runup := -1.0
 var pending_velocity := Vector3.ZERO
+var pending_curve := 0.0
+var shot_curve := 0.0
 var receiver := -1
 var target := Vector3.ZERO
 
@@ -29,6 +31,8 @@ func clear() -> void:
 	targets.clear()
 	button = 0
 	power = 0
+	pending_curve=0
+	shot_curve=0
 	runup = -1
 	taker = -1
 
@@ -37,7 +41,7 @@ func prepare() -> void:
 	var team: int = game.restart_team
 	var kind: String = game.restart_type
 	var point: Vector3 = game.restart_point
-	var forward := -1.0 if team==0 else 1.0
+	var forward: float = game.attack_sign(team)
 	var goal := Vector3(0,0,forward*50)
 	var distance := point.distance_to(goal)
 	var nearest := INF
@@ -45,13 +49,13 @@ func prepare() -> void:
 		var p = game.players[i]
 		if not p.visible: continue
 		if p.team==team and (p.keeper==(kind=="KALE VURUŞU")):
-			var rating: float = p.position.distance_to(game.ball.position)
+			var rating: float = p.position.distance_to(point)
 			if kind=="PENALTI": rating = 0 if p.number==10 else 100+p.number
 			if rating<nearest: nearest=rating; taker=i
 		var pos: Vector3 = p.home+Vector3(point.x*0.16,0,point.z*0.34)
 		pos.x = clampf(pos.x,-29,29)
 		pos.z = clampf(pos.z,-44,44)
-		if p.keeper: pos = Vector3(clampf(point.x*0.06,-2,2),0,46 if p.team==0 else -46)
+		if p.keeper: pos = Vector3(clampf(point.x*0.06,-2,2),0,-game.attack_sign(p.team)*46)
 		targets[i] = pos
 	if taker<0:
 		for i in targets:
@@ -105,7 +109,7 @@ func prepare() -> void:
 		for i in targets:
 			var p=game.players[i]
 			var pos: Vector3=p.home
-			pos.z=maxf(pos.z,2.5) if p.team==0 else minf(pos.z,-2.5)
+			pos.z=-game.attack_sign(p.team)*maxf(2.5,pos.z*-game.attack_sign(p.team))
 			targets[i]=pos
 		if not attackers.is_empty():
 			targets[attackers.back()]=Vector3(5,0,-forward*3)
@@ -163,6 +167,13 @@ func move_player(index: int,destination: Vector3,delta: float,rate: float=0.9) -
 	var p=game.players[index]
 	if wall.size()>=3 and index not in wall:
 		destination=around_wall(p.position,destination)
+	if index in wall and index!=recovery.worker:
+		var slot: Vector3=targets[index]
+		var across: Vector3=(targets[wall.back()]-targets[wall.front()]).normalized()
+		if p.position.distance_to(slot)<4 and absf((slot-p.position).dot(across))>0.3:
+			destination=slot+(game.restart_point-slot).normalized()*1.45
+	if index!=taker and (index!=recovery.worker or recovery.phase=="handoff") and recovery.phase in ["stand","handoff","arrange","ready"]:
+		destination=recovery.clear_delivered_ball(p.position,destination)
 	if game.restart_type=="SANTRA":
 		# Returning players cross the whole pitch. Route past already-settled
 		# bodies instead of alternating the avoidance side in a head-on contact.
@@ -188,8 +199,10 @@ func move_player(index: int,destination: Vector3,delta: float,rate: float=0.9) -
 				if side.dot(gap)<0: side=-side
 				p.desired+=side*(1.15-gap.length())*0.8
 	p.sprinting=false
-	p.chosen=index==game.controlled
+	p.chosen=game.is_user_player(index)
+	p.stamina_free_movement=recovery.is_retriever(index)
 	p.step(delta)
+	p.stamina_free_movement=false
 
 func around_wall(from: Vector3,to: Vector3) -> Vector3:
 	# A compact wall is a continuous obstacle; route around its end instead of
@@ -219,7 +232,15 @@ func settle(delta: float,skip: int=-1) -> void:
 	for i in targets:
 		if i==skip: continue
 		var p = game.players[i]
-		move_player(i,targets[i],delta)
+		var destination: Vector3=targets[i]
+		if i==taker and recovery.worker!=taker and recovery.worker>=0 and recovery.phase not in ["relay_prepare","relay_throw"]:
+			# Leave the delivery point clear for a teammate or opponent fetching it.
+			destination+=Vector3(0,0,-game.attack_sign(game.restart_team)*2.4) if game.restart_type=="TAÇ" else -direction*2.4
+		move_player(i,destination,delta)
+		if i==taker and recovery.phase in ["relay_prepare","relay_throw"]:
+			p.set_piece_pose="receive"
+			p.facing=((game.ball.position-p.position)*Vector3(1,0,1)).normalized()
+			continue
 		var look: Vector3 = game.restart_point-p.position
 		if i==taker: look=direction
 		look.y=0
@@ -229,13 +250,13 @@ func settle(delta: float,skip: int=-1) -> void:
 func formation_ready() -> bool:
 	var point: Vector3=game.restart_point
 	var kind: String=game.restart_type
-	var forward := -1.0 if game.restart_team==0 else 1.0
+	var forward: float = game.attack_sign(game.restart_team)
 	for i in targets:
 		if i==taker: continue
 		var p=game.players[i]
 		var distance: float=game.flat_distance(p.position,point)
 		if kind=="SANTRA":
-			if p.position.z*(1 if p.team==0 else -1)<0: return false
+			if p.position.z*-game.attack_sign(p.team)<0: return false
 			if game.flat_distance(p.position,targets[i])>1.2: return false
 		if i in wall and game.flat_distance(p.position,targets[i])>0.2: return false
 		if kind=="PENALTI":
@@ -255,6 +276,34 @@ func formation_ready() -> bool:
 				if game.flat_distance(p.position,game.players[member].position)<1.0: return false
 	return true
 
+func snap_ready() -> void:
+	if taker<0 or targets.is_empty(): return
+	for i in targets:
+		var p=game.players[i]
+		p.position=targets[i]
+		p.velocity=Vector3.ZERO
+		p.desired=Vector3.ZERO
+		p.celebration=""
+		p.set_piece_pose=""
+		p.handling_blend=0
+		var look: Vector3=direction if i==taker else game.restart_point-p.position
+		look.y=0
+		if look.length()>0.1:
+			p.facing=look.normalized()
+			p.rig.rotation.y=atan2(-p.facing.x,-p.facing.z)
+		p.animate(1)
+	game.ball.release_hold()
+	game.ball.place(game.restart_point+Vector3(0,0.23,0))
+	recovery.phase="arrange"
+	recovery.age=1
+	recovery.rest_age=1
+	recovery.worker=taker
+	ready()
+	game.camera_focus=Vector3.ZERO
+	game.match_camera.apply_projection()
+	game.camera.size=game.match_camera.play_size(game.zoom)
+	game.update_camera(0)
+
 func ready() -> void:
 	if recovery.phase!="arrange" or not recovery.can_ready(): return
 	if not game.referees.ready_for_restart(): return
@@ -263,7 +312,7 @@ func ready() -> void:
 	game.ball.active=true
 	game.referees.whistle()
 	if game.restart_type=="SANTRA":
-		game.announce("SANTRA · "+("S İLE PAS VEREREK BAŞLA" if game.restart_team==0 else "RAKİP OYUNU BAŞLATIYOR"))
+		game.announce("SANTRA · "+((("A" if game.controller.using_gamepad else "S")+" İLE PAS VEREREK BAŞLA") if game.restart_team==0 else "RAKİP OYUNU BAŞLATIYOR"))
 	else:
 		game.announce("DÜDÜK · "+("YÖNÜ SEÇ, VURUŞU YAP" if game.restart_team==0 else "RAKİP DURAN TOPU KULLANIYOR"))
 
@@ -275,28 +324,36 @@ func update(delta: float) -> void:
 		game.players[taker].desired=direction*0.6
 		if runup<=0: launch()
 		return
-	if game.restart_team==1:
+	if game.restart_team==1 or game.menu_match.running:
 		if ready_age>1.15:
 			button=KEY_D if game.restart_type=="PENALTI" or (game.restart_type=="SERBEST VURUŞ" and absf(game.restart_point.z)>22) else (KEY_A if game.restart_type=="KORNER" else KEY_S)
 			power=0.60 if button==KEY_D else 0.45
 			if button==KEY_D and game.restart_type=="SERBEST VURUŞ": power=0.18
 			if button==KEY_D:
-				var goal := Vector3(game.rng.randf_range(-2.6,2.6),0,50)
+				var goal := Vector3(game.rng.randf_range(-2.6,2.6),0,game.attack_sign(game.restart_team)*50)
 				direction=(goal-game.restart_point).normalized()
 			preview()
 			commit()
 		return
-	var steering := float(Input.is_physical_key_pressed(KEY_RIGHT))-float(Input.is_physical_key_pressed(KEY_LEFT))
+	var aim: Vector3=aim_input()
 	var rate := 0.35 if button==KEY_D or game.restart_type=="PENALTI" else 1.0
-	direction=direction.rotated(Vector3.UP,-steering*rate*delta)
+	if aim.length()>0.01:
+		var turn := direction.signed_angle_to(aim.normalized(),Vector3.UP)
+		direction=direction.rotated(Vector3.UP,clampf(turn,-rate*aim.length()*delta,rate*aim.length()*delta))
 	if game.restart_type=="PENALTI":
-		var anchor := Vector3.FORWARD
+		var anchor := Vector3(0,0,game.attack_sign(game.restart_team))
 		var angle := anchor.signed_angle_to(direction,Vector3.UP)
 		direction=anchor.rotated(Vector3.UP,clampf(angle,-0.28,0.28))
 	if button!=0: power=minf(1,power+delta/(1.15 if button==KEY_D else 0.65))
 	game.players[taker].shot_preparation=0.15+power*0.85 if button==KEY_D else 0.0
+	game.players[taker].wrapping=1.0 if button==KEY_D and game.finesse_held() else 0.0
 	game.last_direction=direction
 	preview()
+
+func aim_input() -> Vector3:
+	if game.controller.has_separate_aim():
+		return game.match_camera.orient(game.controller.separate_aim())
+	return game.movement_input()
 
 func input(event: InputEvent) -> void:
 	if game.state!="set_piece" or game.restart_team!=0 or runup>=0: return
@@ -305,15 +362,17 @@ func input(event: InputEvent) -> void:
 			if game.restart_type=="PENALTI" and event.keycode!=KEY_D: return
 			button=event.keycode
 			power=0
+			shot_curve=game.choose_finesse_curve(direction)
 			preview()
 		elif button==event.keycode: commit()
 
 func preview() -> void:
 	var point: Vector3 = game.restart_point
+	pending_curve=shot_curve if button==KEY_D and game.restart_type!="TAÇ" and game.finesse_held() else 0.0
 	if button==KEY_D and game.restart_type!="TAÇ":
 		var lift := lerpf(1.5,3.5,power) if game.restart_type=="PENALTI" else lerpf(3.1,8.0,power)
 		var speed := lerpf(19,32,power)
-		var goal := Vector3(0,0,-50 if game.restart_team==0 else 50)
+		var goal := Vector3(0,0,game.attack_sign(game.restart_team)*50)
 		var distance := point.distance_to(goal)
 		if game.restart_type in ["SERBEST VURUŞ","ENDİREKT VURUŞ"] and distance>15 and distance<36:
 			# A softer, longer flight can arc over the wall; a driven kick stays lower.
@@ -324,7 +383,7 @@ func preview() -> void:
 		target=point+direction*25
 		receiver=-1
 	else:
-		var route = Passing.manual_plan(point+Vector3.UP*0.23,direction,power,game.restart_team,taker,game.players)
+		var route = Passing.manual_plan(point+Vector3.UP*0.23,direction,power,game.restart_team,taker,game.players,game.weather)
 		receiver=route.receiver
 		target=route.target
 		pending_velocity=route.velocity
@@ -332,7 +391,7 @@ func preview() -> void:
 			if receiver<0: target=point+direction*lerpf(10,32,power)
 			var flight := lerpf(1.0,2.0,power)
 			var start_y: float = game.ball.position.y if game.restart_type=="TAÇ" else 0.23
-			pending_velocity=(target-point)*Vector3(1,0,1)/flight+Vector3.UP*((0.23-start_y+4.905*flight*flight)/flight)
+			pending_velocity=Passing.Motion.lob_velocity(Vector3(point.x,start_y,point.z),Vector3(target.x,0.23,target.z),flight,game.weather)
 		if game.restart_type=="TAÇ":
 			# A legal throw must enter the field; forward/backward aiming is bounded.
 			pending_velocity.x=-signf(point.x)*maxf(3,absf(pending_velocity.x))
@@ -354,7 +413,8 @@ func launch() -> void:
 	game.previous_ball=game.restart_point+Vector3.UP*0.23
 	game.rules.restart_taken(kind,team,taker)
 	game.referees.ball_in_play(kind,taker)
-	game.strike(taker,pending_velocity,0,false,"shot" if button==KEY_D and kind!="TAÇ" else "kick")
+	game.replay.origin()
+	game.strike(taker,pending_velocity,pending_curve,false,"shot" if button==KEY_D and kind!="TAÇ" else "kick")
 	if button==KEY_D and kind!="TAÇ": game.shots[team]+=1
 	else: game.passes[team]+=1
 	if receiver>=0:

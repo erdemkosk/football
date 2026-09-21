@@ -1,4 +1,5 @@
 extends Node3D
+signal atmosphere_event(kind: String,team: int,location: Vector3)
 const G = preload("res://scripts/geometry.gd")
 const Crowd = preload("res://scripts/crowd.gd")
 var crowd := Crowd.new()
@@ -17,6 +18,9 @@ var rng := RandomNumberGenerator.new()
 var grass := ShaderMaterial.new()
 var env := Environment.new()
 var sun := DirectionalLight3D.new()
+const MatchLighting = preload("res://scripts/stadium_lighting.gd")
+var light_rig: Node3D
+var static_batch_stats: Dictionary = {}
 
 func _ready() -> void:
 	rng.seed = 913
@@ -25,15 +29,22 @@ func _ready() -> void:
 	stands()
 	details()
 	boundary_walls()
+	# Nets and sideline people animate independently; only architecture is baked.
+	static_batch_stats=preload("res://scripts/static_geometry.gd").batch(self,nets+[sidelines,architecture.district])
+	light_rig=MatchLighting.new()
+	add_child(light_rig)
+	light_rig.build(self)
 
 func lighting() -> void:
 	var environment = WorldEnvironment.new()
 	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color("a7bbc2")
+	env.background_color = Color("6f868a")
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
 	env.ambient_light_color = Color("d4e1ee")
 	env.ambient_light_energy = 0.50
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	# Match the established palette's brightness on the linear Metal/Vulkan path.
+	env.tonemap_exposure = 1.65 if RenderingServer.get_current_rendering_method()!="gl_compatibility" else 1.0
 	environment.environment = env
 	add_child(environment)
 	sun.rotation_degrees = Vector3(-54,-32,0)
@@ -47,11 +58,15 @@ func lighting() -> void:
 	add_child(sun)
 
 func pitch() -> void:
-	G.block(self,Vector3(132,1,162),Vector3(0,-0.6,0),G.material(Color("202e2d")))
+	var foundation=G.block(self,Vector3(132,1,162),Vector3(0,-0.6,0),G.material(Color("202e2d")))
+	foundation.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 	grass.shader = load("res://shaders/grass.gdshader")
-	G.block(self,Vector3(78,0.12,115),Vector3(0,-0.12,0),grass)
-	G.block(self,Vector3(64,0.1,100),Vector3(0,-0.05,0),grass)
+	# Flat ground receives player/roof shadows, but has nothing below it to shade.
+	# Excluding these large coplanar slabs avoids grazing-light shadow acne.
+	for area in [Vector3(78,0.12,115),Vector3(64,0.1,100)]:
+		var turf_mesh=G.block(self,area,Vector3(0,-0.12 if area.x>64 else -0.05,0),grass)
+		turf_mesh.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var turf = G.collision_box(self,Vector3(150,1,180),Vector3(0,-0.5,0),0.05)
 	turf.physics_material_override.friction = 0.65
 	outline(-32,-50,32,50)
@@ -180,14 +195,14 @@ func details() -> void:
 			board.position = Vector3(side*35.6,0.65,-49.5+i*9)
 			board.rotation.y = side*PI*0.5
 			G.block(board,Vector3(8.65,1.2,0.12),Vector3.ZERO,navy if i%2==0 else gold)
-			board_label(board,["TOUCHLINE", "THE BEAUTIFUL GAME", "KIYI  •  1967", "PLAY WITH HEART"][i%4],Vector3(0,0,0.07),Color("e9e2cd") if i%2==0 else Color("153e40"),0.012)
+			board_label(board,["STARTING ELEVEN FC", "THE BEAUTIFUL GAME", "KIYI  •  1967", "PLAY WITH HEART"][i%4],Vector3(0,0,0.07),Color("e9e2cd") if i%2==0 else Color("153e40"),0.012)
 		for i in range(8):
 			var board = Node3D.new()
 			add_child(board)
 			board.position = Vector3(-30.8+i*8.8,0.65,side*55.8)
 			if side>0: board.rotation.y = PI
 			G.block(board,Vector3(8.4,1.2,0.12),Vector3.ZERO,navy)
-			board_label(board,"KIYI ARENA" if i%2 else "TOUCHLINE",Vector3(0,0,0.07),Color("e9e2cd"),0.016)
+			board_label(board,"KIYI ARENA" if i%2 else "SEFC",Vector3(0,0,0.07),Color("e9e2cd"),0.016)
 	# Clear technical areas give both teams a view of the pitch.
 	for z in [-12,12]: outline(32.4,z-5.2,35.0,z+5.2)
 	sidelines = Sidelines.new()
@@ -219,3 +234,4 @@ func board_label(parent: Node3D,text: String,p: Vector3,color: Color,pixel: floa
 func react(kind: String,team: int,location: Vector3) -> void:
 	crowd.react(kind,team,location)
 	sidelines.react(kind,team,location)
+	atmosphere_event.emit(kind,team,location)

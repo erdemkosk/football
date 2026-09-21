@@ -93,7 +93,11 @@ func run() -> void:
 	game.dribbler=6
 	game.support.passed(9,6)
 	game.update_ai(1.0/120)
-	check(game.last_kicker==6 and game.ai_receivers[0]==9 and game.passes[0]==1,"An AI receiver actually returns an open give-and-go pass to the runner")
+	check(game.passes[0]==0,"A teammate waits for the user before returning a give-and-go pass")
+	game.call_for_pass(false)
+	game.update_pass_request(0.3)
+	game.update_ai(0.01)
+	check(game.last_kicker==6 and game.ai_receivers[0]==9 and game.passes[0]==1,"The user's pass request returns an open give-and-go pass to the runner")
 	game.support.passed(9,6)
 	game.players[17].visible=true
 	game.players[17].position=Vector3(-3,0,-7)
@@ -143,14 +147,14 @@ func run() -> void:
 	key(KEY_E,false); key(KEY_RIGHT,false)
 	await setup()
 	game.last_touch=1
-	key(KEY_F,true); key(KEY_F,false)
+	key(KEY_G,true); key(KEY_G,false)
 	var start: Vector3=game.ball.position
 	for frame in range(30):
 		game.players[9].step(1.0/120)
 		game.duels.resolve(1.0/120)
 		await physics_frame
 		if frame==18: await capture("standing-tackle",game.players[9].position)
-	check(game.players[9].pose=="poke" and game.last_kicker==9 and game.last_touch==0,"F makes a standing foot challenge win an exposed ball")
+	check(game.players[9].pose=="poke" and game.last_kicker==9 and game.last_touch==0,"G makes a standing foot challenge win an exposed ball")
 	check(game.ball.position.distance_to(start)>0.2,"Standing tackle changes the real ball's momentum")
 	await setup()
 	game.players[17].visible=true
@@ -160,12 +164,47 @@ func run() -> void:
 	await physics_frame
 	await physics_frame
 	game.dribbler=17
-	key(KEY_F,true); key(KEY_F,false)
+	key(KEY_G,true); key(KEY_G,false)
 	for frame in range(22):
 		game.players[9].step(1.0/120)
 		game.duels.resolve(1.0/120)
 		await physics_frame
 	check(game.state=="restart" and game.restart_team==1,"A body-first standing challenge from behind awards a foul")
+	await setup()
+	game.players[17].visible=true
+	game.players[17].position=Vector3.ZERO
+	game.players[17].facing=Vector3.FORWARD
+	game.players[17].active_sprint=true
+	game.players[17].sprinting=true
+	game.ball.place(Vector3(0,0.23,-1.28))
+	await physics_frame
+	await physics_frame
+	game.dribbler=17
+	game.players[9].position=Vector3(0,0,-3.08)
+	check(game.duels.ball_opened(17) and game.duels.poke_reach(17)>1.5,"A sprinting carrier opens the ball for a longer standing poke")
+	key(KEY_G,true); key(KEY_G,false)
+	for frame in range(22):
+		game.players[9].step(1.0/120)
+		game.duels.resolve(1.0/120)
+		await physics_frame
+	check(game.last_kicker==9 and game.last_touch==0 and game.state=="playing","G / Xbox X nicks a sprinting player's opened ball from a step away")
+	await setup()
+	game.players[17].visible=true
+	game.players[17].position=Vector3.ZERO
+	game.players[17].facing=Vector3.FORWARD
+	game.players[17].active_sprint=false
+	game.ball.place(Vector3(0,0.23,-0.82))
+	await physics_frame
+	await physics_frame
+	game.dribbler=17
+	game.players[9].position=Vector3(0,0,-3.08)
+	check(not game.duels.ball_opened(17) and game.duels.poke_reach(17)<1.4,"A tucked jog keeps the short standing-tackle reach")
+	key(KEY_G,true); key(KEY_G,false)
+	for frame in range(22):
+		game.players[9].step(1.0/120)
+		game.duels.resolve(1.0/120)
+		await physics_frame
+	check(game.last_kicker!=9 and game.state=="playing","The same distant poke cannot steal a ball kept at the feet")
 	await setup()
 	game.players[1].visible=true
 	game.players[2].visible=true

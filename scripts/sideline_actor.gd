@@ -1,5 +1,7 @@
 extends Node3D
 const G = preload("res://scripts/geometry.gd")
+var kit_material: StandardMaterial3D
+var bib_material: StandardMaterial3D
 var team := 0
 var role := "substitute"
 var number := 12
@@ -18,6 +20,7 @@ var mode := "watch"
 
 func _ready() -> void:
 	var kit := G.material(Color("e2e9dd") if team==0 else Color("bd4936"))
+	kit_material=kit
 	var tracksuit := G.material(Color("1d3736") if team==0 else Color("263442"))
 	var trim := G.material(Color("acc4b1") if team==0 else Color("d4aaa0"))
 	var skin := G.material([Color("d6a079"),Color("8c593b"),Color("bb7e54"),Color("e2b28c")][number%4])
@@ -41,6 +44,7 @@ func _ready() -> void:
 		G.sphere(head,0.016,Vector3(side*0.065,0.025,-0.168),boots)
 	if role=="substitute":
 		var bib := G.material(Color("75a884") if team==0 else Color("659eae"))
+		bib_material=bib
 		G.block(spine,Vector3(0.37,0.35,0.028),Vector3(0,0.27,-0.278),bib)
 		G.block(spine,Vector3(0.36,0.35,0.028),Vector3(0,0.27,0.278),bib)
 	else:

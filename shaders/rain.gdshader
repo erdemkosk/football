@@ -1,5 +1,6 @@
 shader_type spatial;
 render_mode unshaded, cull_disabled, shadows_disabled;
+#include "res://shaders/color_space.gdshaderinc"
 uniform float clock = 0.0;
 uniform float intensity = 0.0;
 void vertex() {
@@ -11,6 +12,6 @@ void vertex() {
  VERTEX.z += (18.0-drop)*0.035;
 }
 void fragment() {
- ALBEDO = vec3(0.71,0.81,0.84);
+ ALBEDO = palette_color(vec3(0.71,0.81,0.84));
  ALPHA = intensity * 0.25;
 }

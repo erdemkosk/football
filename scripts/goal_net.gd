@@ -1,13 +1,17 @@
 extends Node3D
 ## A pinned spring lattice shared by rendering and ball contact.
 const NODE_MASS := 0.12
-const TENSION := 90.0
-const RESTORING := 55.0
-const DAMPING := 30.0
+const TENSION := 160.0
+const SHEAR := 42.0
+const RESTORING := 6.0
+const DAMPING := 2.2
+const CONTACT_DAMPING := 65.0
 const MAX_STRETCH := 0.95
 var panels: Array[Dictionary] = []
 var awake := false
 var impact_count := 0
+var playback := false
+var replay_empty := false
 
 func build(side: int) -> void:
 	var front := float(side)*50.0
@@ -49,7 +53,7 @@ func add_panel(a: Vector3,b: Vector3,c: Vector3,d: Vector3,normal: Vector3,cols:
 	refresh_mesh(panel)
 
 func _physics_process(delta: float) -> void:
-	if not awake: return
+	if not awake or playback: return
 	var energy := 0.0
 	for panel in panels:
 		var offsets: PackedFloat32Array = panel.offset
@@ -59,7 +63,11 @@ func _physics_process(delta: float) -> void:
 			for x in range(1,panel.cols):
 				var i: int = y*width+x
 				var laplacian := offsets[i-1]+offsets[i+1]+offsets[i-width]+offsets[i+width]-4*offsets[i]
-				speeds[i] += (TENSION*laplacian-RESTORING*offsets[i]-DAMPING*speeds[i])*delta
+				var diagonal := offsets[i-width-1]+offsets[i-width+1]+offsets[i+width-1]+offsets[i+width+1]-4*offsets[i]
+				# Threads spread impact through the mesh. Low damping leaves a visible
+				# return swing; increasing tension at full stretch keeps the ball contained.
+				var restoring: float=RESTORING+24.0*offsets[i]*offsets[i]
+				speeds[i] += (TENSION*laplacian+SHEAR*diagonal-restoring*offsets[i]-DAMPING*speeds[i])*delta
 		for i in range(offsets.size()):
 			offsets[i] = clampf(offsets[i]+speeds[i]*delta,-MAX_STRETCH,MAX_STRETCH)
 			if absf(offsets[i])>=MAX_STRETCH: speeds[i] *= 0.2
@@ -69,7 +77,7 @@ func _physics_process(delta: float) -> void:
 	if energy<0.0005: reset()
 
 func _process(_delta: float) -> void:
-	if awake:
+	if awake and not playback:
 		for panel in panels: refresh_mesh(panel)
 
 func release_ball() -> void:
@@ -77,11 +85,45 @@ func release_ball() -> void:
 
 func reset() -> void:
 	awake = false
+	playback = false
 	release_ball()
 	for panel in panels:
 		panel.offset.fill(0)
 		panel.velocity.fill(0)
 		refresh_mesh(panel)
+
+func capture_pose() -> Array:
+	var result: Array=[]
+	if awake:
+		for panel in panels: result.append(panel.offset.duplicate())
+	return result
+
+func capture_physics() -> Dictionary:
+	var speeds: Array=[]
+	for panel in panels: speeds.append(panel.velocity.duplicate())
+	return {"pose":capture_pose(),"speeds":speeds,"awake":awake}
+
+func show_replay(a: Array,b: Array,weight: float) -> void:
+	var empty := a.is_empty() and b.is_empty()
+	if playback and replay_empty and empty: return
+	playback=true
+	replay_empty=empty
+	for index in range(panels.size()):
+		var panel: Dictionary=panels[index]
+		var offsets: PackedFloat32Array=panel.offset
+		var start: PackedFloat32Array=a[index] if not a.is_empty() else PackedFloat32Array()
+		var end: PackedFloat32Array=b[index] if not b.is_empty() else PackedFloat32Array()
+		for i in range(offsets.size()):
+			offsets[i]=lerpf(start[i] if not start.is_empty() else 0.0,end[i] if not end.is_empty() else 0.0,weight)
+		panel.offset=offsets
+		refresh_mesh(panel)
+
+func restore_physics(saved: Dictionary) -> void:
+	show_replay(saved.pose,saved.pose,0)
+	for i in range(panels.size()): panels[i].velocity=saved.speeds[i].duplicate()
+	awake=saved.awake
+	playback=false
+	replay_empty=false
 
 func refresh_mesh(panel: Dictionary) -> void:
 	var vertices: PackedVector3Array = panel.rest.duplicate()
@@ -89,7 +131,14 @@ func refresh_mesh(panel: Dictionary) -> void:
 	normals.resize(vertices.size())
 	for i in range(vertices.size()):
 		vertices[i] += panel.normal*panel.offset[i]
-		normals[i] = panel.normal
+	var width: int=panel.cols+1
+	for y in range(panel.rows+1):
+		for x in range(width):
+			var i: int=y*width+x
+			var across: Vector3=vertices[y*width+mini(x+1,panel.cols)]-vertices[y*width+maxi(x-1,0)]
+			var up: Vector3=vertices[mini(y+1,panel.rows)*width+x]-vertices[maxi(y-1,0)*width+x]
+			var normal := across.cross(up).normalized()
+			normals[i]=normal if normal.dot(panel.normal)>0 else -normal
 	var arrays := []
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = vertices
@@ -161,6 +210,9 @@ func contact(state: PhysicsDirectBodyState3D,radius: float,mass: float) -> void:
 		for j in range(4):
 			if panel.pinned[ids[j]]==0:
 				panel.velocity[ids[j]] -= contact_side*impulse*weights[j]/NODE_MASS
+				# The small pocket absorbs the ball; surrounding threads remain free
+				# to carry the impact away as a much wider, longer-lived vibration.
+				panel.velocity[ids[j]] *= exp(-CONTACT_DAMPING*weights[j]*state.step)
 		awake = true
 		impact_count += 1
 

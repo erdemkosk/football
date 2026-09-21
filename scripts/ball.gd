@@ -1,6 +1,7 @@
 extends RigidBody3D
 const G = preload("res://scripts/geometry.gd")
 const RADIUS := 0.22
+const Motion = preload("res://scripts/ball_motion.gd")
 var pending_reset := false
 var reset_position := Vector3.ZERO
 var pending_velocity := Vector3.ZERO
@@ -43,7 +44,9 @@ func _ready() -> void:
 	collision_mask = 11
 	linear_damp_mode = RigidBody3D.DAMP_MODE_REPLACE
 	linear_damp = 0
-	angular_damp = 0.18
+	# Ground rolling loss is explicit; generic angular damping would brake it twice.
+	angular_damp_mode = RigidBody3D.DAMP_MODE_REPLACE
+	angular_damp = 0
 	contact_monitor = true
 	max_contacts_reported = 8
 	var physics = PhysicsMaterial.new()
@@ -127,20 +130,20 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		state.apply_central_impulse(impulse)
 		pending_touch = false
 	var v = state.linear_velocity
-	var resistance := 1.15
-	if is_instance_valid(surface):
-		resistance=surface.ball_drag(state.transform.origin)
-		physics_material_override.bounce=surface.ball_bounce(state.transform.origin)
-	var speed = Vector2(v.x,v.z).length()
-	if state.transform.origin.y < 0.30 and absf(v.y)<1.2:
-		var horizontal = Vector2(v.x,v.z).move_toward(Vector2.ZERO,resistance*state.step)
-		v.x = horizontal.x
-		v.z = horizontal.y
-		state.angular_velocity = Vector3(v.z/RADIUS,state.angular_velocity.y,-v.x/RADIUS)
+	var resistance := Motion.profile(surface,state.transform.origin)
+	if is_instance_valid(surface): physics_material_override.bounce=surface.ball_bounce(state.transform.origin)
+	var speed := Vector2(v.x,v.z).length()
+	var rolling: bool=state.transform.origin.y<RADIUS+0.08 and absf(v.y)<1.2
+	if rolling:
+		var remaining := Motion.rolling_speed(speed,state.step,resistance)
+		var horizontal := Vector2(v.x,v.z).normalized()*remaining
+		v.x=horizontal.x; v.z=horizontal.y
+		var yaw := move_toward(state.angular_velocity.y,0,state.step*resistance.x*5)
+		state.angular_velocity=Vector3(v.z/RADIUS,yaw,-v.x/RADIUS)
 	else:
-		v -= v*speed*0.0018*state.step
-		var curve = Vector3(-v.z,0,v.x)*spin*0.08
-		v += curve*state.step
-	spin = move_toward(spin,0,state.step*0.17)
+		v=Motion.air_velocity(v,state.step,Motion.air_drag(surface))
+		state.angular_velocity*=exp(-0.04*state.step)
+		v=Motion.apply_spin(v,spin,state.step)
+	spin=Motion.decay_spin(spin,state.step,not rolling,resistance.x)
 	state.linear_velocity = v
 	for net in goal_nets: net.contact(state,RADIUS,mass)

@@ -1,5 +1,6 @@
 shader_type spatial;
 render_mode diffuse_burley;
+#include "res://shaders/color_space.gdshaderinc"
 varying vec3 world_pos;
 uniform float wetness = 0.0;
 uniform float weather_clock = 0.0;
@@ -36,7 +37,7 @@ void fragment(){
  float phase=fract(weather_clock*1.7+hash(cell));
  float ring=1.0-smoothstep(0.015,0.05,abs(length(fract(p*1.6)-0.5)-phase*0.55));
  vec3 water=vec3(0.12,0.16,0.16)+ring*(1.0-phase)*rain*0.045;
- ALBEDO=mix(turf,water,puddle*0.65);
+ ALBEDO=palette_color(mix(turf,water,puddle*0.65));
  ROUGHNESS=mix(1.0,0.48,wetness)*(1.0-puddle*0.55);
  SPECULAR=wetness*(0.22+puddle*0.22);
 }

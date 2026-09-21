@@ -22,8 +22,8 @@ func run() -> void:
 	p.desired=Vector3.FORWARD
 	p.sprinting=true
 	advance(p,0.5)
-	check(p.active_sprint and p.energy<0.93 and p.movement_speed()>8,"Sprinting consumes stamina while enabling higher speed")
-	advance(p,5.5)
+	check(p.active_sprint and p.energy<1.0-p.SPRINT_DRAIN*0.25 and p.movement_speed()>8,"Sprinting consumes stamina while enabling higher speed")
+	advance(p,(p.energy-p.EXHAUSTION_LIMIT)/p.SPRINT_DRAIN+0.15)
 	check(p.exhausted and not p.active_sprint and p.movement_speed()==3.4,"A sustained sprint ends in exhaustion and walking speed")
 	var never_restarted:=true
 	for i in range(1200):
@@ -41,9 +41,9 @@ func run() -> void:
 	check(p.exhausted and not p.active_sprint,"Releasing W alone does not bypass the minimum stamina threshold")
 	p.reset_stamina()
 	p.desired=Vector3.FORWARD
-	advance(p,30)
+	advance(p,(1.0-0.41)/p.RUN_DRAIN+0.5)
 	check(p.energy<0.41 and not p.exhausted,"Normal running also gradually consumes stamina")
-	advance(p,17)
+	advance(p,(p.energy-p.EXHAUSTION_LIMIT)/p.RUN_DRAIN+0.2)
 	check(p.exhausted and p.movement_speed()<4,"Continuous normal running eventually forces a slower pace")
 	p.reset_stamina(); p.energy=0.2; p.exhausted=true; p.desired=Vector3.ZERO
 	advance(p,2)
@@ -61,7 +61,7 @@ func run() -> void:
 	advance(p,2,120)
 	check(absf(energy30-p.energy)<0.001,"Stamina consumption is consistent across update rates")
 	ai.reset_stamina(); ai.desired=Vector3.FORWARD; ai.sprinting=true
-	advance(ai,6)
+	advance(ai,(1.0-ai.EXHAUSTION_LIMIT)/ai.SPRINT_DRAIN+0.15)
 	check(ai.exhausted and ai.movement_speed()==3.4,"AI players use the same exhaustion rules")
 	p.energy=0.16; p.exhausted=true
 	game.reset_positions(0)

@@ -1,5 +1,7 @@
 extends RefCounted
 ## Active-play offside and the first/second-touch restrictions on restarts.
+var advantage: Dictionary = {}
+var deferred_cards: Array = []
 var game
 var candidates: Array[int] = []
 var phase_team := -1
@@ -62,7 +64,7 @@ func kicked(index: int) -> void:
 	candidates.clear()
 	phase_team=game.players[index].team
 	if game.training or exempt: return
-	var forward := -1.0 if phase_team==0 else 1.0
+	var forward: float = game.attack_sign(phase_team)
 	var line := offside_line(phase_team)
 	for i in range(game.players.size()):
 		var p=game.players[i]
@@ -70,7 +72,7 @@ func kicked(index: int) -> void:
 			candidates.append(i)
 
 func offside_line(attacking_team: int) -> float:
-	var forward := -1.0 if attacking_team==0 else 1.0
+	var forward: float = game.attack_sign(attacking_team)
 	var line := 0.0
 	var defensive_line: Array[float]=[]
 	for p in game.players:
@@ -82,6 +84,8 @@ func offside_line(attacking_team: int) -> float:
 	return line
 
 func update(delta: float) -> void:
+	update_advantage(delta)
+	if game.state!="playing": return
 	touch_age+=delta
 	# Contact events include headers, deflections and rebounds, not just possession.
 	for body in game.ball.get_colliding_bodies():
@@ -96,32 +100,35 @@ func allows_goal(team: int) -> bool:
 		game.announce("DURAN TOPTAN DOĞRUDAN KENDİ KALESİNE · KORNER")
 		return false
 	if restart_kind in ["TAÇ","ENDİREKT VURUŞ"]:
-		game.begin_restart("KALE VURUŞU",1-team,Vector3(0,0,-45 if team==0 else 45))
+		game.begin_restart("KALE VURUŞU",1-team,Vector3(0,0,game.attack_sign(team)*45))
 		game.announce("DOĞRUDAN GOL GEÇERSİZ · KALE VURUŞU")
 		return false
 	return true
 
-func foul(offender: int,victim: int,reckless: bool=false) -> void:
+func foul(offender: int,victim: int,reckless: bool=false,severe: bool=false) -> void:
 	var p=game.players[victim]
 	var offender_player=game.players[offender]
 	var point: Vector3=p.position*Vector3(1,0,1)
-	var goal_side := 1.0 if game.players[offender].team==0 else -1.0
+	var goal_side: float=-game.attack_sign(offender_player.team)
 	var penalty := absf(point.x)<=20.16 and point.z*goal_side>=33.5 and point.z*goal_side<=50
 	game.foul_cooldown=4
 	offender_player.fouls_committed+=1
-	var booking: bool=reckless or offender_player.fouls_committed%3==0
-	if booking:
-		offender_player.yellow_cards+=1
-		card_red=offender_player.yellow_cards>=2
-		card_time=5
-		card_text=offender_player.display_name+" · "+("İKİNCİ SARI / KIRMIZI" if card_red else "SARI KART")
-		if card_red:
-			offender_player.dismissed=true
-			offender_player.visible=false
-			offender_player.collision_layer=0
-			if game.controlled==offender: game.switch_player()
+	var booking: bool=reckless or severe or offender_player.fouls_committed%3==0
+	# Only play advantage when an upright teammate already has a clear ball.
+	var owner: int=game.nearest_to_ball(1.5)
+	var clear_attack: bool=owner>=0 and owner!=victim and game.state=="playing" and game.players[owner].team==p.team and game.players[owner].action_timer<=0 and game.ball.linear_velocity.length()<16
+	if not penalty and not severe and clear_attack and (not booking or offender_player.yellow_cards==0):
+		if booking: deferred_cards.append(offender)
+		advantage={"team":p.team,"point":point,"age":0.0}
+		game.referees.decision="AVANTAJ"
+		game.referees.decision_age=0
+		game.referees.signal_time=2.0
+		game.referees.actors[0].signal_pose("advantage")
+		game.announce("AVANTAJ · OYUN DEVAM EDİYOR")
+		return
+	if booking: book(offender,severe)
 	game.begin_restart("PENALTI" if penalty else "SERBEST VURUŞ",p.team,Vector3(0,0,goal_side*39) if penalty else point)
-	if booking: game.referees.show_card(offender_player.position,card_red)
+	if booking: game.referees.show_card(offender_player.position,card_red,severe)
 	var remaining := 0
 	for teammate in game.players:
 		if teammate.team==offender_player.team and not teammate.dismissed: remaining+=1
@@ -129,7 +136,40 @@ func foul(offender: int,victim: int,reckless: bool=false) -> void:
 		game.ending_reason="YEDİ OYUNCUDAN AZ · MAÇ TATİL EDİLDİ"
 		game.state="finished"
 		game.ball.active=false
-		game.announce("YEDİ OYUNCUDAN AZ · MAÇ TATİL EDİLDİ")
+		game.announce(game.ending_reason)
+
+func book(offender: int,direct: bool=false) -> void:
+	var p=game.players[offender]
+	if not direct: p.yellow_cards+=1
+	card_red=direct or p.yellow_cards>=2
+	card_time=5
+	card_text=p.display_name+" · "+("DOĞRUDAN KIRMIZI" if direct else ("İKİNCİ SARI / KIRMIZI" if card_red else "SARI KART"))
+	if card_red:
+		p.dismissed=true
+		p.visible=false
+		p.collision_layer=0
+		if game.controlled==offender: game.switch_player()
+
+func update_advantage(delta: float) -> void:
+	if advantage.is_empty(): return
+	advantage.age+=delta
+	var owner: int=game.nearest_to_ball(1.8)
+	var lost: bool=owner>=0 and game.players[owner].team!=int(advantage.team)
+	var forward: float=game.attack_sign(advantage.team)
+	var progressed: bool=(game.ball.position.z-advantage.point.z)*forward>4.0
+	if lost or (advantage.age>=3.0 and not progressed):
+		var decision: Dictionary=advantage.duplicate()
+		advantage.clear()
+		game.begin_restart("SERBEST VURUŞ",decision.team,decision.point)
+		game.announce("AVANTAJ OLUŞMADI · FAULE DÖNÜLDÜ")
+	elif advantage.age>=3.0:
+		advantage.clear()
+
+func show_deferred_cards() -> void:
+	for offender in deferred_cards:
+		book(offender)
+		game.referees.show_card(game.players[offender].position,card_red)
+	deferred_cards.clear()
 
 func start_tackle(index: int,direction: Vector3) -> void:
 	var p=game.players[index]
@@ -163,8 +203,9 @@ func resolve_tackles() -> void:
 				victim=j
 		if victim>=0 and (not ball_hit or first+0.12<near_ball.distance_to(start)) and not game.training:
 			var reckless: bool=p.facing.dot(game.players[victim].facing)>0.5 and p.velocity.length()>8
+			var severe: bool=reckless and not ball_hit and first>0.45 and p.velocity.length()>16.5
 			game.tackle_impact(index,victim)
-			foul(index,victim,reckless)
+			foul(index,victim,reckless,severe)
 			return
 		if ball_hit:
 			game.strike(index,p.facing*9+Vector3.UP*0.6,0,false,"ball_tackle")
