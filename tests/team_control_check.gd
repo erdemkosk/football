@@ -43,33 +43,40 @@ func run() -> void:
 	check(not game.player_lock,"New matches start with whole-team control")
 	button(JOY_BUTTON_A); var preview: Dictionary=game.pass_preview.duplicate()
 	button(JOY_BUTTON_A,false)
-	check(game.controlled==6 and game.last_kicker==9 and game.ball.kick_velocity.is_equal_approx(preview.velocity),"A passes physically and immediately selects its recipient")
+	check(game.controlled==9 and game.last_kicker==9 and game.ball.kick_velocity.is_equal_approx(preview.velocity),"A passes physically and leaves the passer selected")
 	game.players[9].touch_cooldown=0; game.ball.linear_velocity=game.ball.kick_velocity
 	game.team_control.update(0.1)
-	check(game.controlled==6,"Outgoing pass does not switch the cursor back to the passer")
-	game.update_control(0.01)
-	check(game.players[6].desired.length()>0.1,"Without stick input the selected recipient moves to meet the pass")
+	check(game.controlled==9,"Outgoing pass does not auto-switch to the recipient")
+	game.update_ai(0.01)
+	check(game.players[6].desired.length()>0.1 or game.players[7].desired.length()>0.1,"A teammate near the aimed landing can still run to contest the pass")
 	game.controller.stick=Vector2(1,0); game.update_control(0.01)
-	check(game.players[6].desired==Vector3.RIGHT,"Explicit stick direction fully overrides reception assistance")
+	check(game.controlled==9 and game.players[9].desired.length()>0.1,"Stick still steers the passer after the kick")
 	setup()
 	button(JOY_BUTTON_B); button(JOY_BUTTON_B,false)
 	game.controller.combos.update(0.24)
-	check(game.controlled!=9 and game.ai_receivers[0]==game.controlled,"Crosses also transfer control to the recipient")
+	check(game.controlled==9,"Crosses keep the passer selected instead of locking a named recipient")
 	setup()
 	game.players[6].visible=false; game.players[7].visible=false; game.players[0].visible=true
 	game.players[0].position=Vector3(0,0,8); game.last_direction=Vector3.BACK
 	button(JOY_BUTTON_A); button(JOY_BUTTON_A,false)
-	check(game.controlled==0,"A backpass makes the goalkeeper directly controllable too")
-	game.ball.pending_kick=false; game.kick_lock=0; game.ball.position=Vector3(0,0.23,7.2)
+	check(game.controlled==9 and game.ball.kick_velocity.z>0,"A backpass follows the aimed heading without taking control away from the passer")
+	game.ball.pending_kick=false; game.kick_lock=0; game.ball.linear_velocity=Vector3.ZERO
+	game.ball.position=Vector3(0,0.23,7.2); game.ai_pass_time[0]=0; game.dribbler=-1
+	game.team_control.update(0.01)
+	check(game.controlled==0,"The keeper becomes controllable once the ball is at his feet")
 	game.update_contacts(0.01)
 	check(game.dribbler==0 and game.ball.pending_touch,"A controlled goalkeeper receives and carries the ball at his feet")
 	setup()
+	game.match_camera.select("pitch")
+	game.update_camera(0)
 	game.players[9].position=Vector3(0,0,22); game.players[6].position=Vector3(0,0,0.7)
 	game.players[6].desired=Vector3.RIGHT; game.players[6].velocity=Vector3.RIGHT*4
+	game.players[6].touch_cooldown=0; game.players[6].action_timer=0
 	game.controller.stick=Vector2(0,-1)
 	game.dribbler=6
 	game.team_control.update(0.01); game.update_control(0.01); game.update_ai(0.01)
-	check(game.controlled==6 and game.players[6].desired==Vector3.FORWARD and game.shots[0]==0,"A moving teammate gaining possession becomes controlled before AI can play the ball")
+	check(game.controlled==6,"A moving teammate gaining possession becomes controlled")
+	check(game.shots[0]==0 and game.players[6].desired==Vector3.FORWARD,"The new cursor takes the stick before AI can play the ball")
 	setup()
 	game.players[9].position=Vector3(0,0,25)
 	game.players[6].position=Vector3(0,0,4)
@@ -124,7 +131,7 @@ func run() -> void:
 	button(JOY_BUTTON_Y)
 	check(game.pass_charging and game.pass_through and game.players[9].feint_time==0,"Y prepares a through ball without triggering a feint")
 	var short_target: Vector3=game.pass_preview.target
-	check(game.pass_preview.receiver==6 and short_target.z<game.players[6].position.z-3,"A short Y pass leads the runner into forward space")
+	check(game.pass_preview.receiver==-1 and short_target.z<game.players[6].position.z-3,"A short Y pass goes into forward space along the aimed heading")
 	button(JOY_BUTTON_A,false)
 	check(game.pass_charging,"Releasing A cannot accidentally release a held Y pass")
 	hold(0.65)
@@ -132,7 +139,7 @@ func run() -> void:
 	await capture("through")
 	var through: Dictionary=game.pass_preview.duplicate(); var origin: Vector3=game.ball.position
 	button(JOY_BUTTON_Y,false)
-	check(game.controlled==6 and game.passes[0]==1 and game.ball.position==origin and game.ball.kick_velocity.is_equal_approx(through.velocity),"Y release uses the visible physical trajectory and transfers control without teleporting the ball")
+	check(game.controlled==9 and game.passes[0]==1 and game.ball.position==origin and game.ball.kick_velocity.is_equal_approx(through.velocity),"Y release uses the visible physical trajectory and leaves the passer selected")
 	var original_kick: Vector3=game.ball.kick_velocity
 	game.players[6].position.x+=15; game.update_control(0.01)
 	check(game.ball.kick_velocity==original_kick,"Changing the runner's direction after the kick cannot steer the ball in flight")
@@ -140,7 +147,7 @@ func run() -> void:
 	game.half=2; game.last_direction=Vector3.BACK; game.players[6].position=Vector3(1,0,8)
 	game.players[7].visible=false; game.players[14].position.z=40; game.players[11].position.z=48
 	button(JOY_BUTTON_Y)
-	check(game.pass_preview.receiver==6 and game.pass_preview.target.z>12,"Through balls follow the reversed attack direction in the second half")
+	check(game.pass_preview.receiver==-1 and game.pass_preview.target.z>12,"Through balls follow the reversed attack direction in the second half")
 	setup()
 	game.players[6].position=Vector3(0,0,-44); game.players[7].visible=false
 	button(JOY_BUTTON_Y)
@@ -157,8 +164,8 @@ func run() -> void:
 	game.players[6].position=Vector3(6,0,-8); game.players[7].visible=false
 	game.pass_assistance=0; game.begin_pass(); var manual_pass: Dictionary=game.pass_preview.duplicate(); game.cancel_pass()
 	game.pass_assistance=1; game.begin_pass(); var assisted: Dictionary=game.pass_preview.duplicate(); game.cancel_pass()
-	check(manual_pass.receiver==-1 and manual_pass.velocity.x==0 and assisted.receiver==6 and assisted.velocity.x>0,"Semi assistance forgives an imprecise diagonal aim while manual mode preserves exact direction")
-	check(assisted.velocity.length()>manual_pass.velocity.length(),"Assistance supplies more pace for a teammate beyond a short tap's range")
+	check(manual_pass.receiver==-1 and manual_pass.velocity.x==0 and assisted.receiver==-1,"A teammate well off the aimed line does not steal the pass in either assistance mode")
+	check(absf(assisted.velocity.x)<0.35,"Semi assistance only nudges a near-line teammate and never snaps onto a wide runner")
 	game.players[6].position=Vector3(0,0,8); game.begin_pass()
 	check(game.pass_preview.receiver==-1 and game.pass_preview.velocity.z<0,"Assistance never redirects a forward pass behind the user")
 
@@ -184,10 +191,10 @@ func run() -> void:
 		await physics_frame
 		game.kick_lock=maxf(0,game.kick_lock-1.0/120)
 		for p in game.players: p.touch_cooldown=maxf(0,p.touch_cooldown-1.0/120)
-		game.update_pass_request(1.0/120); game.team_control.update(1.0/120); game.update_control(1.0/120)
-		game.players[game.controlled].step(1.0/120); game.update_contacts(1.0/120)
+		game.update_pass_request(1.0/120); game.team_control.update(1.0/120); game.update_control(1.0/120); game.update_ai(1.0/120)
+		game.players[6].step(1.0/120); game.players[game.controlled].step(1.0/120); game.update_contacts(1.0/120)
 		if game.dribbler==6: received=true; break
-	check(received and game.players[6].position.distance_to(Vector3(1,0,-8))>1,"Selected runner physically reaches and controls a through ball into space")
+	check(received and game.players[6].position.distance_to(Vector3(1,0,-8))>1,"The intended runner physically reaches and controls a through ball into space")
 	setup()
 	game.players[7].visible=false; game.players[17].visible=true; game.players[17].position=Vector3(0.5,0,-4)
 	game.ball.freeze=false; game.ball.place(Vector3(0,0.23,0))

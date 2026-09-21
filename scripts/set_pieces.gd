@@ -384,11 +384,11 @@ func preview() -> void:
 		receiver=-1
 	else:
 		var route = Passing.manual_plan(point+Vector3.UP*0.23,direction,power,game.restart_team,taker,game.players,game.weather)
-		receiver=route.receiver
+		receiver=-1
 		target=route.target
 		pending_velocity=route.velocity
 		if button==KEY_A or game.restart_type=="TAÇ":
-			if receiver<0: target=point+direction*lerpf(10,32,power)
+			target=point+direction*lerpf(10,32,power)
 			var flight := lerpf(1.0,2.0,power)
 			var start_y: float = game.ball.position.y if game.restart_type=="TAÇ" else 0.23
 			pending_velocity=Passing.Motion.lob_velocity(Vector3(point.x,start_y,point.z),Vector3(target.x,0.23,target.z),flight,game.weather)
@@ -417,10 +417,12 @@ func launch() -> void:
 	game.strike(taker,pending_velocity,pending_curve,false,"shot" if button==KEY_D and kind!="TAÇ" else "kick")
 	if button==KEY_D and kind!="TAÇ": game.shots[team]+=1
 	else: game.passes[team]+=1
-	if receiver>=0:
-		game.ai_receivers[team]=receiver
+	var heading: Vector3=(pending_velocity*Vector3(1,0,1)).normalized()
+	var reach: float=Vector2(target.x-game.restart_point.x,target.z-game.restart_point.z).length()
+	var hint: int=Passing.hint_along(game.restart_point,heading,reach,team,taker,game.players,14,8)
+	if hint>=0:
+		game.ai_receivers[team]=hint
 		game.ai_pass_time[team]=2.5
-		if team==0 and not game.player_lock: game.controlled=receiver
 	for i in wall:
 		game.players[i].wall_hold=0.85
 		game.players[i].wall_jump_delay=0.12+(i%3)*0.025 if button==KEY_D else -1.0

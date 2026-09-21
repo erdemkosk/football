@@ -253,6 +253,14 @@ File teması, sert/yumuşak şut, yan/üst ağlar, geniş titreşim dalgası, da
 
 Oyuncu eklemleri, kaleci sıçrama/iniş/kalkış ve kurtarış erişimi: `godot --headless --path . --script res://tests/motion_check.gd` (görsel kontrol için headless olmadan `-- --visual`).
 
+Keskin dönüşlerde mevcut adımın destek ayağı kısa süre çime basılı kalır; kalça ağırlığı bu bacağa aktarır, gövde ve kollar dönüşü dengeler. Frenleme ayrı bir diz bükme duruşu kullanır. Savunmada yüzünü rakibe dönük tutarken yan adımlama ve kısa geriye koşu farklı adım döngüleridir. Bu katman yalnızca modeli hareket ettirir; hız, ivme, yön girdisi ve vuruş zamanlamasına bekleme eklemez. Şut, kayma, düşme, kaleci dalışı ve duran top hareketleri önceliklidir.
+
+Destek ayağının dünya konumunu koruması, ilk fizik adımında yön tepkisi, sağ/sol/180° dönüş, yer teması, frenleme, yan/geri adımlar, şut/müdahale geçişi ve mola: `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/locomotion_check.gd`. Yakın plan görüntüler için headless olmadan `-- --visual` ekle.
+
+Canlı beden dili: Oyuncular yaklaşan pasın öncesinde kısa omuz kontrolü yapar, top kontrol mesafesine girerken bakışını yeniden topa çevirir. Koşu yönünden bağımsız baş ve göz eklemleri yerdeki ve havadaki topu sınırlı boyun açılarıyla izler. Saç, yüz ve gözler aynı baş eklemine bağlıdır. Takım arkadaşları savunmacının kapatmadığı gerçek destek koşusunu uygun eliyle gösterir; kişi başına bekleme süresi ve takım başına en fazla iki eşzamanlı işaret vardır. Top kaybedilirse el yumuşakça iner. Gerçek oyuncu çarpışmaları omuz esnemesi, denge arayan kollar, dizlerle darbe emme ve yaklaşık yarım saniyelik toparlanma üretir; hareket girdileri, hız ve vuruşlar görsel katmandan etkilenmez. Şut, kaleci, duran top, sevinç ve disiplin hareketleri önceliklidir. Yakın plandaki göz ayrıntıları 35 metreden sonra çizilmez. Yeni eklemler gol tekrarına kaydedilir; mola sırasında hareketler donar.
+
+Bakış yönü/sınırları, pas öncesi tarama, acil top kontrolü, açık/kapalı pas yolu, sağ/sol işaret, iptal geçişi, eşzamanlılık, gerçek oyuncu teması, top saklama, giriş gecikmesi olmaması, şut/taç önceliği ve tekrar: `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/body_language_check.gd`. Yakın plan görüntüler: `godot --path . --fixed-fps 120 --script res://tests/body_language_check.gd -- --visual`.
+
 Kaleci dengesi: 72 fiziksel şutta kolay top, uzak köşe, sert köşe ve yakın mesafe; tepki süresi, zorluk, yağmur/yorgunluk/görüş, gerçek eldiven erişimi ve canlı seken top: `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/keeper_balance_check.gd`. Dalışta eldivenler aynı karşılama noktasına yaklaşır; aralarında topun kaçtığı yapay boşluk kalmaz. Tepki süresi normal zorlukta yaklaşık 0,23 saniyedir. Sert toplarda okuma hatası artar; kurtarış alanı büyütülmez ve topun sonucu önceden belirlenmez.
 
 İki kalede, sağ/sol köşelerde, üç vuruş açısında ve farklı rastgele okumalarla 84 ek fiziksel şut: `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/keeper_corner_check.gd`. Alçak, yüksek, uzak, ceza sahası içi ve sert yakın köşeler ayrı sınanır; ulaşılabilir şutların çoğunun kurtarılması ve zor bitirişlerin hâlâ gol olabilmesi birlikte kontrol edilir.
@@ -299,6 +307,8 @@ godot --path . --script res://tests/visual_check.gd
 - `scripts/passing.gd`: hareketli alıcıya pas yörüngesi ve pas yolundaki rakip riski.
 - `scripts/goal_net.gd`: yay ağı simülasyonu, deforme ağ geometrisi ve top ile karşılıklı kuvvet aktarımı.
 - `scripts/footballer.gd`: oyuncu modeli, hareket ve animasyon.
+- `scripts/locomotion.gd`: yönlü adımlar, dönüş/frenleme ağırlık aktarımı ve iki eklemle destek ayağı teması.
+- `scripts/body_language.gd`: top takibi, pas öncesi çevre kontrolü, boşluk işaretleri ve fiziksel temasa görsel denge tepkisi.
 - `scripts/stadium.gd`: saha, kaleler, tribünler, ışık ve çevre.
 - `scripts/stadium_lighting.gd`: bağımsız gündüz/gece seçimi, yönlü güneş, çatılara bağlı projektörler ve yağmurla birlikte aydınlatma.
 - `scripts/stadium_architecture.gd`: üst tribünler, çatı makasları, dış cephe, tünel ve canlı skor tabelaları.

@@ -93,7 +93,7 @@ func run() -> void:
 	pass_event.pressed=false
 	Input.parse_input_event(pass_event)
 	await frames(5)
-	check(game.passes[0]==1 and game.controlled!=9,"Pass selects its receiver")
+	check(game.passes[0]==1 and game.controlled==9,"Pass leaves the passer selected")
 	game.start_match(false,false)
 	await frames(5)
 	var cross_event=InputEventKey.new()
@@ -119,6 +119,9 @@ func run() -> void:
 	sprint_event.pressed=false
 	Input.parse_input_event(sprint_event)
 	game.state="playing"
+	# Test the final whistle in the second half, with no added time pending.
+	game.half=2
+	game.management.added[1]=0
 	game.match_time=game.LENGTH-0.001
 	game._physics_process(0.01)
 	check(game.state=="finished","Final whistle stops the match")
@@ -126,7 +129,10 @@ func run() -> void:
 	check(game.score==[0,0] and game.shots==[0,0],"Rematch resets score and statistics")
 	game.start_match(true)
 	game.set_physics_process(true)
-	await frames(8)
+	# Let the new-practice touch lock expire and establish possession before
+	# asking for a running charge in the camera-relative movement direction.
+	await frames(45)
+	check(game.dribbler==game.controlled,"Running-charge scenario starts with established possession")
 	var move_event=InputEventKey.new()
 	move_event.physical_keycode=KEY_UP
 	move_event.keycode=KEY_UP

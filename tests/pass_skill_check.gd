@@ -15,6 +15,8 @@ func setup() -> void:
 	game.start_match(false,false)
 	game.set_physics_process(false)
 	game.set_process(false)
+	game.match_camera.select("pitch")
+	game.update_camera(0)
 	game.ball.freeze=true
 	game.ball.pending_reset=false
 	game.ball.pending_kick=false
@@ -49,7 +51,7 @@ func run() -> void:
 	setup()
 	key(KEY_S,true)
 	check(game.pass_charging and game.passes[0]==0 and not game.ball.pending_kick,"S starts a pass preview without kicking before release")
-	check(game.pass_preview.receiver==6,"A quick tap offers the nearby teammate inside the aiming cone")
+	check(game.pass_preview.receiver==-1 and game.pass_preview.velocity.z<0,"A quick tap sends the pass along the aimed heading instead of locking a teammate")
 	hold(0.1)
 	var short_velocity:Vector3=game.pass_preview.velocity
 	key(KEY_S,false)
@@ -57,7 +59,7 @@ func run() -> void:
 	setup()
 	key(KEY_S,true)
 	hold(0.65)
-	check(game.pass_power>0.99 and game.pass_preview.receiver==7,"A short hold reaches full range and selects the farther teammate")
+	check(game.pass_power>0.99 and game.pass_preview.receiver==-1,"A short hold reaches full range without locking the farther teammate")
 	check(game.pass_preview.velocity.length()>short_velocity.length()*1.6,"Hold duration physically changes pass speed")
 	await capture()
 	var long_velocity:Vector3=game.pass_preview.velocity
@@ -84,7 +86,7 @@ func run() -> void:
 	game.players[17].visible=true
 	game.players[17].position=Vector3(0.5,0,-4)
 	key(KEY_S,true)
-	check(game.pass_risk>0.48 and game.pass_preview.receiver==6,"A defender marks the selected passing lane as risky instead of automatically choosing another teammate")
+	check(game.pass_risk>0.48 and game.pass_preview.receiver==-1,"A defender marks the aimed passing lane as risky instead of choosing another teammate")
 	key(KEY_S,false)
 	setup()
 	key(KEY_S,true)

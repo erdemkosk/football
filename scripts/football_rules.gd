@@ -126,7 +126,7 @@ func foul(offender: int,victim: int,reckless: bool=false,severe: bool=false) -> 
 		game.referees.actors[0].signal_pose("advantage")
 		game.announce("AVANTAJ · OYUN DEVAM EDİYOR")
 		return
-	if booking: book(offender,severe)
+	if booking: book(offender,severe,victim)
 	game.begin_restart("PENALTI" if penalty else "SERBEST VURUŞ",p.team,Vector3(0,0,goal_side*39) if penalty else point)
 	if booking: game.referees.show_card(offender_player.position,card_red,severe)
 	var remaining := 0
@@ -138,16 +138,21 @@ func foul(offender: int,victim: int,reckless: bool=false,severe: bool=false) -> 
 		game.ball.active=false
 		game.announce(game.ending_reason)
 
-func book(offender: int,direct: bool=false) -> void:
+func book(offender: int,direct: bool=false,victim: int=-1) -> void:
 	var p=game.players[offender]
+	if p.dismissed: return
 	if not direct: p.yellow_cards+=1
 	card_red=direct or p.yellow_cards>=2
 	card_time=5
 	card_text=p.display_name+" · "+("DOĞRUDAN KIRMIZI" if direct else ("İKİNCİ SARI / KIRMIZI" if card_red else "SARI KART"))
 	if card_red:
+		game.send_off.begin(offender,victim)
 		p.dismissed=true
 		p.visible=false
 		p.collision_layer=0
+		p.desired=Vector3.ZERO
+		p.chosen=false
+		p.marker.visible=false
 		if game.controlled==offender: game.switch_player()
 
 func update_advantage(delta: float) -> void:

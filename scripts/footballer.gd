@@ -1,5 +1,11 @@
 extends CharacterBody3D
 const G = preload("res://scripts/geometry.gd")
+const Locomotion = preload("res://scripts/locomotion.gd")
+var locomotion := Locomotion.new()
+const BodyLanguage = preload("res://scripts/body_language.gd")
+var body_language := BodyLanguage.new()
+var head_joint := Node3D.new()
+var eye_joints: Array[Node3D] = []
 static var hair_mesh: ArrayMesh
 var kit_materials: Dictionary = {}
 var kit_pattern: MeshInstance3D
@@ -68,6 +74,8 @@ var prematch := false
 var saluting := false
 var official := false
 var celebration := ""
+var discipline_pose := ""
+var discipline_age := 0.0
 var protecting := false
 var jockeying := false
 var feint_time := 0.0
@@ -142,13 +150,30 @@ func build_model() -> void:
 	G.block(rig,Vector3(0.07,0.095,0.03),Vector3(-0.12,1.4,-0.30),trim)
 	G.cylinder(rig,0.235,0.27,Vector3(0,0.83,0),shorts)
 	G.cylinder(rig,0.095,0.12,Vector3(0,1.56,0),skin)
-	var head = G.sphere(rig,0.205,Vector3(0,1.76,0),skin)
+	rig.add_child(head_joint)
+	head_joint.name="Head"
+	head_joint.position=Vector3(0,1.60,0)
+	var head = G.sphere(head_joint,0.205,Vector3(0,0.16,0),skin)
 	head.scale = Vector3(0.86,1.1,0.91)
 	# A fitted scalp shell covers the head's crown; an offset squashed sphere
 	# intersected the forehead and exposed a skin-coloured patch on every player.
-	var haircut = G.mesh(rig,scalp_mesh(),hair,Vector3(0,1.76,0))
+	var haircut = G.mesh(head_joint,scalp_mesh(),hair,Vector3(0,0.16,0))
 	haircut.name="HairCap"
-	G.sphere(rig,0.045,Vector3(0,1.75,-0.181),skin)
+	G.sphere(head_joint,0.045,Vector3(0,0.15,-0.181),skin)
+	var eye_white := G.material(Color("cbc8b8"))
+	var iris := G.material(Color("292921"))
+	for side in [-1,1]:
+		var eye := Node3D.new()
+		head_joint.add_child(eye)
+		eye.position=Vector3(side*0.071,0.19,-0.171)
+		eye_joints.append(eye)
+		var white := G.sphere(eye,0.026,Vector3.ZERO,eye_white)
+		white.scale=Vector3(1,0.42,0.25)
+		var pupil := G.sphere(eye,0.012,Vector3(0,0,-0.006),iris)
+		pupil.scale=Vector3(0.85,0.62,0.30)
+		for part in [white,pupil]:
+			part.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+			part.visibility_range_end=35.0
 	for side in [-1,1]:
 		var leg = left_leg if side<0 else right_leg
 		rig.add_child(leg)
@@ -342,13 +367,17 @@ func step(delta: float,stoppage_speed: float=0.0) -> void:
 	velocity.x = move_toward(velocity.x,target.x,delta*rate)
 	velocity.z = move_toward(velocity.z,target.z,delta*rate)
 	velocity.y -= 20*delta
+	var travel_velocity := velocity
 	move_and_slide()
+	body_language.collisions(self,travel_velocity)
 	if desired.length()>0.05 and action_timer<=0 and (not keeper or stoppage_speed>0) and not protecting and not jockeying and kick_timer<=0 and shot_preparation<=0:
 		facing = desired.normalized()
 	if facing.length()>0.1 and not (pose=="dive" and action_timer>0):
 		rig.rotation.y = lerp_angle(rig.rotation.y,atan2(-facing.x,-facing.z),1-exp(-delta*12))
 	var horizontal := Vector3(velocity.x,0,velocity.z)
 	acceleration_lean = acceleration_lean.lerp((horizontal-last_horizontal)/maxf(delta,0.001),1-exp(-delta*7))
+	locomotion.update(self,delta,last_horizontal)
+	body_language.update(self,delta)
 	last_horizontal = horizontal
 	run_phase += horizontal.length()*delta*1.8
 	animate(delta)
@@ -460,6 +489,7 @@ func animate(delta: float) -> void:
 	rig.rotation.z = lerp_angle(rig.rotation.z,clampf(-local_accel.x*0.010,-0.16,0.16)+idle*0.015*(1-amount),blend)
 	body_collision.rotation = Vector3.ZERO
 	body_collision.position = Vector3(0,0.87,0)
+	locomotion.apply_pose(self,amount,stride)
 	if keeper and not prematch:
 		spine.rotation.x = lerpf(spine.rotation.x,-0.28,blend)
 		rig.position.y = lerpf(rig.position.y,-0.15,blend)
@@ -588,6 +618,34 @@ func animate(delta: float) -> void:
 				right_arm.rotation=Vector3(2.2,0,0.4)
 				left_elbow.rotation.x=1.0
 				right_elbow.rotation.x=1.0
+
+	body_language.apply_pose(self)
+	locomotion.finish_pose(self)
+	if discipline_pose!="" and action_timer<=0:
+		var pulse := sin(motion_clock*6.2+number)*0.12
+		if discipline_pose=="protest":
+			left_arm.rotation=Vector3(0.72+pulse,0,-0.72)
+			right_arm.rotation=Vector3(0.95-pulse,0,0.62)
+			left_elbow.rotation.x=0.95
+			right_elbow.rotation.x=0.85+pulse
+			spine.rotation.z=pulse*0.3
+		elif discipline_pose=="shove":
+			var reach := smoothstep(0.08,0.28,discipline_age)*(1-smoothstep(0.40,0.8,discipline_age))
+			left_arm.rotation=Vector3(lerpf(0.75,1.38,reach),0,-0.18)
+			right_arm.rotation=Vector3(lerpf(0.75,1.38,reach),0,0.18)
+			left_elbow.rotation.x=lerpf(1.35,0.08,reach)
+			right_elbow.rotation.x=left_elbow.rotation.x
+			spine.rotation.x=-0.08-reach*0.20
+		elif discipline_pose=="separate":
+			left_arm.rotation=Vector3(0.8+pulse*0.2,0,-1.22)
+			right_arm.rotation=Vector3(0.8-pulse*0.2,0,1.22)
+			left_elbow.rotation.x=0.35
+			right_elbow.rotation.x=0.35
+		elif discipline_pose=="dismissed":
+			spine.rotation.x=-0.235-amount*0.12
+			left_arm.rotation.x*=0.55
+			right_arm.rotation.x*=0.55
+	body_language.apply_gaze(self,delta)
 
 func hand_center() -> Vector3:
 	return (left_hand.global_position+right_hand.global_position)*0.5

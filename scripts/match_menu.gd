@@ -186,7 +186,7 @@ func show_page(index: int) -> void:
 			option("Gol tekrarları",["Kapalı","Açık"],int(game.replay.enabled),func(v): game.replay.enabled=v==1)
 			option("Rakip zorluğu",["Kolay","Normal","Zor"],game.management.difficulty,func(v): game.management.difficulty=v)
 			option("Pas yardımı",["Manuel","Yarı yardımlı","Yardımlı"],game.pass_assistance,func(v): game.pass_assistance=v)
-			label("Pas yardımı, seçtiğin yöne göre hedefi ve gücü dengeler. Koşu yoluna pasla arkadaşını boşluğa kaçır; topa rakipler de müdahale edebilir.")
+			label("Pas yardımı nişanı hafifçe düzeltir, oyuncu seçmez. Yönü sen verirsin; top boşluğa da gidebilir ve rakipler de müdahale eder.")
 			pad_hint([["A","Gol tekrarını geç (klavye: Space / Enter)"]])
 	wire_navigation()
 	navigation[page].grab_focus()

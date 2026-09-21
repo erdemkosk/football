@@ -20,6 +20,8 @@ var support := SupportPlay.new()
 var duels := Duels.new()
 var goalkeeping := Goalkeeping.new()
 var referees := Referees.new()
+const SendOff = preload("res://scripts/send_off.gd")
+var send_off := SendOff.new()
 var feedback := ImpactFeedback.new()
 var ceremony := Ceremony.new()
 var weather: Node3D
@@ -153,6 +155,7 @@ func _ready() -> void:
 	goalkeeping.game=self
 	celebration.game=self
 	referees.game=self
+	send_off.game=self
 	feedback.game=self
 	ceremony.game=self
 	match_camera.game=self
@@ -230,6 +233,7 @@ func make_teams() -> void:
 			add_child(p)
 
 func start_match(practice: bool = false,show_ceremony: bool = true,background: bool = false) -> void:
+	send_off.reset()
 	controller.clear_shot_aim()
 	menu_match.phase="playing"
 	audio.background=background
@@ -323,6 +327,8 @@ func reset_positions(team: int) -> void:
 		p.pose = "run"
 		p.last_horizontal = Vector3.ZERO
 		p.acceleration_lean = Vector3.ZERO
+		p.locomotion.reset()
+		p.body_language.reset(p)
 		p.animate(1.0)
 		p.ai_think = 0
 		# Every player begins in their own half except the kickoff taker.
@@ -370,6 +376,8 @@ func reset_practice() -> void:
 		p.pose = "run"
 		p.last_horizontal = Vector3.ZERO
 		p.acceleration_lean = Vector3.ZERO
+		p.locomotion.reset()
+		p.body_language.reset(p)
 		p.animate(1.0)
 	ball.place(Vector3(0,0.23,-26))
 	previous_ball = Vector3(0,0.23,-26)
@@ -554,6 +562,7 @@ func update_camera(delta: float) -> void:
 		camera.position = center+Vector3(cos(angle)*190,144,sin(angle)*190)
 		camera.look_at(center)
 		return
+	if send_off.update_camera(delta): return
 	var focus: Vector3 = ball.position
 	if state=="playing": focus = ball.position.lerp(players[controlled].position,0.26)
 	if state in ["restart","set_piece"] and set_pieces.recovery.phase in ["arrange","ready"] and restart_type in ["SERBEST VURUŞ","ENDİREKT VURUŞ","PENALTI","KORNER"]:
@@ -590,11 +599,14 @@ func _physics_process(delta: float) -> void:
 	else: simulate_match(delta)
 
 func simulate_match(delta: float) -> void:
+	if state not in ["playing","paused","replay"]:
+		for p in players: p.body_language.clear_intent()
 	if state not in ["paused","replay"]:
 		weather.update(delta)
 		feedback.update(delta)
 		referees.update(delta)
 	management.update_clock(delta)
+	if send_off.update(delta): return
 	if state in ["restart","halftime"] and management.update_substitutions(delta): return
 	if state=="replay":
 		replay.update(delta)
@@ -630,6 +642,7 @@ func simulate_match(delta: float) -> void:
 		update_pass_request(delta)
 		update_ai(delta)
 		if state!="playing": return
+		for i in range(players.size()): players[i].body_language.observe(self,i)
 		for i in range(players.size()):
 			var p = players[i]
 			p.chosen = is_user_player(i)
@@ -990,17 +1003,21 @@ func release_pass() -> void:
 
 func execute_player_pass(route: Dictionary,one_two: bool=false) -> bool:
 	var passer := controlled
-	var receiver: int = route.receiver
 	clear_pass_request()
 	if not strike(passer,route.velocity): return false
 	hud.remember_pass(route,passer)
 	passes[players[passer].team] += 1
-	if receiver>=0:
-		support.passed(passer,receiver,one_two)
-		ai_receivers[players[passer].team]=receiver
+	var hint: int=int(route.get("receiver",-1))
+	if hint<0:
+		var heading: Vector3=(route.velocity*Vector3(1,0,1)).normalized()
+		var reach: float=Vector2(route.target.x-ball.position.x,route.target.z-ball.position.z).length()
+		hint=Passing.hint_along(ball.position,heading,reach,players[passer].team,passer,players,16,10,route.get("through",false),attack_sign(players[passer].team),rules.offside_line(players[passer].team))
+	if hint>=0:
+		support.passed(passer,hint,one_two)
+		ai_receivers[players[passer].team]=hint
 		ai_pass_time[players[passer].team]=float(route.flight)+2.0
-		team_control.follow_pass(receiver,route)
-		if not player_lock and not training: team_control.select(receiver)
+		team_control.follow_pass(hint,route)
+		if one_two and not player_lock and not training: team_control.select(hint)
 	return true
 
 func one_two_pass() -> void:
@@ -1012,14 +1029,17 @@ func one_two_pass() -> void:
 	if execute_player_pass(route,true): announce("VERKAÇ · PASI VEREN İÇERİ KATIYOR")
 
 func cross_plan(heading: Vector3,driven: bool=false) -> Dictionary:
-	var receiver := best_pass(controlled,heading)
-	var target: Vector3=players[receiver].position if receiver>=0 else ball.position+heading*30
-	var run: Vector3=players[receiver].velocity if receiver>=0 else Vector3.ZERO
-	var route := Passing.driven_cross(ball.position,target,run,weather) if driven else Passing.plan(ball.position,target,run,true,weather)
-	if receiver<0 and not driven:
-		route.velocity=heading*16+Vector3.UP*7.5
+	var aim := (heading*Vector3(1,0,1)).normalized()
+	if aim.length()<0.1: aim=last_direction
+	var reach := 30.0
+	aim=Passing.nudge_heading(ball.position,aim,reach,players[controlled].team,controlled,players,[0.0,0.65,1.0][pass_assistance])
+	var target: Vector3=ball.position+aim*reach
+	target.y=0.23
+	var route := Passing.driven_cross(ball.position,target,Vector3.ZERO,weather) if driven else Passing.plan(ball.position,target,Vector3.ZERO,true,weather)
+	if not driven and route.velocity.length()<0.1:
+		route.velocity=aim*16+Vector3.UP*7.5
 		route.flight=1.5
-	route.receiver=receiver
+	route.receiver=-1
 	route.cross=true
 	return route
 

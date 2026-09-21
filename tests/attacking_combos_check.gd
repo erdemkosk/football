@@ -112,7 +112,7 @@ func run() -> void:
 	setup(); tap(JOY_BUTTON_B); game.controller.combos.update(0.1); tap(JOY_BUTTON_B)
 	var velocity: Vector3=game.ball.kick_velocity
 	check(game.passes[0]==1 and velocity.y<0.2 and velocity.length()>=27,"Two quick B presses produce one hard ground cross")
-	check(game.controlled==game.ai_receivers[0] and game.controlled==6 and game.shots[0]==0,"Driven cross transfers receiver control and counts as a pass")
+	check(game.controlled==9 and game.shots[0]==0,"Driven cross keeps the passer selected and counts as a pass")
 	tap(JOY_BUTTON_B)
 	check(game.passes[0]==1 and game.players[6].pose!="slide","A third rapid tap cannot cause a second kick or an accidental receiver slide")
 	setup(); button(JOY_BUTTON_B); button(JOY_BUTTON_B)

@@ -56,6 +56,12 @@ func animate(delta: float) -> void:
 		if gesture in ["whistle","full_time"]:
 			left_arm.rotation=Vector3(1.60,-0.98,0)
 			left_elbow.rotation.x=1.12
+		elif gesture=="separate":
+			var calm := sin(gesture_age*5)*0.12
+			left_arm.rotation=Vector3(1.25+calm,0,-0.75)
+			right_arm.rotation=Vector3(1.25+calm,0,0.75)
+			left_elbow.rotation.x=0.22
+			right_elbow.rotation.x=0.22
 		elif gesture=="advantage":
 			left_arm.rotation=Vector3(1.1,0,-0.25)
 			right_arm.rotation=Vector3(1.1,0,0.25)

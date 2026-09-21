@@ -18,6 +18,7 @@ const INK := Color("101c22")
 const PAPER := Color("f5f0df")
 const GOLD := Color("e9ce87")
 const MUTE := Color("b4c5bd")
+const LIVE := Rect2(1177,28,229,38)
 
 func _process(delta: float) -> void:
 	if game.state=="paused": return
@@ -82,8 +83,8 @@ func _draw() -> void:
 	if game.match_menu!=null and game.match_menu.visible: return
 	if game.frontend!=null and game.frontend.visible: return
 	if game.controller.using_gamepad:
-		pad_hints(Vector2(1020,18),[["START","Mola"],["VIEW","Kadro & taktik"]],20,11)
-	else: text("P · AYARLAR     K · KADRO & TAKTİK",Vector2(1090,25),11,MUTE)
+		pad_hints(Vector2(live_mid()-pad_hint_width([["START","Mola"],["VIEW","Kadro & taktik"]],20,11)*0.5,20),[["START","Mola"],["VIEW","Kadro & taktik"]],20,11)
+	else: center("P · AYARLAR     K · KADRO & TAKTİK",Vector2(live_mid(),22),11,MUTE)
 	if game.state=="replay":
 		panel(Rect2(0,0,1440,72))
 		text("GOL TEKRARI  ·  0.8×",Vector2(45,46),23,GOLD,true)
@@ -164,6 +165,15 @@ func _draw() -> void:
 		panel(Rect2(32,852,1070,36),Color(0.04,0.09,0.11,0.94),5,Color(GOLD,0.18))
 		pad_hints(Vector2(44,870),action_hints(),28,12)
 
+func live_mid() -> float:
+	return LIVE.position.x+LIVE.size.x*0.5
+
+func pad_hint_width(items: Array,height: float=27,font_size: int=12,gap: float=24) -> float:
+	var total := 0.0
+	for item in items:
+		total+=game.controller.Glyphs.width(item[0],font,height,font_size)+7+font.get_string_size(item[1],HORIZONTAL_ALIGNMENT_LEFT,-1,font_size).x+gap
+	return maxf(total-gap,0)
+
 func pad_hints(at: Vector2,items: Array,height: float=27,font_size: int=12) -> void:
 	game.controller.Glyphs.draw_hints(self,at,items,game.controller.family,font,height,font_size)
 
@@ -209,8 +219,7 @@ func draw_pass_guide(plan: Dictionary,route: Dictionary,color: Color,opacity: fl
 	draw_ball_path(route.points,color)
 	var kind := "DÜŞÜŞ" if plan.get("lob",false) else ("ARA PAS" if plan.get("through",false) else "PAS")
 	if plan.get("cross",false): kind="ORTA" if plan.get("lob",false) else "SERT ORTA"
-	var receiver: int=plan.get("receiver",-1)
-	var label: String=kind+" · "+(game.players[receiver].display_name if receiver>=0 else "BOŞLUĞA")
+	var label: String=kind
 	if game.flat_distance(route.target,plan.target)>2.5 and not plan.get("lob",false): label="KISA KALIYOR"
 	if absf(route.target.x)>32 or absf(route.target.z)>50: label="DIŞARI"
 	var ring := PackedVector2Array()
@@ -263,15 +272,15 @@ func scoreboard() -> void:
 		time_label="%d+%d" % [45*game.half,ceili((game.match_time-game.LENGTH*game.half*0.5)*90/game.LENGTH)]
 	center(time_label,Vector2(435,64),22,GOLD)
 	text("ANTRENMAN" if game.training else ("1. YARI  ·  HÜCUM ↑" if game.half==1 else "2. YARI  ·  HÜCUM ↓"),Vector2(34,104),10,Color(1,1,1,0.8),true)
-	panel(Rect2(1177,28,229,38),Color(0.045,0.10,0.12,0.88),3)
-	draw_circle(Vector2(1194,47),3.5,Color("f17561"))
-	text("CANLI",Vector2(1206,52),11,PAPER,true)
-	draw_texture_rect(Brand.CREST,Rect2(1268,32,30,30),false)
-	text(Brand.SHORT,Vector2(1308,53),18,GOLD,true)
+	panel(LIVE,Color(0.045,0.10,0.12,0.88),3)
+	draw_circle(Vector2(LIVE.position.x+17,LIVE.get_center().y),3.5,Color("f17561"))
+	text("CANLI",Vector2(LIVE.position.x+29,LIVE.position.y+24),11,PAPER,true)
+	draw_texture_rect(Brand.CREST,Rect2(LIVE.position.x+91,LIVE.position.y+4,30,30),false)
+	text(Brand.SHORT,Vector2(LIVE.position.x+131,LIVE.position.y+25),18,GOLD,true)
 	if can_skip_to_kickoff():
-		skip_chip(Rect2(1177,74,229,36))
+		skip_chip(Rect2(LIVE.position.x,LIVE.end.y+8,LIVE.size.x,36))
 	else:
-		text(game.stadium.light_rig.label()+"  ·  "+game.weather.label()+"  ·  C "+game.match_camera.label(),Vector2(1148,88),11,MUTE,true)
+		center(game.stadium.light_rig.label()+"  ·  "+game.weather.label()+"  ·  C "+game.match_camera.label(),Vector2(live_mid(),LIVE.end.y+22),11,MUTE,true)
 	if game.training:
 		text("GOL: %d    ŞUT: %d    R: TOPU YENİLE" % [game.practice_goals,game.shots[0]],Vector2(34,126),11,GOLD,true)
 

@@ -39,18 +39,18 @@ func update(delta: float) -> void:
 		if game.controlled!=0 and manual_hold<=0: select(0)
 		return
 	if current.visible and not current.dismissed and manual_hold>0: return
-	if game.ball.pending_kick and game.ai_receivers[0]==game.controlled and game.last_touch==0: return
+	# Stay on the passer while our ball is still travelling. Switching is LB, not the kick.
+	var flight: float=game.ball.kick_velocity.length() if game.ball.pending_kick else game.ball.linear_velocity.length()
+	if game.last_touch==0 and game.ai_pass_time[0]>0 and game.dribbler<0 and game.ball.held_by==null and flight>5:
+		return
 	var owner: int=game.dribbler
 	if owner<0 and game.ball.linear_velocity.length()<16: owner=game.nearest_to_ball(1.12)
-	if owner==game.last_kicker and game.dribbler<0 and game.ai_receivers[0]==game.controlled and game.ai_pass_time[0]>0 and game.ball.linear_velocity.length()>5: return
 	if owner>=0:
 		var p=game.players[owner]
 		if p.team==0 and (not p.keeper or game.last_touch==0 or game.dribbler==owner) and p.visible and p.action_timer<=0 and p.touch_cooldown<=0:
 			if owner!=game.controlled and game.requested_receiver<0: select(owner)
 			return
 	if game.charging or game.pass_charging or game.requested_receiver>=0: return
-	# Keep the selected recipient while a genuine friendly pass travels.
-	if game.last_touch==0 and game.ai_receivers[0]==game.controlled and game.ai_pass_time[0]>0 and (owner<0 or game.players[owner].team==0): return
 	if current.visible and not current.dismissed and (cooldown>0 or manual_hold>0 or current.action_timer>0): return
 	var threat: Vector3=game.ball.position+game.ball.linear_velocity.limit_length(20)*0.3
 	if game.ball.held_by!=null: return

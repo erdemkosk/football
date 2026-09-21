@@ -134,7 +134,7 @@ func run() -> void:
 	key(KEY_S,false)
 	for i in range(33): game._physics_process(1.0/120)
 	await frames(3)
-	check(game.state=="playing" and game.ball.linear_velocity.x< -2 and game.ball.position.y>1,"S delivers a real overhead throw into the field")
+	check(game.state=="playing" and game.ball.linear_velocity.x< -2 and game.ball.position.y>1 and game.controlled==sp.taker,"S delivers a real overhead throw into the field and keeps the thrower selected")
 	await setup("SERBEST VURUŞ",0,Vector3(0,0,-24))
 	key(KEY_D,true)
 	key(KEY_ESCAPE,true)

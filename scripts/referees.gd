@@ -103,7 +103,7 @@ func show_card(point: Vector3,second_yellow: bool,direct: bool=false) -> void:
 	card_age=0
 
 func ready_for_restart() -> bool:
-	return card_stage==""
+	return card_stage=="" and not game.send_off.blocks_restart()
 
 func ball_in_play(kind: String,taker: int) -> void:
 	decision=""
@@ -175,7 +175,11 @@ func update(delta: float) -> void:
 		look=card_point-actors[0].position
 		if card_stage=="approach":
 			pose="whistle" if signal_time>0 else ""
-			if game.flat_distance(actors[0].position,follow)<0.6:
+			card_age+=delta
+			# A gathering player can occupy the ideal spot. A referee already
+			# within speaking distance can show the card without squeezing through.
+			var nearby: bool=card_age>1.0 and game.flat_distance(actors[0].position,card_point)<4.0
+			if game.flat_distance(actors[0].position,follow)<0.6 or nearby:
 				card_stage="show"
 				card_age=0
 		else:
@@ -185,6 +189,11 @@ func update(delta: float) -> void:
 				card_queue.pop_front()
 				card_age=0
 				if card_queue.is_empty(): card_stage=""
+	if card_stage=="" and game.send_off.calming():
+		var incident: Dictionary=game.send_off.confrontation()
+		pose="separate"
+		follow=incident.center+Vector3(2.2,0,1.2)
+		look=incident.center-actors[0].position
 	actors[0].signal_pose(pose)
 	targets[0]=follow
 	move_actor(actors[0],follow,look,delta)
