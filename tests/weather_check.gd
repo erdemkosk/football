@@ -111,6 +111,28 @@ func run() -> void:
 	event.pressed=true
 	game._input(event)
 	check(game.weather.preset==0 and game.weather.wetness==1,"H cycles weather during play while retaining the wet surface")
+	game.weather.select(0,true)
+	game.weather.reset_match()
+	game.weather.select(0,true)
+	player=game.players[9]
+	player.surface=game.weather
+	player.apply_kit(game.clubs.kit(0))
+	player.position=Vector3(4,0,8)
+	player.velocity=Vector3.ZERO
+	player.desired=Vector3.RIGHT
+	player.facing=Vector3.RIGHT
+	var clean: Color=player.kit_clean.jersey
+	for i in range(160):
+		player.step(1.0/120)
+		game.weather.update(1.0/120)
+		await physics_frame
+	check(game.weather.wetness==0 and game.weather.mark_count>=3,"Dry grass still records worn footprints")
+	player.start_slide(Vector3.RIGHT)
+	for i in range(90):
+		player.step(1.0/120)
+		game.weather.update(1.0/120)
+		await physics_frame
+	check(player.kit_soil>0.04 and player.kit_materials.jersey.albedo_color!=clean,"Kits pick up dirt from play instead of staying match-fresh")
 	game.audio.toggle()
 	game.weather.update(1.0/120)
 	check(game.weather.sound.volume_db<=-79,"M also silences the separate rain ambience")

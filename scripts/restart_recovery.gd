@@ -69,6 +69,10 @@ func clear_delivered_ball(from: Vector3,to: Vector3) -> Vector3:
 	if side.dot(start-point)<0: side=-side
 	return point+side*1.5+(start-point).normalized()*0.65
 
+func sideline_claim() -> bool:
+	var lines=setup.game.stadium.sidelines
+	return is_instance_valid(lines) and lines.claim_throw_in()
+
 func enter(next: String) -> void:
 	phase=next
 	age=0
@@ -84,9 +88,12 @@ func step(delta: float) -> void:
 		var settled: bool=game.ball.position.y<0.7 and game.ball.linear_velocity.length()<2.0
 		var tired: bool=age>2.2 and game.ball.position.y<1.1 and game.ball.linear_velocity.length()<5.5
 		if age>0.15 and (settled or tired):
-			choose_collector()
-			set_delivery()
-			enter("retrieve")
+			if sideline_claim():
+				enter("sideline")
+			else:
+				choose_collector()
+				set_delivery()
+				enter("retrieve")
 		return
 	var moving_index := worker
 	var p=game.players[moving_index]
@@ -95,6 +102,30 @@ func step(delta: float) -> void:
 	setup.settle(delta,moving_index)
 	var destination: Vector3=p.position
 	var rate := 0.9
+	if phase=="sideline":
+		for i in setup.targets: setup.move_player(i,setup.targets[i],delta)
+		var lines=game.stadium.sidelines
+		if not is_instance_valid(lines) or (not lines.is_fetching() and ball.held_by==null):
+			choose_collector()
+			set_delivery()
+			enter("retrieve")
+			return
+		if ball.held_by==game.players[setup.taker]:
+			worker=setup.taker
+			helpers[worker]=true
+			set_delivery()
+			enter("raise")
+			return
+		var taker=game.players[setup.taker]
+		if is_instance_valid(lines.fetch_boy) and ball.held_by==lines.fetch_boy:
+			ball.hold_target=lines.fetch_boy.hand_center()
+			if game.flat_distance(taker.position,setup.targets[setup.taker])<0.45 and game.flat_distance(lines.fetch_boy.position,taker.position)<2.8:
+				ball.hold(taker)
+				worker=setup.taker
+				helpers[worker]=true
+				set_delivery()
+				enter("raise")
+		return
 	if phase=="retrieve":
 		p.set_piece_pose=""
 		var gap: float=game.flat_distance(p.position,ball.position)
@@ -288,6 +319,7 @@ func can_ready() -> bool:
 func description() -> String:
 	match phase:
 		"watch": return "TOPUN DURDUĞU YERE EN YAKIN OYUNCU HAZIRLANIYOR"
+		"sideline": return "TOP TOPLAYICI TOPU ALIYOR"
 		"retrieve": return "EN YAKIN OYUNCU TOPU ALIYOR"
 		"relay_prepare","relay_throw": return "TOP VURUŞU KULLANACAK OYUNCUYA ATILIYOR"
 		"receive": return "OYUNCU TOPU KARŞILIYOR"

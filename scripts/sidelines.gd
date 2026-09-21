@@ -10,10 +10,21 @@ var event_age := 100.0
 var event_duration := 0.0
 var attention := 0.0
 var team_focus := 0
+var game
+var fetch_phase := ""
+var fetch_boy: Node3D
+var fetch_age := 0.0
 
 func _ready() -> void:
 	for team in range(2): build_dugout(team)
+	build_touchline()
 	reset()
+
+func build_touchline() -> void:
+	for corner in [Vector3(33.5,0,-48.6),Vector3(33.5,0,48.6),Vector3(-33.5,0,-48.6),Vector3(-33.5,0,48.6),Vector3(33.5,0,0),Vector3(-33.5,0,0)]:
+		add_actor(0 if corner.z<0 else 1,"ball_boy",30+actors.size(),corner)
+	add_actor(0,"fourth",40,Vector3(38.35,0,0))
+	add_actor(0,"photographer",41,Vector3(33.7,0,-22.4))
 
 func build_dugout(team: int) -> void:
 	var z := -12.0 if team==0 else 12.0
@@ -89,10 +100,12 @@ func reset() -> void:
 	event_age = 100
 	event_duration = 0
 	attention = 0
+	clear_fetch()
 	for actor in actors:
 		actor.position = actor.home
 		actor.response = 0
-		actor.seated = 1.0 if actor.role in ["substitute","physio"] else 0.0
+		actor.target_point=Vector3.INF
+		actor.seated = 1.0 if actor.role in ["substitute","physio"] else (0.42 if actor.role=="photographer" else 0.0)
 		actor.animate_actor(1,clock,Vector3.ZERO,"watch",0)
 
 func react(kind: String,team: int,_location: Vector3) -> void:
@@ -102,7 +115,7 @@ func react(kind: String,team: int,_location: Vector3) -> void:
 	event_age = 0
 	event_duration = 12.0 if kind=="goal" else (2.5 if kind=="save" else 1.8)
 
-func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int,playing: bool) -> void:
+func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int,playing: bool,stoppage: String="",restart_point: Vector3=Vector3.ZERO) -> void:
 	clock += delta
 	event_age += delta
 	team_focus = team
@@ -111,12 +124,37 @@ func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int
 		pressure = clampf((absf(ball_position.z)-27)/20,0,1)
 		if ball_velocity.length()>16: pressure = maxf(pressure,0.65)
 	attention = lerpf(attention,pressure,1-exp(-delta*3))
+	step_fetch(delta,stoppage,restart_point,ball_position)
+	var collector := fetch_boy if fetch_phase!="" else collector_for(stoppage,restart_point)
 	for actor in actors:
 		var actor_mode := "encourage" if attention>0.35 else "watch"
 		var intensity := attention*0.75
+		actor.target_point=Vector3.INF
 		var delay := float(actor.number%7)*0.065
 		var age := event_age-delay
-		if age>0 and age<event_duration:
+		if actor.role=="ball_boy":
+			if actor==fetch_boy and fetch_phase!="":
+				actor_mode=fetch_mode()
+				intensity=1
+				actor.target_point=fetch_target(restart_point,ball_position)
+			elif collector==actor:
+				actor_mode="collect"
+				intensity=1.0
+				actor.target_point=outside(restart_point if stoppage!="" else ball_position)
+			else:
+				actor_mode="watch"
+				intensity=0.15
+		elif actor.role=="photographer":
+			actor_mode="watch"
+			intensity=0
+		elif actor.role=="fourth":
+			actor_mode="watch"
+			intensity=0
+		elif actor.role=="substitute" and actor.number==14 and playing and event_age>event_duration and clock>22:
+			actor_mode="jog"
+			intensity=0.35
+			actor.target_point=Vector3(33.55,0,(-9.5 if actor.team==0 else 9.5)+sin(clock*0.32+actor.team)*6.2)
+		elif age>0 and age<event_duration:
 			var strength := smoothstep(0,0.30,age)*(1-smoothstep(event_duration-0.7,event_duration,age))
 			if event_kind=="goal":
 				actor_mode = "celebrate" if actor.team==event_team else "disappointed"
@@ -131,3 +169,119 @@ func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int
 				actor_mode = "encourage"
 				intensity = strength*0.9
 		actor.animate_actor(delta,clock,ball_position,actor_mode,intensity)
+
+func collector_for(stoppage: String,restart_point: Vector3) -> Node3D:
+	if stoppage not in ["TAÇ","KORNER"]: return null
+	var best: Node3D=null
+	var nearest := INF
+	for actor in actors:
+		if actor.role!="ball_boy": continue
+		var cost: float=actor.home.distance_to(restart_point)
+		if cost<nearest: nearest=cost; best=actor
+	return best
+
+func outside(point: Vector3) -> Vector3:
+	var at := Vector3(point.x,0,point.z)
+	if absf(at.x)>=absf(at.z)*32.0/50.0:
+		at.x=signf(at.x if absf(at.x)>0.2 else 1.0)*33.45
+		at.z=clampf(at.z,-48.8,48.8)
+	else:
+		at.z=signf(at.z if absf(at.z)>0.2 else 1.0)*51.15
+		at.x=clampf(at.x,-31.2,31.2)
+	return at
+
+func is_fetching() -> bool:
+	return fetch_phase in ["run","pickup","carry","wait"]
+
+func claim_throw_in() -> bool:
+	if is_fetching() and is_instance_valid(game) and game.ball.held_by==fetch_boy: return true
+	if not owns_loose_ball(): return false
+	return start_fetch() or is_fetching()
+
+func start_fetch() -> bool:
+	if not owns_loose_ball(): return false
+	fetch_boy=nearest_boy(game.ball.position)
+	if fetch_boy==null: return false
+	fetch_phase="run"
+	fetch_age=0
+	return true
+
+func clear_fetch() -> void:
+	if is_instance_valid(game) and is_instance_valid(game.ball) and game.ball.held_by==fetch_boy:
+		game.ball.release_hold()
+	fetch_phase=""
+	fetch_boy=null
+	fetch_age=0
+
+func fetch_mode() -> String:
+	if fetch_phase=="pickup": return "pickup"
+	if fetch_phase in ["carry","wait"]: return "carry"
+	return "collect"
+
+func fetch_target(restart_point: Vector3,ball_position: Vector3) -> Vector3:
+	if fetch_phase=="return" and fetch_boy!=null: return fetch_boy.home
+	if fetch_phase in ["carry","wait"]: return outside(restart_point)
+	var at := Vector3(ball_position.x,0,ball_position.z)
+	at.x=signf(at.x if absf(at.x)>0.2 else 1.0)*maxf(32.7,absf(at.x))
+	at.z=clampf(at.z,-49.2,49.2)
+	return at
+
+func owns_loose_ball() -> bool:
+	if not is_instance_valid(game) or not is_instance_valid(game.ball): return false
+	if game.restart_type!="TAÇ" or game.state not in ["restart","set_piece"]: return false
+	var ball=game.ball
+	if ball.held_by!=null and ball.held_by!=fetch_boy: return false
+	if absf(ball.position.x)<31.6: return false
+	var speed: float=Vector2(ball.linear_velocity.x,ball.linear_velocity.z).length()
+	if fetch_phase=="" and (ball.position.y>0.85 or speed>2.8): return false
+	var boy := nearest_boy(ball.position)
+	if boy==null: return false
+	var boy_gap: float=boy.position.distance_to(Vector3(ball.position.x,0,ball.position.z))
+	var player_gap := INF
+	for p in game.players:
+		if not p.visible or p.dismissed: continue
+		player_gap=minf(player_gap,game.flat_distance(p.position,ball.position))
+	return boy_gap+1.5<player_gap or player_gap>9.0
+
+func nearest_boy(point: Vector3) -> Node3D:
+	var best: Node3D=null
+	var nearest := INF
+	for actor in actors:
+		if actor.role!="ball_boy": continue
+		var cost: float=actor.position.distance_to(Vector3(point.x,0,point.z))
+		if cost<nearest: nearest=cost; best=actor
+	return best
+
+func step_fetch(delta: float,stoppage: String,restart_point: Vector3,ball_position: Vector3) -> void:
+	var player_has: bool=is_instance_valid(game) and is_instance_valid(game.ball) and game.ball.held_by!=null and game.ball.held_by!=fetch_boy
+	var back_in: bool=is_instance_valid(game) and is_instance_valid(game.ball) and absf(game.ball.position.x)<31.6 and game.ball.held_by!=fetch_boy
+	if stoppage!="TAÇ" or player_has or back_in or (fetch_phase=="" and not owns_loose_ball()):
+		if fetch_phase!="" and fetch_phase!="return":
+			if is_instance_valid(game) and game.ball.held_by==fetch_boy: game.ball.release_hold()
+			fetch_phase="return" if fetch_boy!=null else ""
+			fetch_age=0
+		if fetch_phase=="return" and fetch_boy!=null and fetch_boy.position.distance_to(fetch_boy.home)<0.25:
+			clear_fetch()
+		return
+	if fetch_phase=="" or fetch_phase=="return": start_fetch()
+	if fetch_boy==null: return
+	fetch_age+=delta
+	var ball=game.ball
+	var settled: bool=ball.position.y<0.85 and Vector2(ball.linear_velocity.x,ball.linear_velocity.z).length()<2.8
+	if fetch_phase=="run":
+		var gap: float=fetch_boy.position.distance_to(Vector3(ball.position.x,0,ball.position.z))
+		if settled and gap<1.15:
+			fetch_phase="pickup"
+			fetch_age=0
+	elif fetch_phase=="pickup":
+		if fetch_age>0.32 and settled:
+			ball.hold(fetch_boy)
+			fetch_phase="carry"
+			fetch_age=0
+	elif fetch_phase=="carry":
+		if ball.held_by==fetch_boy: ball.hold_target=fetch_boy.hand_center()
+		if fetch_boy.position.distance_to(outside(restart_point))<0.55:
+			fetch_phase="wait"
+			fetch_age=0
+	elif fetch_phase=="wait":
+		if ball.held_by==fetch_boy: ball.hold_target=fetch_boy.hand_center()

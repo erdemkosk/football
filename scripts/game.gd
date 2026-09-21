@@ -164,6 +164,7 @@ func _ready() -> void:
 	rng.seed = 614
 	stadium = Stadium.new()
 	add_child(stadium)
+	stadium.sidelines.game=self
 	make_teams()
 	ball = Ball.new()
 	ball.goal_nets = stadium.nets
@@ -544,7 +545,8 @@ func _process(delta: float) -> void:
 		stadium.crowd.home_attack=attack_sign(0)
 		var playing: bool=state=="playing" or (state=="menu" and menu_match.phase=="playing")
 		stadium.crowd.update(delta,ball.position,ball.linear_velocity,last_touch,playing,not training and match_time>LENGTH*0.7 and abs(score[0]-score[1])<=1)
-		stadium.sidelines.update(delta,ball.position,ball.linear_velocity,last_touch,playing)
+		var stoppage := restart_type if state in ["restart","set_piece"] else ""
+		stadium.sidelines.update(delta,ball.position,ball.linear_velocity,last_touch,playing,stoppage,restart_point)
 
 func update_camera(delta: float) -> void:
 	if state=="replay" or (state=="paused" and before_pause=="replay"): return
@@ -887,7 +889,11 @@ func strike(index: int,velocity: Vector3,curve: float=0,is_save: bool=false,kind
 	players[index].touch_cooldown = 0.38
 	players[index].kick_power=clampf((velocity.length()-12)/20,0.15,1)
 	if kind!="ball_tackle" and not is_save:
-		players[index].begin_kick(players[index].kick_power,0.46 if kind=="shot" else 0.32)
+		var style := "laces"
+		if kind=="shot" and velocity.y>6.5: style="chip"
+		elif kind!="shot" and velocity.y>5.2: style="chip"
+		elif kind!="shot" and velocity.length()<16: style="inside"
+		players[index].begin_kick(players[index].kick_power,0.46 if kind=="shot" else 0.32,style)
 	else: players[index].kick_timer=0
 	players[index].shot_preparation=0
 	if kind=="shot": players[index].facing=(velocity*Vector3(1,0,1)).normalized()
@@ -1079,7 +1085,6 @@ func call_for_pass(lob: bool = false,through: bool=false) -> void:
 	request_through = through
 	request_cooldown = 0.6
 	players[controlled].call_timer = 3.2
-	players[controlled].call_label.text = "ARA PAS!" if through else ("ORTA!" if lob else "PAS!")
 	announce("KOŞU YOLUNA PAS İSTEDİN" if through else ("ORTA İSTEDİN · BOŞLUĞA KOŞ" if lob else "PAS İSTEDİN · BOŞLUĞA KOŞ"))
 
 func nearest_to_ball(reach: float = 1.5) -> int:
@@ -1313,6 +1318,9 @@ func update_contacts(delta: float) -> void:
 		dribbler=carrier
 		dribble_direction=(ball.position-p.position)*Vector3(1,0,1)
 		dribble_direction=dribble_direction.normalized() if dribble_direction.length()>0.1 else p.facing
+		if speed>3.5 or incoming_receiver==carrier:
+			var style := "chest" if ball.position.y>1.05 else ("thigh" if ball.position.y>0.48 else "foot")
+			p.begin_receive(style)
 		if ai_receivers[p.team]==carrier: ai_receivers[p.team]=-1
 		if carrier==incoming_receiver:
 			incoming_receiver=-1

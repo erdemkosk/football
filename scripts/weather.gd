@@ -156,6 +156,9 @@ func apply_look() -> void:
 	game.stadium.grass.set_shader_parameter("wetness",wetness)
 	game.stadium.grass.set_shader_parameter("weather_clock",clock)
 	game.stadium.grass.set_shader_parameter("rain",rain)
+	var wear := 0.0
+	if is_instance_valid(game): wear=clampf(game.match_time/maxf(game.LENGTH,1.0),0,1)
+	game.stadium.grass.set_shader_parameter("play_wear",wear)
 	game.stadium.light_rig.apply_weather(rain)
 
 func player_step(player, _delta: float) -> void:
@@ -187,6 +190,8 @@ func player_step(player, _delta: float) -> void:
 		if wetness>0.2:
 			stamp(at,forward,Vector2(0.20,0.38),Color(0.09,0.079,0.045,wetness*(0.15+mud*0.62)))
 			if player.velocity.length()>3: splash(at,player.velocity,3,mud)
+		else:
+			stamp(at,forward,Vector2(0.18,0.34),Color(0.11,0.155,0.078,0.12))
 
 func trail(from: Vector3,to: Vector3,width: float,color: Color) -> void:
 	var travel := (to-from)*Vector3(1,0,1)

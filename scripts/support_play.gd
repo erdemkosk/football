@@ -21,7 +21,6 @@ func passed(passer: int,receiver: int,one_two: bool=false) -> void:
 		target.x=clampf(target.x,-29,29); target.z=clampf(target.z,-46,46)
 		runs[passer].merge({"explicit":true,"time":ONE_TWO_TIME,"target":target,"previous":p.position,"distance":0.0},true)
 		p.call_timer=ONE_TWO_TIME
-		p.call_label.text="VERKAÇ"
 
 func follow_run(index: int) -> Vector3:
 	if not runs.has(index) or not runs[index].get("explicit",false): return Vector3.ZERO
@@ -29,7 +28,7 @@ func follow_run(index: int) -> Vector3:
 	return offset.normalized()*clampf(offset.length()/1.4,0,1)
 
 func end_run(index: int) -> void:
-	if game.players[index].call_label.text=="VERKAÇ": game.players[index].call_timer=0
+	if runs.get(index,{}).get("explicit",false): game.players[index].call_timer=0
 	runs.erase(index)
 	targets.erase(index)
 	roles.erase(index)

@@ -47,7 +47,7 @@ func available(p) -> bool:
 	return enabled and not p.official and not p.prematch and not p.dismissed and p.action_timer<=0 and p.set_piece_pose=="" and p.celebration=="" and p.discipline_pose=="" and not p.saluting
 
 func free_arms(p) -> bool:
-	return available(p) and not p.keeper and p.kick_timer<=0 and p.shot_preparation<=0 and p.shot_ready_blend<0.01 and p.call_timer<=0 and not p.protecting and not p.jockeying and p.feint_time<=0
+	return available(p) and not p.keeper and p.kick_timer<=0 and p.receive_timer<=0 and p.shot_preparation<=0 and p.shot_ready_blend<0.01 and p.call_timer<=0 and not p.protecting and not p.jockeying and p.feint_time<=0
 
 func can_balance(p) -> bool:
 	return available(p) and not p.keeper and p.kick_timer<=0 and p.shot_preparation<=0 and p.shot_ready_blend<0.01 and p.feint_time<=0

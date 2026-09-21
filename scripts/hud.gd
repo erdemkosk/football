@@ -152,9 +152,6 @@ func _draw() -> void:
 		draw_pass_guide(plan,pass_guide.pass_preview(game.ball.position,plan,game.weather),Color("8ec6e8"))
 	elif game.state=="playing" and pass_trail_time>0 and not game.charging:
 		draw_pass_guide(last_pass.plan,last_pass.route,Color("8ec6e8") if last_pass.plan.get("lob",false) else Color("a7d9bb"),clampf(pass_trail_time/0.3,0,1)*0.85)
-	if game.toast_timer>0 and game.state in ["playing","restart","set_piece"] and game.management.transit.is_empty():
-		panel(Rect2(443,100,554,39),Color(0.04,0.09,0.11,0.84),3)
-		center(game.toast,Vector2(720,126),14,GOLD)
 	if game.state in ["restart","set_piece"]: set_piece_overlay()
 	if game.rules.card_time>0:
 		panel(Rect2(475,153,490,42),Color(0.035,0.08,0.1,0.94),4)
@@ -177,13 +174,16 @@ func pad_hint_width(items: Array,height: float=27,font_size: int=12,gap: float=2
 func pad_hints(at: Vector2,items: Array,height: float=27,font_size: int=12) -> void:
 	game.controller.Glyphs.draw_hints(self,at,items,game.controller.family,font,height,font_size)
 
+func shot_warning(route: Dictionary) -> String:
+	if route.get("goal_plane",false) and route.target.y>=2.22: return "YÜKSEK"
+	return ""
+
 func draw_shot_guide(launch: Vector3,spin: float,color: Color) -> void:
 	var route: Dictionary=shot_guide.preview(game.ball.position,launch,spin,game.attack_sign(0)*50,game.weather)
 	draw_ball_path(route.points,color)
-	var marker_color := Color("a7d9bb") if route.on_target else (Color("f19b80") if route.goal_plane else color)
-	var label := "KALE HEDEFİ" if route.on_target else ("DIŞARI" if route.goal_plane else "TAHMİNİ VARIŞ")
-	if route.goal_plane and route.target.y>=2.22: label="YÜKSEK"
-	draw_target_marker(route.target,label,marker_color)
+	draw_landing_disc(route.target,color,route.target.y>1.1)
+	var warning := shot_warning(route)
+	if warning!="": draw_target_marker(route.target,warning,Color("f19b80",color.a))
 
 func draw_ball_path(points: PackedVector3Array,color: Color) -> void:
 	var arc := PackedVector2Array()
@@ -209,6 +209,7 @@ func draw_target_marker(point: Vector3,label: String,color: Color) -> void:
 		draw_arc(target,9,0,TAU,32,color,2,true)
 		draw_line(target-Vector2(4,0),target+Vector2(4,0),color,1.5,true)
 		draw_line(target-Vector2(0,4),target+Vector2(0,4),color,1.5,true)
+		if label=="": return
 		var width: float=bold.get_string_size(label,HORIZONTAL_ALIGNMENT_LEFT,-1,10).x+16
 		var at := Vector2(clampf(target.x,28+width*0.5,1412-width*0.5),target.y-18)
 		panel(Rect2(at-Vector2(width*0.5,13),Vector2(width,19)),Color(0.015,0.04,0.05,color.a*0.88),3)
@@ -217,18 +218,26 @@ func draw_target_marker(point: Vector3,label: String,color: Color) -> void:
 func draw_pass_guide(plan: Dictionary,route: Dictionary,color: Color,opacity: float=1.0) -> void:
 	color.a*=opacity
 	draw_ball_path(route.points,color)
-	var kind := "DÜŞÜŞ" if plan.get("lob",false) else ("ARA PAS" if plan.get("through",false) else "PAS")
-	if plan.get("cross",false): kind="ORTA" if plan.get("lob",false) else "SERT ORTA"
-	var label: String=kind
-	if game.flat_distance(route.target,plan.target)>2.5 and not plan.get("lob",false): label="KISA KALIYOR"
-	if absf(route.target.x)>32 or absf(route.target.z)>50: label="DIŞARI"
+	var warning := ""
+	if absf(route.target.x)>32 or absf(route.target.z)>50: warning="DIŞARI"
+	elif game.pass_charging and game.pass_risk>0.48: warning="RAKİP"
+	draw_landing_disc(route.target,color,plan.get("lob",false))
+	if warning!="": draw_target_marker(route.target,warning,color)
+
+func draw_landing_disc(point: Vector3,color: Color,lob: bool) -> void:
+	if game.camera.is_position_behind(point): return
 	var ring := PackedVector2Array()
+	var radius: float=0.85 if lob else 0.58
 	for i in range(33):
 		var angle := TAU*i/32.0
-		var point: Vector3=Vector3(route.target.x,0.04,route.target.z)+Vector3(cos(angle),0,sin(angle))*(0.7 if plan.get("lob",false) else 0.45)
-		ring.append(game.screen_position(point))
-	draw_polyline(ring,Color(color,color.a*0.65),1.5,true)
-	draw_target_marker(route.target,label,color)
+		ring.append(game.screen_position(Vector3(point.x,0.04,point.z)+Vector3(cos(angle),0,sin(angle))*radius))
+	if ring.size()>2:
+		draw_colored_polygon(ring,Color(color,color.a*0.16))
+		draw_polyline(ring,Color(color,color.a*0.28),1.2,true)
+	var target: Vector2=game.screen_position(point)
+	if Rect2(26,115,1388,600).has_point(target):
+		draw_circle(target,12 if lob else 9,Color(color,color.a*0.14))
+		draw_circle(target,4,Color(color,color.a*0.22))
 
 func action_hints() -> Array:
 	var on_ball: bool=game.has_ball_control(game.controlled)

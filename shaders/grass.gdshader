@@ -5,6 +5,7 @@ varying vec3 world_pos;
 uniform float wetness = 0.0;
 uniform float weather_clock = 0.0;
 uniform float rain = 0.0;
+uniform float play_wear = 0.0;
 float patch(vec2 p,vec4 area) { return 1.0-smoothstep(0.3,1.0,length((p-area.xy)/area.zw)); }
 float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }
 float noise(vec2 p) {
@@ -23,8 +24,9 @@ void fragment(){
  float grain=(noise(p*5.0)-0.5)*0.018*detail;
  float natural=(noise(p*0.42)-0.5)*0.018;
  grass*=1.0+grain+natural;
- float wear=exp(-length(p*vec2(0.22,0.14)))*0.035;
- wear+=exp(-length((abs(p)-vec2(0.0,47.0))*vec2(0.35,0.48)))*0.065;
+ float wear=exp(-length(p*vec2(0.22,0.14)))*(0.035+play_wear*0.10);
+ wear+=exp(-length((abs(p)-vec2(0.0,47.0))*vec2(0.35,0.48)))*(0.065+play_wear*0.14);
+ wear+=play_wear*0.08*(0.45+noise(p*0.55)*0.55);
  float mud=max(max(patch(p,vec4(0,-47,8,5)),patch(p,vec4(0,47,8,5))),patch(p,vec4(0,0,7,5)));
  mud=max(mud,max(max(patch(p,vec4(-23,-17,6,10)),patch(p,vec4(22,20,7,9))),patch(p,vec4(9,-31,5,6))));
  if(abs(p.x)>32.0 || abs(p.y)>50.0) mud=0.0;
@@ -32,6 +34,7 @@ void fragment(){
  float broken=smoothstep(0.18,0.78,noise(p*1.15)*0.7+noise(p*3.0)*0.3);
  float puddle=smoothstep(0.58,0.86,noise(p*0.75))*mud;
  vec3 turf=mix(grass,vec3(0.15,0.16,0.095),wear)*(1.0-wetness*0.10);
+ turf=mix(turf,vec3(0.138,0.132,0.072),play_wear*0.22*(1.0-wetness*0.35));
  turf=mix(turf,vec3(0.125,0.102,0.059),mud*broken*0.78);
  vec2 cell=floor(p*1.6);
  float phase=fract(weather_clock*1.7+hash(cell));

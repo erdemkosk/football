@@ -15,6 +15,8 @@ var wave_cooldown := 0.0
 var danger := 0.0
 var home_attack := -1.0
 var excitement := 0.0
+var follow := 0.0
+var ball_focus := Vector3.ZERO
 var cloth := [Color("23363a"),Color("34434c"),Color("29483f"),Color("4b5554"),Color("647267"),Color("706654"),Color("76524d"),Color("a2a493"),Color("536a79"),Color("393933")]
 var skins := [Color("ba9073"),Color("aa7b59"),Color("755340"),Color("c4a18b"),Color("916443")]
 var hairs := [Color("302820"),Color("463a2c"),Color("605443"),Color("242828"),Color("807c6c")]
@@ -90,7 +92,11 @@ func reset() -> void:
 	wave_cooldown = 0
 	danger = 0
 	excitement = 0
+	follow = 0
+	ball_focus = Vector3.ZERO
 	material.set_shader_parameter("danger",0.0)
+	material.set_shader_parameter("follow",0.0)
+	material.set_shader_parameter("ball_focus",Vector3.ZERO)
 	material.set_shader_parameter("event_duration",0.0)
 	material.set_shader_parameter("event_strength",0.0)
 	material.set_shader_parameter("event_goal",false)
@@ -138,11 +144,20 @@ func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int
 	if playing and late_close_match and team==0 and danger>0.65 and event_age>3:
 		start_wave(ball_position)
 	excitement = maxf(danger*0.55,(1.0 if event_kind=="goal" else 0.82)*clampf((event_duration-event_age)/1.5,0,1))
+	ball_focus=ball_position
+	follow=lerpf(follow,0.78 if playing else 0.08,1-exp(-delta*2.4))
 	material.set_shader_parameter("crowd_time",clock)
 	material.set_shader_parameter("event_age",event_age)
 	material.set_shader_parameter("wave_age",wave_age)
 	material.set_shader_parameter("danger",danger)
 	material.set_shader_parameter("danger_team",float(team))
+	material.set_shader_parameter("follow",follow)
+	material.set_shader_parameter("ball_focus",ball_focus)
+
+func follow_weight(perimeter: float) -> float:
+	var azimuth := fposmod(atan2(ball_focus.z/60.0,ball_focus.x/45.0)/TAU,1.0)
+	var around := minf(absf(perimeter-azimuth),1.0-absf(perimeter-azimuth))
+	return follow*(1.0-smoothstep(0.04,0.22,around))
 
 func instances(parent: Node3D,label: String,mesh: Mesh,transforms: Array,colors: Array,phases: Array,mat: Material) -> void:
 	# A stadium-wide MultiMesh draws every fan even when only one stand is visible.

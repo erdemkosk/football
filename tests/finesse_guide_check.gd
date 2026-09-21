@@ -83,6 +83,11 @@ func run() -> void:
 	check(absf(spin)>1.4 and game.ball.spin==spin and game.ball.kick_velocity.is_equal_approx(committed),"Free-kick release commits the shown curl even when the modifier is released during run-up")
 	restart.clear()
 	check(restart.pending_curve==0,"The next restart cannot inherit a stale curl")
+	check(game.hud.shot_warning({"target":Vector3(0,1.2,-50),"goal_plane":true,"on_target":true})=="","An on-target shot has no lock label")
+	check(game.hud.shot_warning({"target":Vector3(0,2.6,-50),"goal_plane":true,"on_target":false})=="YÜKSEK","A high finish only warns when it is too high")
+	check(game.hud.shot_warning({"target":Vector3(6,1.0,-50),"goal_plane":true,"on_target":false})=="","A wide finish has no out label")
+	check(game.hud.shot_warning({"target":Vector3(2,0.8,-20),"goal_plane":false,"on_target":false})=="","A landing inside the pitch has no arrival label")
+	check(game.hud.shot_warning({"target":Vector3(34,0.3,-10),"goal_plane":false,"on_target":false})=="","A shot leaving the pitch has no out label")
 	await setup()
 	game.ball.freeze=true
 	game.players[9].visible=true

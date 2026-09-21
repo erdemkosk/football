@@ -53,7 +53,7 @@ func run() -> void:
 	check(game.controlled==9 and game.requested_receiver==9,"S without the ball requests a pass without switching players")
 	check(game.passes[0]==0 and not game.ball.pending_kick and game.ball.position.distance_to(before)<0.01,"Requesting a pass never teleports or remotely kicks the ball")
 	game.players[9].step(1.0/120.0)
-	check(game.players[9].call_label.visible and game.players[9].right_arm.rotation.z>2,"The requester raises an arm and displays PAS")
+	check(not game.players[9].call_label.visible and game.players[9].right_arm.rotation.z>2,"The requester raises an arm without a shout label")
 	await capture()
 	game.update_pass_request(0.3)
 	game.update_ai(1.0/120.0)

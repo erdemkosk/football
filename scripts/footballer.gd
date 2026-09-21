@@ -8,6 +8,8 @@ var head_joint := Node3D.new()
 var eye_joints: Array[Node3D] = []
 static var hair_mesh: ArrayMesh
 var kit_materials: Dictionary = {}
+var kit_clean: Dictionary = {}
+var kit_soil := 0.0
 var kit_pattern: MeshInstance3D
 var team := 0
 var number := 10
@@ -87,8 +89,16 @@ var shot_ready_blend := 0.0
 var wrapping := 0.0
 var kick_power := 0.35
 var kick_duration := 0.32
+var kick_style := "laces"
 var kick_joints: Array[Node3D] = []
 var kick_start_pose: Array[Vector3] = []
+var receive_timer := 0.0
+var receive_duration := 0.34
+var receive_style := ""
+var body_scale := Vector3(1.25,1.20,1.25)
+var idle_habit := 0
+var idle_rest := 0.0
+var stance := 0.0
 var impact_direction := Vector3.ZERO
 var impact_strength := 0.0
 var impact_duration := 0.8
@@ -108,7 +118,7 @@ func _ready() -> void:
 	add_child(rig)
 	build_model()
 	kick_joints.assign([left_leg,right_leg,left_knee,right_knee,spine,left_arm,right_arm,left_elbow,right_elbow])
-	rig.scale = Vector3(1.25,1.20,1.25)
+	apply_build()
 	var torus = TorusMesh.new()
 	torus.inner_radius = 0.67
 	torus.outer_radius = 0.72
@@ -266,6 +276,7 @@ func receive_impact(direction: Vector3,strength: float) -> void:
 	velocity=velocity*0.25+impact_direction*lerpf(1.5,4.2,impact_strength)
 	facing=-impact_direction
 	kick_timer=0
+	receive_timer=0
 	shot_preparation=0
 	touch_cooldown=impact_duration+0.15
 	tackle_cooldown=maxf(tackle_cooldown,impact_duration)
@@ -307,18 +318,25 @@ func step(delta: float,stoppage_speed: float=0.0) -> void:
 		wall_jump_delay-=delta
 		if wall_jump_delay<0: velocity.y=5.4
 	call_timer = maxf(0,call_timer-delta)
-	call_label.visible = call_timer>0
+	call_label.visible = false
 	motion_clock += delta
 	action_timer = maxf(0,action_timer-delta)
 	tackle_cooldown = maxf(0,tackle_cooldown-delta)
 	touch_cooldown = maxf(0,touch_cooldown-delta)
 	kick_timer = maxf(0,kick_timer-delta)
+	receive_timer = maxf(0,receive_timer-delta)
+	if Vector2(velocity.x,velocity.z).length()>1.2 or kick_timer>0 or shot_preparation>0 or action_timer>0:
+		idle_rest=0
+	else:
+		idle_rest=minf(1.2,idle_rest+delta)
 	ai_think += delta
 	update_stamina(delta)
 	var speed := movement_speed()
 	# Substitution exits remain physical but do not inherit match fatigue.
 	if stamina_free_movement and stoppage_speed>0: speed=stoppage_speed
-	if is_instance_valid(surface): speed*=1.0-surface.mud_at(position)*0.16
+	if is_instance_valid(surface):
+		speed*=1.0-surface.mud_at(position)*0.16
+		stain(delta)
 	var target = desired.limit_length(1)*speed
 	if action_timer>0:
 		if pose=="poke": target*=0.2
@@ -418,14 +436,50 @@ func movement_speed() -> float:
 	if active_sprint: return lerpf(8.8,10.4,smoothstep(0.08,0.4,energy))
 	return lerpf(4.6,6.5 if keeper else 6.2,smoothstep(0.08,0.3,energy))
 
-func begin_kick(power: float,duration: float) -> void:
+func begin_kick(power: float,duration: float,style: String="laces") -> void:
 	kick_power=power
 	kick_duration=duration
+	kick_style=style if style in ["inside","laces","chip"] else "laces"
 	kick_timer=duration
+	receive_timer=0
+	idle_rest=0
 	shot_preparation=0
 	# Start from the current stride, including a quick tap or a running shot.
 	kick_start_pose.clear()
 	for joint in kick_joints: kick_start_pose.append(joint.rotation)
+
+func begin_receive(style: String) -> void:
+	if action_timer>0 or kick_timer>0 or keeper: return
+	receive_style=style if style in ["chest","thigh","foot"] else "foot"
+	receive_duration=0.46 if receive_style=="chest" else (0.38 if receive_style=="thigh" else 0.30)
+	receive_timer=receive_duration
+
+func apply_build() -> void:
+	var seed: int=shirt_number if shirt_number>0 else number
+	var height := 1.20
+	var width := 1.25
+	if official:
+		height=1.18; width=1.22
+	elif keeper:
+		height=1.28; width=1.22
+	elif number in [2,3,4,5]:
+		height=1.24+fmod(float(seed)*0.017,0.05)
+		width=1.28
+	elif number in [7,11]:
+		height=1.16+fmod(float(seed)*0.013,0.04)
+		width=1.18
+	else:
+		height=1.18+fmod(float(seed)*0.021,0.06)
+		width=1.22+fmod(float(seed)*0.019,0.08)
+	body_scale=Vector3(width,height,width)
+	idle_habit=seed%4
+	stance=0.08 if keeper else (0.055 if number in [2,3,4,5] else 0.0)
+	rig.scale=body_scale
+	if body_collision!=null and body_collision.shape is CapsuleShape3D:
+		var shape: CapsuleShape3D=body_collision.shape
+		shape.height=1.72*(height/1.20)
+		shape.radius=0.33*(width/1.25)
+		body_collision.position.y=shape.height*0.5
 
 func animate_shot(delta: float,amount: float,stride: float) -> void:
 	var ready := shot_preparation if action_timer<=0 and kick_timer<=0 else 0.0
@@ -449,12 +503,16 @@ func animate_shot(delta: float,amount: float,stride: float) -> void:
 	var plant := 1-smoothstep(0.28,0.74,progress)
 	# Contact -> follow-through -> knee recovery -> live running stride.
 	# The ball is released immediately; only the visual follow-through takes time.
-	var hip := lerpf(lerpf(0.42,lerpf(0.85,1.24,kick_power),sweep),0.12,recoil)
+	var inside: float=1.0 if kick_style=="inside" else 0.0
+	var chip: float=1.0 if kick_style=="chip" else 0.0
+	var hip := lerpf(lerpf(0.42,lerpf(lerpf(0.85,0.72,inside),lerpf(1.24,0.92,inside),kick_power),sweep),0.12,recoil)
+	if chip>0: hip=lerpf(lerpf(0.50,lerpf(0.95,1.18,kick_power),sweep),0.18,recoil)
 	var knee := lerpf(lerpf(-0.12,-0.28,sweep),-0.86,recoil)
+	var open := inside*lerpf(0.0,0.46,sweep)
 	var poses: Array[Vector3] = [
-		Vector3(0.24,0,-0.045),Vector3(hip,0,0.045),
-		Vector3(-0.42,0,0),Vector3(knee,0,0),
-		Vector3(-0.12-kick_power*0.16*sweep,lerpf(-0.12,0.3,sweep)*kick_power,-0.055*sweep),
+		Vector3(0.24,0,-0.045-inside*0.08),Vector3(hip,open,0.045+inside*0.16),
+		Vector3(-0.42,0,0),Vector3(knee,0,inside*0.22),
+		Vector3(-0.12-kick_power*0.16*sweep-chip*0.18*sweep,lerpf(-0.12,0.3,sweep)*kick_power+inside*0.22*sweep,-0.055*sweep),
 		Vector3(0.18+0.22*sweep,0,-0.55-kick_power*0.25*sweep),
 		Vector3(-0.32+0.72*sweep,0,0.38+0.14*sweep),
 		Vector3(lerpf(0.62,0.4,sweep)+recoil*0.25,0,0),
@@ -466,21 +524,42 @@ func animate_shot(delta: float,amount: float,stride: float) -> void:
 		var rotation_target := joint.rotation.lerp(poses[i],weight)
 		joint.rotation=kick_start_pose[i].lerp(rotation_target,entry) if kick_start_pose.size()==kick_joints.size() else rotation_target
 
+func apply_receive() -> void:
+	var progress := 1.0-receive_timer/maxf(receive_duration,0.01)
+	var hold := smoothstep(0,0.16,progress)*(1.0-smoothstep(0.58,1.0,progress))
+	if receive_style=="chest":
+		spine.rotation.x=lerpf(spine.rotation.x,-0.08+0.22*hold,hold)
+		left_arm.rotation=left_arm.rotation.lerp(Vector3(1.15,0,-0.72),hold)
+		right_arm.rotation=right_arm.rotation.lerp(Vector3(1.15,0,0.72),hold)
+		left_elbow.rotation.x=lerpf(left_elbow.rotation.x,0.55,hold)
+		right_elbow.rotation.x=lerpf(right_elbow.rotation.x,0.55,hold)
+	elif receive_style=="thigh":
+		right_leg.rotation.x=lerpf(right_leg.rotation.x,0.95,hold)
+		right_knee.rotation.x=lerpf(right_knee.rotation.x,-0.28,hold)
+		spine.rotation.x=lerpf(spine.rotation.x,-0.18,hold)
+		left_arm.rotation.z=lerpf(left_arm.rotation.z,-0.55,hold)
+	else:
+		right_leg.rotation.x=lerpf(right_leg.rotation.x,0.42,hold)
+		right_knee.rotation.x=lerpf(right_knee.rotation.x,-0.72,hold)
+		spine.rotation.x=lerpf(spine.rotation.x,-0.16,hold)
+
 func animate(delta: float) -> void:
-	var amount = clampf(Vector2(velocity.x,velocity.z).length()/8.7,0,1)
+	var amount: float=clampf(Vector2(velocity.x,velocity.z).length()/8.7,0,1)
+	var tired: float=0.0 if energy>0.42 else clampf((0.42-energy)/0.42,0,1)
+	var gait: float=amount*(1.0-tired*0.28)
 	var stride = sin(run_phase)
-	var idle = sin(motion_clock*2.0+number*0.8)
+	var idle = sin(motion_clock*(1.55 if tired>0.4 else 2.0)+number*0.8)
 	var blend = 1-exp(-delta*14)
 	var local_accel = acceleration_lean.rotated(Vector3.UP,-rig.rotation.y)
-	left_leg.rotation = Vector3(0.10+stride*0.78*amount,0,-0.035)
-	right_leg.rotation = Vector3(0.10-stride*0.78*amount,0,0.035)
-	left_knee.rotation.x = -0.19-maxf(0,-stride)*1.08*amount
-	right_knee.rotation.x = -0.19-maxf(0,stride)*1.08*amount
-	left_arm.rotation = Vector3(-stride*0.55*amount-0.08,0,-0.13)
-	right_arm.rotation = Vector3(stride*0.55*amount-0.08,0,0.13)
-	left_elbow.rotation.x = 0.50+amount*0.34+stride*0.09
-	right_elbow.rotation.x = 0.50+amount*0.34-stride*0.09
-	spine.rotation = spine.rotation.lerp(Vector3(-0.065-amount*0.12-(0.065 if exhausted else 0.0),sin(run_phase)*amount*0.065,-stride*amount*0.035),blend)
+	left_leg.rotation = Vector3(0.10+stride*0.78*gait,0,-0.035)
+	right_leg.rotation = Vector3(0.10-stride*0.78*gait,0,0.035)
+	left_knee.rotation.x = -0.19-maxf(0,-stride)*1.08*gait
+	right_knee.rotation.x = -0.19-maxf(0,stride)*1.08*gait
+	left_arm.rotation = Vector3(-stride*0.55*gait-0.08-tired*0.12,0,-0.13)
+	right_arm.rotation = Vector3(stride*0.55*gait-0.08-tired*0.12,0,0.13)
+	left_elbow.rotation.x = 0.50+gait*0.34+stride*0.09+tired*0.18
+	right_elbow.rotation.x = 0.50+gait*0.34-stride*0.09+tired*0.18
+	spine.rotation = spine.rotation.lerp(Vector3(-0.065-amount*0.12-tired*0.10-stance-(0.065 if exhausted else 0.0),sin(run_phase)*gait*0.065,-stride*gait*0.035),blend)
 	if exhausted:
 		spine.position.y = 0.94+sin(motion_clock*5.0)*0.012
 	else: spine.position.y = 0.94
@@ -488,8 +567,11 @@ func animate(delta: float) -> void:
 	rig.rotation.x = lerp_angle(rig.rotation.x,-0.035-amount*0.075+clampf(local_accel.z*0.006,-0.08,0.08),blend)
 	rig.rotation.z = lerp_angle(rig.rotation.z,clampf(-local_accel.x*0.010,-0.16,0.16)+idle*0.015*(1-amount),blend)
 	body_collision.rotation = Vector3.ZERO
-	body_collision.position = Vector3(0,0.87,0)
-	locomotion.apply_pose(self,amount,stride)
+	if body_collision.shape is CapsuleShape3D:
+		body_collision.position = Vector3(0,(body_collision.shape as CapsuleShape3D).height*0.5,0)
+	else:
+		body_collision.position = Vector3(0,0.87,0)
+	locomotion.apply_pose(self,gait,stride)
 	if keeper and not prematch:
 		spine.rotation.x = lerpf(spine.rotation.x,-0.28,blend)
 		rig.position.y = lerpf(rig.position.y,-0.15,blend)
@@ -504,7 +586,23 @@ func animate(delta: float) -> void:
 	if saluting:
 		right_arm.rotation=Vector3(0.15,0,2.65+sin(motion_clock*5+number)*0.16)
 		right_elbow.rotation.x=0.35+sin(motion_clock*4+number)*0.12
+	if idle_rest>0.35 and gait<0.12 and shot_preparation<=0 and kick_timer<=0 and receive_timer<=0 and action_timer<=0 and call_timer<=0 and body_language.point_weight<=0.05 and body_language.point_cooldown<=0 and not keeper and not protecting and not jockeying:
+		var rest: float=smoothstep(0.35,0.7,idle_rest)
+		match idle_habit:
+			1:
+				left_arm.rotation=left_arm.rotation.lerp(Vector3(0.35,0,-1.15),rest)
+				right_arm.rotation=right_arm.rotation.lerp(Vector3(0.35,0,1.15),rest)
+				left_elbow.rotation.x=lerpf(left_elbow.rotation.x,1.15,rest)
+				right_elbow.rotation.x=lerpf(right_elbow.rotation.x,1.15,rest)
+			2:
+				right_arm.rotation=right_arm.rotation.lerp(Vector3(0.85,0.35,0.55),rest)
+				right_elbow.rotation.x=lerpf(right_elbow.rotation.x,1.35,rest)
+			3:
+				left_leg.rotation.x+=0.18*rest
+				left_knee.rotation.x-=0.22*rest
+				spine.rotation.z+=0.04*rest
 	animate_shot(delta,amount,stride)
+	if receive_timer>0 and kick_timer<=0 and action_timer<=0: apply_receive()
 	if call_timer>0 and kick_timer<=0 and shot_preparation<=0:
 		right_arm.rotation.z = 2.75+sin(motion_clock*9)*0.12
 		right_elbow.rotation.x = 0.25
@@ -596,11 +694,23 @@ func animate(delta: float) -> void:
 	if celebration!="" and action_timer<=0:
 		var pulse := sin(motion_clock*8.5+number)
 		if celebration=="cheer":
-			left_arm.rotation=Vector3(0.2,0,-2.55-pulse*0.18)
-			right_arm.rotation=Vector3(0.2,0,2.55+pulse*0.18)
-			left_elbow.rotation.x=0.3
-			right_elbow.rotation.x=0.3
-			spine.rotation.x=0.04
+			if number%3==1:
+				right_arm.rotation=Vector3(0.15,0,2.72+pulse*0.22)
+				left_arm.rotation=Vector3(0.4,0,-0.35)
+				right_elbow.rotation.x=0.22
+				left_elbow.rotation.x=0.7
+			elif number%3==2:
+				left_arm.rotation=Vector3(0.05,0,-2.35)
+				right_arm.rotation=Vector3(0.05,0,2.35)
+				left_elbow.rotation.x=1.15
+				right_elbow.rotation.x=1.15
+				spine.rotation.x=0.16
+			else:
+				left_arm.rotation=Vector3(0.2,0,-2.55-pulse*0.18)
+				right_arm.rotation=Vector3(0.2,0,2.55+pulse*0.18)
+				left_elbow.rotation.x=0.3
+				right_elbow.rotation.x=0.3
+				spine.rotation.x=0.04
 		elif celebration=="embrace":
 			left_arm.rotation=Vector3(1.3,0,-0.52)
 			right_arm.rotation=Vector3(1.3,0,0.52)
@@ -657,7 +767,7 @@ func animate_dive() -> void:
 	var spread := launch*(1-recover)
 	var airborne_roll := lerpf(1.48,1.25,(dive_height-0.2)/2.1)
 	var roll := spread*lerpf(airborne_roll,1.46,smoothstep(0.50,0.76,time))
-	rig.basis = (Basis(Vector3.FORWARD,dive_direction*roll)*Basis(Vector3.UP,dive_yaw)).scaled(Vector3(1.25,1.20,1.25))
+	rig.basis = (Basis(Vector3.FORWARD,dive_direction*roll)*Basis(Vector3.UP,dive_yaw)).scaled(body_scale)
 	# Rotate around the pelvis, not the feet: the body lands above the turf.
 	var pelvis_height := lerpf(1.08,0.44,spread)
 	if time<0.10: pelvis_height -= smoothstep(0.0,0.1,time)*0.17
@@ -720,7 +830,24 @@ func apply_kit(colors: Dictionary) -> void:
 	kit_materials.socks.albedo_color=kit_materials.jersey.albedo_color
 	kit_materials.trim.albedo_color=colors.accent
 	kit_materials.shorts.albedo_color=Color("171d23") if keeper else colors.shorts
+	kit_clean={"jersey":kit_materials.jersey.albedo_color,"socks":kit_materials.socks.albedo_color,"shorts":kit_materials.shorts.albedo_color}
+	kit_soil=0
 	shirt_label.modulate=colors.accent
 	if kit_pattern!=null:
 		kit_pattern.scale=Vector3(1,1,1) if int(colors.pattern)==0 else (Vector3(0.32,4.1,1) if int(colors.pattern)==1 else Vector3(1.03,2.3,1))
 		kit_pattern.rotation.z=deg_to_rad(-24) if int(colors.pattern)==2 else 0.0
+	apply_build()
+
+func stain(delta: float) -> void:
+	if official or kit_clean.is_empty() or kit_materials.is_empty(): return
+	if is_instance_valid(surface) and is_instance_valid(surface.game) and surface.game.state not in ["playing","restart","set_piece"]: return
+	var play: float=clampf(surface.clock/240.0,0,1) if is_instance_valid(surface) else 0.0
+	var mud: float=surface.mud_at(position) if is_instance_valid(surface) else 0.0
+	var wet: float=surface.wetness if is_instance_valid(surface) else 0.0
+	var gain: float=(0.016+play*0.028+mud*0.045+wet*0.012)*delta
+	if pose in ["slide","dive"] and action_timer>0: gain+=0.085*delta
+	kit_soil=minf(0.82,kit_soil+gain)
+	var dirt := Color(0.24,0.19,0.11)
+	kit_materials.jersey.albedo_color=kit_clean.jersey.lerp(dirt,kit_soil*0.40)
+	kit_materials.shorts.albedo_color=kit_clean.shorts.lerp(dirt,kit_soil*0.55)
+	kit_materials.socks.albedo_color=kit_clean.socks.lerp(dirt,kit_soil*0.64)

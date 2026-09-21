@@ -39,7 +39,7 @@ func reset() -> void:
 	release_age=RELEASE_TIME
 
 func available(p) -> bool:
-	return p.action_timer<=0 and p.kick_timer<=0 and p.shot_preparation<=0 and p.set_piece_pose=="" and p.celebration=="" and p.discipline_pose=="" and not p.saluting and p.feint_time<=0
+	return p.action_timer<=0 and p.kick_timer<=0 and p.receive_timer<=0 and p.shot_preparation<=0 and p.set_piece_pose=="" and p.celebration=="" and p.discipline_pose=="" and not p.saluting and p.feint_time<=0
 
 func update(p,delta: float,previous_velocity: Vector3) -> void:
 	var velocity: Vector3=p.velocity*Vector3(1,0,1)
