@@ -55,10 +55,12 @@ func run() -> void:
 	var before: Vector3=game.shot_direction
 	hold(1.0/120)
 	check(before.angle_to(game.shot_direction)<=game.SHOT_PAD_RATE/120+0.001,"D-pad changes aim smoothly, without an instant reversal")
-	hold(0.65)
+	hold(1.7)
 	check(game.shot_direction.x>0.999 and game.players[9].desired.x< -0.5,"D-pad aims right while the left stick continues running left")
 	check(game.players[9].facing.x>0.99,"The shooting stance turns toward the actual shot direction")
-	button(JOY_BUTTON_DPAD_RIGHT,false); hold(0.3)
+	button(JOY_BUTTON_DPAD_RIGHT,false)
+	stick(0,0)
+	hold(0.3)
 	check(game.shot_direction.x>0.999,"Releasing D-pad holds aim instead of snapping back to the running direction")
 	await capture("opposite")
 	var shown: Vector3=game.shot_direction
@@ -75,7 +77,7 @@ func run() -> void:
 	game.ball.freeze=false; game.ball.linear_velocity=Vector3.LEFT*4
 	game.dribbler=9; game.dribble_direction=Vector3.LEFT
 	game.last_touch=0; game.last_kicker=9
-	stick(-1,0); button(JOY_BUTTON_X,true); button(JOY_BUTTON_DPAD_RIGHT,true)
+	stick(-1,0); button(JOY_BUTTON_DPAD_RIGHT,true); button(JOY_BUTTON_X,true)
 	for frame in range(80):
 		game.update_control(1.0/120)
 		runner.step(1.0/120)
@@ -88,25 +90,25 @@ func run() -> void:
 	for frame in range(24): await physics_frame
 	check(game.shots[0]==1 and game.ball.position.x>ball_before.x+2,"A live dribble-to-shot sequence releases the ball to the opposite side")
 	setup(); stick(-1,0); button(JOY_BUTTON_X,true)
-	stick(1,0,true); hold(0.65)
+	stick(1,0,true); hold(1.7)
 	check(game.shot_direction.x>0.999 and game.players[9].desired.x<0,"Right stick also aims independently from movement")
 	stick(0,0,true); hold(0.2)
 	check(game.shot_direction.x>0.999,"Centering the right stick retains the chosen shot direction")
 	setup(); stick(-1,0); button(JOY_BUTTON_X,true)
-	stick(1,0); hold(0.65)
+	stick(1,0); hold(2.5)
 	check(game.shot_direction.x>0.999,"Left-stick-only players can reverse shot direction beyond the old 14-degree limit")
 	stick(0,0); hold(0.2)
 	check(game.shot_direction.x>0.999,"Centering the left stick also preserves aim")
 	setup(); button(JOY_BUTTON_X,true); stick(0.5,0)
 	before=game.shot_direction; hold(0.1)
-	check(before.angle_to(game.shot_direction)>deg_to_rad(1) and before.angle_to(game.shot_direction)<deg_to_rad(3),"A light analog input gives a small controlled adjustment")
+	check(before.angle_to(game.shot_direction)>deg_to_rad(.5) and before.angle_to(game.shot_direction)<deg_to_rad(1.2),"A light left-stick input trims aim by less than 1.2 degrees in 100 ms")
 	setup(); button(JOY_BUTTON_X,true); stick(0.1,0.1,true); hold(0.5)
 	check(game.shot_direction==Vector3.FORWARD and not game.shot_separate_aim,"Right-stick drift does not steal or move aim")
 	for target in [Vector3.FORWARD,Vector3.BACK,Vector3(-1,0,-1).normalized(),Vector3(1,0,1).normalized()]:
 		setup(); button(JOY_BUTTON_X,true)
 		if target.x!=0: button(JOY_BUTTON_DPAD_LEFT if target.x<0 else JOY_BUTTON_DPAD_RIGHT,true)
 		button(JOY_BUTTON_DPAD_UP if target.z<0 else JOY_BUTTON_DPAD_DOWN,true)
-		hold(0.65)
+		hold(1.7)
 		check(game.shot_direction.dot(target)>0.999,"D-pad supports full vertical/diagonal aim: "+str(target))
 	setup(); button(JOY_BUTTON_X,true)
 	button(JOY_BUTTON_DPAD_LEFT,true); button(JOY_BUTTON_DPAD_RIGHT,true)
@@ -118,7 +120,7 @@ func run() -> void:
 	var at_30: Vector3=game.shot_direction
 	setup(); button(JOY_BUTTON_X,true); stick(1,0,true); hold(0.2,120)
 	check(game.shot_direction.distance_to(at_30)<0.00001,"Aim response is consistent at 30 and 120 updates per second")
-	setup(); game.half=2; button(JOY_BUTTON_X,true); button(JOY_BUTTON_DPAD_RIGHT,true); hold(0.65)
+	setup(); game.half=2; button(JOY_BUTTON_X,true); button(JOY_BUTTON_DPAD_RIGHT,true); hold(1.7)
 	check(game.shot_direction.x>0.999,"Right remains screen-right after the teams change ends")
 	setup(); button(JOY_BUTTON_X,true); axis(JOY_AXIS_RIGHT_X,1,1); button(JOY_BUTTON_DPAD_RIGHT,true,1)
 	hold(0.3)

@@ -124,6 +124,6 @@ func make_button(parent: Node,rect: Rect2,value: String,callback: Callable,prima
 
 func badge(at: Vector2,data: Dictionary,scale_value: float=1.0) -> void:
 	var graphics=preload("res://scripts/kit_graphics.gd")
-	var id: int=graphics.SHORTS.find(data.short)
+	var id: int=int(data.get("badge_id",graphics.SHORTS.find(data.short)))
 	var texture: Texture2D=graphics.badge(id,Color(data.primary),Color(data.accent))
 	draw_texture_rect(texture,Rect2(at-Vector2(34,34)*scale_value,Vector2(68,68)*scale_value),false)

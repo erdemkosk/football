@@ -127,7 +127,7 @@ func update(delta: float) -> void:
 	apply_look()
 	if is_instance_valid(game.audio): sound.volume_db=-80 if game.audio.muted or game.state=="paused" or rain<0.01 else lerpf(-36,-23,rain)
 	var ball=game.ball
-	if ball.active and ball.held_by==null and ball.position.y<0.3 and game.state not in ["menu","finished"]:
+	if ball.active and ball.held_by==null and ball.position.y<0.3 and game.state not in ["menu","finished","replay"]:
 		if ball_last!=Vector3.ZERO and ball_last.distance_to(ball.position)<2 and ball_last.distance_to(ball.position)>0.22:
 			var mud := mud_at(ball.position)
 			if mud>0.12: trail(ball_last,ball.position,0.08,Color(0.075,0.06,0.032,mud*0.62))
@@ -162,7 +162,7 @@ func apply_look() -> void:
 	game.stadium.light_rig.apply_weather(rain)
 
 func player_step(player, _delta: float) -> void:
-	if not player.visible or game.state in ["menu","paused","finished"]: return
+	if not player.visible or game.state in ["menu","paused","finished","replay"]: return
 	var id: int=player.get_instance_id()
 	var here: Vector3=player.position
 	if not foot_state.has(id): foot_state[id]={"last":here,"distance":0.0,"side":1.0}

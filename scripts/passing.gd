@@ -72,12 +72,15 @@ static func risk(origin: Vector3,pass_plan: Dictionary,team: int,players: Array)
 	if length_squared<0.1: return 1.0
 	var result := 0.0
 	for opponent in players:
-		if opponent.team==team or not opponent.visible: continue
+		if opponent.team==team or not opponent.visible or opponent.dismissed: continue
 		var offset: Vector3 = opponent.position-origin
 		offset.y = 0
 		var fraction := clampf(offset.dot(segment)/length_squared,0,1)
 		var time: float = fraction*pass_plan.flight
 		var predicted: Vector3 = opponent.position+Vector3(opponent.velocity.x,0,opponent.velocity.z)*minf(time*0.45,0.6)
+		# A marker behind a departing ball cannot block every escape direction.
+		# Keep immediate boot-range pressure, and all defenders ahead of the kick.
+		if (predicted-origin).dot(segment.normalized())<-.45 and Vector2(predicted.x-origin.x,predicted.z-origin.z).length()>.7: continue
 		fraction = clampf((predicted-origin).dot(segment)/length_squared,0,1)
 		time = fraction*pass_plan.flight
 		var height: float = maxf(0.23,origin.y+pass_plan.velocity.y*time-0.5*GRAVITY*time*time)
@@ -147,6 +150,18 @@ static func driven_cross(origin: Vector3,receiver: Vector3,run: Vector3,surface=
 		target.x=clampf(target.x,-30.5,30.5); target.z=clampf(target.z,-48,48); target.y=0.23
 	var aim := ((target-origin)*Vector3(1,0,1)).normalized()
 	return {"target":target,"velocity":aim*speed+Vector3.UP*0.12,"flight":flight,"lob":false,"driven":true}
+
+static func driven_pass(origin: Vector3,receiver: Vector3,run: Vector3,surface=null) -> Dictionary:
+	var target := receiver
+	var speed := 18.0
+	var flight := .7
+	for i in range(4):
+		var distance := Vector2(target.x-origin.x,target.z-origin.z).length()
+		speed=Motion.passing_speed(clampf(13+distance*.30,17,23),distance,Motion.along(surface,origin,target))
+		flight=flight_time(origin,target,speed,surface)
+		target=receiver+(run*Vector3(1,0,1)).limit_length(10.4)*minf(flight,2.2)*.82
+		target.x=clampf(target.x,-30,30); target.z=clampf(target.z,-48,48); target.y=.23
+	return {"target":target,"velocity":((target-origin)*Vector3(1,0,1)).normalized()*speed+Vector3.UP*.12,"flight":flight,"lob":false,"driven":true}
 
 static func switch_plan(origin: Vector3,direction: Vector3,power: float,team: int,passer: int,players: Array,assistance: float,forward: float,offside: float,surface=null) -> Dictionary:
 	var aim := (direction*Vector3(1,0,1)).normalized()

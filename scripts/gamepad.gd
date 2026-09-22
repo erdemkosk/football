@@ -80,6 +80,22 @@ func movement() -> Vector3:
 	var direction := stick.normalized()*pow(strength,1.0/sensitivity)
 	return Vector3(direction.x,0,direction.y)
 
+func precision_stick(value: Vector2) -> Vector2:
+	var magnitude := value.length()
+	if magnitude<=deadzone: return Vector2.ZERO
+	return value.normalized()*clampf((magnitude-deadzone)/(1-deadzone),0,1)
+
+func aim_movement() -> Vector3:
+	if device<0: return Vector3.ZERO
+	# Aim uses the physical deflection, independent of the running sensitivity.
+	var direction := precision_stick(stick)
+	return Vector3(direction.x,0,direction.y)
+
+func aim_response(strength: float) -> float:
+	var value := clampf(strength,0,1)
+	# No inertia after release: light touches trim, full deflection still turns.
+	return .62*value*lerpf(.2,1.0,value*value)
+
 func clear_shot_aim() -> void:
 	aim_stick=Vector2.ZERO
 	aim_buttons.clear()
@@ -137,7 +153,7 @@ func translate(event: InputEvent) -> InputEventKey:
 		elif event.button_index==JOY_BUTTON_A and game.state in ["menu","finished","paused","ceremony","halftime","replay","goal"]: code=KEY_ENTER
 		elif event.button_index==JOY_BUTTON_A and game.state=="restart" and game.restart_type=="SANTRA": code=KEY_ENTER
 		elif code==KEY_A and game.state=="playing" and not game.has_ball_control(game.controlled): code=KEY_X
-		elif code==KEY_D and game.state=="playing" and not game.has_ball_control(game.controlled) and not game.heading.can_request(game.controlled): code=KEY_G
+		elif code==KEY_D and game.state=="playing" and not game.has_ball_control(game.controlled) and not game.can_request_aerial(game.controlled): code=KEY_G
 		if code==0: return null
 		held[event.button_index]=code
 	else:
@@ -170,6 +186,7 @@ func connection_changed(id: int,connected: bool) -> void:
 	held.clear()
 	menus.reset()
 	game.coaching.reset_input()
+	game.reset_advanced_play()
 	combos.cancel()
 	using_gamepad=false
 	game.charging=false
@@ -192,6 +209,11 @@ func action_held(action: int) -> bool:
 func rumble(strength: float,shot: bool=false) -> void:
 	if not vibration or device not in Input.get_connected_joypads(): return
 	Input.start_joy_vibration(device,clampf(strength*0.55,0,1),clampf(strength*(0.85 if shot else 1.0),0,1),0.16 if shot else 0.25)
+
+func net_rumble(strength: float,own_goal: bool) -> void:
+	if not vibration or device not in Input.get_connected_joypads(): return
+	var weight := 1.0 if own_goal else 0.65
+	Input.start_joy_vibration(device,lerpf(0.18,0.72,strength)*weight,lerpf(0.16,0.92,strength)*weight,lerpf(0.24,0.42,strength))
 
 func rebind(action: int,button: int) -> void:
 	if button==100+JOY_AXIS_TRIGGER_RIGHT: return

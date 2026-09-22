@@ -87,6 +87,11 @@ func dismiss(show_notice: bool=true) -> void:
 	proposal.clear(); scan_in=6
 	if show_notice: notice="ÖNERİ GEÇİLDİ"; notice_time=2
 
+func power_shot_held() -> bool:
+	var pad=game.controller
+	if pad.bindings.get(JOY_BUTTON_LEFT_SHOULDER)!=KEY_Q: return false
+	return pad.action_held(KEY_Q) or game.advanced_controls.shoulder_held() or pad.combos.consumed.has(JOY_BUTTON_LEFT_SHOULDER)
+
 func handle(event: InputEvent) -> bool:
 	if event is InputEventJoypadButton or event is InputEventJoypadMotion:
 		var pad=game.controller
@@ -96,20 +101,22 @@ func handle(event: InputEvent) -> bool:
 			var was_down := trigger_down
 			trigger_down=event.axis_value>(.35 if trigger_down else .55)
 			if not trigger_down: opened=false
-			elif not was_down and available():
+			elif not was_down and available() and not power_shot_held():
 				opened=true; pad.using_gamepad=true
 				pad.clear_shot_aim(); pad.combos.cancel()
 				game.cancel_pass(); game.charging=false; game.charge=0
 				game.heading.cancel(game.controlled)
 				game.players[game.controlled].shot_preparation=0
 				refresh()
-			return available()
+			return available() and not power_shot_held()
 		if event is InputEventJoypadButton:
 			var button: int=event.button_index
+			if button==JOY_BUTTON_LEFT_SHOULDER and event.pressed and pad.bindings.get(button)==KEY_Q:
+				opened=false
 			if consumed.has(button):
 				if not event.pressed: consumed.erase(button)
 				return true
-			if available() and opened and button in [JOY_BUTTON_DPAD_LEFT,JOY_BUTTON_DPAD_UP,JOY_BUTTON_DPAD_RIGHT,JOY_BUTTON_DPAD_DOWN,JOY_BUTTON_A,JOY_BUTTON_B,JOY_BUTTON_X,JOY_BUTTON_Y]:
+			if available() and opened and not power_shot_held() and button in [JOY_BUTTON_DPAD_LEFT,JOY_BUTTON_DPAD_UP,JOY_BUTTON_DPAD_RIGHT,JOY_BUTTON_DPAD_DOWN,JOY_BUTTON_A,JOY_BUTTON_B,JOY_BUTTON_X,JOY_BUTTON_Y]:
 				if event.pressed:
 					consumed[button]=true
 					pad.using_gamepad=true

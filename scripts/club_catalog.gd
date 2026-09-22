@@ -1,8 +1,13 @@
 extends RefCounted
 const Physique = preload("res://scripts/player_physique.gd")
+const World = preload("res://scripts/career_world.gd")
 var game
 var selected := [0,1]
+var league := [0,0]
 var alternate := [false,false]
+var career_clubs: Array=[]
+var career_rosters: Array=[]
+var exhibition: Dictionary={}
 var lineups: Array = [range(11),range(11)]
 var reserves: Array = [range(11,18),range(11,18)]
 const CLUBS := [
@@ -15,32 +20,107 @@ const CLUBS := [
 	{"name":"LİMAN ATHLETIC","short":"LİM","city":"MERSİN","year":"1981","primary":"243346","accent":"f1f0df","shorts":"1a2636","alt":"f0eee3","alt_trim":"29384f","pattern":0,"style":"KOMPAKT BLOK","squad":"DIEGO,BRUNO,HUGO,TIAGO,ANDRE,MATEO,OSCAR,PABLO,ELIAS,MARCO,FELIX,RENE,LOREN,JORGE,DARIO,INES,TONI,VICTOR"},
 	{"name":"KAPADOKYA SK","short":"KAP","city":"NEVŞEHİR","year":"1969","primary":"8d629d","accent":"f0ded1","shorts":"422d58","alt":"eee0cf","alt_trim":"705180","pattern":2,"style":"YARATICI ORTA SAHA","squad":"CANER,BARIŞ,BERAT,BULUT,İHSAN,ENES,İBRAHİM,FERHAT,SEFA,FURKAN,BATUHAN,RECEP,SALİH,AHMET,MAHMUT,NECATİ,KAĞAN,SERDAR"}]
 
+func ensure_world() -> void:
+	if exhibition.is_empty(): exhibition=World.create()
+
+func league_ids(div: int) -> Array:
+	if exhibition.is_empty() and div==0:
+		var local: Array=[]
+		for i in range(CLUBS.size()): local.append("c%02d" % i)
+		return local
+	ensure_world()
+	var ids: Array=[]
+	for id in exhibition.clubs:
+		if int(exhibition.clubs[id].league)==div: ids.append(id)
+	ids.sort()
+	return ids
+
+func league_name(side: int) -> String:
+	return World.LEAGUES[league[side]]
+
+func club_id(side: int) -> String:
+	if exhibition.is_empty(): return "c%02d" % clampi(selected[side],0,CLUBS.size()-1)
+	var ids: Array=league_ids(league[side])
+	if ids.is_empty(): return "c%02d" % selected[side]
+	return str(ids[clampi(selected[side],0,ids.size()-1)])
+
+func catalog_index(side: int) -> int:
+	if exhibition.is_empty(): return clampi(selected[side],0,CLUBS.size()-1)
+	var id := club_id(side)
+	if id.begins_with("c"):
+		var n := int(id.substr(1))
+		if n<CLUBS.size(): return n
+	return -1
+
 func data(side: int) -> Dictionary:
-	return CLUBS[selected[side]]
+	if not career_clubs.is_empty(): return career_clubs[side]
+	if exhibition.is_empty(): return CLUBS[clampi(selected[side],0,CLUBS.size()-1)]
+	var id := club_id(side)
+	if exhibition.clubs.has(id): return exhibition.clubs[id]
+	return CLUBS[selected[side]%CLUBS.size()]
 
 func kit(side: int) -> Dictionary:
 	var club := data(side)
-	return {"primary":Color(club.alt if alternate[side] else club.primary),"accent":Color(club.alt_trim if alternate[side] else club.accent),"shorts":Color(club.alt if alternate[side] else club.shorts),"pattern":int(club.pattern),"club_id":selected[side],"badge_primary":Color(club.primary),"badge_accent":Color(club.accent)}
+	var fallback: int=catalog_index(side)
+	var away: String=str(club.get("alt",club.primary))
+	return {"primary":Color(away if alternate[side] else club.primary),"accent":Color(club.get("alt_trim",club.accent) if alternate[side] else club.accent),"shorts":Color(away if alternate[side] else club.shorts),"pattern":int(club.get("pattern",0)),"club_id":club.get("badge_id",fallback if fallback>=0 else selected[side]),"badge_primary":Color(club.primary),"badge_accent":Color(club.accent)}
 
-func choose(side: int,id: int) -> void:
-	var direction := -1 if id<selected[side] else 1
-	selected[side]=posmod(id,CLUBS.size())
-	if selected[side]==selected[1-side]: selected[side]=posmod(selected[side]+direction,CLUBS.size())
-	lineups[side]=range(11)
-	reserves[side]=range(11,18)
-	alternate[side]=false
-	# Start visually similar pairs in contrasting strips; both can still be chosen.
+func clear_career() -> void:
+	career_clubs.clear(); career_rosters.clear()
+	lineups=[range(11),range(11)]
+	reserves=[range(11,18),range(11,18)]
+
+func contrast_kits() -> void:
 	var a := Color(data(0).primary)
 	var b := Color(data(1).primary)
 	if Vector3(a.r-b.r,a.g-b.g,a.b-b.b).length()<0.4: alternate[1]=true
+
+func reset_side(side: int) -> void:
+	lineups[side]=range(11)
+	reserves[side]=range(11,18)
+	alternate[side]=false
+
+func choose(side: int,id: int) -> void:
+	clear_career()
+	var ids: Array=league_ids(league[side])
+	var count: int=maxi(1,ids.size())
+	var direction := -1 if id<selected[side] else 1
+	selected[side]=posmod(id,count)
+	while club_id(0)==club_id(1) and count>1:
+		selected[side]=posmod(selected[side]+direction,count)
+	reset_side(side)
+	contrast_kits()
+	apply()
+
+func set_league(side: int,div: int) -> void:
+	clear_career()
+	league[side]=posmod(div,World.LEAGUES.size())
+	selected[side]=0
+	var ids: Array=league_ids(league[side])
+	if club_id(0)==club_id(1) and ids.size()>1: selected[side]=1
+	reset_side(side)
+	contrast_kits()
 	apply()
 
 func member(side: int,id: int) -> Dictionary:
-	var names: PackedStringArray=data(side).squad.split(",")
-	var result := {"name":names[id],"shirt":id+1,"keeper":id in [0,11],"used":false}
-	result.merge(Physique.profile(selected[side],id,result.keeper))
-	result.attributes=preload("res://scripts/player_attributes.gd").profile(selected[side],id,result.keeper)
-	return result
+	if not career_rosters.is_empty(): return career_rosters[side][id].duplicate(true)
+	var cat := catalog_index(side)
+	if cat>=0:
+		var names: PackedStringArray=CLUBS[cat].squad.split(",")
+		var result := {"name":names[id],"shirt":id+1,"keeper":id in [0,11],"used":false,"appearance_id":cat*24+id}
+		result.merge(Physique.profile(cat,id,result.keeper))
+		result.attributes=preload("res://scripts/player_attributes.gd").profile(cat,id,result.keeper)
+		return result
+	var club := data(side)
+	var roster: Array=club.get("roster",[])
+	if id<roster.size() and exhibition.players.has(roster[id]):
+		var player: Dictionary=exhibition.players[roster[id]].duplicate(true)
+		if not player.has("used"): player.used=false
+		return player
+	var fallback := {"name":"OYUNCU","shirt":id+1,"keeper":id==0,"used":false,"appearance_id":id}
+	fallback.merge(Physique.profile(side,id,fallback.keeper))
+	fallback.attributes=preload("res://scripts/player_attributes.gd").profile(side,id,fallback.keeper)
+	return fallback
 
 func swap_starter(slot: int,reserve: int) -> bool:
 	var a: int=lineups[0][slot]

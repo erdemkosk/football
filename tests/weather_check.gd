@@ -89,6 +89,12 @@ func run() -> void:
 	game.state="paused"
 	for i in range(30): game._physics_process(1.0/120)
 	check(game.weather.clock==old_clock and game.weather.sound.stream_paused,"Pause freezes weather, mark aging and rain audio")
+	game.state="replay"
+	game.weather.select(2,true)
+	old_clock=game.weather.clock
+	var rain_visible: bool=game.weather.rain_mesh.visible
+	for i in range(30): game._physics_process(1.0/120)
+	check(game.weather.clock>old_clock and rain_visible and game.weather.rain_mesh.visible and not game.weather.sound.stream_paused,"Replay keeps rain falling and sounding while play is frozen")
 	game.state="playing"
 	game.weather.select(2,true)
 	player.position=Vector3(-2,0,47)

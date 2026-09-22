@@ -22,11 +22,18 @@ var binding_header: Label
 func _ready() -> void:
 	setup_style()
 	visible=false
-	for i in range(4):
-		var button := make_button(self,Rect2(54,251+i*80,258,62),["01   SES","02   KONTROLCÜ","03   TUŞ ATAMA","04   GÖRÜNTÜ & OYUN"][i],show_page.bind(i))
+	var sections := [["SES","sound"],["KONTROLÇÜ","pad"],["TUŞ ATAMA","keys"],["GÖRÜNTÜ","view"]]
+	for i in range(sections.size()):
+		var button := make_button(self,Rect2(54,251+i*80,258,64),sections[i][0],show_page.bind(i))
 		button.alignment=HORIZONTAL_ALIGNMENT_LEFT
+		button.icon_alignment=HORIZONTAL_ALIGNMENT_LEFT
+		button.icon=nav_icon(sections[i][1])
+		button.expand_icon=true
 		button.add_theme_font_size_override("font_size",15)
+		button.add_theme_constant_override("h_separation",12)
+		button.add_theme_constant_override("icon_max_width",28)
 		navigation.append(button)
+	style_nav()
 	scroll=ScrollContainer.new()
 	scroll.position=Vector2(379,322)
 	scroll.size=Vector2(969,409)
@@ -80,6 +87,44 @@ func _draw() -> void:
 			game.controller.Glyphs.draw_hints(self,Vector2(55,845),[["D-PAD","Gez"],["A","Seç"],["LB / RB","Bölüm"],["B","Kaydet ve dön"]],game.controller.family,font,27,13)
 		else: text("YÖN TUŞLARI  Gez     ENTER  Seç     ESC  Kaydet ve dön",Vector2(55,850),14,MUTE)
 
+func nav_icon(kind: String) -> Texture2D:
+	var art := ""
+	match kind:
+		"sound":
+			art='<path d="M8 16H13L20 10V30L13 24H8Z"/><path d="M24 15Q28 20 24 25"/><path d="M27 11Q34 20 27 29"/>'
+		"pad":
+			art='<rect x="6" y="13" width="28" height="15" rx="6"/><path d="M13 18V24M10 21H16"/><circle cx="27" cy="18" r="1.4"/><circle cx="24" cy="21.5" r="1.4"/><circle cx="30" cy="21.5" r="1.4"/><circle cx="27" cy="25" r="1.4"/>'
+		"keys":
+			art='<rect x="6" y="11" width="10" height="9" rx="2"/><rect x="18" y="11" width="10" height="9" rx="2"/><rect x="30" y="11" width="5" height="9" rx="2"/><rect x="10" y="22" width="20" height="8" rx="2"/>'
+		"view":
+			art='<rect x="7" y="10" width="26" height="16" rx="2"/><path d="M14 32L20 26L26 32"/><path d="M16 16H24M20 12V20"/>'
+	var svg := '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect x="1.5" y="1.5" width="37" height="37" rx="8" fill="#142d35" stroke="#526c72" stroke-width="1.4"/><g fill="none" stroke="#f4f0df" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">%s</g></svg>' % art
+	var bitmap := Image.new()
+	bitmap.load_svg_from_string(svg,2.0)
+	return ImageTexture.create_from_image(bitmap)
+
+func style_nav() -> void:
+	for i in range(navigation.size()):
+		var button: Button=navigation[i]
+		var selected := i==page
+		for state in ["normal","hover","pressed"]:
+			var box := StyleBoxFlat.new()
+			box.bg_color=Color("2d5056") if selected or state!="normal" else Color("19373e")
+			box.set_corner_radius_all(6)
+			box.content_margin_left=14
+			box.content_margin_right=12
+			box.content_margin_top=10
+			box.content_margin_bottom=10
+			if selected:
+				box.border_width_left=3
+				box.border_color=GOLD
+			button.add_theme_stylebox_override(state,box)
+		button.add_theme_color_override("font_color",GOLD if selected else PAPER)
+		button.add_theme_color_override("font_hover_color",GOLD)
+		button.add_theme_color_override("font_focus_color",GOLD)
+		button.add_theme_color_override("font_pressed_color",GOLD if selected else PAPER)
+		button.modulate=Color.WHITE
+
 func label(value: String) -> void:
 	var text := Label.new()
 	text.text=value
@@ -131,7 +176,7 @@ func show_page(index: int) -> void:
 	page=clampi(index,0,3)
 	capture_action=-1
 	fields.clear()
-	for i in range(navigation.size()): navigation[i].modulate=GOLD if i==page else Color.WHITE
+	style_nav()
 	for child in content.get_children(): content.remove_child(child); child.queue_free()
 	scroll.scroll_vertical=0
 	match page:
@@ -149,6 +194,7 @@ func show_page(index: int) -> void:
 			pad_hint([[game.controller.label_for(KEY_D),"Şut / ayakta müdahale"],[game.controller.label_for(KEY_A),"Orta / kayma"]])
 			pad_hint([[game.controller.label_for(KEY_S),"Pas"],[game.controller.label_for(KEY_Y),"Ara pas / kaleciyi çıkar"]])
 			pad_hint([[game.controller.label_for(KEY_W),"Hızlı koş"],[game.controller.label_for(KEY_Q),"Oyuncu seç"],["LB + X","Aşırtma"]])
+			pad_hint([[game.controller.label_for(KEY_W)+" × 2","Topu ileri açıp hızlan"]])
 			pad_hint([["B × 2","Yerden sert orta"],["LB + Y","Havadan uzun pas"]])
 			pad_hint([["LB + A","Verkaç"],[game.controller.label_for(KEY_E),"Top koruma / falso"]])
 			pad_hint([["RT + D-PAD","Oyun planı"],[game.controller.label_for(KEY_V),"Topu aç"]])
@@ -186,6 +232,15 @@ func show_page(index: int) -> void:
 			option("Gol tekrarları",["Kapalı","Açık"],int(game.replay.enabled),func(v): game.replay.enabled=v==1)
 			option("Rakip zorluğu",["Kolay","Normal","Zor"],game.management.difficulty,func(v): game.management.difficulty=v)
 			option("Pas yardımı",["Manuel","Yarı yardımlı","Yardımlı"],game.pass_assistance,func(v): game.pass_assistance=v)
+			option("Başlangıç kamerası",Array(game.match_camera.LABELS),game.match_camera.IDS.find(game.match_camera.preferred),func(v): game.match_camera.preference(game.match_camera.IDS[v]))
+			slider("Kamera uzaklığı",game.match_camera.distance,.70,1.50,game.match_camera.set_distance)
+			slider("Kamera yüksekliği / açı",game.match_camera.height,.65,1.60,game.match_camera.set_height)
+			var reset_camera := Button.new()
+			reset_camera.text="KAMERA AYARLARINI SIFIRLA"
+			reset_camera.custom_minimum_size.y=44
+			content.add_child(reset_camera); fields.append([reset_camera])
+			reset_camera.pressed.connect(func(): game.match_camera.defaults(); show_page(3); fields[5][0].grab_focus())
+			label("Uzaklık azalınca oyuncular büyür; yükseklik arttıkça sahayı daha tepeden görürsün. Maçta fare tekerleği uzaklığı, C kamera türünü değiştirir. Ayarlar sonraki maçlarda da korunur.")
 			label("Pas yardımı nişanı hafifçe düzeltir, oyuncu seçmez. Yönü sen verirsin; top boşluğa da gidebilir ve rakipler de müdahale eder.")
 			pad_hint([["A","Gol tekrarını geç (klavye: Space / Enter)"]])
 	wire_navigation()
@@ -293,6 +348,9 @@ func save_settings() -> void:
 	cfg.set_value("match","pass_assistance",game.pass_assistance)
 	cfg.set_value("display","fullscreen",DisplayServer.window_get_mode()==DisplayServer.WINDOW_MODE_FULLSCREEN)
 	cfg.set_value("display","fps",game.performance_hud.visible)
+	cfg.set_value("camera","profile",game.match_camera.preferred)
+	cfg.set_value("camera","distance",game.match_camera.distance)
+	cfg.set_value("camera","height",game.match_camera.height)
 	cfg.set_value("audio","muted",game.audio.muted)
 	var error := cfg.save(config_path)
 	if error!=OK: game.announce("Ayarlar bu oturumda uygulandı; diske kaydedilemedi.")
@@ -337,6 +395,9 @@ func load_settings() -> void:
 			if int(code)>=KEY_A and int(code)<=KEY_Z and int(code)!=KEY_K and stored[code]!=KEY_K and stored[code] in range(KEY_A,KEY_Z+1): keys[int(code)]=int(stored[code])
 	game.replay.enabled=bool(cfg.get_value("match","replay",true))
 	game.pass_assistance=clampi(int(cfg.get_value("match","pass_assistance",1)),0,2)
+	game.match_camera.preference(str(cfg.get_value("camera","profile",game.match_camera.DEFAULT)),game.state in ["playing","restart","set_piece"])
+	game.match_camera.set_distance(float(cfg.get_value("camera","distance",1.0)))
+	game.match_camera.set_height(float(cfg.get_value("camera","height",1.0)))
 	game.performance_hud.visible=bool(cfg.get_value("display","fps",false))
 	if bool(cfg.get_value("audio","muted",false))!=game.audio.muted: game.audio.toggle()
 	if DisplayServer.get_name()!="headless": DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if bool(cfg.get_value("display","fullscreen",false)) else DisplayServer.WINDOW_MODE_WINDOWED)

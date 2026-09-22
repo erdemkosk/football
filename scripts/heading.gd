@@ -42,7 +42,7 @@ func can_request(index: int) -> bool:
 	return active(index) or not window(index).is_empty()
 
 func arm(index: int,aim: Vector3,power: float=0.0,user: bool=true,intent: String="shot",receiver: int=-1) -> bool:
-	if active(index) or window(index).is_empty(): return false
+	if active(index) or game.volleys.active(index) or window(index).is_empty(): return false
 	requests[index]={"age":0.0,"aim":aim,"power":power,"user":user,"released":not user,"launched":false,"ball":game.ball.position,"head":head_point(game.players[index]),"intent":intent,"receiver":receiver}
 	game.players[index].receive_timer=0
 	game.players[index].shot_preparation=0

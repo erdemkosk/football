@@ -15,7 +15,7 @@ func airborne() -> bool:
 	var gap := 0.88
 	for i in range(game.players.size()):
 		var p=game.players[i]
-		if game.heading.active(i): continue
+		if game.aerial_shot_active(i) or p.dummy_time>0: continue
 		if not p.visible or p.keeper or p.action_timer>0 or p.kick_timer>0 or p.touch_cooldown>0 or p.ball_actions.contact_cooldown>0: continue
 		var offset: Vector3=(ball.position-p.position)*Vector3(1,0,1)
 		if offset.length()>gap or ball.position.y>p.body_scale.y*1.75: continue
@@ -31,6 +31,7 @@ func airborne() -> bool:
 
 func receive(index: int,extended: bool) -> bool:
 	var p=game.players[index]
+	game.team_control.touched(index)
 	var ball=game.ball
 	var relative: Vector3=ball.linear_velocity-p.velocity
 	var speed := relative.length()
@@ -43,22 +44,51 @@ func receive(index: int,extended: bool) -> bool:
 	difficulty=clampf(difficulty+(72-float(p.attributes.control))*.003+p.contest_weight*.16/stability,0,1)
 	var spill := extended or difficulty>0.68
 	p.begin_receive(style,ball.position,relative,reach)
-	p.ball_actions.control_grace=0.16 if style=="foot" else 0.25
+	p.ball_actions.control_grace=0.075 if style=="foot" else 0.25
 	p.ball_actions.contact_cooldown=0.32 if spill else 0.25
 	# One bounded impulse cushions the real rigid body. Hard, stretched touches
 	# retain more incoming momentum; no transform snap or guaranteed possession.
-	var retain := lerpf(0.12,0.42,difficulty)
+	var retain := lerpf(0.08,0.32,difficulty)
 	if spill: retain=maxf(retain,0.48)
 	var output: Vector3=p.velocity*Vector3(1,0,1)+relative*retain
-	if p.desired.length()>0.2: output+=p.desired.normalized()*lerpf(0.55,1.25,difficulty)
+	var intent := control_intent(index)
+	if intent.length_squared()>.1:
+		var technique := clampf((float(p.attributes.control)-45)/50,0,1)
+		var running: float=Vector2(p.velocity.x,p.velocity.z).length()
+		var opening := lerpf(2.0,1.2,technique)+(.65 if p.active_sprint else 0.0)+difficulty*.55
+		# Turn the incoming momentum with one limited impulse. A good technician
+		# takes a compact touch; sprinting and poor control expose more ball.
+		var directed: Vector3=p.velocity*Vector3(1,0,1)*(.85 if running>3 else .4)+intent*opening
+		output=output.lerp(directed,lerpf(.55,.90,technique)*(0.45 if spill else 1.0))
+		p.ball_actions.receive_direction=intent
+		p.ball_actions.receive_distance=clampf(opening*.42,.45,1.65)
 	if spill:
 		var side := -1.0 if p.ball_actions.receive_foot==0 else 1.0
 		output+=p.rig.global_basis.x.normalized()*side*(0.8+difficulty*1.2)
 	if style!="foot": output.y=minf(-0.55,relative.y*0.3)
 	else: output.y=maxf(0,ball.linear_velocity.y)*0.3
+	if style=="foot" and not spill:
+		# During the receive-to-dribble handover, the coarse torso capsule must
+		# not strike a ball already cushioned by the foot. Other players still collide.
+		p.dribble_motion.control_collision(p,ball)
+		p.dribble_motion.freshness=p.ball_actions.control_grace+.02
 	ball.touch(output,ball.mass*minf(17.0,maxf(2.5,speed*(0.85 if not spill else 0.55))))
 	game.reactions.received(index)
 	game.last_touch=p.team
 	game.last_kicker=index
 	if spill: p.touch_cooldown=maxf(p.touch_cooldown,0.25)
 	return not spill and style=="foot"
+
+func control_intent(index: int) -> Vector3:
+	var p=game.players[index]
+	var input: Vector3=p.desired*Vector3(1,0,1)
+	if p.protecting: return game.duels.shield_direction(index)
+	if game.is_user_player(index): return input.normalized() if input.length()>.2 else Vector3.ZERO
+	# AI receivers use the same touch, opening away from the closest pressure.
+	var forward := Vector3(0,0,game.attack_sign(p.team))
+	var space := forward
+	for q in game.players:
+		if not q.visible or q.team==p.team: continue
+		var gap: Vector3=(p.position-q.position)*Vector3(1,0,1)
+		if gap.length()>.1 and gap.length()<3: space+=gap.normalized()*(1-gap.length()/3)*1.4
+	return space.normalized()

@@ -1,17 +1,20 @@
 extends Node3D
 ## A pinned spring lattice shared by rendering and ball contact.
+signal struck(point: Vector3, direction: Vector3, strength: float)
 const NODE_MASS := 0.12
 const TENSION := 160.0
 const SHEAR := 42.0
 const RESTORING := 6.0
 const DAMPING := 2.2
-const CONTACT_DAMPING := 65.0
+const CONTACT_DAMPING := 32.0
 const MAX_STRETCH := 0.95
 var panels: Array[Dictionary] = []
 var awake := false
 var impact_count := 0
 var playback := false
 var replay_empty := false
+var impact_cooldown := 0.0
+var simulation_paused := false
 
 func build(side: int) -> void:
 	var front := float(side)*50.0
@@ -53,7 +56,9 @@ func add_panel(a: Vector3,b: Vector3,c: Vector3,d: Vector3,normal: Vector3,cols:
 	refresh_mesh(panel)
 
 func _physics_process(delta: float) -> void:
-	if not awake or playback: return
+	if playback or simulation_paused: return
+	impact_cooldown=maxf(0,impact_cooldown-delta)
+	if not awake: return
 	var energy := 0.0
 	for panel in panels:
 		var offsets: PackedFloat32Array = panel.offset
@@ -82,10 +87,12 @@ func _process(_delta: float) -> void:
 
 func release_ball() -> void:
 	for panel in panels: panel.contact_side = 0.0
+	impact_cooldown=0
 
 func reset() -> void:
 	awake = false
 	playback = false
+	simulation_paused=false
 	release_ball()
 	for panel in panels:
 		panel.offset.fill(0)
@@ -101,7 +108,7 @@ func capture_pose() -> Array:
 func capture_physics() -> Dictionary:
 	var speeds: Array=[]
 	for panel in panels: speeds.append(panel.velocity.duplicate())
-	return {"pose":capture_pose(),"speeds":speeds,"awake":awake}
+	return {"pose":capture_pose(),"speeds":speeds,"awake":awake,"impact_cooldown":impact_cooldown}
 
 func show_replay(a: Array,b: Array,weight: float) -> void:
 	var empty := a.is_empty() and b.is_empty()
@@ -122,6 +129,7 @@ func restore_physics(saved: Dictionary) -> void:
 	show_replay(saved.pose,saved.pose,0)
 	for i in range(panels.size()): panels[i].velocity=saved.speeds[i].duplicate()
 	awake=saved.awake
+	impact_cooldown=saved.get("impact_cooldown",0.0)
 	playback=false
 	replay_empty=false
 
@@ -149,6 +157,7 @@ func refresh_mesh(panel: Dictionary) -> void:
 	panel.instance.mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
 
 func contact(state: PhysicsDirectBodyState3D,radius: float,mass: float) -> void:
+	if playback or simulation_paused: return
 	var position := state.transform.origin
 	if absf(position.z)<49.0 or absf(position.x)>5.2 or position.y>4:
 		release_ball()
@@ -202,6 +211,7 @@ func contact(state: PhysicsDirectBodyState3D,radius: float,mass: float) -> void:
 		if approach>=0 and gap>=-0.01: continue
 		var impulse := maxf(0,-approach-maxf(gap,0)/state.step+maxf(-gap-0.005,0)*18)/(1.0/mass+inverse_mass)
 		if impulse<=0: continue
+		var closing_speed := maxf(0,-state.linear_velocity.dot(normal)*contact_side)
 		state.linear_velocity += normal*contact_side*impulse/mass
 		# Tangential friction lets a captured ball drop down the mesh.
 		var tangent := state.linear_velocity-normal*state.linear_velocity.dot(normal)
@@ -215,6 +225,11 @@ func contact(state: PhysicsDirectBodyState3D,radius: float,mass: float) -> void:
 				panel.velocity[ids[j]] *= exp(-CONTACT_DAMPING*weights[j]*state.step)
 		awake = true
 		impact_count += 1
+		# One cue for the arriving ball, not each solver step or the mesh touching
+		# an already resting ball. The lattice alone carries subsequent ripples.
+		if closing_speed>2.0 and impulse>0.05 and impact_cooldown<=0:
+			impact_cooldown=0.55
+			struck.emit(position,-normal*contact_side,clampf(pow(closing_speed/34.0,0.7),0.1,1.0))
 
 func max_deformation() -> float:
 	var result := 0.0

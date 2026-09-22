@@ -69,14 +69,35 @@ func run() -> void:
 	game.controller.stick=Vector2.ZERO
 	game.begin_restart("SERBEST VURUŞ",0,Vector3(0,0,-25))
 	game.state="set_piece"
-	game.set_pieces.direction=Vector3.RIGHT
+	game.set_pieces.recovery.phase="ready"
 	game.match_camera.select("sideline")
 	game.update_camera(0)
+	game.set_pieces.direction=game.match_camera.ground_forward()
 	var kick_before: Vector3=game.set_pieces.direction
 	game.controller.device=0
 	game.controller.stick=Vector2(1,0)
 	game.set_pieces.update(0.25)
-	check(game.set_pieces.direction.dot(game.match_camera.ground_right())>kick_before.dot(game.match_camera.ground_right())+0.05 and game.set_pieces.direction.x<kick_before.x,"Sideline free-kick aim follows screen-right, not world X")
+	check(game.set_pieces.direction.dot(game.match_camera.ground_right())>kick_before.dot(game.match_camera.ground_right())+0.05,"Sideline free-kick aim follows screen-right")
+	var kick_eye: Vector3=game.camera.position
+	var kick_goal := Vector3(0,1.2,game.attack_sign(0)*50)
+	check(kick_eye.distance_to(Vector3(0,0,-25))<16 and kick_eye.z>-25+2 and framed(Vector3(0,0,-25)+Vector3.UP) and framed(kick_goal),"A free kick stands behind the taker and keeps the goal in frame")
+	game.controller.stick=Vector2.ZERO
+	game.begin_restart("KORNER",0,Vector3(32,0,game.attack_sign(0)*49.6))
+	game.state="set_piece"
+	game.set_pieces.recovery.phase="ready"
+	game.match_camera.select("sideline")
+	game.update_camera(0)
+	var box := Vector3(0,1.1,game.attack_sign(0)*43)
+	var corner_goal := Vector3(0,1.2,game.attack_sign(0)*50)
+	check(framed(game.restart_point+Vector3.UP) and framed(box) and framed(corner_goal),"A corner looks from behind the taker into the box instead of at the flag")
+	game.match_camera.has_pose=true
+	game.match_camera.snap=false
+	game.match_camera.current_eye=Vector3(40,18.6,0)
+	game.match_camera.current_look=Vector3.ZERO
+	var before_eye: Vector3=game.match_camera.current_eye
+	var target_eye: Vector3=game.match_camera.behind_kick_pose().eye
+	game.update_camera(0.08)
+	check(game.camera.position.distance_to(before_eye)>0.4 and game.camera.position.distance_to(target_eye)>4.0,"The set-piece camera eases behind the play instead of snapping")
 	game.controller.stick=Vector2.ZERO
 	game.start_match(false,false)
 	game.update_camera(0)

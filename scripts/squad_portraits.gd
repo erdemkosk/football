@@ -10,7 +10,7 @@ var current := ""
 var frames := 0
 
 func key_for(data: Dictionary) -> String:
-	return "%s/%d/%d/%d/%d/%s/%s/%d" % [data.name,data.shirt,data.get("appearance_number",data.shirt),data.height_cm,data.weight_kg,data.kit.primary.to_html(),data.kit.accent.to_html(),data.kit.get("club_id",0)]
+	return "%s/%d/%d/%d/%d/%s/%s/%d" % [data.name,data.shirt,data.get("appearance_id",data.get("appearance_number",data.shirt)),data.height_cm,data.weight_kg,data.kit.primary.to_html(),data.kit.accent.to_html(),data.kit.get("club_id",0)]
 
 func request(data: Dictionary) -> String:
 	var key := key_for(data)
@@ -79,9 +79,9 @@ func build_studio(data: Dictionary) -> void:
 	model.head_joint.rotation.y=-model.rig.rotation.y*0.6
 	var camera := Camera3D.new()
 	camera.projection=Camera3D.PROJECTION_ORTHOGONAL
-	camera.size=1.30
+	camera.size=1.50
 	world.add_child(camera)
-	var center: float=1.73*model.body_scale.y/1.2
+	var center: float=model.head_joint.global_position.y+.04
 	camera.position=Vector3(0,center,-5)
 	camera.look_at(Vector3(0,center,0))
 	camera.current=true

@@ -74,7 +74,7 @@ func run() -> void:
 	setup()
 	key(KEY_S,true)
 	key(KEY_RIGHT,true)
-	hold(0.4)
+	hold(0.85)
 	check(game.pass_direction.x>0.9,"Arrow input steers the pass toward the chosen direction")
 	key(KEY_RIGHT,false)
 	var aimed:Vector3=game.pass_preview.velocity

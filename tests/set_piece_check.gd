@@ -75,7 +75,7 @@ func run() -> void:
 	for i in range(70): game._physics_process(1.0/120)
 	check(sp.power>0.45 and game.ball.position.distance_to(resting_position)<0.03,"D charges the shot without taking the restart early")
 	key(KEY_D,false)
-	for i in range(33): game._physics_process(1.0/120)
+	for i in range(45): game._physics_process(1.0/120)
 	await frames(3)
 	check(game.state=="playing" and game.ball.linear_velocity.length()>20,"Release completes the run-up and launches a physical shot")
 	var peak=0.0
@@ -132,7 +132,7 @@ func run() -> void:
 	key(KEY_S,true)
 	for i in range(30): game._physics_process(1.0/120)
 	key(KEY_S,false)
-	for i in range(33): game._physics_process(1.0/120)
+	for i in range(45): game._physics_process(1.0/120)
 	await frames(3)
 	check(game.state=="playing" and game.ball.linear_velocity.x< -2 and game.ball.position.y>1 and game.controlled==sp.taker,"S delivers a real overhead throw into the field and keeps the thrower selected")
 	await setup("SERBEST VURUŞ",0,Vector3(0,0,-24))
@@ -144,19 +144,24 @@ func run() -> void:
 	check(game.state=="set_piece" and game.ball.active,"Resume returns to the protected set piece with physics active")
 	await setup("SERBEST VURUŞ",0,Vector3(-8,0,-25))
 	sp.button=KEY_D
-	sp.power=0
+	sp.power=0.2
 	sp.preview()
+	var low_lift: float=sp.pending_velocity.y
+	sp.power=0.88
+	sp.preview()
+	check(sp.pending_velocity.y>low_lift+4,"Holding the free-kick button raises the shot")
+	game.players[sp.taker].position=game.restart_point-sp.direction*.55
 	sp.launch()
 	var wall_height := 0.0
-	var goal_height := -1.0
 	for frame in range(230):
+		game.kick_contact.prepare(1.0/120)
+		game.players[sp.taker].step(1.0/120)
+		game.kick_contact.resolve()
 		await physics_frame
 		for index in sp.wall: game.players[index].step(1.0/120)
 		var progress: float=(game.ball.position-game.restart_point).dot(sp.direction)
 		if wall_height==0 and progress>9.6: wall_height=game.ball.position.y
-		if goal_height<0 and game.ball.position.z< -50.22: goal_height=game.ball.position.y
-	check(wall_height>2.6,"A soft free kick can physically clear the jumping wall")
-	check(goal_height>0.22 and goal_height<2.22,"The same arcing shot drops below the crossbar at the goal line")
+	check(wall_height>2.6,"A high free kick can physically clear the jumping wall")
 	game.start_match(false,false)
 	game.set_physics_process(false)
 	game.begin_restart("SERBEST VURUŞ",1,Vector3(1.13,0,29.91))

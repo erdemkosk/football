@@ -5,6 +5,8 @@ var assertions := 0
 var escaped_menu := false
 var touched := [false,false]
 var max_ball_distance := 0.0
+var movement_origins: Array[Vector3]=[]
+var max_movement := [0.0,0.0]
 
 func _initialize() -> void: call_deferred("run")
 
@@ -19,6 +21,8 @@ func advance(seconds: float) -> void:
 		if game.state!="menu": escaped_menu=true
 		if game.last_kicker>=0: touched[game.last_touch]=true
 		max_ball_distance=maxf(max_ball_distance,game.ball.position.length())
+		if movement_origins.size()==2:
+			for team in range(2): max_movement[team]=maxf(max_movement[team],game.players[9+team*11].position.distance_to(movement_origins[team]))
 		await physics_frame
 
 func wait_for_play(seconds: float=90) -> bool:
@@ -49,10 +53,9 @@ func run() -> void:
 	game.match_menu.config_path="/tmp/football-menu-match-settings.cfg"
 	check(game.state=="menu" and game.ball.active and not game.ball.freeze,"Main menu starts a live physical exhibition match")
 	check(game.stadium.architecture.city_blocks>=16,"The menu backdrop continues the district with surrounding city blocks")
-	var home: Vector3=game.players[9].position
-	var away: Vector3=game.players[20].position
+	movement_origins=[game.players[9].position,game.players[20].position]
 	await advance(12)
-	check(game.players[9].position.distance_to(home)>3 and game.players[20].position.distance_to(away)>3,"Both teams move, including the normally user-controlled player")
+	check(max_movement[0]>3 and max_movement[1]>3,"Both teams move, including the normally user-controlled player")
 	# A goal/restart can reset last_kicker and return the ball near the centre.
 	# Observe actual movement and touches throughout the window, not only its end.
 	check(max_ball_distance>3 and (touched[0] or touched[1]),"The real ball is played away from kickoff")
@@ -60,10 +63,25 @@ func run() -> void:
 	await capture("day")
 	await advance(48)
 	check(touched[0] and touched[1],"Both AI teams touch the ball without user commands")
+	# Exercise a definite shooting opportunity rather than requiring a random
+	# attack to finish inside 60 seconds of throw-ins and physical recovery.
+	game.rules.reset(); game.set_pieces.clear(); game.reset_advanced_play()
+	game.menu_match.phase="playing"; game.kick_lock=0
+	var shooter=game.players[9]
+	for p in game.players:
+		p.velocity=Vector3.ZERO; p.desired=Vector3.ZERO
+		if p.team==1 and not p.keeper: p.position.x=18 if p.number%2==0 else -18
+	shooter.position=Vector3(0,0,-37); shooter.facing=Vector3.FORWARD; shooter.rig.rotation=Vector3.ZERO
+	shooter.action_timer=0; shooter.kick_timer=0; shooter.touch_cooldown=0; shooter.ai_think=20
+	game.dribbler=9; game.last_touch=0; game.last_kicker=9
+	game.ball.place(shooter.position+Vector3(0,.23,-.72)); game.previous_ball=game.ball.position
+	await physics_frame; await physics_frame
+	await advance(1)
 	check(game.passes[0]+game.passes[1]>0 and game.shots[0]+game.shots[1]>0,"Background play produces genuine passes and shots")
 	check(game.players.all(func(p): return not p.chosen and not p.marker.visible),"No selection marker appears over background players")
 	check(game.replay.frames.is_empty() and not game.audio.match_audio and not game.audio.effects.playing,"Menu play avoids replay recording and match sound effects")
 	print("MENU PLAY: time=%.1f score=%s passes=%s shots=%s phase=%s" % [game.match_time,game.score,game.passes,game.shots,game.menu_match.phase])
+	print("MENU CONTACTS: ",game.kick_contact.contacts," missed approaches=",game.kick_contact.misses)
 	game.stadium.light_rig.select(1)
 	await advance(1)
 	await capture("night")

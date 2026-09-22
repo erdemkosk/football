@@ -96,6 +96,7 @@ func _draw() -> void:
 		panel(Rect2(5,4,31,16),Color(role_color,.5))
 		label_at(data.role,Vector2(8,15),9,role_color.darkened(.58),true)
 		label_at("%02d" % data.shirt,Vector2(8,34),13,ink,true)
+		label_at(str(data.get("ovr","")),Vector2(size.x-28,34),16,Color("2d6b4a"),true)
 		if data.get("dismissed",false): draw_rect(Rect2(size.x-15,9,7,11),Color("c6433e"))
 		elif data.get("yellow",0)>0: draw_rect(Rect2(size.x-15,9,7,11),Color("bd962e"))
 		var px := 13 if str(data.name).length()<10 else 10
@@ -110,6 +111,7 @@ func _draw() -> void:
 		label_at(data.name,Vector2(66,24),13 if str(data.name).length()<10 else 11,ink,true,size.x-70)
 		label_at(data.position_label,Vector2(67,41),9,muted,true)
 		label_at("#%02d" % data.shirt,Vector2(67,55),10,muted)
+		label_at(str(data.get("ovr","")),Vector2(size.x-36,28),21,Color("2d6b4a"),true)
 		label_at(status if status!="" else ("HAZIR" if eligible else data.get("unavailable","SEÇİLEMİYOR")),Vector2(12,71),9,muted,true)
 		label_at("%d%%" % roundi(energy*100),Vector2(size.x-40,71),10,tint,true)
 		draw_line(Vector2(12,82),Vector2(size.x-12,82),Color("c3cdbf"),3,true)

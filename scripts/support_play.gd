@@ -3,6 +3,7 @@ var game
 var runs: Dictionary = {}
 var targets: Dictionary = {}
 var roles: Dictionary = {}
+var shape := preload("res://scripts/attack_shape.gd").new()
 const ONE_TWO_DISTANCE := 12.0
 const ONE_TWO_TIME := 3.0
 
@@ -10,6 +11,7 @@ func reset() -> void:
 	runs.clear()
 	targets.clear()
 	roles.clear()
+	shape.reset()
 
 func passed(passer: int,receiver: int,one_two: bool=false) -> void:
 	if receiver<0 or game.players[passer].keeper: return
@@ -48,7 +50,8 @@ func update(delta: float) -> void:
 	roles.clear()
 	var owner: int=game.dribbler if game.dribbler>=0 else game.nearest_to_ball(1.4)
 	var team: int=game.players[owner].team if owner>=0 else game.last_touch
-	if owner<0 and game.ai_pass_time[team]<=0: return
+	if game.state!="playing" or owner<0 and game.ai_pass_time[team]<=0:
+		shape.reset(); return
 	var ball: Vector3=game.ball.position
 	var forward: float = game.attack_sign(team)
 	var line: float=game.rules.offside_line(team)-0.8
@@ -56,7 +59,7 @@ func update(delta: float) -> void:
 	var side := signf(ball.x)
 	for i in range(game.players.size()):
 		var p=game.players[i]
-		if not p.visible or p.keeper or p.team!=team or i==owner: continue
+		if not p.visible or p.dismissed or p.keeper or p.team!=team or i==owner: continue
 		var target: Vector3=p.home+Vector3(ball.x*0.18,0,ball.z*0.35+forward*7)
 		var role := "support"
 		if i in runs:
@@ -80,6 +83,29 @@ func update(delta: float) -> void:
 			role="box"
 		elif p.number>=6:
 			target=Vector3(p.home.x*0.8+ball.x*0.2,0,ball.z+forward*(8 if p.number>=10 else -6))
+		if game.career.in_match and role!="one_two":
+			target.x*=([.84,1.0,1.12][game.management.detail(team,"width")])
+			if game.management.slot_role(i)>=2: target.z+=forward*(game.management.detail(team,"runs")-1)*4
+			if game.management.slot_role(i)>=2: target.z+=forward*(game.management.detail(team,"tempo")-1)*2
+			if p.number==7 and game.management.detail(team,"anchor")>0:
+				target.z=forward*minf(target.z*forward,ball.z*forward-9); role="cover_attack"
+			if p.number in [2,5]:
+				var fullback: int=game.management.detail(team,"fullbacks")
+				if fullback==0: target.z=forward*minf(target.z*forward,ball.z*forward-15); role="support"
+				elif fullback==2 and absf(ball.x)>12: target.z=ball.z+forward*10; role="overlap"
+		if team==1:
+			var plan: int=game.team_tactics.plan_for(team)
+			var group: int=game.management.slot_role(i)
+			# Keep a central pair behind attacks so one loss does not expose the keeper.
+			if group==1 and absf(p.home.x)<18:
+				target.z=forward*minf(target.z*forward,ball.z*forward-(9 if plan==2 else 14))
+				role="cover_attack"
+			elif plan==0 and role=="overlap":
+				target.z=ball.z-forward*9; role="support"
+			# A low outlet and a wide outlet help play around sustained user pressing.
+			elif game.opponent_coach.escape_press and group==2 and role=="support":
+				target.x=signf(p.home.x+.01)*clampf(absf(p.home.x)+5,10,27)
+				target.z=ball.z+forward*(-7 if i%2==0 else 5)
 		# Sample receiving space and the passing lane; each role keeps its own
 		# region instead of everybody converging on the nearest empty point.
 		var best := target
@@ -99,6 +125,8 @@ func update(delta: float) -> void:
 			if value>best_value: best_value=value; best=candidate
 		targets[i]=best
 		roles[i]=role
+	shape.game=game
+	shape.update(delta,owner,team,self)
 
 func return_option(holder: int) -> int:
 	for i in runs:
@@ -107,6 +135,9 @@ func return_option(holder: int) -> int:
 		var distance: float=game.flat_distance(p.position,game.ball.position)
 		if distance<4 or distance>23: continue
 		var forward: float = game.attack_sign(p.team)
+		# Ordinary support runs are an option, not an automatic bounce back to
+		# the previous passer. Explicit one-twos retain their quick return.
+		if not runs[i].get("explicit",false) and (p.position.z-game.players[holder].position.z)*forward<2.5: continue
 		if p.position.z*forward>game.rules.offside_line(p.team)-0.2: continue
 		var route=game.Passing.plan(game.ball.position,p.position,p.velocity,false,game.weather)
 		if game.Passing.risk(game.ball.position,route,p.team,game.players)<0.35: return i

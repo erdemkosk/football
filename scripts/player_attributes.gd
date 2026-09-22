@@ -23,4 +23,4 @@ static func multiplier(value: float,spread: float=.14) -> float:
 static func kick_factor(p,point: Vector3) -> float:
 	var foot: int=p.ball_actions.choose_foot(p,point)
 	var weak: float=1.0 if foot==p.attributes.preferred_foot else lerpf(.88,.99,(p.attributes.weak_foot-1)/4.0)
-	return weak*multiplier(p.attributes.finishing,.055)*(1-p.contest_weight*.045)
+	return weak*multiplier(p.attributes.finishing,.13 if p.career_id!="" else .055)*(1-p.contest_weight*.045)

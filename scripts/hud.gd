@@ -2,6 +2,7 @@ extends Control
 const Brand = preload("res://scripts/branding.gd")
 var shot_guide := preload("res://scripts/shot_guide.gd").new()
 var pass_guide := preload("res://scripts/shot_guide.gd").new()
+var landing_guide := preload("res://scripts/ball_landing_guide.gd").new()
 var last_pass: Dictionary = {}
 var pass_trail_time := 0.0
 var pass_trail_kicker := -1
@@ -21,6 +22,7 @@ const MUTE := Color("b4c5bd")
 const LIVE := Rect2(1177,28,229,38)
 
 func _process(delta: float) -> void:
+	landing_guide.update(game,delta)
 	if game.state=="paused": return
 	pass_trail_time=maxf(0,pass_trail_time-delta)
 	if game.state!="playing" or game.last_kicker!=pass_trail_kicker: pass_trail_time=0
@@ -79,6 +81,7 @@ func headline(value: String,p: Vector2,size: int=84,color: Color=PAPER) -> void:
 	draw_string(display,p,value,HORIZONTAL_ALIGNMENT_LEFT,-1,size,color)
 
 func _draw() -> void:
+	if game.state in ["shootout","trophy"]: game.finale.draw(self); return
 	if is_instance_valid(game.controls_help) and game.controls_help.visible: return
 	if game.match_menu!=null and game.match_menu.visible: return
 	if game.frontend!=null and game.frontend.visible: return
@@ -107,17 +110,12 @@ func _draw() -> void:
 		ceremony_overlay()
 		if game.state=="paused": modal()
 		return
+	landing_guide.draw(self)
 	scoreboard()
 	if game.broadcast.active:
 		game.broadcast.draw(self)
 		if game.state=="paused": modal()
 		return
-	if game.training and game.training_drills.mode!="free":
-		panel(Rect2(470,35,495,77),Color(.035,.09,.10,.95),5)
-		center(game.training_drills.title()+" · DENEME %d" % game.training_drills.attempt,Vector2(717,59),13,GOLD)
-		center(game.training_drills.instruction(),Vector2(717,82),10,PAPER,false)
-		if game.controller.using_gamepad: pad_hints(Vector2(610,99),[["START","Yeni deneme için mola"]],18,9)
-		else: center("R · YENİ DENEME     T · ANTRENMAN SEÇİMİ",Vector2(717,100),9,MUTE,false)
 	if game.state=="halftime": halftime_overlay(); return
 	if not game.management.transit.is_empty():
 		panel(Rect2(480,90,480,40))
@@ -127,6 +125,7 @@ func _draw() -> void:
 		return
 	player_info()
 	minimap()
+	game.advanced_controls.draw(self)
 	var p = game.players[game.controlled]
 	var marker: Vector2 = game.screen_position(p.position+Vector3.UP*2.75)
 	if not game.camera.is_position_behind(p.position) and marker.x>0 and marker.x<1440 and marker.y>80 and marker.y<790:
@@ -144,7 +143,12 @@ func _draw() -> void:
 		if game.heading.active(game.controlled):
 			launch=game.heading.launch_velocity(game.controlled,game.aim_direction(),game.charge)
 			curve=0
-			center("KAFA",origin+Vector2(0,-18),11,GOLD)
+		elif game.volleys.active(game.controlled):
+			launch=game.volleys.launch_velocity(game.controlled,game.aim_direction(),game.charge)
+			curve=0
+		if game.finishing.style!="":
+			curve=game.finishing.curve(game.controlled,game.finishing.style)
+			center(game.finishing.LABELS[game.finishing.style],origin+Vector2(0,-18),11,GOLD)
 		var color := Color("8ec6e8",0.92) if chip else (Color("ecad72",0.9) if curl else Color(GOLD,0.8))
 		draw_shot_guide(launch,curve,color)
 		if chip: center("AŞIRT",origin+Vector2(0,-18),11,color)
@@ -155,7 +159,8 @@ func _draw() -> void:
 		draw_pass_guide(route,pass_guide.pass_preview(game.ball.position,route,game.weather),color)
 		panel(Rect2(552,765,336,70),Color(0.035,0.09,0.105,0.94),4)
 		var strength := "KISA" if game.pass_power<0.3 else ("ORTA" if game.pass_power<0.72 else "UZUN")
-		var pass_name: String="HAVADAN "+strength if game.pass_lob else ("KOŞU YOLUNA" if game.pass_through else strength+" PAS")
+		var pass_name: String=("SERT ARA PAS" if game.pass_through else "SERT DÜZ PAS") if game.pass_driven else "HAVADAN "+strength if game.pass_lob else ("KOŞU YOLUNA" if game.pass_through else strength+" PAS")
+		if route.has("distribution"): pass_name="UZUN EL ATIŞI" if route.distribution=="throw" else "ELLE YERDEN PAS"
 		if game.controller.using_gamepad:
 			text(pass_name,Vector2(569,789),13,color,true)
 			pad_hints(Vector2(790,784),[["Y" if game.pass_lob else action_label(KEY_Y if game.pass_through else KEY_S),"Bırak"]],25,12)
@@ -176,7 +181,6 @@ func _draw() -> void:
 	game.coaching.draw(self)
 	if game.state in ["paused","finished"]: modal()
 	elif game.state=="playing" and game.controller.using_gamepad:
-		panel(Rect2(32,852,1070,36),Color(0.04,0.09,0.11,0.94),5,Color(GOLD,0.18))
 		pad_hints(Vector2(44,870),action_hints(),28,12)
 
 func live_mid() -> float:
@@ -257,10 +261,12 @@ func draw_landing_disc(point: Vector3,color: Color,lob: bool) -> void:
 		draw_circle(target,4,Color(color,color.a*0.22))
 
 func action_hints() -> Array:
+	if game.ball.held_by==game.players[game.controlled]:
+		return [[action_label(KEY_S),"Elle pas"],[action_label(KEY_Y),"Uzun atış"],[action_label(KEY_D),"Ayaktan aç"],[action_label(KEY_V),"Yere bırak"],[action_label(KEY_Q),"Oyuncu seç"]]
 	var on_ball: bool=game.has_ball_control(game.controlled)
 	var teammate: bool=not on_ball and game.carrier>=0 and game.players[game.carrier].team==0
-	var shot_label := "Kafa" if game.heading.can_request(game.controlled) else ("Şut" if on_ball else "Müdahale")
-	return [[action_label(KEY_D),shot_label],[action_label(KEY_A),"Orta" if on_ball else "Kayma"],[action_label(KEY_S),"Pas" if on_ball else "Pas iste"],[action_label(KEY_Y),"Ara pas" if on_ball else ("Ara pas iste" if teammate else "Kaleciyi çıkar")],[action_label(KEY_W),"Hızlı koş"],[action_label(KEY_Q),"Oyuncu seç"]]
+	var shot_label: String= "Kafa" if game.heading.can_request(game.controlled) else (game.volleys.label(game.controlled) if game.volleys.can_request(game.controlled) else ("Hava vuruşu" if game.aerial_assist.can_request(game.controlled) else ("Şut" if on_ball else "Müdahale")))
+	return [[action_label(KEY_D),shot_label],[action_label(KEY_A),"Orta" if on_ball else "Kayma"],[action_label(KEY_S),"Pas" if on_ball else ("Baskı (tut)" if game.last_touch!=0 else "Pas iste")],[action_label(KEY_Y),"Ara pas" if on_ball else ("Ara pas iste" if teammate else "Kaleciyi çıkar")],[action_label(KEY_W),"Hızlı koş"],[action_label(KEY_Q),"Oyuncu seç"]]
 
 func ceremony_overlay() -> void:
 	draw_rect(Rect2(0,0,1440,60),Color(0.02,0.04,0.055,0.96))
@@ -280,7 +286,7 @@ func ceremony_overlay() -> void:
 
 func scoreboard() -> void:
 	var extra: float=game.management.added[game.half-1]
-	if extra>0 and game.match_time>=game.LENGTH*game.half*0.5-10:
+	if extra>0 and not game.career.cups.extra_active() and game.match_time>=game.LENGTH*game.half*0.5-10:
 		panel(Rect2(515,28,100,56))
 		center("+%d DK" % roundi(extra*90/game.LENGTH),Vector2(565,64),18,GOLD)
 	panel(Rect2(32,28,476,56),Color(0.045,0.10,0.12,0.95),3)
@@ -292,13 +298,14 @@ func scoreboard() -> void:
 	text(game.clubs.data(1).short,Vector2(262,64),22,PAPER,true)
 	crest(Vector2(338,56),true,0.6)
 	draw_line(Vector2(362,39),Vector2(362,73),Color(1,1,1,0.15))
-	var minutes = mini(90,int(game.match_time/game.LENGTH*90))
+	var extended: bool=game.career.cups.extra_phase>0 and not game.clubs.career_clubs.is_empty()
+	var minutes = mini(120 if extended else 90,int(game.match_time/game.LENGTH*90))
 	var seconds = int(fmod(game.match_time/game.LENGTH*5400,60))
 	var time_label := "%02d:%02d" % [minutes,seconds]
-	if game.match_time>game.LENGTH*game.half*0.5:
+	if not extended and game.match_time>game.LENGTH*game.half*0.5:
 		time_label="%d+%d" % [45*game.half,ceili((game.match_time-game.LENGTH*game.half*0.5)*90/game.LENGTH)]
 	center(time_label,Vector2(435,64),22,GOLD)
-	text("ANTRENMAN" if game.training else ("1. YARI  ·  HÜCUM ↑" if game.half==1 else "2. YARI  ·  HÜCUM ↓"),Vector2(34,104),10,Color(1,1,1,0.8),true)
+	text("ANTRENMAN" if game.training else (("UZATMA  ·  " if extended else "")+("1. YARI  ·  HÜCUM ↑" if game.half==1 else "2. YARI  ·  HÜCUM ↓")),Vector2(34,104),10,Color(1,1,1,0.8),true)
 	panel(LIVE,Color(0.045,0.10,0.12,0.88),3)
 	draw_circle(Vector2(LIVE.position.x+17,LIVE.get_center().y),3.5,Color("f17561"))
 	text("CANLI",Vector2(LIVE.position.x+29,LIVE.position.y+24),11,PAPER,true)
@@ -327,12 +334,14 @@ func set_piece_overlay() -> void:
 	if setup.power>0.02:
 		panel(Rect2(572,848,296,6),Color("39504d"),3)
 		panel(Rect2(572,848,maxf(3,296*setup.power),6),GOLD,3)
-	if setup.button==KEY_D and game.restart_type!="TAÇ":
-		draw_shot_guide(setup.pending_velocity,setup.pending_curve,Color("ecad72") if absf(setup.pending_curve)>0.01 else GOLD)
+	if setup.kind()=="shot":
+		var curl := absf(setup.pending_curve)>0.01
+		draw_shot_guide(setup.pending_velocity,setup.pending_curve,Color("ecad72") if curl else GOLD)
 		return
-	var lob: bool=setup.button==KEY_A or game.restart_type=="TAÇ"
-	var plan := {"target":setup.target,"velocity":setup.pending_velocity,"lob":lob,"receiver":setup.receiver,"flight":4.0,"cross":setup.button==KEY_A}
-	draw_pass_guide(plan,pass_guide.pass_preview(game.ball.position,plan,game.weather),Color("8ec6e8") if lob else Color("a7d9bb"))
+	var lob: bool=setup.kind() in ["cross","throw"]
+	var curl := absf(setup.pending_curve)>0.01
+	var plan := {"target":setup.target,"velocity":setup.pending_velocity,"lob":lob,"receiver":setup.receiver,"flight":4.0,"cross":setup.kind()=="cross"}
+	draw_pass_guide(plan,pass_guide.pass_preview(game.ball.position,plan,game.weather,setup.pending_curve),Color("ecad72") if curl else (Color("8ec6e8") if lob else Color("a7d9bb")))
 
 func crest(p: Vector2,away: bool,scale_value: float=1) -> void:
 	var club: Dictionary=game.clubs.data(1 if away else 0)
@@ -404,6 +413,7 @@ func menu() -> void:
 	text("11'e 11 futbol. Bir sonraki golü sen yaz.",Vector2(70,548),16,MUTE)
 	button(Rect2(68,601,345,64),"HIZLI MAÇ","ENTER",true)
 	button(Rect2(68,681,345,56),"ANTRENMAN","T",false)
+	button(Rect2(440,601,295,64),"KARİYER","",true)
 	button(Rect2(68,751,345,46),"AYARLAR","P",false)
 	button(Rect2(68,820,345,48),"KONTROL REHBERİ","Y" if game.controller.using_gamepad else "F1",false)
 	panel(Rect2(1194,36,208,33),Color(0.03,0.08,0.09,0.75),3)
@@ -451,7 +461,7 @@ func modal() -> void:
 		center("ŞUT  %d – %d     KURTARIŞ  %d – %d" % [game.shots[0],game.shots[1],game.saves[0],game.saves[1]],Vector2(720,458),14,PAPER)
 		var total: float = maxf(0.01,game.possession[0]+game.possession[1])
 		center("TOPA SAHİP OLMA  %%%d – %%%d" % [int(game.possession[0]/total*100),int(game.possession[1]/total*100)],Vector2(720,488),12,MUTE)
-		button(Rect2(490,526,460,58),"TEKRAR OYNA","ENTER",true)
+		button(Rect2(490,526,460,58),"KARİYERE DÖN" if not game.clubs.career_clubs.is_empty() else "TEKRAR OYNA","ENTER",true)
 		button(Rect2(490,600,460,54),"ANA MENÜ","←",false)
 	if game.state=="paused": button(Rect2(490,660,460,34),"KONTROL REHBERİ","F1",false)
 
@@ -459,6 +469,7 @@ func sync_navigation() -> void:
 	var state: String=game.state if game.state in ["menu","paused","finished","halftime","ceremony","replay","goal"] else ""
 	if state=="" and can_skip_to_kickoff(): state="kickoff_skip"
 	var covered: bool=(is_instance_valid(game.match_menu) and game.match_menu.visible) or (is_instance_valid(game.frontend) and game.frontend.visible) or (is_instance_valid(game.controls_help) and game.controls_help.visible)
+	covered=covered or (is_instance_valid(game.career_screen) and game.career_screen.visible)
 	covered=covered or (is_instance_valid(game.training_menu) and game.training_menu.visible) or (game.broadcast.active and game.state!="paused")
 	help_launcher.visible=not covered and state in ["","finished"]
 	help_launcher.text="" if game.controller.using_gamepad else "F1  ·  KONTROL REHBERİ"
@@ -477,6 +488,7 @@ func sync_navigation() -> void:
 				nav_button(Rect2(68,681,345,56),game.training_menu.open_menu)
 				nav_button(Rect2(68,751,345,46),game.match_menu.open_menu)
 				nav_button(Rect2(68,820,345,48),game.controls_help.open_panel)
+				nav_button(Rect2(440,601,295,64),game.career_screen.open_entry)
 			"paused":
 				nav_button(Rect2(490,420,460,55),game.resume)
 				nav_button(Rect2(490,485,460,48),game.reset_practice if game.training else game.frontend.open_tactics)
@@ -485,7 +497,7 @@ func sync_navigation() -> void:
 				nav_button(Rect2(730,601,220,48),game.return_menu)
 				nav_button(Rect2(490,660,460,34),game.controls_help.open_panel)
 			"finished":
-				nav_button(Rect2(490,526,460,58),game.frontend.open_selection)
+				nav_button(Rect2(490,526,460,58),game.career_screen.open_hub if not game.clubs.career_clubs.is_empty() else game.frontend.open_selection)
 				nav_button(Rect2(490,600,460,54),game.return_menu)
 			"halftime": nav_button(Rect2(510,564,420,54),game.interval.finish)
 			"ceremony": nav_button(Rect2(1175,825,225,40),game.ceremony.finish.bind(true))
@@ -499,6 +511,9 @@ func sync_navigation() -> void:
 			item.focus_neighbor_right=item.focus_neighbor_bottom
 			item.focus_next=item.focus_neighbor_bottom
 			item.focus_previous=item.focus_neighbor_top
+		if state=="menu":
+			nav_buttons[0].focus_neighbor_right=nav_buttons[0].get_path_to(nav_buttons[4])
+			nav_buttons[4].focus_neighbor_left=nav_buttons[4].get_path_to(nav_buttons[0])
 	for item in nav_buttons: item.show()
 	if not nav_buttons.is_empty() and not nav_buttons.has(get_viewport().gui_get_focus_owner()): nav_buttons[nav_index].grab_focus()
 

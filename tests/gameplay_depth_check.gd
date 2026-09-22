@@ -29,6 +29,14 @@ func setup() -> void:
 	game.ball.place(Vector3(0,0.23,-0.82))
 	await physics_frame
 	await physics_frame
+func contact() -> void:
+	for frame in range(20):
+		if game.kick_contact.pending.is_empty(): return
+		var actor=game.players[game.kick_contact.pending.index]
+		game.kick_contact.prepare(1.0/120)
+		actor.step(1.0/120)
+		game.kick_contact.resolve()
+		await physics_frame
 func capture(label: String,focus: Vector3,size: float=7) -> void:
 	if not visual: return
 	game.hud.visible=false
@@ -63,6 +71,7 @@ func run() -> void:
 	for i in game.support.targets: onside=onside and -game.support.targets[i].z<=game.rules.offside_line(0)+0.01
 	check(onside,"Support runs stay behind the current offside line")
 	game.deliver_pass(8,7,false)
+	await contact()
 	for frame in range(30): await physics_frame
 	game.support.update(0.02)
 	check(8 in game.support.runs and game.support.roles.get(8,"")=="give_go","A real pass starts a forward give-and-go run")
@@ -97,6 +106,7 @@ func run() -> void:
 	game.call_for_pass(false)
 	game.update_pass_request(0.3)
 	game.update_ai(0.01)
+	await contact()
 	check(game.last_kicker==6 and game.ai_receivers[0]==9 and game.passes[0]==1,"The user's pass request returns an open give-and-go pass to the runner")
 	game.support.passed(9,6)
 	game.players[17].visible=true
@@ -120,7 +130,8 @@ func run() -> void:
 	check(game.players[9].skill_cooldown==cooldown,"Skill cooldown prevents repeated input spam")
 	for frame in range(60): game.players[9].step(1.0/120); await physics_frame
 	key(KEY_V,true); key(KEY_V,false)
-	check(game.dribbler==-1 and game.ball.pending_kick,"V releases the ball for a push into space")
+	check(game.dribbler==-1 and not game.kick_contact.pending.is_empty(),"V releases the ball for a push into space")
+	await contact()
 	for frame in range(35): await physics_frame
 	check(game.flat_distance(game.ball.position,game.players[9].position)>2,"The pushed ball actually travels ahead of the player")
 	await setup()
@@ -259,6 +270,7 @@ func run() -> void:
 	game.goalkeeping.reset()
 	game.ball.release_hold()
 	keeper.action_timer=0
+	keeper.touch_cooldown=0; keeper.tackle_cooldown=0
 	keeper.pose="run"
 	keeper.position=Vector3(0,0,-47)
 	keeper.velocity=Vector3.ZERO
@@ -269,10 +281,17 @@ func run() -> void:
 	game.last_touch=0
 	game.goalkeeping.update(11,0.01)
 	check(game.goalkeeping.holding==11 and game.ball.held_by==keeper,"A slow ball at the gloves can be caught")
-	for frame in range(160):
+	for frame in range(270):
 		game.goalkeeping.update(11,1.0/120)
+		game.keeper_distribution.update(1.0/120)
+		game.ai_attack.finishing.game=game
+		game.ai_attack.finishing.prepare(1.0/120)
 		keeper.step(1.0/120)
+		game.keeper_distribution.resolve()
+		game.ai_attack.finishing.resolve()
 		await physics_frame
+	if game.goalkeeping.holding!=-1 or game.ball.held_by!=null or game.last_kicker!=11:
+		print("DISTRIBUTION TRACE ",game.goalkeeping.holding," held=",game.ball.held_by," kicker=",game.last_kicker," pose=",keeper.pose," action=",keeper.action_timer," distribution=",game.keeper_distribution.pending," finishing=",game.ai_attack.finishing.pending," save_age=",keeper.motion_clock-keeper.keeper_motion.saved_at)
 	check(game.goalkeeping.holding==-1 and game.ball.held_by==null and game.last_kicker==11,"Keeper releases a held ball through a real distribution")
 	game.players[9].position=Vector3(-11,0,-43)
 	game.ball.place(Vector3(0,1,-47),Vector3(0,0,-25))

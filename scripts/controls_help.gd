@@ -11,20 +11,20 @@ var paused_match := false
 var tabs: Array[Button] = []
 var device_buttons: Array[Button] = []
 var close_button: Button
-const TITLES := ["PAS & ŞUT","SAVUNMA","TOP KONTROLÜ","MAÇ & MENÜ"]
+const TITLES := ["PAS & ŞUT","SAVUNMA","TOP KONTROLÜ","MAÇ & MENÜ","ÇALIMLAR","BİTİRİCİLİK","ÖZEL PAS","KALECİ"]
 const CARD := Rect2(390,84,1010,744)
 
 func _ready() -> void:
 	setup_style()
 	visible=false
 	mouse_filter=Control.MOUSE_FILTER_STOP
-	for i in range(4):
-		var tab := make_button(self,Rect2(422+i*146,192,138,40),TITLES[i],select_page.bind(i))
-		tab.add_theme_font_size_override("font_size",13)
+	for i in range(TITLES.size()):
+		var tab := make_button(self,Rect2(422+i*118,192,112,40),TITLES[i],select_page.bind(i))
+		tab.add_theme_font_size_override("font_size",11)
 		tabs.append(tab)
-	device_buttons.append(make_button(self,Rect2(1040,192,156,40),game.controller.family_label(),select_device.bind(true)))
+	device_buttons.append(make_button(self,Rect2(1040,146,156,34),game.controller.family_label(),select_device.bind(true)))
 	device_buttons[0].add_theme_font_size_override("font_size",13)
-	device_buttons.append(make_button(self,Rect2(1208,192,160,40),"KLAVYE",select_device.bind(false)))
+	device_buttons.append(make_button(self,Rect2(1208,146,160,34),"KLAVYE",select_device.bind(false)))
 	close_button=make_button(self,Rect2(1168,766,200,40),"KAPAT  ×",close_panel,true)
 	var close_icon := make_button(self,Rect2(1324,110,44,38),"×",close_panel)
 	close_icon.focus_mode=Control.FOCUS_NONE
@@ -56,6 +56,7 @@ func open_panel() -> void:
 		game.state="paused"
 		game.ball.freeze=true
 	game.charging=false; game.charge=0; game.cancel_pass()
+	game.reset_advanced_play()
 	game.aiming_mouse=false
 	game.goalkeeping.stop_rush()
 	game.set_pieces.button=0; game.set_pieces.power=0
@@ -117,7 +118,44 @@ func combo(title: String,detail: String,keys: String,enabled: bool) -> Dictionar
 	item.pad_keys=true
 	return item
 
+func advanced_entry(title: String,detail: String,pad_keys: String,keyboard_keys: String) -> Dictionary:
+	return entry(title,detail,pad_keys if use_pad else keyboard_keys)
+
 func rows() -> Array:
+	if page==4:
+		return [
+			advanced_entry("Roulette","Topu saklayarak tam dönüş. Analog yönleri oyuncunun baktığı yöne göredir.","RS ↓","1"),
+			advanced_entry("Ball roll","Tabanla yana taşı. Sağ / sol yön hangi ayağın kullanılacağını seçer.","RS ← / →","2 + YÖN"),
+			advanced_entry("Elastico","Dışa göster, içe çek. Sağ analogu hızla bir yandan diğerine çevir.","RS → ←","3 + YÖN"),
+			advanced_entry("Scoop turn","Topu hafif kaldırarak çapraz dön. Düşük hızda daha kontrollüdür.","RS ↑","4 + YÖN"),
+			entry("Kısa vücut çalımı","Yakın kontrolde kısa aldatma; koşuya devam edebilirsin.",binding(KEY_Z)),
+			entry("Topu ileri aç","Topu öne it; boş alanda arkasından hızlan.",binding(KEY_V)),
+			advanced_entry("Bağlama göre sağ analog","Top ayağında: çalım. Savunmada: oyuncu seç. Şut hazırlarken: nişan.","RS","YÖN TUŞLARI"),
+			advanced_entry("Hareket sınırı","Çalımlar kondisyon harcar; kısa toparlanma ister. Rakip topu alabilir.","LS","↑ ↓ ← →")]
+	if page==5:
+		return [
+			advanced_entry("Alçak sert şut","Hazırla ve bırak; güçlü, düşük yükselişli vuruş.","RB + "+binding(KEY_D),"CTRL + "+binding(KEY_D)),
+			advanced_entry("Power shot","Daha uzun hazırlık, daha sert vuruş. Hazırlıkta top kapılabilir.","LB + RT + "+binding(KEY_D),"SHIFT + "+binding(KEY_D)),
+			advanced_entry("Dış ayak","Ayağın dışıyla ters yönde kavis. Yön ve güç sende kalır.","LB + LT + "+binding(KEY_D),"ALT + "+binding(KEY_D)),
+			advanced_entry("Zamanlamalı şutu seç","Sonraki normal şut için zamanlamayı aç / kapat.","L3","5"),
+			entry("Timed finishing","Özel şutu bırak; çubuk yeşile gelince şuta tekrar bas. Erken basmak zayıflatır.",binding(KEY_D)+" → "+binding(KEY_D)),
+			entry("İkinci basış isteğe bağlı","Tek basışla normal kalitede vurur. Zamanlama golü garanti etmez.",binding(KEY_D)),
+			entry("Vole / kafa","Top gelmeden şutu hazırla. Kısa adım, uzanma ve gerekirse küçük sıçramayla uygun vuruş seçilir.",binding(KEY_D))]
+	if page==6:
+		return [
+			advanced_entry("Sert düz pas","Yön ver, gücü ayarla ve bırak. Daha hızlı gider; kontrolü daha zordur.","RB + "+binding(KEY_S),"CTRL + "+binding(KEY_S)),
+			advanced_entry("Yerden sert ara pas","Savunma arasına hızlı yerden pas. Mesafeyi basılı tutarak ayarla.","RB + "+binding(KEY_Y),"CTRL + "+binding(KEY_Y)),
+			advanced_entry("Dummy / bırak geç","Takım arkadaşının alçak pasını kontrol etmeden arkandaki oyuncuya bırak.","L3","U"),
+			entry("Ara pas","Yönündeki koşu alanına yarı yardımlı pas; boşluğa da oynayabilirsin.",binding(KEY_Y)),
+			advanced_entry("Verkaç","Pas veren oyuncu sınırlı bir koşu yapar; dönüş pasını sen verirsin.","LB + "+binding(KEY_S),"KONTROLCÜ: LB + A")]
+	if page==7:
+		return [
+			entry("Elle yerden dağıtım","Top eldeyken yönünü seç; kısa dokun veya mesafe için basılı tutup bırak.",binding(KEY_S)),
+			entry("Uzun el atışı","Topu seçtiğin yöne omuz üzerinden fırlat. Basılı tutarak gücü ayarla.",binding(KEY_Y)),
+			entry("Ayaktan açış","Şutu hazırla ve bırak: top elden düşer, ayağa temasla havadan açılır.",binding(KEY_D)),
+			entry("Yere bırak","Topu elden sahaya bırak; ardından normal pas veya şutla devam et.",binding(KEY_V)),
+			advanced_entry("Serbest yön ve güç","Kullanıcı kalecisi kendiliğinden güvenli oyuncuya pas vermez.","LS","↑ ↓ ← →"),
+			entry("Kaleciyi çıkar","Rakip hücumdayken basılı tut; bıraktığında kaleye döner.",binding(KEY_Y))]
 	var lb: bool=game.controller.bindings.get(JOY_BUTTON_LEFT_SHOULDER)==KEY_Q
 	match page:
 		0:
@@ -129,7 +167,7 @@ func rows() -> Array:
 				entry("Orta","Kanattan ceza sahasına havadan gönder.",binding(KEY_A)),
 				combo("Yerden sert orta","Orta tuşuna hızlıca iki kez bas. Top yerden sert gider.","B × 2",game.controller.bindings.get(JOY_BUTTON_B)==KEY_A),
 				entry("Şut","Sol analogla nişan; koşudan bağımsız yön: D-pad / sağ analog." if use_pad else "Basılı tut → bırak. Yönle küçük nişan düzeltmeleri yap.",binding(KEY_D)),
-				entry("Kafa vuruşu","Orta yaklaşırken şuta bas → yön ver → bırak. Oyuncu topa yükselir; temas ederse kafayla vurur.",binding(KEY_D)),
+				entry("Vole / kafa","Top gelirken şuta erken basabilirsin. Oyuncu yerleşir; uygun ayak/kafa vuruşunu seçer. Yön ver → bırak.",binding(KEY_D)),
 				entry("Falsolu şut","Şutu hazırlarken top koruma tuşunu da basılı tut.",binding(KEY_E)+" + "+binding(KEY_D)),
 				combo("Verkaç","Pası ver; pası atan oyuncu kısa bir ileri koşu yapsın.","LB + A",lb)]
 		1:
@@ -138,11 +176,15 @@ func rows() -> Array:
 				entry("Kayarak müdahale","Topsuzken kay. Önce rakibe temas edersen faul olabilir.",binding(KEY_A) if use_pad else binding(KEY_X)),
 				entry("Kaleciyi çıkar","Savunmada basılı tut; bırakınca kaleci yerine döner.",binding(KEY_Y)),
 				entry("Oyuncu değiştir","Tehlikeye yakın oyuncuyu seç; yön vererek seçimi etkile.",binding(KEY_Q)),
-				entry("Rakibi karşıla","Basılı tut; topa dönük kısa, kontrollü adımlarla savun.",binding(KEY_E))]
+				entry("Rakibi karşıla","Basılı tut; topa dönük kısa, kontrollü adımlarla savun.",binding(KEY_E)),
+				advanced_entry("İkinci adam baskısı","Rakipteyken tut: yeşil PRES oyuncusu basar. En fazla 4 sn; kondisyon harcar.",binding(KEY_S)+" TUT","SPACE TUT"),
+				advanced_entry("Omuz mücadelesi","Rakibin yanında omuz koy. Arkadan veya topsuz itiş faul olabilir.","L3","J"),
+				advanced_entry("Pas arası","Ayağını pas yoluna uzat. Doğru zamanlamayla topu keser; ıskalayabilir.","LT + "+binding(KEY_D),"L"),
+				advanced_entry("Yönlü oyuncu seçimi","Savunmada sağ analogu hedefe it. LB/Q'nun sonraki hedefi sahada işaretlidir.","RS / LB + LS","Q + YÖN") ]
 		2:
 			return [
 				entry("Hareket","Oyuncuyu yönlendir; son hareket yönün pas ve şuta temel olur.","SOL ANALOG" if use_pad else "↑  ↓  ←  →"),
-				entry("Hızlı koş","Hareket ederken basılı tut. Kondisyon harcar.",binding(KEY_W)),
+				entry("Hızlı koş","Basılı tut: sprint. Hızlıca iki bas: topu ileri açıp peşinden koş. Kondisyon harcar.",binding(KEY_W)),
 				entry("Topu sakla","Basılı tut; vücudunu rakiple topun arasına koy.",binding(KEY_E)),
 				entry("Kısa çalım","Vücut çalımıyla topu yana al." if not use_pad or binding(KEY_Z)!="Atanmamış" else "Ayarlar → Tuş atama bölümünden bir tuş seç.",binding(KEY_Z)),
 				entry("Topu ileri aç","Topu önüne bırak, ardından hızlanarak yetiş.",binding(KEY_V)),
@@ -157,7 +199,7 @@ func rows() -> Array:
 		entry("Ayarlar","Ses, kontrolcü, tuş atama ve oyun tercihleri.","MENÜDEN" if use_pad else "P"),
 		entry("Seremoni / golü geç","Töreni, gol kutlamasını, tekrarı veya devre arasını geç; santradan başla.","A" if use_pad else "SPACE"),
 		entry("Hava durumu","Açık, yağmurlu ve sağanak arasında geç.","MENÜDEN" if use_pad else "H"),
-		entry("Kamera","C: kenar (açılış), yayın, saha, kale ve taktik açıları. Fare tekeri: yakınlaştır / uzaklaştır.","KLAVYE: C" if use_pad else "C / TEKER"),
+		entry("Kamera","Ayarlar → Görüntü & Oyun: kamera, uzaklık ve yükseklik. C açı değiştirir; fare tekeri yakınlaştırır.","AYARLARDAN" if use_pad else "C / TEKER"),
 		entry("FPS paneli","Kare hızı ve performans grafiğini aç / kapat.","KLAVYE: F" if use_pad else "F"),
 		entry("Ses aç / kapat","Tüm oyun seslerini aç veya sessize al.","AYARLARDAN" if use_pad else "M")]
 

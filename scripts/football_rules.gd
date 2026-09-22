@@ -129,6 +129,7 @@ func foul(offender: int,victim: int,reckless: bool=false,severe: bool=false) -> 
 	if booking: book(offender,severe,victim)
 	game.begin_restart("PENALTI" if penalty else "SERBEST VURUŞ",p.team,Vector3(0,0,goal_side*39) if penalty else point)
 	if booking: game.referees.show_card(offender_player.position,card_red,severe)
+	game.stadium.react("foul",offender_player.team,point)
 	var remaining := 0
 	for teammate in game.players:
 		if teammate.team==offender_player.team and not teammate.dismissed: remaining+=1
@@ -148,6 +149,7 @@ func book(offender: int,direct: bool=false,victim: int=-1) -> void:
 	if card_red:
 		game.send_off.begin(offender,victim)
 		p.dismissed=true
+		game.career.remember_player(p)
 		p.visible=false
 		p.collision_layer=0
 		p.desired=Vector3.ZERO
@@ -167,6 +169,7 @@ func update_advantage(delta: float) -> void:
 		advantage.clear()
 		game.begin_restart("SERBEST VURUŞ",decision.team,decision.point)
 		game.announce("AVANTAJ OLUŞMADI · FAULE DÖNÜLDÜ")
+		game.stadium.react("foul",1-int(decision.team),decision.point)
 	elif advantage.age>=3.0:
 		advantage.clear()
 

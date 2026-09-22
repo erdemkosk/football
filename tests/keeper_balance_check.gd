@@ -29,7 +29,9 @@ func shot(distance: float,speed: float,corner: float,height: float,offset: float
 	game.ball.freeze=false; game.ball.place(origin)
 	await physics_frame; await physics_frame
 	game.kick_lock=0; game.last_touch=1-team
-	game.strike(shooter_index,velocity,0,false,"shot")
+	# This fixture starts at ball release and only steps the keeper. Ordinary
+	# shooter approach/contact is covered independently by motion_contact_check.
+	game.commit_strike(shooter_index,velocity,0,false,"shot")
 	var peak_x := 0.0
 	var goal := false
 	var closest := INF

@@ -10,6 +10,7 @@ var popup_option: OptionButton
 const DIRECTIONS := {JOY_BUTTON_DPAD_LEFT:Vector2i.LEFT,JOY_BUTTON_DPAD_RIGHT:Vector2i.RIGHT,JOY_BUTTON_DPAD_UP:Vector2i.UP,JOY_BUTTON_DPAD_DOWN:Vector2i.DOWN}
 
 func screen() -> String:
+	if is_instance_valid(game.career_screen) and game.career_screen.visible: return "career:"+game.career_screen.page
 	if is_instance_valid(game.controls_help) and game.controls_help.visible: return "controls_help"
 	if is_instance_valid(popup_option) and popup_option.get_popup().visible: return "option:"+str(popup_option.get_instance_id())
 	if is_instance_valid(game.match_menu) and game.match_menu.visible:
@@ -92,6 +93,8 @@ func handle(event: InputEvent) -> bool:
 		if event.button_index in [JOY_BUTTON_B,JOY_BUTTON_BACK,JOY_BUTTON_START]: popup_option.get_popup().hide()
 	elif game.controls_help.visible:
 		game.controls_help.handle(event)
+	elif is_instance_valid(game.career_screen) and game.career_screen.visible:
+		game.career_screen.handle(event)
 	elif game.match_menu.visible:
 		if event.button_index in [JOY_BUTTON_LEFT_SHOULDER,JOY_BUTTON_RIGHT_SHOULDER]:
 			game.match_menu.show_page(posmod(game.match_menu.page+(-1 if event.button_index==JOY_BUTTON_LEFT_SHOULDER else 1),4))
@@ -113,6 +116,9 @@ func move(value: Vector2i) -> void:
 	if value.x!=0 and focus is HSlider:
 		focus.value+=value.x*focus.step
 		return
+	if value.x!=0 and is_instance_valid(game.frontend) and game.frontend.visible and game.frontend.stage=="teams":
+		if game.frontend.try_carousel(focus,value.x):
+			return
 	if value.x!=0 and focus is OptionButton:
 		choose(focus,value.x)
 		return
@@ -128,6 +134,9 @@ func activate() -> void:
 		if index>=0 and not option.is_item_disabled(index):
 			option.select(index)
 			option.item_selected.emit(index)
+		return
+	if is_instance_valid(game.frontend) and game.frontend.visible and game.frontend.stage=="teams" and game.frontend.pick_step<2:
+		game.frontend.pick_current()
 		return
 	var focus: Control=game.get_viewport().gui_get_focus_owner()
 	if focus is OptionButton:

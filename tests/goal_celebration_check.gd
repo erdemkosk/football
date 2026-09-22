@@ -109,7 +109,9 @@ func scenario(team: int) -> void:
 			game._input(key(KEY_S,false))
 		for i in range(240):
 			await tick()
-			if game.state=="playing": break
+			# Play opens as the kick is prepared; the physical foot contact and
+			# RigidBody update follow over the next few simulation steps.
+			if game.state=="playing" and game.ball.linear_velocity.length()>2: break
 		check(game.state=="playing" and game.last_touch==1-team and game.ball.linear_velocity.length()>2,"A real kickoff pass releases play for the conceding team")
 	if not ready:
 		print("BLOCKED ball=%s taker=%s" % [game.ball.position,game.set_pieces.taker])

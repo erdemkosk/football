@@ -91,6 +91,8 @@ func standing_tackle(index: int) -> void:
 	var facing: Vector3=(game.ball.position-p.position)*Vector3(1,0,1)
 	if facing.length()>0.1: p.facing=facing.normalized()
 	p.pose="poke"
+	p.tackle_foot=p.ball_actions.choose_foot(p,game.ball.position)
+	p.tackle_target=game.ball.position
 	p.action_timer=0.38
 	p.tackle_cooldown=0.85
 	p.sprinting=false
@@ -105,7 +107,7 @@ func resolve(delta: float) -> void:
 		attempts.erase(i)
 		var a: Vector3=p.position*Vector3(1,0,1)
 		var owner: int=game.dribbler
-		var end: Vector3=a+p.facing*poke_reach(owner)
+		var end: Vector3=a+p.facing*poke_reach(owner)*p.Attributes.multiplier(p.attributes.get("defending",72),.075)
 		var ball: Vector3=game.ball.position*Vector3(1,0,1)
 		var victim := -1
 		var body_distance := INF
@@ -138,6 +140,17 @@ func resolve(delta: float) -> void:
 				q.body_language.contact(q,-from_victim,0.25)
 				p.velocity*=0.88
 
+func ai_poke_window(index: int,owner: int) -> bool:
+	var p=game.players[index]
+	# A poke commits for 120 ms. If a runner will have already left its path,
+	# keep moving and get alongside instead of repeatedly stabbing behind him.
+	var start: Vector3=p.position*Vector3(1,0,1)+p.velocity*Vector3(1,0,1)*.065
+	var now: Vector3=game.ball.position*Vector3(1,0,1)
+	var future: Vector3=now+game.ball.linear_velocity*Vector3(1,0,1)*.12
+	var aim: Vector3=(now-p.position*Vector3(1,0,1)).normalized()
+	var end: Vector3=start+aim*poke_reach(owner)*p.Attributes.multiplier(p.attributes.get("defending",72),.075)
+	return Geometry3D.get_closest_point_to_segment(future,start,end).distance_to(future)<poke_ball_radius(owner)*.9
+
 func ai_can_challenge(index: int,owner: int,sliding: bool=false) -> bool:
 	if owner<0: return false
 	var p=game.players[index]
@@ -148,10 +161,25 @@ func ai_can_challenge(index: int,owner: int,sliding: bool=false) -> bool:
 	var near := Geometry3D.get_closest_point_to_segment(body,start,ball)
 	var blocked := near.distance_to(body)<(0.64 if sliding else 0.36) and start.distance_to(body)+0.15<start.distance_to(ball)
 	if blocked or not ball_exposed(index,owner): return false
+	if p.team==1:
+		var box: bool=absf(body.x)<20.16 and body.z*game.attack_sign(p.team)<-33.5
+		var cautious: bool=box or p.yellow_cards>0
+		var facing: Vector3=(start-body).normalized()
+		var behind: bool=facing.dot(q.facing)<-.35
+		var closing: float=maxf(0,(p.velocity-q.velocity).dot(-facing))
+		# Penalize the attempted path through a leg, not the result of a dice roll.
+		var clearance: float=near.distance_to(body)
+		var first_to_ball: bool=start.distance_to(ball)+.18<start.distance_to(body)
+		if cautious and (behind or closing>7.0 or (clearance<.62 and not first_to_ball)): return false
+		if sliding and (p.yellow_cards>0 or (box and (clearance<.95 or not first_to_ball))): return false
 	# AI slides only into a loose, reachable ball; jockeying handles protected possession.
 	return not sliding or (ball_opened(owner) and game.ball.position.y<0.65 and start.distance_to(ball)<2.2)
 
 func switch_choice() -> int:
+	var direction: Vector3=game.movement_input()
+	if direction.length()>.3:
+		var directional: int=game.defending.directional_choice(direction)
+		if directional>=0: return directional
 	var threat: Vector3=game.ball.position+game.ball.linear_velocity.limit_length(20)*0.38
 	if game.dribbler>=0 and game.players[game.dribbler].team==1:
 		threat=game.players[game.dribbler].position+game.players[game.dribbler].velocity*0.5

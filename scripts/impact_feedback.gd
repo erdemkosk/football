@@ -25,6 +25,20 @@ func offset() -> Vector3:
 	var envelope := pow(1-age/duration,2)
 	return (axis*sin(age*53)+Vector3(0,0,1)*sin(age*37)*0.28)*amplitude*envelope
 
+func net_contact(point: Vector3,direction: Vector3,strength: float) -> void:
+	if game.menu_match.running or game.state not in ["playing","goal","restart","set_piece"]: return
+	var scored: bool=game.state=="goal"
+	game.audio.net_contact(strength,scored)
+	last_kind="net"
+	event_count+=1
+	var nearby: bool=game.flat_distance(point,game.players[game.controlled].position)<18
+	if not scored and not nearby: return
+	age=0
+	duration=lerpf(0.26,0.46,strength)
+	amplitude=lerpf(0.035,0.22,strength)*(1.0 if scored else 0.4)
+	axis=direction.normalized()
+	if scored: game.controller.net_rumble(strength,game.goal_team==0)
+
 func contact(kind: String,index: int,point: Vector3,direction: Vector3,strength: float,victim: int=-1) -> void:
 	last_kind=kind
 	event_count+=1

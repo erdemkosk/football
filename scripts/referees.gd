@@ -101,6 +101,7 @@ func show_card(point: Vector3,second_yellow: bool,direct: bool=false) -> void:
 	card_queue.assign(["red"] if direct else (["yellow","red"] if second_yellow else ["yellow"]))
 	card_stage="approach"
 	card_age=0
+	game.stadium.react("card",0,point)
 
 func ready_for_restart() -> bool:
 	return card_stage=="" and not game.send_off.blocks_restart()

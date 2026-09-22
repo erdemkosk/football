@@ -19,6 +19,8 @@ func reset() -> void:
 	rush_requested=false
 	returning=false
 	reads.clear()
+	for p in game.players:
+		if p.keeper: p.keeper_motion.reset()
 
 func shot_read(index: int,delta: float) -> Dictionary:
 	var p=game.players[index]
@@ -42,10 +44,12 @@ func shot_read(index: int,delta: float) -> Dictionary:
 			if fraction>0.15 and fraction<0.85 and (offset-line*fraction).length()<0.65: screened=true; break
 		var fatigue: float=1.0-p.energy
 		var delay: float=[0.28,0.23,0.18][difficulty]+variation.randf_range(-0.025,0.025)+fatigue*0.055
+		delay/=p.Attributes.multiplier(p.attributes.get("reflexes",72),.25)
 		# Faster balls leave less time to judge the interception point. Keep this
 		# as one small, persistent read error rather than a forced save/goal roll.
 		var pace_error: float=clampf((velocity.length()-20)/16,0,1)*0.13
 		var error: float=[0.42,0.33,0.21][difficulty]+pace_error+fatigue*0.12+game.weather.rain*0.08
+		error/=p.Attributes.multiplier(p.attributes.get("positioning",72),.28)
 		if screened: delay+=0.06; error+=0.16
 		# One imperfect read per incoming ball, never a random roll every frame.
 		if variation.randf()<0.10: delay+=0.055; error+=0.30
@@ -65,6 +69,7 @@ func handling_error(index: int,read: Dictionary) -> bool:
 	var pace: float=clampf((game.ball.linear_velocity.length()-16)/18,0,1)
 	var difficult: float=pace*0.21+game.weather.rain*0.13+(1-p.energy)*0.08+(0.06 if read.screened else 0.0)
 	if p.pose=="dive": difficult+=0.06
+	difficult/=p.Attributes.multiplier(p.attributes.get("handling",72),.3)
 	return read.handling<difficult
 
 func loose_parry(index: int) -> Vector3:
@@ -134,30 +139,14 @@ func update(index: int,delta: float) -> Vector3:
 	if holding==index:
 		if game.ball.held_by!=p: reset(); return target
 		hold_age+=delta
-		p.set_piece_pose="carry"
+		if game.keeper_distribution.active(index): return p.position
+		p.set_piece_pose="" if p.pose.begins_with("keeper_") and p.action_timer>0 else "carry"
 		if not game.is_user_player(index) or (not game.charging and not game.pass_charging and p.desired.length()<0.05):
 			p.facing=Vector3(0,0,forward)
 		game.ball.hold_target=p.hand_center()
 		modes[index]="hold"
-		if hold_age>1.15 and game.autonomous_kicks(p.team):
-			var receiver := -1
-			var best_risk := 0.5
-			for j in range(game.players.size()):
-				var q=game.players[j]
-				if not q.visible or q.team!=p.team or q.keeper: continue
-				var distance: float=game.flat_distance(p.position,q.position)
-				if distance<7 or distance>28: continue
-				var route=game.Passing.plan(ball,q.position,q.velocity,false,game.weather)
-				var risk: float=game.Passing.risk(ball,route,p.team,game.players)
-				if risk<best_risk: best_risk=risk; receiver=j
-			p.set_piece_pose=""
-			holding=-1
-			if receiver>=0: game.deliver_pass(index,receiver,false)
-			else: game.strike(index,Vector3(7 if ball.x>=0 else -7,7,forward*22))
-			p.kick_timer=0
-			p.set_piece_pose="throw"
-			p.handling_blend=0.75
-			p.wall_hold=0.4
+		if hold_age>1.15+game.management.reaction(p.team)*.35 and game.autonomous_kicks(p.team):
+			game.ai_attack.distribute(index)
 		return p.position
 	var read := shot_read(index,delta)
 	var reacting: bool=not read.is_empty() and read.age<read.delay
@@ -197,6 +186,9 @@ func update(index: int,delta: float) -> Vector3:
 			var height: float=read.height
 			target.x=clampf(predicted,-4.3,4.3)
 			var reach: float=predicted-p.position.x
+			if absf(reach)<1.15 and time<.30 and time>.04 and height<1.65:
+				var style := "foot" if height<.55 else "spread"
+				p.keeper_motion.start(p,style,Vector3(predicted,height,p.position.z))
 			if absf(reach)>1.05 and absf(reach)<3.9 and time<0.52 and height<2.65:
 				p.start_dive(reach,height,time)
 	if called and p.action_timer<=0:
@@ -211,8 +203,18 @@ func update(index: int,delta: float) -> Vector3:
 			stop_rush()
 		return target
 	# Every hand save requires proximity and the ball inside the penalty area.
+	var rebound: bool=game.last_kicker==index and p.motion_clock-p.keeper_motion.saved_at<2.2
+	if rebound and in_box and game.flat_distance(p.position,ball)<4:
+		# Recover where the first save landed, then attack the loose ball. An
+		# automatic retreat to the goal line would abandon every second attempt.
+		target=ball+bv*.12 if p.keeper_motion.rebound_ready(p) else p.position
+		modes[index]="rebound"
+	if in_box and (game.last_touch!=p.team or rebound) and ball.y<.7 and bv.length()<12 and game.flat_distance(p.position,ball)<1.45 and not reacting:
+		if rebound and p.keeper_motion.rebound_ready(p) and p.pose!="keeper_rebound":
+			p.keeper_motion.start(p,"rebound",ball,true)
+		elif not rebound: p.keeper_motion.start(p,"smother",ball)
 	if in_box and p.can_save(ball) and p.touch_cooldown<=0 and game.kick_lock<=0 and (not reacting or bv.length()<8):
-		var opponent: bool=game.last_touch!=p.team
+		var opponent: bool=game.last_touch!=p.team or rebound
 		var glove_distance: float=minf(p.left_hand.global_position.distance_to(ball),p.right_hand.global_position.distance_to(ball))
 		var spill := handling_error(index,read)
 		if opponent and in_box and bv.length()<11.5 and glove_distance<0.65 and not spill:
@@ -224,17 +226,20 @@ func update(index: int,delta: float) -> Vector3:
 			game.last_touch=p.team
 			game.last_kicker=index
 			game.ball.hold(p)
+			game.team_control.touched(index)
+			p.keeper_motion.saved(p)
+			p.keeper_motion.secured=true
 			holding=index
 			hold_age=0
 			if index==0: stop_rush()
-			p.set_piece_pose="carry"
+			p.set_piece_pose="" if p.pose.begins_with("keeper_") and p.action_timer>0 else "carry"
 			game.announce("KALECİ TOPU KONTROL ETTİ")
 		elif opponent:
 			if not game.strike(index,loose_parry(index) if spill else safe_parry(index),0,true): return target
 			game.saves[p.team]+=1
 			game.stadium.react("save",p.team,ball)
 			game.reactions.saved(index)
-			p.touch_cooldown=0.9
+			p.keeper_motion.saved(p)
 			game.announce("KALECİDEN SEKTİ · TOP OYUNDA" if spill else "KALECİ TOPU YANA ÇELDİ")
 		elif bv.length()<9:
 			if game.autonomous_kicks(p.team): game.strike(index,Vector3(7 if ball.x>=0 else -7,6.5,forward*22))

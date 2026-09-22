@@ -3,9 +3,15 @@ extends RefCounted
 var game
 const MAX_SUBS := 3
 var formation := 0
+var opponent_formation := 0
 var mentality := 1
 var pressing := 1
 var line_height := 1
+var width := 1
+var tempo := 1
+var runs := 1
+var fullbacks := 1
+var anchor := true
 var difficulty := 1
 var bench: Array = [[],[]]
 var used := [0,0]
@@ -26,6 +32,7 @@ func setup() -> void:
 	reset()
 
 func reset() -> void:
+	opponent_formation=int(game.clubs.career_clubs[1].plan.formation) if not game.clubs.career_clubs.is_empty() else 0
 	bench=[[],[]]
 	used=[0,0]
 	pending.clear()
@@ -45,9 +52,10 @@ func reset() -> void:
 
 func apply_formation() -> void:
 	for p in game.players:
-		var shape: Array=SHAPES[formation if p.team==0 else 0]
+		var shape: Array=SHAPES[formation if p.team==0 else opponent_formation]
 		var pos: Vector2=shape[p.number-1]
 		p.home=Vector3(pos.x,0,pos.y)*(-game.attack_sign(p.team))
+		p.home.x*=([.78,1.0,1.14][width] if p.team==0 else 1.0)
 
 func committed(team: int) -> int:
 	var count: int=used[team]
@@ -91,7 +99,7 @@ func slot_role(index: int) -> int:
 	var p=game.players[index]
 	if p.keeper: return 0
 	var slot := index%11
-	var shape: int=formation if p.team==0 else 0
+	var shape: int=formation if p.team==0 else opponent_formation
 	if slot<=(3 if shape==2 else 4): return 1
 	if slot>=(8 if shape==1 else 9): return 3
 	return 2
@@ -105,7 +113,7 @@ func suggestion(team: int,threshold: float=0.40,excluded: Array=[]) -> Dictionar
 		if not p.visible or p.dismissed or p.energy>=lowest or p.shirt_number in excluded: continue
 		for reserve in range(1,7):
 			var b: Dictionary=bench[team][reserve]
-			if natural_role(b.shirt,b.keeper)!=slot_role(slot) or substitution_reason(slot,reserve)!="": continue
+			if int(b.get("role",natural_role(b.shirt,b.keeper)))!=slot_role(slot) or substitution_reason(slot,reserve)!="": continue
 			lowest=p.energy
 			best={"slot":slot,"reserve":reserve,"shirt":p.shirt_number,"incoming":b.shirt}
 			break
@@ -113,6 +121,12 @@ func suggestion(team: int,threshold: float=0.40,excluded: Array=[]) -> Dictionar
 
 func live_plan(value: int) -> void:
 	value=clampi(value,0,2)
+	if game.career.in_match:
+		game.career.club().plan=game.career.club().plans[value].duplicate(true)
+		game.career.apply_plan(game.career.club().plan)
+		apply_formation()
+		game.stadium.sidelines.instruct(0,["defend","balance","attack"][value])
+		return
 	mentality=value; pressing=value; line_height=value
 	game.stadium.sidelines.instruct(0,["defend","balance","attack"][value])
 
@@ -120,9 +134,10 @@ func prepare_substitutions() -> void:
 	if game.training: return
 	# Each team's allowance includes accepted and still-running changes.
 	# The opponent's decision never depends on whether our team queued a change.
-	if game.match_time>60:
-		var next := suggestion(1,.36)
-		if not next.is_empty(): queue_sub(next.slot,next.reserve)
+	var next: Dictionary=game.opponent_coach.substitution()
+	if not next.is_empty():
+		queue_sub(next.slot,next.reserve)
+		game.opponent_coach.substituted()
 	for item in pending:
 		var p=game.players[item.slot]
 		if p.dismissed or bench[p.team][item.reserve].used or transit.has(item.slot): continue
@@ -169,9 +184,11 @@ func update_substitutions(delta: float) -> bool:
 				var b: Dictionary=bench[p.team][item.reserve]
 				b.used=true
 				used[p.team]+=1
+				game.career.remember_player(p)
 				p.apply_identity(b)
 				p.apply_kit(game.clubs.kit(p.team))
 				p.reset_stamina()
+				game.career.enter_player(p)
 				p.yellow_cards=0
 				p.fouls_committed=0
 				p.action_timer=0
@@ -218,7 +235,13 @@ func adjust_target(index: int,target: Vector3) -> Vector3:
 	target.z=clampf(target.z,-45,45)
 	return target
 
+func detail(team: int,key: String) -> int:
+	if team==0: return int(get(key))
+	if not game.clubs.career_clubs.is_empty(): return int(game.clubs.career_clubs[1].plan.get(key,1))
+	return 1
+
 func update_clock(delta: float) -> void:
+	if game.career.cups.extra_active(): return
 	if game.training: return
 	var half_index: int=game.half-1
 	# Active-play time is retained; stoppages earn a bounded extra period.

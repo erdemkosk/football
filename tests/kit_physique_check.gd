@@ -72,11 +72,19 @@ func run() -> void:
 	game.clubs.swap_starter(9,2)
 	check(p.identity()==identity and p.body_scale==scale_before,"Undoing the swap restores the same body")
 	game.state="playing"; game.match_time=0
+	p.kit_soil=.7
 	game.management.queue_sub(9,2); game.management.prepare_substitutions()
 	p.position=Vector3(32.8,0,-3+9*1.2)
 	game.management.update_substitutions(0)
+	check(p.identity()==identity,"The outgoing player's build is retained until the touchline greeting finishes")
+	if game.stadium.sidelines.entries.has(9):
+		var entry: Dictionary=game.stadium.sidelines.entries[9]
+		entry.actor.position=entry.gate
+	for frame in range(100):
+		game.management.update_substitutions(1.0/120.0)
+		await physics_frame
 	check(p.height_cm==incoming.height_cm and p.weight_kg==incoming.weight_kg and p.shirt_number==incoming.shirt and game.management.transit[9].phase=="in","Live substitution switches build only when the replacement enters")
-	check(p.kit_soil==0,"The incoming player wears a clean shirt")
+	check(p.kit_soil<.03,"The incoming shirt starts clean, accumulating only its own entry-time dirt")
 	game.management.reset()
 	check(p.identity()==identity,"New match/reset restores the selected lineup's physiques")
 	var dirty_texture: Texture2D=p.kit_materials.printed.albedo_texture

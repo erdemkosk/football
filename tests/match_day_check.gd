@@ -128,7 +128,8 @@ func run() -> void:
 	var crowd=game.stadium.crowd
 	crowd.reset()
 	game.ball.position=Vector3(0,0.3,-25)
-	game.strike(9,Vector3(1,4,-28),0,false,"shot")
+	# Crowd unit fixture starts at committed contact; approach is tested in motion_contact_check.
+	game.commit_strike(9,Vector3(1,4,-28),0,false,"shot")
 	check(crowd.event_kind=="shot" and crowd.event_duration>3 and crowd.material.get_shader_parameter("event_strength")>=0.9,"Shots trigger a strong sustained crowd reaction")
 	game.camera.size=21
 	game.camera.position=Vector3(23,14,-24)

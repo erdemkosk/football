@@ -24,6 +24,14 @@ const MatchReactions = preload("res://scripts/match_reactions.gd")
 var first_touch := FirstTouch.new()
 var reactions := MatchReactions.new()
 var heading := preload("res://scripts/heading.gd").new()
+var volleys := preload("res://scripts/volleys.gd").new()
+var aerial_assist := preload("res://scripts/aerial_assist.gd").new()
+var skills := preload("res://scripts/skill_moves.gd").new()
+var kick_contact := preload("res://scripts/kick_contact.gd").new()
+var defending := preload("res://scripts/defence_controls.gd").new()
+var finishing := preload("res://scripts/advanced_finishing.gd").new()
+var keeper_distribution := preload("res://scripts/keeper_distribution.gd").new()
+var advanced_controls := preload("res://scripts/advanced_controls.gd").new()
 var referees := Referees.new()
 const SendOff = preload("res://scripts/send_off.gd")
 var send_off := SendOff.new()
@@ -41,6 +49,9 @@ var menu_match := MenuMatch.new()
 const ControlsHelp = preload("res://scripts/controls_help.gd")
 var controls_help: Control
 var clubs := Clubs.new()
+var career := preload("res://scripts/career.gd").new()
+var finale:=preload("res://scripts/career_finale.gd").new()
+var career_screen: Control
 var frontend: Control
 const Replay = preload("res://scripts/match_replay.gd")
 const MatchCamera = preload("res://scripts/match_camera.gd")
@@ -52,6 +63,7 @@ var physical_contests := preload("res://scripts/physical_contests.gd").new()
 var broadcast := preload("res://scripts/match_broadcast.gd").new()
 var coaching := preload("res://scripts/match_coaching.gd").new()
 var ai_attack := preload("res://scripts/ai_attack.gd").new()
+var opponent_coach := preload("res://scripts/opponent_coach.gd").new()
 var match_menu: Control
 var replay := Replay.new()
 const LENGTH := 240.0
@@ -64,11 +76,11 @@ var half := 1
 var performance_hud: Control
 const SHOT_AIM_RATE := 0.34906585 # 20 degrees per second.
 const SHOT_AIM_LIMIT := 0.24434610 # 14 degrees either side of the starting aim.
-const SHOT_MOUSE_RATE := 1.57079633 # 90 degrees per second.
-const SHOT_PAD_RATE := 5.23598776 # Full deflection turns up to 300 degrees/second.
+const SHOT_MOUSE_RATE := 1.04719755 # 60 degrees per second.
+const SHOT_PAD_RATE := 2.09439510 # Full deflection turns up to 120 degrees/second.
 const FINESSE_CURVE := 1.65
 const PASS_CHARGE_TIME := 0.65
-const PASS_TURN_RATE := 3.14159265
+const PASS_TURN_RATE := 1.74532925 # 100 degrees per second.
 var pass_charging := false
 var pass_power := 0.0
 var pass_direction := Vector3.FORWARD
@@ -114,13 +126,14 @@ var tactical: bool:
 	get:
 		return match_camera.is_tactical()
 	set(value):
-		match_camera.select("tactical" if value else "sideline")
+		match_camera.select("tactical" if value else match_camera.preferred)
 var player_lock := false
 const TeamControl = preload("res://scripts/team_control.gd")
 var team_control := TeamControl.new()
 var pass_assistance := 1
 var pass_through := false
 var pass_lob := false
+var pass_driven := false
 var request_through := false
 var training := false
 var training_drills := preload("res://scripts/training_drills.gd").new()
@@ -134,7 +147,6 @@ var toast := ""
 var toast_timer := 0.0
 var previous_ball := Vector3.ZERO
 var boundary_grace := 0.0
-var camera_shake := 0.0
 var rng := RandomNumberGenerator.new()
 var aiming_mouse := false
 var practice_goals := 0
@@ -161,19 +173,26 @@ func _ready() -> void:
 	menu_match.game=self
 	team_control.game=self
 	clubs.game=self
+	career.game=self
+	finale.game=self
 	management.game=self
 	coaching.game=self
 	broadcast.game=self
 	team_tactics.game=self; second_balls.game=self; physical_contests.game=self
 	ai_attack.game=self
+	opponent_coach.game=self
 	replay.game=self
 	interval.game=self
 	support.game=self
 	duels.game=self
 	goalkeeping.game=self
 	first_touch.game=self
+	kick_contact.game=self
 	reactions.game=self
 	heading.game=self
+	volleys.game=self
+	aerial_assist.game=self
+	for feature in [skills,defending,finishing,keeper_distribution,advanced_controls]: feature.game=self
 	celebration.game=self
 	referees.game=self
 	send_off.game=self
@@ -218,6 +237,7 @@ func _ready() -> void:
 	audio = Audio.new()
 	add_child(audio)
 	stadium.atmosphere_event.connect(audio.react)
+	for net in stadium.nets: net.struck.connect(feedback.net_contact)
 	referees.build()
 	ceremony.officials=referees.actors
 	reset_positions(0)
@@ -238,6 +258,9 @@ func _ready() -> void:
 	controls_help=ControlsHelp.new()
 	controls_help.game=self
 	canvas.add_child(controls_help)
+	career_screen=preload("res://scripts/career_screen.gd").new()
+	career_screen.game=self
+	canvas.add_child(career_screen)
 	start_match(false,false,true)
 	set_physics_process(true)
 
@@ -263,6 +286,7 @@ func start_match(practice: bool = false,show_ceremony: bool = true,background: b
 	coaching.reset()
 	broadcast.reset()
 	ai_attack.reset()
+	opponent_coach.reset()
 	team_tactics.reset(); second_balls.reset(); physical_contests.reset()
 	send_off.reset()
 	controller.clear_shot_aim()
@@ -309,6 +333,7 @@ func start_match(practice: bool = false,show_ceremony: bool = true,background: b
 		p.dismissed=false
 		p.visible = not practice or (p.team==0 and p.number==10) or (p.team==1 and p.keeper)
 		p.collision_layer = 2 if p.visible else 0
+	if career.in_match and not background and not practice: career.match_started()
 	referees.reset(not practice)
 	if practice: reset_practice()
 	ball.active = true
@@ -331,7 +356,8 @@ func start_match(practice: bool = false,show_ceremony: bool = true,background: b
 		announce(training_drills.title() if practice else "İLK DÜDÜK  ·  HÜCUM YÖNÜ ↑")
 
 func reset_positions(team: int) -> void:
-	heading.reset()
+	reset_advanced_play()
+	heading.reset(); volleys.reset(); aerial_assist.reset()
 	second_balls.reset(); physical_contests.reset(); team_tactics.reset()
 	reactions.reset()
 	controller.combos.cancel()
@@ -364,6 +390,7 @@ func reset_positions(team: int) -> void:
 		p.locomotion.reset()
 		p.body_language.reset(p)
 		p.ball_actions.reset(p)
+		p.dribble_motion.reset()
 		p.animate(1.0)
 		p.ai_think = 0
 		# Every player begins in their own half except the kickoff taker.
@@ -385,13 +412,14 @@ func reset_positions(team: int) -> void:
 	camera_focus = Vector3.ZERO
 
 func reset_practice() -> void:
+	reset_advanced_play()
 	second_balls.reset(); physical_contests.reset(); broadcast.reset()
 	state="playing"
 	ball.active=true; ball.freeze=false
 	charging=false; charge=0; controller.clear_shot_aim()
 	set_pieces.clear(); rules.reset()
 	carrier=-1; kick_lock=.15
-	heading.reset()
+	heading.reset(); volleys.reset(); aerial_assist.reset()
 	reactions.reset()
 	controller.combos.cancel()
 	support.reset()
@@ -422,6 +450,7 @@ func reset_practice() -> void:
 		p.locomotion.reset()
 		p.body_language.reset(p)
 		p.ball_actions.reset(p)
+		p.dribble_motion.reset()
 		p.animate(1.0)
 	ball.place(Vector3(0,0.23,-26))
 	previous_ball = Vector3(0,0.23,-26)
@@ -433,11 +462,21 @@ func reset_practice() -> void:
 	camera_focus = Vector3(0,0,-29)
 	training_drills.setup()
 
+func reset_advanced_play(preserve_contact: bool=false) -> void:
+	if not preserve_contact: kick_contact.reset()
+	for feature in [skills,defending,finishing,ai_attack.finishing,keeper_distribution,advanced_controls]: feature.reset()
+	for p in players: p.dribble_motion.reset()
+
 func announce(text: String) -> void:
 	toast = text
 	toast_timer = 2.8
 
 func _input(event: InputEvent) -> void:
+	if finale.handle(event): get_viewport().set_input_as_handled(); return
+	if is_instance_valid(career_screen) and career_screen.visible:
+		if controller.menus.handle(event): get_viewport().set_input_as_handled(); return
+		career_screen.handle(event)
+		return
 	if broadcast.handle(event):
 		get_viewport().set_input_as_handled(); return
 	if coaching.handle(event):
@@ -475,6 +514,8 @@ func _input(event: InputEvent) -> void:
 		if original in match_menu.keys:
 			event=event.duplicate()
 			event.keycode=match_menu.keys[original]
+	if advanced_controls.handle(event):
+		get_viewport().set_input_as_handled(); return
 	if event is InputEventJoypadButton or event is InputEventJoypadMotion:
 		event=controller.translate(event)
 		if event==null: return
@@ -494,10 +535,18 @@ func _input(event: InputEvent) -> void:
 	if state=="restart" and restart_type=="SANTRA" and not training and event is InputEventKey and event.pressed and not event.echo and event.keycode in [KEY_SPACE,KEY_ENTER]:
 		set_pieces.snap_ready()
 		return
+	if training and training_drills.handle(event):
+		get_viewport().set_input_as_handled()
+		return
 	if state=="set_piece": set_pieces.input(event)
 	if event is InputEventKey and event.pressed and not event.echo:
-		if state=="playing" and event.keycode in [KEY_S,KEY_A,KEY_Y,KEY_Z,KEY_V,KEY_G,KEY_X]: heading.cancel(controlled)
+		if state=="playing" and event.keycode in [KEY_S,KEY_A,KEY_Y,KEY_D,KEY_Z,KEY_V,KEY_G,KEY_X]:
+			skills.cancel(controlled)
+			advanced_controls.roll_side=0
+		if state=="playing" and event.keycode in [KEY_S,KEY_A,KEY_Y,KEY_Z,KEY_V,KEY_G,KEY_X]: heading.cancel(controlled); volleys.cancel(controlled); aerial_assist.cancel(controlled)
 		match event.keycode:
+			KEY_W:
+				if state=="playing": advanced_controls.sprint_pressed()
 			KEY_P: match_menu.open_menu()
 			KEY_K:
 				if training: training_menu.open_menu()
@@ -511,7 +560,7 @@ func _input(event: InputEvent) -> void:
 			KEY_ESCAPE:
 				if state=="paused": resume()
 				elif state not in ["menu","finished"]:
-					heading.reset()
+					heading.reset(); volleys.reset(); aerial_assist.reset()
 					before_pause = state
 					state = "paused"
 					ball.freeze = true
@@ -567,7 +616,7 @@ func _input(event: InputEvent) -> void:
 				if state=="playing": tackle()
 			KEY_D:
 				if state=="playing":
-					if can_touch(controlled,1.8) or heading.can_request(controlled): begin_shot()
+					if can_touch(controlled,1.8) or ball.held_by==players[controlled] or can_request_aerial(controlled): begin_shot()
 	if event is InputEventKey and not event.pressed and event.keycode==KEY_D and charging:
 		shoot()
 	if event is InputEventKey and not event.pressed and event.keycode==KEY_Y:
@@ -575,11 +624,12 @@ func _input(event: InputEvent) -> void:
 	if event is InputEventKey and not event.pressed and event.keycode==(KEY_Y if pass_through else KEY_S) and pass_charging and not pass_lob:
 		release_pass()
 	if event is InputEventMouseButton:
-		if event.button_index==MOUSE_BUTTON_WHEEL_UP: zoom = clampf(zoom-3,34,76)
-		if event.button_index==MOUSE_BUTTON_WHEEL_DOWN: zoom = clampf(zoom+3,34,76)
+		if event.button_index in [MOUSE_BUTTON_WHEEL_UP,MOUSE_BUTTON_WHEEL_DOWN] and state in ["playing","restart","set_piece"]:
+			match_camera.set_distance(match_camera.distance+(-.05 if event.button_index==MOUSE_BUTTON_WHEEL_UP else .05))
+			match_menu.save_settings()
 		if event.button_index==MOUSE_BUTTON_RIGHT: aiming_mouse = event.pressed
 		if event.button_index==MOUSE_BUTTON_LEFT and state=="playing":
-			if event.pressed and (can_touch(controlled,1.8) or heading.can_request(controlled)): aiming_mouse = true; begin_shot(true)
+			if event.pressed and (can_touch(controlled,1.8) or ball.held_by==players[controlled] or can_request_aerial(controlled)): aiming_mouse = true; begin_shot(true)
 			elif not event.pressed and charging: shoot(); aiming_mouse = false
 
 func resume() -> void:
@@ -587,9 +637,14 @@ func resume() -> void:
 	ball.freeze = state=="replay"
 
 func return_menu() -> void:
+	if career.in_match: career.save()
+	career.detach()
+	clubs.apply()
 	start_match(false,false,true)
 
 func _process(delta: float) -> void:
+	if state=="finished" and career.in_match: career.finish_match()
+	if state=="career": return
 	elapsed += delta
 	toast_timer = maxf(0,toast_timer-delta)
 	update_camera(delta)
@@ -606,6 +661,7 @@ func _process(delta: float) -> void:
 		stadium.sidelines.update(delta,ball.position,ball.linear_velocity,last_touch,playing,stoppage,restart_point)
 
 func update_camera(delta: float) -> void:
+	if finale.camera(): return
 	if state=="replay" or (state=="paused" and before_pause=="replay"): return
 	if not training and not tactical and celebration.age>=1.15 and (state=="goal" or (state=="paused" and before_pause=="goal")):
 		celebration.update_camera(0 if state=="paused" else delta)
@@ -625,14 +681,17 @@ func update_camera(delta: float) -> void:
 	if broadcast.camera(): return
 	var focus: Vector3 = ball.position
 	if state=="playing": focus = ball.position.lerp(players[controlled].position,0.26)
-	if state in ["restart","set_piece"] and set_pieces.recovery.phase in ["arrange","ready"] and restart_type in ["SERBEST VURUŞ","ENDİREKT VURUŞ","PENALTI","KORNER"]:
+	var kick_view := (not training_drills.placing()) and state in ["restart","set_piece"] and restart_type in ["SERBEST VURUŞ","ENDİREKT VURUŞ","PENALTI","KORNER"] and set_pieces.recovery.phase in ["arrange","ready"]
+	if kick_view:
 		var goal = Vector3(0,0,attack_sign(restart_team)*50)
-		if restart_point.distance_to(goal)<45: focus=restart_point.lerp(goal,0.42)
+		focus=restart_point.lerp(goal,0.38 if restart_type=="KORNER" else 0.22)
 	focus.y = 0
-	if tactical: focus = Vector3.ZERO
-	else:
+	if training_drills.placing(): focus=training_drills.place_point
+	elif tactical: focus = Vector3.ZERO
+	elif not kick_view:
 		focus.x = clampf(focus.x*0.42,-8,8)
 		var extent := 45.0 if state=="restart" and set_pieces.recovery.phase not in ["arrange","ready"] else 35.0
+		if state=="goal" or (state=="paused" and before_pause=="goal"): extent=51.0
 		focus.z = clampf(focus.z,-extent,extent)
 	if match_camera.snap or delta<=0.0: camera_focus=focus
 	else: camera_focus=camera_focus.lerp(focus,1-exp(-delta*3.7))
@@ -640,38 +699,40 @@ func update_camera(delta: float) -> void:
 	if training and training_drills.mode=="cross" and state=="playing": view_zoom=maxf(view_zoom,57)
 	if not tactical:
 		if state in ["restart","set_piece"]: view_zoom=maxf(zoom,57)
-		if state=="goal": view_zoom=maxf(zoom,61.0)
 	var pose: Dictionary=match_camera.apply(camera_focus,view_zoom,delta)
 	camera.position = pose.eye
-	if camera_shake>0:
-		camera.position.x += sin(elapsed*63)*camera_shake
-		camera_shake = maxf(0,camera_shake-delta*1.8)
 	var contact_offset := feedback.offset()
 	camera.position+=contact_offset
 	camera.look_at(pose.look+contact_offset)
 
 func _physics_process(delta: float) -> void:
+	if state=="career": return
+	for net in stadium.nets: net.simulation_paused=state=="paused"
 	controller.combos.update(delta)
 	stadium.crowd.context(score,match_time,LENGTH)
 	audio.crowd_context(stadium.crowd.home_support,stadium.crowd.danger,stadium.crowd.hush,score[0]-score[1],match_time/LENGTH)
 	if state!="playing" and goalkeeping.rush_requested: goalkeeping.stop_rush()
-	audio.update_atmosphere(delta,state)
+	audio.update_atmosphere(delta,"paused" if state in ["shootout","trophy"] and finale.paused else state)
 	weather.sound.stream_paused=state=="paused"
 	for channel in audio.contacts: channel.stream_paused=state=="paused"
 	if state=="menu": menu_match.update(delta)
 	else: simulate_match(delta)
 
 func simulate_match(delta: float) -> void:
+	if state in ["shootout","trophy"]: finale.update(delta); return
 	broadcast.update(delta)
 	coaching.update(delta)
 	ai_attack.update(delta)
 	training_drills.update(delta)
-	if state!="playing": heading.reset()
+	if state!="playing":
+		heading.reset(); volleys.reset(); aerial_assist.reset(); reset_advanced_play(state=="paused")
+	else: advanced_controls.update(delta)
 	if state not in ["paused","replay"]: reactions.update(delta)
 	if state not in ["playing","paused","replay"]:
 		for p in players: p.body_language.clear_intent()
-	if state not in ["paused","replay"]:
+	if state!="paused":
 		weather.update(delta)
+	if state not in ["paused","replay"]:
 		feedback.update(delta)
 		referees.update(delta)
 	management.update_clock(delta)
@@ -685,10 +746,16 @@ func simulate_match(delta: float) -> void:
 		interval.update(delta)
 	elif state=="playing":
 		match_time += delta
-		if not training and half==1 and match_time>=management.half_end():
+		if not training and career.cups.extra_active():
+			if match_time>=LENGTH*(7.0/6.0 if career.cups.extra_phase==1 else 4.0/3.0):
+				if not career.cups.period_end():
+					match_time=LENGTH*4.0/3.0; state="finished"; ball.active=false; referees.finish_match()
+				return
+		if not training and not career.cups.extra_active() and half==1 and match_time>=management.half_end():
 			interval.begin()
 			return
-		if not training and half==2 and match_time>=management.half_end():
+		if not training and not career.cups.extra_active() and half==2 and match_time>=management.half_end():
+			if career.cups.period_end(): return
 			match_time=LENGTH
 			state = "finished"
 			ball.active = false
@@ -713,7 +780,14 @@ func simulate_match(delta: float) -> void:
 		update_ai(delta)
 		if state!="playing": return
 		heading.prepare(delta)
+		volleys.prepare(delta)
+		defending.update(delta)
+		skills.update(delta)
+		finishing.prepare(delta)
+		ai_attack.finishing.prepare(delta)
+		keeper_distribution.update(delta)
 		physical_contests.update(delta)
+		kick_contact.prepare(delta)
 		for i in range(players.size()): players[i].body_language.observe(self,i)
 		for i in range(players.size()):
 			var p = players[i]
@@ -727,6 +801,12 @@ func simulate_match(delta: float) -> void:
 		rules.resolve_tackles()
 		if state!="playing": return
 		heading.resolve()
+		volleys.resolve()
+		defending.resolve()
+		finishing.resolve()
+		ai_attack.finishing.resolve()
+		keeper_distribution.resolve()
+		kick_contact.resolve()
 		if state!="playing": return
 		update_contacts(delta)
 		if state!="playing": return
@@ -736,10 +816,15 @@ func simulate_match(delta: float) -> void:
 	elif state=="restart":
 		if not training:
 			set_pieces.recovery.step(delta)
-		elif training_drills.mode=="free_kick" and training_drills.phase=="setup":
-			pass # The drill waits for the physically placed ball and ready wall.
+		elif training_drills.mode=="free_kick" and training_drills.phase in ["setup","place"]:
+			pass # Spot selection and the ready wall wait without a restart countdown.
 		else:
 			restart_timer-=delta
+			# Practice used to stop ticking the players until the next ball,
+			# leaving a running leg or shooting pose suspended for 2.6 seconds.
+			for p in players:
+				p.desired=Vector3.ZERO; p.sprinting=false
+				if p.visible: p.step(delta)
 			if restart_timer<=0:
 				reset_practice()
 	elif state=="set_piece":
@@ -770,15 +855,18 @@ func raw_move() -> Vector3:
 func movement_input() -> Vector3:
 	return match_camera.orient(raw_move())
 
+func aiming_input() -> Vector3:
+	return match_camera.orient(controller.aim_movement()) if controller.using_gamepad else movement_input()
+
 func steering_input() -> float:
 	var move: Vector3=movement_input()
 	if move.length_squared()<0.0001: return 0.0
 	return clampf(move.dot(match_camera.ground_right()),-1,1)
 
 func update_control(delta: float) -> void:
-	for p in players: p.shot_preparation=0; p.wrapping=0
+	for p in players: p.shot_preparation=0; p.wrapping=0; p.aerial_preparing=false
 	var movement = movement_input()
-	players[controlled].desired = movement*(0.62 if charging and not heading.active(controlled) else (0.72 if pass_charging else 1.0))
+	players[controlled].desired = movement*(0.62 if charging and not aerial_shot_active(controlled) else (0.72 if pass_charging else 1.0))
 	if movement.length()<0.01 and not charging and not pass_charging:
 		players[controlled].desired=team_control.reception_direction()
 	players[controlled].sprinting = Input.is_physical_key_pressed(match_menu.key_for(KEY_W)) or controller.action_held(KEY_W)
@@ -796,16 +884,22 @@ func update_control(delta: float) -> void:
 		if not has_ball_control(controlled): cancel_pass()
 		else:
 			pass_power = minf(1,pass_power+delta/PASS_CHARGE_TIME)
-			if movement.length()>0.1:
-				var turn := pass_direction.signed_angle_to(movement,Vector3.UP)
-				pass_direction = pass_direction.rotated(Vector3.UP,clampf(turn,-PASS_TURN_RATE*delta,PASS_TURN_RATE*delta))
+			var aim := aiming_input()
+			if aim.length()>0.01:
+				var turn := pass_direction.signed_angle_to(aim,Vector3.UP)
+				var strength: float=controller.aim_response(aim.length()) if controller.using_gamepad else clampf(aim.length(),0,1)
+				var rate := PASS_TURN_RATE*strength
+				pass_direction = pass_direction.rotated(Vector3.UP,clampf(turn,-rate*delta,rate*delta))
 			update_pass_preview()
 	if charging:
 		charge = minf(1,charge+delta*0.86)
 		update_shot_aim(delta)
-		shot_chip=chip_held() and not heading.active(controlled)
-		shot_finesse=finesse_held() and not shot_chip and not heading.active(controlled)
-		if not heading.active(controlled):
+		if not aerial_shot_active(controlled): arm_aerial_shot()
+		if controller.using_gamepad: advanced_controls.refresh_shot_style()
+		var wait_chip := controller.using_gamepad and advanced_controls.shoulder_held() and charge<0.12 and finishing.style==""
+		shot_chip=chip_held() and not wait_chip and not aerial_shot_active(controlled) and finishing.style==""
+		shot_finesse=finesse_held() and not shot_chip and not aerial_shot_active(controlled) and finishing.style==""
+		if not aerial_shot_active(controlled):
 			players[controlled].shot_preparation=0.15+charge*0.85
 			players[controlled].wrapping=1.0 if shot_finesse else (0.35 if shot_chip else 0.0)
 			players[controlled].ball_actions.prepare_kick(players[controlled],ball.position,shot_direction,first_touch.pressure(controlled))
@@ -818,6 +912,8 @@ func update_control(delta: float) -> void:
 		if ball.held_by!=players[0]:
 			var offset: Vector3=(keeper_target-players[0].position)*Vector3(1,0,1)
 			players[0].desired=offset.normalized()*clampf(offset.length()/1.4,0,1)
+
+	aerial_assist.update(delta)
 
 func pointer_direction(fallback: Vector3) -> Vector3:
 	var mouse = get_viewport().get_mouse_position()
@@ -842,9 +938,21 @@ func assisted_shot_direction(direction: Vector3) -> Vector3:
 	var assistance := smoothstep(0.35,0.95,direction.z*attack_sign(0))*0.36
 	return direction.lerp(toward_goal.normalized(),assistance).normalized()
 
+func aerial_shot_active(index: int) -> bool:
+	return heading.active(index) or volleys.active(index) or aerial_assist.active(index)
+
+func can_request_aerial(index: int) -> bool:
+	return heading.can_request(index) or volleys.can_request(index) or aerial_assist.can_request(index)
+
+func arm_aerial_shot() -> void:
+	if heading.can_request(controlled): heading.arm(controlled,shot_direction,charge)
+	elif volleys.can_request(controlled): volleys.arm(controlled,shot_direction,charge)
+	else: aerial_assist.arm(controlled,shot_direction,charge)
+	if aerial_shot_active(controlled): finishing.style=""
+
 func begin_shot(use_mouse: bool = false) -> void:
 	cancel_pass()
-	if charging or heading.active(controlled): return
+	if charging or aerial_shot_active(controlled) or finishing.active(controlled): return
 	shot_mouse_aim = use_mouse or aiming_mouse
 	shot_separate_aim = not shot_mouse_aim and controller.using_gamepad and controller.has_separate_aim()
 	shot_anchor = pointer_direction(last_direction) if shot_mouse_aim else assisted_shot_direction(last_direction)
@@ -857,7 +965,7 @@ func begin_shot(use_mouse: bool = false) -> void:
 	shot_curve = choose_finesse_curve(shot_anchor)
 	charge = 0
 	charging = true
-	if heading.can_request(controlled): heading.arm(controlled,shot_direction)
+	arm_aerial_shot()
 
 func update_shot_aim(delta: float) -> void:
 	if shot_mouse_aim:
@@ -868,7 +976,7 @@ func update_shot_aim(delta: float) -> void:
 		# A separate aim gesture stays in charge until this shot ends. Releasing
 		# it holds the aim instead of snapping back to the running direction.
 		if controller.has_separate_aim(): shot_separate_aim=true
-		var target: Vector3=match_camera.orient(controller.separate_aim() if shot_separate_aim else controller.movement())
+		var target: Vector3=match_camera.orient(controller.separate_aim() if shot_separate_aim else controller.aim_movement())
 		if target.length()>0.01:
 			var turn := shot_direction.signed_angle_to(target.normalized(),Vector3.UP)
 			if shot_direction.dot(target.normalized())< -0.9999:
@@ -877,6 +985,7 @@ func update_shot_aim(delta: float) -> void:
 			# Small stick deflections are precise; a deliberate full deflection
 			# can turn away from the original heading without an instant snap.
 			var rate := lerpf(deg_to_rad(6),SHOT_PAD_RATE,pow(clampf(target.length(),0,1),3))
+			if not shot_separate_aim: rate=SHOT_PAD_RATE*controller.aim_response(target.length())
 			shot_direction=shot_direction.rotated(Vector3.UP,clampf(turn,-rate*delta,rate*delta)).normalized()
 			shot_offset=shot_anchor.signed_angle_to(shot_direction,Vector3.UP)
 	else:
@@ -903,6 +1012,7 @@ func finesse_held() -> bool:
 
 func chip_held() -> bool:
 	if menu_match.running: return false
+	if controller.using_gamepad and advanced_controls.right_trigger(): return false
 	return Input.is_physical_key_pressed(match_menu.key_for(KEY_Q)) or controller.action_held(KEY_Q) or controller.combos.consumed.has(JOY_BUTTON_LEFT_SHOULDER)
 
 func finesse_curve(aim: Vector3) -> float:
@@ -925,6 +1035,7 @@ func choose_finesse_curve(aim: Vector3) -> float:
 	return -signf(turn)*FINESSE_CURVE
 
 func shot_velocity(aim: Vector3,power: float,curl: bool,chip: bool=false,index: int=-1) -> Vector3:
+	if index<0 and finishing.style!="": return finishing.velocity(controlled,aim,power,finishing.style)
 	var shooter=players[controlled if index<0 else index]
 	var ability: float=shooter.Attributes.kick_factor(shooter,ball.position)
 	if chip:
@@ -934,9 +1045,21 @@ func shot_velocity(aim: Vector3,power: float,curl: bool,chip: bool=false,index: 
 	return aim*speed+Vector3.UP*lift
 
 func shoot() -> void:
-	if state=="playing" and heading.active(controlled):
+	if state=="playing" and ball.held_by==players[controlled]:
+		keeper_distribution.queue(controlled,"punt",shot_direction,charge)
+		return
+	if state=="playing" and not aerial_shot_active(controlled): arm_aerial_shot()
+	if state=="playing" and aerial_assist.active(controlled):
+		aerial_assist.release(controlled,shot_direction,charge)
+	elif state=="playing" and heading.active(controlled):
 		heading.release(controlled,shot_direction,charge)
+	elif state=="playing" and volleys.active(controlled):
+		volleys.release(controlled,shot_direction,charge)
 	elif state=="playing" and (can_touch(controlled,2.0) or ball.held_by==players[controlled]):
+		if finishing.style!="":
+			finishing.queue(controlled,shot_direction,charge)
+			charging=false; charge=0; shot_chip=false; shot_finesse=false
+			return
 		# Release uses exactly the previewed heading, with no last-frame aim correction.
 		var aim := shot_direction if charging else (pointer_direction(last_direction) if aiming_mouse else assisted_shot_direction(last_direction))
 		var chip := charging and (shot_chip or chip_held())
@@ -951,8 +1074,22 @@ func shoot() -> void:
 	shot_chip = false
 
 func strike(index: int,velocity: Vector3,curve: float=0,is_save: bool=false,kind: String="kick") -> bool:
+	if not is_save and kind in ["kick","cross","shot"] and state=="playing" and ball.held_by==null and ball.position.y<1.05:
+		return kick_contact.queue(index,velocity,curve,kind)
+	return commit_strike(index,velocity,curve,is_save,kind)
+
+func commit_strike(index: int,velocity: Vector3,curve: float=0,is_save: bool=false,kind: String="kick",animated_contact: bool=false) -> bool:
 	if not rules.before_touch(index,not is_save): return false
+	if players[index].keeper and not is_save:
+		players[index].keeper_motion.saved_at=-10
+		players[index].keeper_motion.secured=false
+	if not is_save and kind in ["kick","cross"] and players[index].career_id!="":
+		var ability: float=players[index].attributes.get("passing",72)
+		var deviation: float=maxf(0,90-ability)*.0006*(1+first_touch.pressure(index))
+		velocity=velocity.rotated(Vector3.UP,sin(players[index].position.x*.71+players[index].position.z*.39)*deviation)
+	if not is_save: opponent_coach.observe_kick(index,velocity,kind)
 	if not is_save: rules.kicked(index)
+	if dribbler>=0: players[dribbler].dribble_motion.release_collision()
 	possession_player = -1
 	dribbler=-1
 	var from_hands: bool=ball.held_by==players[index]
@@ -963,11 +1100,13 @@ func strike(index: int,velocity: Vector3,curve: float=0,is_save: bool=false,kind
 		players[index].set_piece_pose=""
 	last_touch = players[index].team
 	last_kicker = index
+	team_control.released(index)
+	if is_save or kind=="ball_tackle": team_control.touched(index)
 	players[index].touch_cooldown = 0.38
 	players[index].kick_power=clampf((velocity.length()-12)/20,0.15,1)
-	var is_shot := kind in ["shot","header"]
+	var is_shot := kind in ["shot","header","volley","half_volley","finish"]
 	var is_header := kind.begins_with("header")
-	if is_header:
+	if is_header or kind in ["volley","half_volley","finish","punt","distribution"]:
 		players[index].kick_timer=0
 		reactions.kicked(index,"shot" if is_shot else "kick")
 	elif kind!="ball_tackle" and not is_save:
@@ -975,7 +1114,7 @@ func strike(index: int,velocity: Vector3,curve: float=0,is_save: bool=false,kind
 		if kind=="shot" and velocity.y>6.5: style="chip"
 		elif kind!="shot" and velocity.y>5.2: style="chip"
 		elif kind!="shot" and velocity.length()<16: style="inside"
-		players[index].begin_kick(players[index].kick_power,0.46 if kind=="shot" else 0.32,style,ball.position,velocity,first_touch.pressure(index))
+		if not animated_contact: players[index].begin_kick(players[index].kick_power,0.46 if kind=="shot" else 0.32,style,ball.position,velocity,first_touch.pressure(index))
 		reactions.kicked(index,kind)
 	else: players[index].kick_timer=0
 	players[index].shot_preparation=0
@@ -984,7 +1123,8 @@ func strike(index: int,velocity: Vector3,curve: float=0,is_save: bool=false,kind
 	kick_lock = 0.16
 	if is_save: second_balls.alert("save",1-players[index].team)
 	if is_shot or is_header or kind=="ball_tackle":
-		feedback.contact("header" if is_header else kind,index,ball.position,velocity.normalized(),players[index].kick_power)
+		feedback.contact("header" if is_header else ("shot" if is_shot else kind),index,ball.position,velocity.normalized(),players[index].kick_power)
+	elif animated_contact: feedback.contact("kick",index,ball.position,velocity.normalized(),players[index].kick_power*.45)
 	else: audio.play("kick")
 	var forward := attack_sign(last_touch)
 	if is_shot:
@@ -1040,6 +1180,8 @@ func pass_ball(lob: bool) -> void:
 		return
 	cancel_pass()
 	if state!="playing": return
+	if ball.held_by==players[controlled]:
+		keeper_distribution.queue(controlled,"throw",last_direction,.6); return
 	if not has_ball_control(controlled):
 		call_for_pass(lob)
 		return
@@ -1055,12 +1197,13 @@ func cancel_pass() -> void:
 	pass_charging = false
 	pass_through = false
 	pass_lob = false
+	pass_driven = false
 	pass_power = 0
 	pass_preview = {}
 	pass_risk = 0
 
-func begin_pass(through: bool=false,lob: bool=false) -> void:
-	if state!="playing" or (pass_charging and pass_through==through and pass_lob==lob): return
+func begin_pass(through: bool=false,lob: bool=false,driven: bool=false) -> void:
+	if state!="playing" or (pass_charging and pass_through==through and pass_lob==lob and pass_driven==driven): return
 	if pass_charging: cancel_pass()
 	if not has_ball_control(controlled):
 		call_for_pass(false,through)
@@ -1071,21 +1214,35 @@ func begin_pass(through: bool=false,lob: bool=false) -> void:
 	pass_charging = true
 	pass_through = through
 	pass_lob = lob
+	pass_driven = driven
 	pass_power = 0
 	pass_direction = last_direction
 	update_pass_preview()
 
 func update_pass_preview() -> void:
-	if pass_lob:
+	if ball.held_by==players[controlled]:
+		var kind := "throw" if pass_through or pass_lob else "roll"
+		var output: Vector3=keeper_distribution.launch_velocity(kind,pass_direction,pass_power)
+		pass_preview={"velocity":output,"target":ball.position+pass_direction*lerpf(8,30,pass_power),"flight":1.2,"lob":kind=="throw","receiver":-1,"distribution":kind}
+	elif pass_lob:
 		pass_preview=Passing.switch_plan(ball.position,pass_direction,pass_power,players[controlled].team,controlled,players,[0.0,0.65,1.0][pass_assistance],attack_sign(0),rules.offside_line(0),weather)
 	else:
 		pass_preview = Passing.assisted_plan(ball.position,pass_direction,pass_power,players[controlled].team,controlled,players,[0.0,0.65,1.0][pass_assistance],pass_through,attack_sign(0),rules.offside_line(0),weather)
+	if pass_driven:
+		var direction: Vector3=(pass_preview.velocity*Vector3(1,0,1)).normalized()
+		var speed: float=minf(34,pass_preview.velocity.length()*1.30+2)
+		pass_preview.velocity=direction*speed+Vector3.UP*.14
+		pass_preview.flight=Passing.flight_time(ball.position,pass_preview.target,speed,weather)
+		pass_preview.driven=true
 	pass_risk = Passing.risk(ball.position,pass_preview,players[controlled].team,players)
 
 func release_pass() -> void:
 	if not pass_charging: return
 	if state!="playing" or not has_ball_control(controlled):
 		cancel_pass()
+		return
+	if ball.held_by==players[controlled]:
+		keeper_distribution.queue(controlled,"throw" if pass_through or pass_lob else "roll",pass_direction,pass_power)
 		return
 	var route := pass_preview.duplicate()
 	last_direction = pass_direction
@@ -1193,7 +1350,8 @@ func update_pass_request(delta: float) -> void:
 	for team in range(2):
 		ai_pass_time[team] = maxf(0,ai_pass_time[team]-delta)
 		if ai_pass_time[team]<=0 or last_touch!=team: ai_receivers[team]=-1
-	var owner := nearest_to_ball()
+	# A pressing player's closer capsule is not a change of possession.
+	var owner: int=dribbler if dribbler>=0 else nearest_to_ball()
 	if owner>=0 and owner!=possession_player and ball.linear_velocity.length()<16:
 		possession_player = owner
 		players[owner].ai_think = 0
@@ -1273,33 +1431,47 @@ func tackle() -> void:
 	rules.start_tackle(controlled,last_direction)
 
 func update_ai(_delta: float) -> void:
+	opponent_coach.update(_delta)
 	support.update(_delta)
 	team_tactics.update(_delta)
+	var owner: int=dribbler if dribbler>=0 else carrier
 	var nearest = [-1,-1]
 	var distances = [INF,INF]
 	for i in range(players.size()):
 		var p = players[i]
-		if not p.visible or p.keeper or is_user_player(i): continue
+		if not p.visible or p.dismissed or p.keeper or is_user_player(i): continue
 		var d = flat_distance(p.position,ball.position)
 		if d<distances[p.team]: distances[p.team] = d; nearest[p.team] = i
 	for i in range(players.size()):
 		var p = players[i]
-		if is_user_player(i) or not p.visible: continue
+		if is_user_player(i) or not p.visible or p.dismissed: continue
+		p.protecting=false
+		p.jockeying=false
 		if state!="playing": return
 		if training_drills.manages(i):
 			training_drills.actor(i)
 			continue
+		if p.ball_actions.contact_pending:
+			# Follow the real ball through the short backswing; tactical runs
+			# resume only after contact, without rotating away from the kick.
+			var approach: Vector3=(ball.position-p.position)*Vector3(1,0,1)
+			var ball_motion: Vector3=ball.linear_velocity*Vector3(1,0,1)
+			var settle: Vector3=ball_motion+(approach-approach.normalized()*.55)*12
+			p.desired=(settle/maxf(1,p.movement_speed())).limit_length(1)
+			p.sprinting=false
+			continue
 		if p.action_timer>0 and p.pose in ["stumble","fall","poke"]:
 			p.desired=Vector3.ZERO
 			continue
-		if i==nearest[p.team] and carrier>=0 and players[carrier].team!=p.team and foul_cooldown<=0:
+		if ai_attack.defend(i): continue
+		if (i==nearest[p.team] or team_tactics.pressers[p.team]==i) and owner>=0 and players[owner].team!=p.team and foul_cooldown<=0:
 			var gap: Vector3=ball.position-p.position
 			gap.y=0
-			var poke_at: float=1.58 if duels.ball_opened(carrier) else 1.35
-			if gap.length()<poke_at and ball.position.y<0.75 and p.tackle_cooldown<=0 and p.ai_think>management.reaction(p.team) and duels.ai_can_challenge(i,carrier):
+			var poke_at: float=1.58 if duels.ball_opened(owner) else 1.35
+			if gap.length()<poke_at and ball.position.y<0.75 and p.tackle_cooldown<=0 and p.ai_think>management.reaction(p.team) and duels.ai_can_challenge(i,owner) and duels.ai_poke_window(i,owner):
 				duels.standing_tackle(i)
 				if p.pose=="poke": continue
-			elif gap.length()<2.2 and gap.length()>1 and p.tackle_cooldown<=0 and p.ai_think>1.5 and duels.ai_can_challenge(i,carrier,true) and rng.randf()<0.28*_delta:
+			elif gap.length()<2.2 and gap.length()>1 and p.tackle_cooldown<=0 and p.ai_think>1.5 and duels.ai_can_challenge(i,owner,true) and rng.randf()<0.28*_delta:
 				rules.start_tackle(i,gap.normalized())
 		if p.set_piece_pose=="wall" and p.wall_hold>0:
 			p.desired=Vector3.ZERO
@@ -1308,16 +1480,19 @@ func update_ai(_delta: float) -> void:
 		if try_requested_pass(i): continue
 		var forward = attack_sign(p.team)
 		var target: Vector3 = p.home
+		var has_ball: bool=dribbler==i or ((owner==i or owner<0) and can_touch(i,1.05) and ball.linear_velocity.length()<16 and p.receive_timer<=0 and p.touch_cooldown<=0)
+		var receiving_pass: bool=not has_ball and ai_receivers[p.team]==i and last_touch==p.team
+		var chasing_ball: bool=not has_ball and i==nearest[p.team] and (carrier<0 or carrier==i or players[carrier].team!=p.team)
 		p.sprinting = false
 		if p.keeper:
 			target=goalkeeping.update(i,_delta)
 		else:
-			if p.pose=="header" and p.action_timer>0: continue
-			ai_attack.try_header(i)
+			if p.pose in ["header","volley","finish","intercept"] and p.action_timer>0: continue
+			if not ai_attack.try_header(i): ai_attack.try_volley(i)
+			if aerial_shot_active(i): continue
 			var distance = flat_distance(p.position,ball.position)
-			var has_ball = distance<1.05 and ball.position.y<1.05 and ball.linear_velocity.length()<16
 			if has_ball:
-				target = Vector3(clampf(p.position.x*0.45,-12,12),0,forward*48)
+				target = ai_attack.carry_target(i)
 				if dribbler==i:
 					for q in players:
 						if q.visible and q.team!=p.team and flat_distance(p.position,q.position)<1.6:
@@ -1325,13 +1500,10 @@ func update_ai(_delta: float) -> void:
 							p.facing=duels.shield_direction(i)
 							break
 				if ai_attack.act(i): continue
-			elif ai_receivers[p.team]==i and last_touch==p.team:
-				target = ball.position+ball.linear_velocity*clampf(distance/14,0.08,0.65)
-				if autonomous_kicks(p.team): target=ai_attack.aerial_target(i,target)
-				target.x = clampf(target.x,-30,30)
-				target.z = clampf(target.z,-48,48)
-				p.sprinting = distance>5 and p.energy>0.4 and not p.exhausted
-			elif i==nearest[p.team] and (carrier<0 or carrier==i or players[carrier].team!=p.team):
+			elif receiving_pass:
+				target = ai_attack.receiving_target(i)
+				p.sprinting = flat_distance(p.position,target)>5 and p.energy>0.4 and not p.exhausted
+			elif chasing_ball:
 				target = ball.position+ball.linear_velocity*0.18
 				if autonomous_kicks(p.team): target=ai_attack.aerial_target(i,target)
 				p.sprinting = distance>9 and p.energy>0.4 and not p.exhausted
@@ -1348,13 +1520,15 @@ func update_ai(_delta: float) -> void:
 						target = target.lerp(mark.position-Vector3(0,0,forward*3),0.30)
 				target.x = clampf(target.x,-29,29)
 				target.z = clampf(target.z,-43,43)
-		if not p.keeper and i in support.targets and not can_touch(i,1.05) and ai_receivers[p.team]!=i:
+		if not p.keeper and i in support.targets and not has_ball and not receiving_pass and not chasing_ball:
 			target=support.targets[i]
-			p.sprinting=support.roles[i] in ["give_go","one_two","overlap"] and p.energy>0.35 and not p.exhausted
-		if i in team_tactics.targets and not p.keeper and not can_touch(i,1.05):
+			p.sprinting=support.roles[i] in ["give_go","one_two","overlap","channel_run"] and p.energy>0.35 and not p.exhausted
+		var defensive_duty: bool=i in team_tactics.targets and not p.keeper and not has_ball
+		if defensive_duty:
 			target=team_tactics.targets[i]
-			p.sprinting=team_tactics.roles[i]=="press" and team_tactics.press_level(p.team)==2 and p.energy>.35
-		elif i!=nearest[p.team] and not can_touch(i,1.05) and support.roles.get(i,"")!="one_two": target=management.adjust_target(i,target)
+			var duty: String=team_tactics.roles[i]
+			p.sprinting=(duty in ["press","press_support","track"] and team_tactics.press_level(p.team)==2 or duty=="recover") and p.energy>.3 and not p.exhausted
+		elif i!=nearest[p.team] and ai_receivers[p.team]!=i and not can_touch(i,1.05) and support.roles.get(i,"") not in ["one_two","short_outlet","channel_run","wide_outlet"]: target=management.adjust_target(i,target)
 		if i in second_balls.targets and not p.keeper and not can_touch(i,1.05):
 			target=second_balls.targets[i]
 			p.sprinting=p.energy>.25
@@ -1362,6 +1536,8 @@ func update_ai(_delta: float) -> void:
 		var offset: Vector3 = target-p.position
 		offset.y = 0
 		p.desired = offset.normalized()*clampf(offset.length()/1.4,0,1)
+		if receiving_pass and not defensive_duty and not (i in second_balls.targets): p.desired=ai_attack.receiving_movement(i,target)
+		if defensive_duty and p.team==1: p.desired=team_tactics.defensive_movement(i,target)
 		if p.protecting: p.desired*=0.45
 		# Local separation keeps formations open and avoids stacks of bodies.
 		for other in players:
@@ -1372,6 +1548,8 @@ func update_ai(_delta: float) -> void:
 		p.desired = p.desired.limit_length(1)
 
 func update_contacts(delta: float) -> void:
+	for i in range(players.size()):
+		if i!=dribbler and not players[i].dribble_motion.preparing: players[i].dribble_motion.release_collision()
 	if ball.pending_kick or ball.held_by!=null: return
 	if first_touch.airborne():
 		dribbler=-1
@@ -1379,13 +1557,15 @@ func update_contacts(delta: float) -> void:
 	# Keep possession through a turn; a nearby opponent can still win the ball.
 	if dribbler>=0:
 		var owner=players[dribbler]
-		if not owner.visible or owner.action_timer>0 or (owner.keeper and not is_user_player(dribbler)) or flat_distance(owner.position,ball.position)>(2.05 if owner.active_sprint else 1.65) or ball.position.y>1.05 or ball.linear_velocity.length()>18 or kick_lock>0 or ball.pending_kick:
+		if not owner.visible or owner.action_timer>0 or aerial_shot_active(dribbler) or (owner.keeper and not is_user_player(dribbler)) or flat_distance(owner.position,ball.position)>(2.05 if owner.active_sprint else 1.65) or ball.position.y>1.05 or ball.linear_velocity.length()>18 or kick_lock>0 or ball.pending_kick:
+			owner.dribble_motion.release_collision()
 			dribbler=-1
 	carrier=dribbler
 	var nearest_distance: float=flat_distance(players[carrier].position,ball.position) if carrier>=0 else 1.35
 	for i in range(players.size()):
 		var p=players[i]
-		if not p.visible or p.action_timer>0: continue
+		if not p.visible or p.action_timer>0 or aerial_shot_active(i) or p.dummy_time>0: continue
+		if p.ball_actions.contact_pending: continue
 		var distance: float=flat_distance(p.position,ball.position)
 		var closer: bool=distance<nearest_distance if dribbler<0 else (p.team!=players[dribbler].team and distance<duels.steal_reach(dribbler) and distance+duels.steal_margin(dribbler)<nearest_distance)
 		if closer and ball.position.y<1.05 and duels.ball_exposed(i,dribbler):
@@ -1398,11 +1578,19 @@ func update_contacts(delta: float) -> void:
 		if kick_lock>0 or p.touch_cooldown>0 or p.ball_actions.contact_cooldown>0 or (p.keeper and not is_user_player(carrier)): return
 		var extended: bool=nearest_distance>1.12
 		if extended and (nearest_distance>1.34 or ball.position.y>0.7 or (ball.linear_velocity-p.velocity).dot(ball.position-p.position)>0): return
+		if extended and not is_user_player(carrier) and ai_receivers[p.team]==carrier:
+			var offset: Vector3=(ball.position-p.position)*Vector3(1,0,1)
+			var relative: Vector3=(ball.linear_velocity-p.velocity)*Vector3(1,0,1)
+			var meeting := clampf(-offset.dot(relative)/maxf(.01,relative.length_squared()),0,.12)
+			# Let an on-target pass reach the instep. Stretch only for a ball
+			# that would otherwise go past, instead of spilling every easy pass.
+			if ball.position.y<.55 and (offset+relative*meeting).length()<1.0: return
 		var speed: float=ball.linear_velocity.length()
 		if speed>16 and not (ai_receivers[p.team]==carrier and last_touch==p.team and speed<27):
 			if nearest_distance<0.65:
 				if not rules.before_touch(carrier,false): return
 				last_touch=p.team
+				team_control.touched(carrier)
 			return
 		if not rules.before_touch(carrier): return
 		reactions.received(carrier)
@@ -1419,26 +1607,9 @@ func update_contacts(delta: float) -> void:
 			incoming_time=0
 			announce("İLK DOKUNUŞ · TOP SENDE")
 	elif not rules.before_touch(carrier): return
-	if p.ball_actions.control_grace>0: return
-	# Close control is a continuous, bounded foot impulse, never a transform
-	# snap. Sprint only opens the ball a step ahead; it does not kick it away.
-	var desired_direction: Vector3=duels.shield_direction(carrier) if p.protecting else p.facing
-	if p.feint_time>0: desired_direction=desired_direction.rotated(Vector3.UP,sin((1-p.feint_time/0.48)*TAU)*0.85*p.feint_side)
-	var turn := dribble_direction.signed_angle_to(desired_direction,Vector3.UP)
-	var turn_rate := 5.0 if p.active_sprint else 9.0
-	dribble_direction=dribble_direction.rotated(Vector3.UP,clampf(turn,-turn_rate*delta,turn_rate*delta))
-	var pace: float=pace_of(p)
-	var carry := 1.28 if p.active_sprint else 0.82
-	if not p.active_sprint and pace<1.4: carry=0.80
-	var foot: Vector3=p.position+dribble_direction*carry
-	var correction: Vector3=(foot-ball.position)*Vector3(1,0,1)
-	var catch := 11.0 if pace<1.4 else (8.0 if p.active_sprint else 7.0)
-	var velocity: Vector3=p.velocity*Vector3(1,0,1)+(correction*20).limit_length(catch)
-	ball.touch(Vector3(velocity.x,ball.linear_velocity.y,velocity.z),ball.mass*(120.0 if p.active_sprint else 110.0)*delta)
-	last_touch=p.team
-	last_kicker=carrier
-	if p.team==0 and not player_lock and not training and carrier!=controlled and requested_receiver<0 and team_control.manual_hold<=0:
-		team_control.select(carrier)
+	team_control.touched(carrier)
+	if p.ball_actions.control_grace>0 or skills.active.has(carrier): return
+	p.dribble_motion.carry(self,carrier,delta)
 
 func pace_of(player: Node3D) -> float:
 	return Vector2(player.velocity.x,player.velocity.z).length()
@@ -1471,6 +1642,7 @@ func check_boundaries() -> void:
 	elif training and current.length()>200: reset_practice()
 
 func goal(team: int) -> void:
+	career.capture_goal(team,last_kicker)
 	support.reset()
 	duels.reset()
 	goalkeeping.reset()
@@ -1486,7 +1658,6 @@ func goal(team: int) -> void:
 	restart_timer = 3.7
 	charging = false
 	charge = 0
-	camera_shake = 0.28
 	stadium.crowd.context(score,match_time,LENGTH)
 	audio.crowd_context(stadium.crowd.home_support,stadium.crowd.danger,stadium.crowd.hush,score[0]-score[1],match_time/LENGTH)
 	stadium.react("goal",team,ball.position)
@@ -1519,6 +1690,9 @@ func begin_restart(kind: String,team: int,point: Vector3) -> void:
 	clear_pass_request()
 	rules.reset()
 	state = "restart"
+	reset_advanced_play()
+	for p in players:
+		p.desired=Vector3.ZERO; p.sprinting=false; p.shot_preparation=0; p.wrapping=0
 	restart_timer = 2.6
 	broadcast.restart()
 	restart_team = team

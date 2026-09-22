@@ -20,8 +20,8 @@ func preview(origin: Vector3,velocity: Vector3,spin: float,goal_z: float,surface
 		last_destination=destination; last_landing=landing; last_duration=duration
 	return cached
 
-func pass_preview(origin: Vector3,plan: Dictionary,surface) -> Dictionary:
-	return preview(origin,plan.velocity,0,INF,surface,plan.target,plan.get("lob",false),clampf(plan.get("flight",3.0)+0.8,2.0,6.0))
+func pass_preview(origin: Vector3,plan: Dictionary,surface,spin: float=0.0) -> Dictionary:
+	return preview(origin,plan.velocity,spin,INF,surface,plan.target,plan.get("lob",false),clampf(plan.get("flight",3.0)+0.8,2.0,6.0))
 
 static func predict(origin: Vector3,velocity: Vector3,spin: float,goal_z: float,surface=null,destination: Vector3=Vector3.INF,landing: bool=false,duration: float=3.0) -> Dictionary:
 	var points := PackedVector3Array([origin])

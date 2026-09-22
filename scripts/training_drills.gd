@@ -8,20 +8,26 @@ var attempt := 0
 var phase := ""
 var age := 0.0
 var held_age := 0.0
+var finish_wait := -1.0
 var feeder := 8
 var station := Vector3.ZERO
 var target := Vector3.ZERO
+var place_point := Vector3(0,0,-26)
 var wall: Array[int] = []
 
 func begin(value: String) -> void:
 	mode=value if value in MODES else "free"
-	attempt=0; phase=""; age=0; held_age=0; wall.clear()
+	attempt=0; phase=""; age=0; held_age=0; finish_wait=-1; wall.clear()
+	place_point=Vector3(0,0,-26)
+
+func placing() -> bool:
+	return mode=="free_kick" and phase=="place"
 
 func title() -> String:
 	return TITLES[MODES.find(mode)]
 
 func setup() -> void:
-	attempt+=1; age=0; held_age=0; wall.clear()
+	attempt+=1; age=0; held_age=0; finish_wait=-1; wall.clear()
 	phase="free" if mode=="free" else "waiting"
 	for i in range(game.players.size()):
 		var p=game.players[i]
@@ -39,16 +45,12 @@ func setup() -> void:
 		game.previous_ball=station+partner.facing*.74+Vector3.UP*.23
 		game.announce("ORTA ÇALIŞMASI · CEZA SAHASINDA YERİNİ AL")
 	else:
-		var points := [Vector3(-7,0,-26),Vector3(6,0,-28),Vector3(0,0,-24)]
-		game.restart_point=points[(attempt-1)%points.size()]
-		game.restart_type="SERBEST VURUŞ"; game.restart_team=0
-		game.players[9].position=game.restart_point+Vector3.BACK
-		game.state="restart"
-		game.set_pieces.prepare()
-		game.set_pieces.snap_ready()
-		wall.assign(game.set_pieces.wall)
-		for i in wall: game.players[i].set_piece_pose="wall"
-		phase="setup"
+		for i in range(game.players.size()):
+			game.players[i].visible=false
+			game.players[i].collision_layer=0
+		phase="place"
+		show_place()
+		game.announce("YÖN TUŞLARIYLA NOKTAYI SEÇ  ·  A İLE VUR")
 	game.match_camera.snap=true
 
 func manages(index: int) -> bool:
@@ -89,8 +91,57 @@ func deliver_cross() -> bool:
 	game.announce("ORTA GELİYOR · ŞUT TUŞUYLA KAFA VURUŞU")
 	return true
 
+func handle(event: InputEvent) -> bool:
+	if not placing() or game.state=="paused": return false
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode in [KEY_S,KEY_ENTER]:
+		confirm_place()
+		return true
+	return false
+
+func place_move() -> Vector3:
+	var move: Vector3=game.movement_input()
+	var pad: Vector3=game.controller.separate_aim()
+	return pad if pad.length()>move.length() else move
+
+func show_place() -> void:
+	var attack: float=game.attack_sign(0)
+	place_point.x=clampf(place_point.x,-29,29)
+	place_point.z=clampf(place_point.z,-46.5 if attack<0 else -6,6 if attack<0 else 46.5)
+	game.restart_point=place_point
+	game.restart_type="SERBEST VURUŞ"
+	game.restart_team=0
+	game.state="restart"
+	game.ball.place(place_point+Vector3.UP*0.23)
+	game.previous_ball=game.ball.position
+	game.camera_focus=place_point
+
+func steer_place(delta: float) -> void:
+	var move: Vector3=place_move()
+	if move.length()>0.01:
+		place_point+=move.normalized()*16.0*delta*clampf(move.length(),0,1)
+	show_place()
+
+func confirm_place() -> void:
+	if not placing(): return
+	for i in [9,11,12,13,14,15]:
+		game.players[i].visible=true
+		game.players[i].collision_layer=2
+	game.restart_point=place_point
+	game.restart_type="SERBEST VURUŞ"
+	game.restart_team=0
+	game.state="restart"
+	game.set_pieces.prepare()
+	game.set_pieces.snap_ready()
+	wall.assign(game.set_pieces.wall)
+	for i in wall: game.players[i].set_piece_pose="wall"
+	phase="setup"
+	game.match_camera.snap=true
+
 func update(delta: float) -> void:
 	if not game.training or mode=="free" or game.state not in ["playing","restart","set_piece"]: return
+	if mode=="free_kick" and phase=="place":
+		steer_place(delta)
+		return
 	if mode=="free_kick" and phase=="setup":
 		if game.ball.pending_reset: return
 		if game.state=="restart": game.set_pieces.recovery.step(delta)
@@ -99,19 +150,42 @@ func update(delta: float) -> void:
 	if game.state!="playing": return
 	if mode=="free_kick" and phase=="ready": phase="live"; age=0
 	age+=delta
+	if finish_wait>=0:
+		finish_wait-=delta
+		if finish_wait<=0: game.reset_practice()
+		return
 	if mode=="cross" and phase=="waiting":
 		if age>=1.8: deliver_cross()
 		# A disrupted setup must not strand the exercise partner without a ball.
 		if age>7: game.reset_practice()
 		return
 	if phase!="live": return
+	if mode=="free_kick" and blocked_by_wall():
+		end_attempt()
+		return
+	if keeper_stopped():
+		end_attempt()
+		return
 	held_age=held_age+delta if game.ball.held_by!=null else 0.0
-	if held_age>.8 or age>11:
+	if held_age>.55 or age>11:
 		game.reset_practice()
 
-func instruction() -> String:
-	if mode=="cross":
-		return "Kanattaki arkadaşın hazırlanıyor. Yerini al; pas tuşuyla ortayı iste." if phase=="waiting" else "Topa yaklaş; havadayken şut tuşuyla kafa vur."
-	if mode=="free_kick":
-		return "Yönünü seç; şuta basılı tutup bırak. Falso da kullanabilirsin." if phase in ["setup","ready"] else "Seken topu tamamlayabilirsin. Sonra yeni deneme kurulacak."
-	return "Mevcut serbest çalışma: topu sür, yönünü seç, şutunu çek."
+func blocked_by_wall() -> bool:
+	if wall.is_empty(): return false
+	for i in wall:
+		var p=game.players[i]
+		if not p.visible: continue
+		var offset: Vector3=game.ball.position-p.position
+		if Vector2(offset.x,offset.z).length()<0.52 and offset.y<2.1: return true
+	return false
+
+func keeper_stopped() -> bool:
+	if game.ball.held_by!=null and game.ball.held_by.keeper: return true
+	if game.last_kicker>=0 and game.players[game.last_kicker].keeper: return true
+	return false
+
+func end_attempt() -> void:
+	if finish_wait>=0: return
+	finish_wait=0.55
+	game.previous_ball=game.ball.position
+	game.ball.linear_velocity=Vector3.ZERO

@@ -26,6 +26,8 @@ var release_hip := Quaternion.IDENTITY
 var release_knee := Quaternion.IDENTITY
 var last_hip := Quaternion.IDENTITY
 var last_knee := Quaternion.IDENTITY
+var last_pelvis := 0.0
+var release_pelvis := 0.0
 
 func reset() -> void:
 	side=0; backward=0; braking=0; cut=0
@@ -110,7 +112,7 @@ func apply_pose(p,amount: float,stride: float) -> void:
 		var sign_leg := -1.0 if i==0 else 1.0
 		var phase := -stride*sign_leg
 		leg.rotation.x=lerpf(0.1-reverse_stride*sign_leg*0.78*amount,0.13+phase*0.12*amount,lateral)
-		leg.rotation.z=lerpf(sign_leg*0.035,sign_leg*0.18+stride*direction*0.20*amount,lateral)
+		leg.rotation.z=lerpf(sign_leg*0.035*p.gait_width,sign_leg*0.18*p.gait_width+stride*direction*0.20*amount,lateral)
 		var lift := lerpf(maxf(0,-phase),maxf(0,phase),backward)
 		knee.rotation.x=-0.19-lift*lerpf(1.08,0.68,lateral)*amount-lateral*0.1-backward*0.06
 		if braking>0.01:
@@ -141,14 +143,20 @@ func finish_pose(p) -> void:
 		var leg: Node3D=p.left_leg if plant_leg==0 else p.right_leg
 		var knee: Node3D=p.left_knee if plant_leg==0 else p.right_knee
 		var target: Vector3=p.rig.to_local(anchor)-leg.position
+		# Different stride lengths can arrive on a straighter support knee.
+		# Lower the visual pelvis a little before asking that leg to bear weight.
+		if target.length()>.72 and plant_age<.065:
+			p.rig.position.y-=clampf((target.length()-.71)*1.5,0,.12)*plant_weight
+			target=p.rig.to_local(anchor)-leg.position
 		# Begin recovery before the hip runs out of reach. Blend from the actual
 		# last pose to the live stride, even if the physics body turns immediately.
-		if (plant_age>0.03 and target.length()>0.73) or plant_age>0.085 or absf(anchor.y-p.global_position.y-SOLE)>0.15:
+		if (plant_age>0.03 and target.length()>0.745) or plant_age>0.085 or absf(anchor.y-p.global_position.y-SOLE)>0.15:
 			plant_age=PLANT_TIME
 			plant_weight=0
 			release_age=0
 			release_hip=last_hip
 			release_knee=last_knee
+			release_pelvis=last_pelvis
 		elif plant_weight>0:
 			# Blend the contact point, not the hip and knee independently. Joint
 			# interpolation can sweep the toe through the turf during release.
@@ -160,14 +168,23 @@ func finish_pose(p) -> void:
 		var knee: Node3D=p.left_knee if plant_leg==0 else p.right_knee
 		if release_age<RELEASE_TIME:
 			var recovery := smoothstep(0,RELEASE_TIME,release_age)
+			p.rig.position.y=lerpf(release_pelvis,p.rig.position.y,recovery)
 			leg.quaternion=release_hip.slerp(leg.quaternion,recovery)
 			knee.quaternion=release_knee.slerp(knee.quaternion,recovery)
 			# During recovery the other boot takes support. Only the visual pelvis
 			# follows it; the CharacterBody and its collision capsule stay untouched.
-			height=minf(p.left_knee.to_global(BOOT).y,p.right_knee.to_global(BOOT).y)
-			p.rig.position.y-=height-p.global_position.y-SOLE
-		last_hip=leg.quaternion
-		last_knee=knee.quaternion
+	# Pelvis compression must not push the free boot through the turf.
+	for i in range(2):
+		var leg: Node3D=p.left_leg if i==0 else p.right_leg
+		var knee: Node3D=p.left_knee if i==0 else p.right_knee
+		var point: Vector3=knee.to_global(BOOT)
+		if point.y<p.global_position.y+SOLE-.002:
+			point.y=p.global_position.y+SOLE
+			solve_leg(leg,knee,p.rig.to_local(point)-leg.position,1)
+	if plant_leg>=0:
+		last_hip=(p.left_leg if plant_leg==0 else p.right_leg).quaternion
+		last_knee=(p.left_knee if plant_leg==0 else p.right_knee).quaternion
+	last_pelvis=p.rig.position.y
 	feet.assign([p.left_knee.to_global(BOOT),p.right_knee.to_global(BOOT)])
 
 func solve_leg(leg: Node3D,knee: Node3D,target: Vector3,weight: float) -> void:
@@ -182,4 +199,7 @@ func solve_leg(leg: Node3D,knee: Node3D,target: Vector3,weight: float) -> void:
 	var bend := -acos(clampf((reach*reach-upper*upper-lower*lower)/(2*upper*lower),-1,1))-atan2(0.05,0.42)
 	var rotation := Basis(Vector3.BACK,spread)*Basis(Vector3.RIGHT,hip)
 	leg.quaternion=leg.quaternion.slerp(Quaternion(rotation),weight)
-	knee.rotation.x=lerpf(knee.rotation.x,bend,weight)
+	# A quaternion carried over from a turning touch can decompose to a 180°
+	# Z rotation. Replacing only Euler X then points the boot into the air.
+	# Solve the complete hinge orientation before any deliberate ankle twist.
+	knee.quaternion=knee.quaternion.slerp(Quaternion(Vector3.RIGHT,bend),weight)

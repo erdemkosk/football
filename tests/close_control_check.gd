@@ -1,87 +1,75 @@
-extends SceneTree
-var game
-var failures := 0
-func _initialize() -> void: call_deferred("run")
-func check(ok: bool,label: String) -> void:
-	if ok: print("PASS: "+label)
-	else: failures+=1; push_error("FAIL: "+label)
-func setup() -> void:
-	game.start_match(true)
-	game.set_physics_process(false)
-	game.set_process(false)
-	for p in game.players:
-		p.visible=false
-		p.collision_layer=0
-	var p=game.players[9]
-	p.visible=true
-	p.collision_layer=2
-	p.position=Vector3.ZERO
-	p.facing=Vector3.FORWARD
-	game.ball.place(Vector3(0,0.23,-0.82))
-	game.kick_lock=0
-	await physics_frame
-	await physics_frame
-func drive(direction: Vector3,count: int,sprint: bool=false) -> float:
-	var maximum := 0.0
-	var p=game.players[9]
-	for i in range(count):
-		p.desired=direction
-		p.sprinting=sprint
-		p.step(1.0/120)
-		game.update_contacts(1.0/120)
+extends "res://tests/dribble_control_check.gd"
+
+func receive_pass(speed: float,intent: Vector3,sprint: bool=false) -> Dictionary:
+	await setup()
+	game.ai_receivers[0]=9; game.incoming_receiver=9; game.incoming_time=2
+	game.last_touch=0; game.last_kicker=8
+	game.ball.place(p.position+Vector3(0,.23,-1.04),Vector3.BACK*speed)
+	await physics_frame; await physics_frame
+	var got_ball:=false
+	var peak:=0.0
+	var height:=0.0
+	var touched_at:=-1
+	var loss_frames:=0
+	for i in range(180):
+		p.desired=intent; p.sprinting=sprint
+		p.step(DT)
+		var point: Vector3=game.ball.position
+		game.update_contacts(DT)
+		if game.ball.position!=point: check(false,"Receiving never teleports the ball")
+		if game.dribbler==9:
+			got_ball=true
+			if touched_at<0: touched_at=i
 		await physics_frame
-		maximum=maxf(maximum,game.flat_distance(p.position,game.ball.position))
-	return maximum
+		if got_ball:
+			peak=maxf(peak,game.flat_distance(p.position,game.ball.position))
+			height=maxf(height,game.ball.position.y)
+			if game.dribbler!=9: loss_frames+=1
+	return {"got":got_ball,"peak":peak,"height":height,"loss":loss_frames,"owner":game.dribbler,"gap":game.flat_distance(p.position,game.ball.position),"speed":game.ball.linear_velocity.length(),"touch_frame":touched_at}
+
 func run() -> void:
-	game=load("res://main.tscn").instantiate()
-	root.add_child(game)
-	await physics_frame
-	await setup()
-	var run_gap: float=await drive(Vector3.FORWARD,360)
-	print("RUN gap=",run_gap)
-	check(run_gap<1.1 and game.dribbler==9,"Running keeps the ball at the player's feet")
-	var turn_gap: float=await drive(Vector3.RIGHT,120)
-	var reverse_gap: float=await drive(Vector3.LEFT,120)
-	print("TURN gaps=",turn_gap," / ",reverse_gap)
-	check(maxf(turn_gap,reverse_gap)<1.35 and game.dribbler==9,"Right-angle and full reversal retain close control")
-	await setup()
-	var sprint_gap: float=await drive(Vector3.FORWARD,360,true)
-	print("SPRINT gap=",sprint_gap)
-	var opened: Vector3=(game.ball.position-game.players[9].position)*Vector3(1,0,1)
-	check(sprint_gap>1.05 and sprint_gap<1.55 and game.dribbler==9,"Sprint opens the ball only a step ahead")
-	check(opened.normalized().dot(Vector3.FORWARD)>0.7,"The slightly opened ball stays in front of the sprinter")
-	await drive(Vector3.FORWARD,180)
-	var recover_gap: float=game.flat_distance(game.players[9].position,game.ball.position)
-	print("RECOVER gap=",recover_gap)
-	check(recover_gap<1.05 and game.dribbler==9,"Releasing sprint restores close control")
+	visual="--visual" in OS.get_cmdline_user_args()
+	game=load("res://main.tscn").instantiate(); root.add_child(game); await physics_frame
+	game.match_menu.config_path="/tmp/sefc-close-control.cfg"
+	p=game.players[9]
+	for scenario in [{"speed":8.0,"intent":Vector3.ZERO,"sprint":false},{"speed":8.0,"intent":Vector3.RIGHT,"sprint":false},{"speed":18.0,"intent":Vector3.LEFT,"sprint":false},{"speed":24.0,"intent":Vector3.FORWARD,"sprint":false},{"speed":18.0,"intent":Vector3.BACK,"sprint":true}]:
+		var received: Dictionary=await receive_pass(scenario.speed,scenario.intent,scenario.sprint)
+		print("RECEIVE ",scenario," => ",received)
+		check(received.got and received.owner==9 and received.peak<1.3 and received.loss==0,"A reachable pass at %.0f m/s stays close through its first control and next run" % scenario.speed)
+		check(received.height<.5,"Ground-pass cushioning does not launch the ball upwards")
+	await setup(); await drive(Vector3.FORWARD,240)
+	print("CLOSE RUN max=",samples.max()," last=",samples.back())
+	check(samples.max()<.9 and game.dribbler==9,"Ordinary running keeps the ball within a compact carrying distance")
+	await setup(); await drive(Vector3.FORWARD,240,true)
+	print("CLOSE SPRINT max=",samples.max()," last=",samples.back())
+	check(samples.max()<1.12 and game.dribbler==9,"Sprinting gives a small controlled lead instead of a loose knock-on")
+	for direction in [Vector3.RIGHT,Vector3.BACK,Vector3.LEFT,Vector3.FORWARD]:
+		trace=direction==Vector3.LEFT and "--trace" in OS.get_cmdline_user_args()
+		samples.clear(); await drive(direction,90,true)
+		print("CUT ",direction," max=",samples.max()," owner=",game.dribbler," gap=",samples.back())
+		check(samples.max()<1.3 and game.dribbler==9,"Successive sprint cuts retain close possession")
+	trace=false
 	await drive(Vector3.ZERO,120)
-	check(game.ball.linear_velocity.length()<0.2 and game.flat_distance(game.players[9].position,game.ball.position)<0.95,"Stopping settles the ball beside the foot")
-	game.strike(9,Vector3(0,3,-25),0,false,"shot")
-	check(game.dribbler==-1,"Shooting immediately releases close control")
-	for i in range(35):
-		game.kick_lock=maxf(0,game.kick_lock-1.0/120)
-		await drive(Vector3.ZERO,1)
-	check(game.flat_distance(game.players[9].position,game.ball.position)>5 and game.dribbler==-1,"A released shot travels freely without being pulled back")
+	print("STOP gap=",game.flat_distance(p.position,game.ball.position)," speed=",game.ball.linear_velocity.length())
+	check(game.flat_distance(p.position,game.ball.position)<.95 and game.ball.linear_velocity.length()<.3,"Letting go of movement settles the ball near the boot")
 	await setup()
-	game.ball.place(Vector3(0,0.23,-0.7),Vector3(0,0,-25))
-	await physics_frame
-	await physics_frame
-	await drive(Vector3.ZERO,1)
-	check(game.dribbler==-1,"A hard incoming shot is not captured as a dribble")
+	var point: Vector3=p.position+Vector3(-.18,.24,-.26)
+	p.left_knee.quaternion=Quaternion.from_euler(Vector3(-2.1,.32,0))
+	p.locomotion.solve_leg(p.left_leg,p.left_knee,p.rig.to_local(point)-p.left_leg.position,1)
+	check(p.left_knee.to_global(p.dribble_motion.BOOT).distance_to(point)<.025,"A twisted knee still places the boot at the ball instead of flipping the lower leg upwards")
+	for build in [{"height":166.0,"weight":60.0,"control":94,"pace":92},{"height":195.0,"weight":92.0,"control":58,"pace":64}]:
+		await setup()
+		p.height_cm=build.height; p.weight_kg=build.weight
+		p.attributes.control=build.control; p.attributes.pace=build.pace
+		p.apply_build()
+		await drive(Vector3.FORWARD,140,true)
+		await drive(Vector3.RIGHT,70,true); await drive(Vector3.BACK,70,true)
+		await drive(Vector3.LEFT,70,true)
+		print("BUILD ",build.height," max=",samples.max()," owner=",game.dribbler)
+		check(game.dribbler==9 and samples.max()<1.35,"Different player builds and abilities retain controllable consecutive sprint turns")
 	await setup()
-	await drive(Vector3.FORWARD,30)
-	game.players[9].receive_impact(Vector3.RIGHT,0.85)
-	await drive(Vector3.ZERO,1)
-	check(game.dribbler==-1,"A knocked-down player loses close control")
-	await setup()
-	await drive(Vector3.ZERO,30)
-	game.players[17].visible=true
-	game.players[17].position=game.ball.position+Vector3(0.15,0,0)
-	game.players[17].touch_cooldown=0
-	game.update_contacts(1.0/120)
-	check(game.dribbler==17 and game.last_touch==1,"An opponent reaching the ball can still win possession")
-	game.begin_restart("TAÇ",0,Vector3(32,0,0))
-	check(game.dribbler==-1,"Whistles release close control for the physical restart")
-	print("CLOSE CONTROL CHECK: %d failures" % failures)
-	game.free()
-	quit(0 if failures==0 else 1)
+	await drive(Vector3.FORWARD*.3,180)
+	await drive(Vector3.RIGHT*.4,120)
+	check(game.dribbler==9 and samples.max()<1.0,"Partial analog movement keeps a short, controllable touch")
+	print("CLOSE CONTROL CHECK: %d checks, %d failures" % [checks,failures])
+	game.free(); quit(1 if failures else 0)

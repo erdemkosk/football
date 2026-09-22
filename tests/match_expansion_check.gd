@@ -36,6 +36,7 @@ func run() -> void:
 	await process_frame
 	nav.pressed=false; Input.parse_input_event(nav); Input.flush_buffered_events()
 	check(game.match_menu.get_viewport().gui_get_focus_owner()==game.match_menu.navigation[1],"Xbox D-pad navigates between settings sections")
+	check(game.match_menu.navigation.all(func(b): return b.icon!=null and not b.text.contains("01")),"Settings sections use drawn icons instead of numbered labels")
 	for page in range(4):
 		game.match_menu.show_page(page)
 		await capture(str(page))

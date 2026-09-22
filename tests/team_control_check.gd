@@ -26,6 +26,13 @@ func setup() -> void:
 	game.players[7].position=Vector3(2,0,-29)
 	game.players[11].position=Vector3(0,0,-48)
 	game.players[14].position=Vector3(12,0,-40)
+func contact() -> void:
+	for frame in range(20):
+		if game.kick_contact.pending.is_empty(): return
+		var actor=game.players[game.kick_contact.pending.index]
+		game.kick_contact.prepare(1.0/120)
+		actor.step(1.0/120)
+		game.kick_contact.resolve()
 func hold(seconds: float) -> void:
 	for n in range(roundi(seconds*120)): game.update_control(1.0/120)
 func capture(name: String) -> void:
@@ -43,14 +50,15 @@ func run() -> void:
 	check(not game.player_lock,"New matches start with whole-team control")
 	button(JOY_BUTTON_A); var preview: Dictionary=game.pass_preview.duplicate()
 	button(JOY_BUTTON_A,false)
+	contact()
 	check(game.controlled==9 and game.last_kicker==9 and game.ball.kick_velocity.is_equal_approx(preview.velocity),"A passes physically and leaves the passer selected")
 	game.players[9].touch_cooldown=0; game.ball.linear_velocity=game.ball.kick_velocity
 	game.team_control.update(0.1)
-	check(game.controlled==9,"Outgoing pass does not auto-switch to the recipient")
+	check(game.controlled==6,"Outgoing pass selects the teammate who can receive its physical trajectory")
 	game.update_ai(0.01)
 	check(game.players[6].desired.length()>0.1 or game.players[7].desired.length()>0.1,"A teammate near the aimed landing can still run to contest the pass")
 	game.controller.stick=Vector2(1,0); game.update_control(0.01)
-	check(game.controlled==9 and game.players[9].desired.length()>0.1,"Stick still steers the passer after the kick")
+	check(game.controlled==6 and game.players[6].desired.length()>0.1,"Stick immediately steers the incoming receiver")
 	setup()
 	button(JOY_BUTTON_B); button(JOY_BUTTON_B,false)
 	game.controller.combos.update(0.24)
@@ -59,13 +67,19 @@ func run() -> void:
 	game.players[6].visible=false; game.players[7].visible=false; game.players[0].visible=true
 	game.players[0].position=Vector3(0,0,8); game.last_direction=Vector3.BACK
 	button(JOY_BUTTON_A); button(JOY_BUTTON_A,false)
+	contact()
 	check(game.controlled==9 and game.ball.kick_velocity.z>0,"A backpass follows the aimed heading without taking control away from the passer")
 	game.ball.pending_kick=false; game.kick_lock=0; game.ball.linear_velocity=Vector3.ZERO
 	game.ball.position=Vector3(0,0.23,7.2); game.ai_pass_time[0]=0; game.dribbler=-1
 	game.team_control.update(0.01)
 	check(game.controlled==0,"The keeper becomes controllable once the ball is at his feet")
 	game.update_contacts(0.01)
-	check(game.dribbler==0 and game.ball.pending_touch,"A controlled goalkeeper receives and carries the ball at his feet")
+	check(game.dribbler==0,"A controlled goalkeeper can acquire the ball at his feet")
+	for frame in range(16):
+		game.players[0].step(1.0/120)
+		game.update_contacts(1.0/120)
+		await physics_frame
+	check(game.players[0].dribble_motion.contacts>0,"The goalkeeper controls the grounded ball with an animated foot contact")
 	setup()
 	game.match_camera.select("pitch")
 	game.update_camera(0)
@@ -90,7 +104,7 @@ func run() -> void:
 	var manual: int=game.controlled
 	game.players[6].position=Vector3(0,0,0.5); game.dribbler=6
 	game.team_control.update(0.3); game.update_contacts(0.01)
-	check(game.controlled==manual and manual!=6,"LB choice is respected briefly even while another teammate has the ball")
+	check(game.controlled==6 and manual!=6,"Actual possession overrides the earlier LB choice immediately")
 	game.team_control.update(1.2)
 	check(game.controlled==6,"Possession control resumes after the manual selection grace period")
 	game.players[6].visible=false; game.players[6].dismissed=true; game.dribbler=-1
@@ -98,6 +112,7 @@ func run() -> void:
 	check(game.controlled!=6 and game.players[game.controlled].visible,"A dismissed player cannot retain control")
 	setup()
 	game.player_lock=true; button(JOY_BUTTON_A); button(JOY_BUTTON_A,false)
+	contact()
 	check(game.controlled==9,"Optional single-player mode still preserves the selected player")
 
 	setup()
@@ -120,6 +135,7 @@ func run() -> void:
 	check(game.players[9].pose=="poke" and game.shots[0]==0,"X challenges an opponent's possession even when the ball is within shooting reach")
 	setup()
 	button(JOY_BUTTON_X); hold(0.2); button(JOY_BUTTON_X,false)
+	contact()
 	check(game.shots[0]==1 and game.ball.kick_velocity.length()>19,"Xbox X still charges and shoots in possession")
 	setup()
 	game.players[9].position=Vector3(0,0,12)
@@ -139,6 +155,7 @@ func run() -> void:
 	await capture("through")
 	var through: Dictionary=game.pass_preview.duplicate(); var origin: Vector3=game.ball.position
 	button(JOY_BUTTON_Y,false)
+	contact()
 	check(game.controlled==9 and game.passes[0]==1 and game.ball.position==origin and game.ball.kick_velocity.is_equal_approx(through.velocity),"Y release uses the visible physical trajectory and leaves the passer selected")
 	var original_kick: Vector3=game.ball.kick_velocity
 	game.players[6].position.x+=15; game.update_control(0.01)
@@ -158,6 +175,7 @@ func run() -> void:
 	button(JOY_BUTTON_Y); button(JOY_BUTTON_Y,false)
 	check(game.requested_receiver==9 and game.request_through and game.passes[0]==0,"Off-ball Y asks a teammate for a through ball without kicking remotely")
 	game.update_pass_request(0.3); game.update_ai(0.01)
+	contact()
 	check(game.passes[0]==1 and game.last_kicker==6 and game.ball.kick_velocity.z<0,"A teammate can answer the through-ball request")
 
 	setup()
@@ -186,13 +204,16 @@ func run() -> void:
 	game.players[7].visible=false; game.ball.freeze=false; game.ball.place(Vector3(0,0.23,0))
 	await physics_frame; await physics_frame
 	button(JOY_BUTTON_Y); button(JOY_BUTTON_Y,false)
+	contact()
 	var received := false
 	for n in range(300):
 		await physics_frame
 		game.kick_lock=maxf(0,game.kick_lock-1.0/120)
 		for p in game.players: p.touch_cooldown=maxf(0,p.touch_cooldown-1.0/120)
 		game.update_pass_request(1.0/120); game.team_control.update(1.0/120); game.update_control(1.0/120); game.update_ai(1.0/120)
-		game.players[6].step(1.0/120); game.players[game.controlled].step(1.0/120); game.update_contacts(1.0/120)
+		game.players[6].step(1.0/120)
+		if game.controlled!=6: game.players[game.controlled].step(1.0/120)
+		game.update_contacts(1.0/120)
 		if game.dribbler==6: received=true; break
 	check(received and game.players[6].position.distance_to(Vector3(1,0,-8))>1,"The intended runner physically reaches and controls a through ball into space")
 	setup()
@@ -200,6 +221,7 @@ func run() -> void:
 	game.ball.freeze=false; game.ball.place(Vector3(0,0.23,0))
 	await physics_frame; await physics_frame
 	button(JOY_BUTTON_A); button(JOY_BUTTON_A,false)
+	contact()
 	var intercepted := false
 	for n in range(180):
 		await physics_frame

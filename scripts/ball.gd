@@ -11,10 +11,14 @@ var spin := 0.0
 var active := true
 var previous_position := Vector3.ZERO
 var rolling_angle := 0.0
+var ground_bounce_age := INF
+var previous_vertical_speed := 0.0
 var goal_nets: Array[Node3D] = []
 var pending_touch := false
 var touch_velocity := Vector3.ZERO
 var touch_impulse_limit := 0.0
+var control_acceleration := Vector3.ZERO
+var pending_control := false
 var held_by: Node3D
 var hold_target := Vector3.ZERO
 var held_collision_mask := 11
@@ -28,6 +32,7 @@ func hold(player: Node3D) -> void:
 	held_collision_mask=collision_mask
 	collision_mask=0
 	pending_touch=false
+	pending_control=false
 	pending_kick=false
 	active=true
 	for net in goal_nets: net.release_ball()
@@ -83,13 +88,17 @@ func place(p: Vector3, v: Vector3 = Vector3.ZERO) -> void:
 	reset_position = p
 	pending_velocity = v
 	pending_reset = true
+	ground_bounce_age=INF; previous_vertical_speed=0
 	pending_kick = false
 	pending_touch = false
+	pending_control = false
 	spin = 0
 
 func strike(v: Vector3, curve: float = 0) -> void:
+	ground_bounce_age=INF; previous_vertical_speed=v.y
 	release_hold()
 	pending_touch = false
+	pending_control = false
 	kick_velocity = v
 	pending_kick = true
 	spin = curve
@@ -102,6 +111,12 @@ func touch(v: Vector3,max_impulse: float) -> void:
 	pending_touch = true
 	sleeping = false
 
+func guide(acceleration: Vector3) -> void:
+	# One physics step of close-control assistance, never a transform lock.
+	if pending_kick or held_by!=null: return
+	control_acceleration=acceleration*Vector3(1,0,1)
+	pending_control=true
+
 func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	if pending_reset:
 		state.transform = Transform3D(Basis.IDENTITY,reset_position)
@@ -110,6 +125,7 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		pending_reset = false
 		previous_position = reset_position
 	if not active:
+		pending_control=false
 		state.linear_velocity = Vector3.ZERO
 		state.angular_velocity = Vector3.ZERO
 		return
@@ -129,7 +145,15 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		var impulse := ((touch_velocity-state.linear_velocity)*mass).limit_length(touch_impulse_limit)
 		state.apply_central_impulse(impulse)
 		pending_touch = false
+	if pending_control:
+		state.apply_central_impulse(control_acceleration*mass*state.step)
+		pending_control=false
 	var v = state.linear_velocity
+	ground_bounce_age+=state.step
+	if previous_vertical_speed< -1 and v.y>0.65 and state.transform.origin.y<RADIUS+0.18:
+		for contact in range(state.get_contact_count()):
+			if state.get_contact_local_normal(contact).y>0.55: ground_bounce_age=0
+	previous_vertical_speed=v.y
 	var resistance := Motion.profile(surface,state.transform.origin)
 	if is_instance_valid(surface): physics_material_override.bounce=surface.ball_bounce(state.transform.origin)
 	var speed := Vector2(v.x,v.z).length()

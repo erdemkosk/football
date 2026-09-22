@@ -12,6 +12,9 @@ func button(code: int,pressed: bool=true,device: int=0) -> void:
 	var event := InputEventJoypadButton.new(); event.device=device; event.button_index=code; event.pressed=pressed
 	Input.parse_input_event(event); Input.flush_buffered_events()
 func tap(code: int) -> void: button(code); button(code,false)
+func axis(code: int,value: float,device: int=0) -> void:
+	var event := InputEventJoypadMotion.new(); event.device=device; event.axis=code; event.axis_value=value
+	Input.parse_input_event(event); Input.flush_buffered_events()
 func setup(second_half: bool=false) -> void:
 	game.start_match(false,false)
 	game.set_process(false); game.set_physics_process(false)
@@ -89,7 +92,7 @@ func run() -> void:
 	setup(); button(JOY_BUTTON_A); game.update_control(0.1); button(JOY_BUTTON_LEFT_SHOULDER)
 	check(game.passes[0]==1 and game.shots[0]==0 and not game.charging,"Near-simultaneous A then LB also resolves as a one-two")
 	button(JOY_BUTTON_A,false); button(JOY_BUTTON_LEFT_SHOULDER,false)
-	setup(); button(JOY_BUTTON_LEFT_SHOULDER); button(JOY_BUTTON_X); game.update_control(0.08)
+	setup(); button(JOY_BUTTON_LEFT_SHOULDER); button(JOY_BUTTON_X); game.update_control(0.16)
 	check(game.charging and game.shot_chip and game.passes[0]==0 and game.shots[0]==0,"LB + X prepares a chip shot instead of a one-two")
 	var chip_aim: Vector3=game.shot_direction
 	game.charge=0.55
@@ -98,6 +101,9 @@ func run() -> void:
 	check(game.shots[0]==1 and chip.y>6.5 and chip.length()<24 and is_zero_approx(game.ball.spin),"Releasing X chips the ball over the keeper line without curl")
 	check((chip*Vector3(1,0,1)).normalized().distance_to(chip_aim)<0.0001,"The chip keeps the aimed heading")
 	button(JOY_BUTTON_LEFT_SHOULDER,false)
+	setup(); button(JOY_BUTTON_LEFT_SHOULDER); button(JOY_BUTTON_X); axis(JOY_AXIS_TRIGGER_RIGHT,1); game.update_control(0.08)
+	check(game.charging and game.finishing.style=="power" and not game.shot_chip,"LB + RT + X waits for all three and selects power instead of a chip")
+	button(JOY_BUTTON_X,false); axis(JOY_AXIS_TRIGGER_RIGHT,0); button(JOY_BUTTON_LEFT_SHOULDER,false)
 	setup(); game.players[6].visible=false; game.players[7].visible=false; combo()
 	check(game.passes[0]==0 and game.shots[0]==0 and game.support.runs.is_empty(),"No teammate means no forced shot, remote pass, or phantom run")
 	setup(); game.players[6].position.z=-48; combo()

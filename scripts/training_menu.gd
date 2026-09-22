@@ -10,7 +10,7 @@ var return_focus: Control
 const DESCRIPTIONS := [
 	["SAHA SENİN.","Mevcut antrenman düzeni.","Top sür, çalım dene, kaleciye şut çek."],
 	["ORTAYA HAREKETLEN.","Takım arkadaşın sırayla iki kanattan orta açar.","Yerini al, şut tuşuyla kafa vur veya kontrol et."],
-	["BARAJI AŞ.","Kaleci ve barajla farklı noktalardan çalış.","Yön, güç ve falsoyu birlikte dene."]]
+	["BARAJI AŞ.","Yön tuşlarıyla noktayı seç, A ile oradan vur.","Yön, güç ve falsoyu birlikte dene."]]
 
 func _ready() -> void:
 	setup_style(); hide()

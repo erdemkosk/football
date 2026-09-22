@@ -27,6 +27,7 @@ func run() -> void:
 	game.dribbler=6; game.carrier=6; game.last_touch=0
 	game.call_for_pass(false)
 	game.update_pass_request(0.3); game.update_ai(0.01)
+	contact()
 	check(game.passes[0]==1 and game.last_kicker==6,"An explicit user pass request still authorizes the teammate's pass")
 	setup()
 	game.players[14].position=Vector3(0,0,33)
@@ -34,6 +35,7 @@ func run() -> void:
 	game.players[14].ai_think=20
 	game.dribbler=14; game.carrier=14; game.last_touch=1
 	game.update_ai(0.1)
+	contact()
 	check(game.shots[1]==1 and game.last_kicker==14,"Opponent AI retains its own shooting decisions")
 	setup()
 	game.players[9].position=Vector3(20,0,20)
@@ -42,6 +44,7 @@ func run() -> void:
 	game.players[6].ai_think=20
 	game.menu_match.running=true
 	game.update_ai(0.1)
+	contact()
 	check(game.shots[0]==1,"The main-menu exhibition still lets both teams play")
 	game.menu_match.running=false
 	setup()
@@ -58,6 +61,11 @@ func run() -> void:
 	check(game.ball.held_by==keeper and game.passes[0]==0 and not game.ball.pending_kick,"The user's keeper waits for a command instead of automatically distributing")
 	game.last_direction=Vector3.FORWARD
 	button(JOY_BUTTON_A); button(JOY_BUTTON_A,false)
+	# Distribution releases at the animated hand contact, not the button event.
+	for frame in range(40):
+		game.keeper_distribution.update(1.0/120)
+		keeper.step(1.0/120)
+		game.keeper_distribution.resolve()
 	check(game.ball.held_by==null and game.ball.pending_kick and game.passes[0]==1 and game.goalkeeping.holding==-1,"User A releases the held ball as a real pass and clears the hand constraint")
 	print("PLAYER AUTHORITY CHECK: %d failures" % failures)
 	game.free(); quit(0 if failures==0 else 1)
