@@ -129,11 +129,12 @@ func rows() -> Array:
 				entry("Orta","Kanattan ceza sahasına havadan gönder.",binding(KEY_A)),
 				combo("Yerden sert orta","Orta tuşuna hızlıca iki kez bas. Top yerden sert gider.","B × 2",game.controller.bindings.get(JOY_BUTTON_B)==KEY_A),
 				entry("Şut","Sol analogla nişan; koşudan bağımsız yön: D-pad / sağ analog." if use_pad else "Basılı tut → bırak. Yönle küçük nişan düzeltmeleri yap.",binding(KEY_D)),
+				entry("Kafa vuruşu","Orta yaklaşırken şuta bas → yön ver → bırak. Oyuncu topa yükselir; temas ederse kafayla vurur.",binding(KEY_D)),
 				entry("Falsolu şut","Şutu hazırlarken top koruma tuşunu da basılı tut.",binding(KEY_E)+" + "+binding(KEY_D)),
 				combo("Verkaç","Pası ver; pası atan oyuncu kısa bir ileri koşu yapsın.","LB + A",lb)]
 		1:
 			return [
-				entry("Ayakta müdahale","Topsuzken ayağını uzatıp topu almaya çalış.",binding(KEY_D)+" / "+binding(KEY_G) if use_pad else binding(KEY_G)),
+				entry("Ayakta müdahale","Topsuzken ayağını uzatıp topu almaya çalış.",binding(KEY_D) if use_pad else binding(KEY_G)),
 				entry("Kayarak müdahale","Topsuzken kay. Önce rakibe temas edersen faul olabilir.",binding(KEY_A) if use_pad else binding(KEY_X)),
 				entry("Kaleciyi çıkar","Savunmada basılı tut; bırakınca kaleci yerine döner.",binding(KEY_Y)),
 				entry("Oyuncu değiştir","Tehlikeye yakın oyuncuyu seç; yön vererek seçimi etkile.",binding(KEY_Q)),
@@ -149,6 +150,8 @@ func rows() -> Array:
 				entry("Havadan pas iste","Top takım arkadaşındayken havadan servis iste.",binding(KEY_A)),
 				entry("Takım / tek oyuncu","Takım kontrolü ile tek oyuncuda kalma arasında geç.","KLAVYE: TAB" if use_pad else "TAB")]
 	return [
+		entry("Anlık oyun planı","RT/R2 basılı: sol savunmacı, yukarı dengeli, sağ hücumcu. Oyun durmaz.","RT + D-PAD" if use_pad else "F5 / F6 / F7"),
+		entry("Hızlı değişiklik","Yorgun oyuncuya mevki uyumlu yedek. Kabul et; ilk duraklamada girsin. Takım başına 3 hak.","RT + A / B" if use_pad else "F8 / F9"),
 		entry("Mola / devam","Maçı duraklat veya duraklatma menüsünden devam et.","START" if use_pad else "ESC"),
 		entry("Kadro & taktik","Maç sırasında oyuncu değiştir, dizilişini düzenle.","VIEW" if use_pad else "K"),
 		entry("Ayarlar","Ses, kontrolcü, tuş atama ve oyun tercihleri.","MENÜDEN" if use_pad else "P"),
@@ -170,20 +173,21 @@ func _draw() -> void:
 	text(game.controller.family_label()+" KONTROLCÜSÜ" if use_pad else "KLAVYE & FARE",Vector2(1090,272),11,MUTE,true)
 	var items := rows()
 	var row_height := minf(56,448.0/items.size())
+	var compact := row_height<48
 	for i in range(items.size()):
 		var item: Dictionary=items[i]
 		var y := 286.0+i*row_height
 		box(Rect2(422,y,946,row_height-4),Color("18333a") if i%2==0 else Color("132c33"),5)
-		text(item.title,Vector2(438,y+22),17,PAPER,true)
-		text(item.detail,Vector2(438,y+42),12,MUTE)
-		box(Rect2(1080,y+9,270,34),Color("203d44"),6,Color(GOLD,0.3))
+		text(item.title,Vector2(438,y+(18 if compact else 22)),15 if compact else 17,PAPER,true)
+		text(item.detail,Vector2(438,y+(35 if compact else 42)),11 if compact else 12,MUTE)
+		box(Rect2(1080,y+(5 if compact else 9),270,34),Color("203d44"),6,Color(GOLD,0.3))
 		if item.pad_keys:
 			var width: float=game.controller.Glyphs.width(item.keys,bold,30,12)
-			game.controller.Glyphs.draw_sequence(self,Vector2(1215-width*0.5,y+26),item.keys,game.controller.family,bold,30,12)
+			game.controller.Glyphs.draw_sequence(self,Vector2(1215-width*0.5,y+(22 if compact else 26)),item.keys,game.controller.family,bold,30,12)
 		else:
 			var key_size := 17
 			while key_size>11 and bold.get_string_size(item.keys,HORIZONTAL_ALIGNMENT_LEFT,-1,key_size).x>246: key_size-=1
-			center(item.keys,Vector2(1215,y+32),key_size,GOLD,true)
+			center(item.keys,Vector2(1215,y+(28 if compact else 32)),key_size,GOLD,true)
 	draw_line(Vector2(422,750),Vector2(1368,750),Color("365359"),1)
 	if game.controller.using_gamepad:
 		game.controller.Glyphs.draw_hints(self,Vector2(423,779),[["LB / RB","Bölüm değiştir"],["A","Seç"],["B / Y","Kapat"]],game.controller.family,font,25,12)

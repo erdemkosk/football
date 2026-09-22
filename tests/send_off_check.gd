@@ -32,7 +32,7 @@ func arrange() -> void:
 	game.players[9].energy=0.04
 	game.players[9].exhausted=true
 	game.players[9].shirt_number=27
-	game.players[9].shirt_label.text="27"
+	game.players[9].apply_identity({"shirt":27})
 	game.controlled=9
 	game.players[9].chosen=true
 	game.referees.actors[0].position=Vector3(2.2,0,-4.8)
@@ -49,7 +49,7 @@ func run() -> void:
 	check(game.players[9].dismissed and not game.players[9].visible and game.controlled!=9,"Direct red immediately removes the selected footballer from play")
 	var entry: Dictionary=game.send_off.exits[0]
 	var actor=entry.actor
-	check(actor.visible and actor.position.distance_to(origin)<0.01 and actor.shirt_label.text=="27" and actor.number==game.players[9].number,"Dismissed player remains visible at the foul with the same identity and shirt")
+	check(actor.visible and actor.position.distance_to(origin)<0.01 and actor.shirt_number==27 and actor.number==game.players[9].number and actor.body_scale==game.players[9].body_scale,"Dismissed player remains visible at the foul with the same identity, build and shirt")
 	check(actor not in game.players and actor.collision_layer==0 and (actor.collision_mask & game.ball.collision_layer)==0 and not actor.marker.visible,"Exit actor cannot receive passes, be selected or collide with the ball")
 	check(not game.referees.ready_for_restart(),"Restart waits for the dismissal and departure")
 	var ball_start: Vector3=game.ball.position

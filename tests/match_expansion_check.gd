@@ -58,7 +58,7 @@ func run() -> void:
 	game.players[4].position=Vector3(26.2,0,-0.4)
 	var old_name: String=p.display_name
 	check(m.queue_sub(9,1).contains("duraklamada"),"A valid substitution is queued")
-	check(m.queue_sub(9,2).contains("zaten"),"The same player cannot be queued twice")
+	check(m.queue_sub(9,2).contains("bekleyen"),"The same player cannot be queued twice")
 	check(m.queue_sub(0,2).contains("kaleci"),"Keeper requires a goalkeeper reserve")
 	game.begin_restart("TAÇ",0,Vector3(32,0,2))
 	var completed := false
@@ -71,9 +71,9 @@ func run() -> void:
 		if not active: completed=true; break
 	check(completed and entered and m.used[0]==1 and m.bench[0][1].used,"Substitute physically leaves and enters, consuming one slot")
 	check(p.energy==1 and p.shirt_number==13 and p.number==10,"Fresh identity and stamina preserve the tactical slot")
-	check(m.queue_sub(8,1).contains("Uygun"),"Used reserve cannot enter twice")
-	m.used[0]=5
-	check(m.queue_sub(8,2).contains("doldu"),"Five-substitution limit is enforced")
+	check(m.queue_sub(8,1).contains("kullanıldı"),"Used reserve cannot enter twice")
+	m.used[0]=3
+	check(m.queue_sub(8,2).contains("doldu"),"Three-substitution limit is enforced")
 	game.start_match(false,false)
 	check(p.display_name==old_name and p.shirt_number==10 and m.used[0]==0,"New match restores the starting roster")
 	game.ball.freeze=true
@@ -158,7 +158,7 @@ func run() -> void:
 	check(not p.protecting,"Releasing LT releases shielding")
 	game.dribbler=-1
 	trigger(JOY_AXIS_TRIGGER_RIGHT,1)
-	check(game.duels.attempts.has(9),"RT performs a standing tackle")
+	check(game.coaching.opened and not game.duels.attempts.has(9),"RT opens live tactics without attempting a tackle")
 	trigger(JOY_AXIS_TRIGGER_RIGHT,0)
 	button(JOY_BUTTON_START); button(JOY_BUTTON_START,false)
 	check(game.state=="paused","Start pauses the match")

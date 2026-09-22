@@ -206,7 +206,8 @@ func run() -> void:
 		game.kick_lock=maxf(0,game.kick_lock-1.0/120)
 		for p in game.players: p.touch_cooldown=maxf(0,p.touch_cooldown-1.0/120)
 		game.update_contacts(1.0/120)
-		if game.dribbler==17: intercepted=true; break
-	check(intercepted,"A defender physically intercepts an assisted pass through a blocked lane")
+		# A stretched first touch may spill instead of granting perfect possession.
+		if game.last_kicker==17 and game.last_touch==1: intercepted=true; break
+	check(intercepted,"A defender physically intercepts an assisted pass through a blocked lane, with control or a first-touch deflection")
 	print("TEAM CONTROL CHECK: %d failures" % failures)
 	game.free(); await process_frame; quit(0 if failures==0 else 1)

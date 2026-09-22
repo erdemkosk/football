@@ -1,6 +1,7 @@
 extends Button
 ## Real squad identity and condition, with the same actions for mouse and controller.
 var frontend
+var portrait_key := ""
 var kind := "slot"
 var index := 0
 var data: Dictionary = {}
@@ -60,39 +61,59 @@ static func shirt(canvas: CanvasItem,at: Vector2,width: float,kit: Dictionary,nu
 	else:
 		canvas.draw_line(at+Vector2(-.23,-.13)*width,at+Vector2(.23,-.13 if int(kit.pattern)==0 else .08)*width,Color(kit.accent,0.6),width*.075,true)
 	var px := int(width*.27)
+	if width>=50:
+		var graphics=preload("res://scripts/kit_graphics.gd")
+		canvas.draw_texture_rect(graphics.badge(kit.get("club_id",0),kit.get("badge_primary",kit.primary),kit.get("badge_accent",kit.accent)),Rect2(at+Vector2(.08,-.24)*width,Vector2(.12,.14)*width),false)
 	var value := str(number)
 	var length := font.get_string_size(value,HORIZONTAL_ALIGNMENT_LEFT,-1,px).x
 	canvas.draw_string(font,at+Vector2(-length*.5,width*.25),value,HORIZONTAL_ALIGNMENT_LEFT,-1,px,kit.accent)
 
+func portrait(rect: Rect2) -> void:
+	var tint: Color=frontend.ROLE_COLORS[data.group]
+	draw_circle(rect.get_center(),rect.size.x*.43,Color(tint,.24))
+	var photo: Texture2D=frontend.portraits.cache.get(portrait_key)
+	if photo!=null: draw_texture_rect(photo,rect,false,Color.WHITE if eligible else Color(1,1,1,.45))
+	else: shirt(self,rect.get_center()+Vector2(0,3),rect.size.x*.7,data.kit,data.shirt,strong)
+
 func _draw() -> void:
 	if data.is_empty() or face==null: return
-	var background := Color("102930").lerp(Color("24464b"),hover_mix*.8)
-	var edge := MINT if active or drop_hot else Color("335051")
-	if has_focus(): edge=LIGHT
-	panel(Rect2(Vector2(0,3),size),Color(0,0,0,0.2))
-	panel(Rect2(Vector2.ZERO,size),background,edge,2 if active or has_focus() or drop_hot else 1)
-	var ink := LIGHT if eligible else MUTED
+	var highlighted := active or drop_hot
+	var background := Color("f0eee1").lerp(Color("ffffff"),hover_mix*.55)
+	if highlighted: background=Color("f3dfaa")
+	if not eligible: background=Color("cad3cb")
+	var edge := Color("edd087") if highlighted else Color("a7bcb0")
+	if has_focus(): edge=Color("f7e4a9")
+	panel(Rect2(Vector2(0,4),size),Color(0,0,0,.18))
+	panel(Rect2(Vector2.ZERO,size),background,edge,3 if highlighted or has_focus() else 1)
+	var ink := Color("16352f") if eligible else Color("64776e")
+	var muted := Color("577265")
 	var energy: float=data.energy
-	var tint := energy_color(energy)
+	var tint := Color("357558") if energy>.5 else (Color("a57829") if energy>.25 else Color("b4513e"))
 	var status: String=data.get("status","")
 	if kind=="slot":
-		label_at(status if status!="" else data.role,Vector2(8,13),8,MINT if active else MUTED,true)
-		label_at("%d%%" % roundi(energy*100),Vector2(size.x-33,13),9,tint,true)
-		shirt(self,Vector2(size.x/2,32),35,data.kit,data.shirt,strong)
-		var px := 12 if str(data.name).length()<10 else 10
-		middle(data.name,Vector2(size.x/2,62),px,ink)
-		draw_line(Vector2(12,size.y-7),Vector2(size.x-12,size.y-7),Color("354d4e"),3,true)
-		draw_line(Vector2(12,size.y-7),Vector2(12+(size.x-24)*maxf(.01,energy),size.y-7),tint,3,true)
+		portrait(Rect2(size.x/2-28,1,56,56))
+		var role_color: Color=frontend.ROLE_COLORS[data.group]
+		panel(Rect2(5,4,31,16),Color(role_color,.5))
+		label_at(data.role,Vector2(8,15),9,role_color.darkened(.58),true)
+		label_at("%02d" % data.shirt,Vector2(8,34),13,ink,true)
+		if data.get("dismissed",false): draw_rect(Rect2(size.x-15,9,7,11),Color("c6433e"))
+		elif data.get("yellow",0)>0: draw_rect(Rect2(size.x-15,9,7,11),Color("bd962e"))
+		var px := 13 if str(data.name).length()<10 else 10
+		middle(data.name,Vector2(size.x/2,67),px,ink)
+		middle(status if status!="" else data.position_label,Vector2(size.x/2,79),8,muted)
+		draw_line(Vector2(10,size.y-4),Vector2(size.x-10,size.y-4),Color("c3cdbf"),2,true)
+		draw_line(Vector2(10,size.y-4),Vector2(10+(size.x-20)*maxf(.01,energy),size.y-4),tint,2,true)
+		if active:
+			draw_circle(Vector2(size.x-12,36),4,Color("397355"))
 	else:
-		shirt(self,Vector2(28,31),38,data.kit,data.shirt,strong)
-		label_at(data.name,Vector2(55,26),14,ink,true,size.x-62)
-		label_at(data.role,Vector2(55,44),10,MUTED)
-		label_at(status if status!="" else ("HAZIR" if eligible else data.get("unavailable","SEÇİLEMİYOR")),Vector2(13,67),9,MINT if eligible else MUTED,true)
-		label_at("%d%%" % roundi(energy*100),Vector2(size.x-40,67),10,tint,true)
-		draw_line(Vector2(13,80),Vector2(size.x-13,80),Color("354d4e"),3,true)
-		draw_line(Vector2(13,80),Vector2(13+(size.x-26)*maxf(.01,energy),80),tint,3,true)
-	if data.get("dismissed",false): draw_rect(Rect2(size.x-16,21,8,12),Color("f07972"))
-	elif data.get("yellow",0)>0: draw_rect(Rect2(size.x-16,21,8,12),Color("efcb78"))
+		portrait(Rect2(5,3,57,57))
+		label_at(data.name,Vector2(66,24),13 if str(data.name).length()<10 else 11,ink,true,size.x-70)
+		label_at(data.position_label,Vector2(67,41),9,muted,true)
+		label_at("#%02d" % data.shirt,Vector2(67,55),10,muted)
+		label_at(status if status!="" else ("HAZIR" if eligible else data.get("unavailable","SEÇİLEMİYOR")),Vector2(12,71),9,muted,true)
+		label_at("%d%%" % roundi(energy*100),Vector2(size.x-40,71),10,tint,true)
+		draw_line(Vector2(12,82),Vector2(size.x-12,82),Color("c3cdbf"),3,true)
+		draw_line(Vector2(12,82),Vector2(12+(size.x-24)*maxf(.01,energy),82),tint,3,true)
 
 func _get_drag_data(_at: Vector2) -> Variant:
 	var preview := PanelContainer.new()

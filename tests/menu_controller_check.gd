@@ -138,6 +138,8 @@ func run() -> void:
 	await settle()
 	check(game.state=="menu" and focus()==game.hud.nav_buttons[2],"B saves and restores the main-menu selection")
 	go(game.hud.nav_buttons[1]); tap(JOY_BUTTON_A)
+	check(game.training_menu.visible and game.training_menu.selected==0,"Controller opens the training selector on the existing free practice mode")
+	tap(JOY_BUTTON_A)
 	check(game.training and game.state=="playing" and not game.pass_charging,"Controller starts training without passing")
 	tap(JOY_BUTTON_START); await settle()
 	go(game.hud.nav_buttons[4]); tap(JOY_BUTTON_A); await settle()

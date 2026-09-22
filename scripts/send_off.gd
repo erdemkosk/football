@@ -25,9 +25,8 @@ func begin(index: int,victim: int = -1) -> void:
 	actor.name="DismissedPlayer%d" % index
 	game.add_child(actor)
 	actor.transform=source.transform
+	actor.apply_identity(source.identity())
 	actor.apply_kit(game.clubs.kit(source.team))
-	actor.shirt_number=source.shirt_number
-	actor.shirt_label.text=source.shirt_label.text
 	actor.rig.transform=source.rig.transform
 	actor.head_joint.rotation=source.head_joint.rotation
 	for j in range(actor.eye_joints.size()): actor.eye_joints[j].rotation=source.eye_joints[j].rotation
@@ -42,6 +41,9 @@ func begin(index: int,victim: int = -1) -> void:
 	actor.impact_duration=source.impact_duration
 	actor.impact_direction=source.impact_direction
 	actor.impact_strength=source.impact_strength
+	actor.impact_motion.yaw=source.impact_motion.yaw
+	actor.impact_motion.local_direction=source.impact_motion.local_direction
+	actor.impact_motion.start=source.impact_motion.start.duplicate()
 	actor.slide_duration=source.slide_duration
 	actor.dive_duration=source.dive_duration
 	actor.dive_yaw=source.dive_yaw

@@ -1,20 +1,37 @@
 extends CharacterBody3D
 const G = preload("res://scripts/geometry.gd")
+const KitGraphics = preload("res://scripts/kit_graphics.gd")
+const Attributes = preload("res://scripts/player_attributes.gd")
+var attributes: Dictionary=Attributes.profile(0,9)
+var contest_weight := 0.0
+var contest_direction := Vector3.ZERO
+var landing_age := 1.0
+var landing_strength := 0.0
+var header_airborne := false
+const Physique = preload("res://scripts/player_physique.gd")
 const Locomotion = preload("res://scripts/locomotion.gd")
 var locomotion := Locomotion.new()
 const BodyLanguage = preload("res://scripts/body_language.gd")
 var body_language := BodyLanguage.new()
 var head_joint := Node3D.new()
 var eye_joints: Array[Node3D] = []
+const BallActions = preload("res://scripts/ball_actions.gd")
+const ImpactMotion = preload("res://scripts/impact_motion.gd")
+const PlayerReaction = preload("res://scripts/player_reaction.gd")
+var ball_actions := BallActions.new()
+var impact_motion := ImpactMotion.new()
+var reaction := PlayerReaction.new()
 static var hair_mesh: ArrayMesh
 var kit_materials: Dictionary = {}
 var kit_clean: Dictionary = {}
 var kit_soil := 0.0
-var kit_pattern: MeshInstance3D
+var kit_colors: Dictionary = {}
+var jersey_body: MeshInstance3D
 var team := 0
 var number := 10
 var shirt_number := 10
-var shirt_label: Label3D
+var height_cm := 180
+var weight_kg := 76
 var keeper := false
 var display_name := "EGE"
 var home := Vector3.ZERO
@@ -102,6 +119,37 @@ var stance := 0.0
 var impact_direction := Vector3.ZERO
 var impact_strength := 0.0
 var impact_duration := 0.8
+var header_duration := 0.72
+var header_hit_age := -1.0
+var header_start: Array[Quaternion] = []
+
+func begin_header(jump: float,direction: Vector3) -> void:
+	pose="header"; action_timer=header_duration; header_hit_age=-1
+	kick_timer=0; receive_timer=0; shot_preparation=0; shot_ready_blend=0
+	header_start.clear()
+	for joint in kick_joints: header_start.append(joint.quaternion)
+	facing=(direction*Vector3(1,0,1)).normalized()
+	velocity.y=maxf(velocity.y,jump)
+	header_airborne=jump>0.1
+	energy=maxf(0,energy-0.018-jump*0.003)
+
+func animate_header() -> void:
+	var age := header_duration-action_timer
+	var entry := smoothstep(0,0.065,age)
+	var recover := smoothstep(0.40,header_duration,age)
+	var nod := 0.0 if header_hit_age<0 else smoothstep(0,0.065,header_hit_age)*(1-smoothstep(0.14,0.34,header_hit_age))
+	var poses: Array[Vector3]=[
+		Vector3(0.18,0,-0.08),Vector3(0.30,0,0.10),Vector3(-0.58,0,0),Vector3(-0.84,0,0),
+		Vector3(0.12-nod*0.44,0,0),Vector3(0.32,0,-0.72),Vector3(0.42,0,0.75),Vector3(0.95,0,0),Vector3(1.05,0,0)]
+	for i in range(kick_joints.size()):
+		var joint: Node3D=kick_joints[i]
+		var target := Quaternion.from_euler(poses[i]).slerp(joint.quaternion,recover)
+		joint.quaternion=header_start[i].slerp(target,entry)
+	head_joint.rotation.x=lerpf(head_joint.rotation.x,0.16-nod*0.45,(1-recover)*entry)
+	head_joint.rotation.y=lerpf(head_joint.rotation.y,0.0,entry*(1-recover))
+	if is_on_floor():
+		var sole := minf(left_knee.to_global(Vector3(0,-0.42,-0.05)).y,right_knee.to_global(Vector3(0,-0.42,-0.05)).y)
+		rig.position.y-=sole-global_position.y-0.102
 
 func _ready() -> void:
 	collision_layer = 2
@@ -116,9 +164,14 @@ func _ready() -> void:
 	add_child(collision)
 	body_collision = collision
 	add_child(rig)
+	shirt_number=number
+	var physique := Physique.profile(team,number-1,keeper)
+	height_cm=physique.height_cm; weight_kg=physique.weight_kg
 	build_model()
 	kick_joints.assign([left_leg,right_leg,left_knee,right_knee,spine,left_arm,right_arm,left_elbow,right_elbow])
 	apply_build()
+	if not official:
+		apply_kit({"primary":Color("e5ece5") if team==0 else Color("d34532"),"accent":Color("193d39") if team==0 else Color("f1d7bd"),"shorts":Color("133933") if team==0 else Color("eee3d2"),"pattern":0,"club_id":team})
 	var torus = TorusMesh.new()
 	torus.inner_radius = 0.67
 	torus.outer_radius = 0.72
@@ -153,11 +206,12 @@ func build_model() -> void:
 	var hair = G.material([Color("201e1b"),Color("32261d"),Color("6e5030")][number%3])
 	var boots = G.material(Color("e8d867") if number%3==0 else Color("182229"))
 	if official: boots=G.material(Color("12171b"))
-	G.cylinder(rig,0.255,0.55,Vector3(0,1.22,0),jersey,0.30)
+	var printed := G.material(kit_color)
+	printed.texture_filter=BaseMaterial3D.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS_ANISOTROPIC
+	kit_materials["printed"]=printed
+	jersey_body=G.mesh(rig,KitGraphics.torso_mesh(),printed,Vector3(0,1.22,0))
+	jersey_body.name="JerseyCloth"
 	G.cylinder(rig,0.12,0.06,Vector3(0,1.51,0),trim)
-	# Chest stripe, crest, shoulder piping and collar give the kits a real silhouette.
-	if not official: kit_pattern=G.block(rig,Vector3(0.40,0.09,0.025),Vector3(0,1.27,-0.30),trim)
-	G.block(rig,Vector3(0.07,0.095,0.03),Vector3(-0.12,1.4,-0.30),trim)
 	G.cylinder(rig,0.235,0.27,Vector3(0,0.83,0),shorts)
 	G.cylinder(rig,0.095,0.12,Vector3(0,1.56,0),skin)
 	rig.add_child(head_joint)
@@ -210,17 +264,6 @@ func build_model() -> void:
 		var hand = G.sphere(elbow,0.103 if keeper else 0.08,Vector3(0,-0.29,0),G.material(Color("ececd7")) if keeper else skin)
 		if side<0: left_hand = hand
 		else: right_hand = hand
-	var back = Label3D.new()
-	shirt_label=back
-	shirt_number=number
-	back.text = "" if official else str(number)
-	back.font_size = 96
-	back.pixel_size = 0.0036
-	back.outline_size = 0
-	back.modulate = Color("173b35") if team==0 else Color("fff1d7")
-	back.rotation.y = 0
-	rig.add_child(back)
-	back.position = Vector3(0,1.27,0.31)
 	# A waist pivot lets the torso bend independently of hips and planted feet.
 	rig.add_child(spine)
 	spine.position = Vector3(0,0.94,0)
@@ -274,7 +317,7 @@ func receive_impact(direction: Vector3,strength: float) -> void:
 	action_timer=impact_duration
 	pose="fall" if impact_strength>0.7 else "stumble"
 	velocity=velocity*0.25+impact_direction*lerpf(1.5,4.2,impact_strength)
-	facing=-impact_direction
+	impact_motion.begin(self)
 	kick_timer=0
 	receive_timer=0
 	shot_preparation=0
@@ -309,6 +352,7 @@ func start_claim(target_height: float=2.8,time_available: float=0.35) -> void:
 	velocity.y=clampf((target_height-2.3+10*time_available*time_available)/maxf(time_available,0.15),2.2,6.5)
 
 func step(delta: float,stoppage_speed: float=0.0) -> void:
+	landing_age+=delta
 	feint_time=maxf(0,feint_time-delta)
 	skill_cooldown=maxf(0,skill_cooldown-delta)
 	if wall_hold>0:
@@ -325,6 +369,7 @@ func step(delta: float,stoppage_speed: float=0.0) -> void:
 	touch_cooldown = maxf(0,touch_cooldown-delta)
 	kick_timer = maxf(0,kick_timer-delta)
 	receive_timer = maxf(0,receive_timer-delta)
+	if header_hit_age>=0: header_hit_age+=delta
 	if Vector2(velocity.x,velocity.z).length()>1.2 or kick_timer>0 or shot_preparation>0 or action_timer>0:
 		idle_rest=0
 	else:
@@ -341,6 +386,7 @@ func step(delta: float,stoppage_speed: float=0.0) -> void:
 	if action_timer>0:
 		if pose=="poke": target*=0.2
 		elif pose=="claim": target*=0.35
+		elif pose=="header": target=Vector3(velocity.x,0,velocity.z).lerp(target,0.12)
 		elif pose == "slide":
 			var t := action_timer / slide_duration
 			target = facing * lerpf(5.5, 16.0, t)
@@ -359,8 +405,8 @@ func step(delta: float,stoppage_speed: float=0.0) -> void:
 	var driving := Vector2(desired.x,desired.z).length()>0.05
 	var current_speed := Vector2(velocity.x,velocity.z).length()
 	var target_speed := Vector2(target.x,target.z).length()
-	var acceleration := lerpf(38,56,smoothstep(0.08,0.4,energy))
-	var sprint_acceleration := lerpf(11,16,smoothstep(0.08,0.4,energy))
+	var acceleration: float=lerpf(38,56,smoothstep(0.08,0.4,energy))*Attributes.multiplier(attributes.acceleration,.19)
+	var sprint_acceleration: float=lerpf(11,16,smoothstep(0.08,0.4,energy))*Attributes.multiplier(attributes.acceleration,.19)
 	var deceleration := lerpf(8,12,smoothstep(0.08,0.4,energy))
 	var settle := lerpf(7,10,smoothstep(0.08,0.4,energy))
 	if stamina_free_movement and stoppage_speed>0:
@@ -387,15 +433,20 @@ func step(delta: float,stoppage_speed: float=0.0) -> void:
 	velocity.y -= 20*delta
 	var travel_velocity := velocity
 	move_and_slide()
+	if header_airborne and is_on_floor() and travel_velocity.y< -1:
+		header_airborne=false; landing_age=0
+		landing_strength=clampf(absf(travel_velocity.y)/8,0.2,1)*Attributes.multiplier(144-attributes.balance,.16)
 	body_language.collisions(self,travel_velocity)
 	if desired.length()>0.05 and action_timer<=0 and (not keeper or stoppage_speed>0) and not protecting and not jockeying and kick_timer<=0 and shot_preparation<=0:
 		facing = desired.normalized()
-	if facing.length()>0.1 and not (pose=="dive" and action_timer>0):
+	if facing.length()>0.1 and not (pose in ["dive","fall","stumble"] and action_timer>0):
 		rig.rotation.y = lerp_angle(rig.rotation.y,atan2(-facing.x,-facing.z),1-exp(-delta*12))
 	var horizontal := Vector3(velocity.x,0,velocity.z)
 	acceleration_lean = acceleration_lean.lerp((horizontal-last_horizontal)/maxf(delta,0.001),1-exp(-delta*7))
 	locomotion.update(self,delta,last_horizontal)
 	body_language.update(self,delta)
+	ball_actions.update(delta)
+	reaction.update(self,delta)
 	last_horizontal = horizontal
 	run_phase += horizontal.length()*delta*1.8
 	animate(delta)
@@ -433,14 +484,15 @@ func update_stamina(delta: float) -> void:
 
 func movement_speed() -> float:
 	if exhausted: return 3.4
-	if active_sprint: return lerpf(8.8,10.4,smoothstep(0.08,0.4,energy))
-	return lerpf(4.6,6.5 if keeper else 6.2,smoothstep(0.08,0.3,energy))
+	if active_sprint: return lerpf(8.8,10.4,smoothstep(0.08,0.4,energy))*Attributes.multiplier(attributes.pace,.09)
+	return lerpf(4.6,6.5 if keeper else 6.2,smoothstep(0.08,0.3,energy))*Attributes.multiplier(attributes.pace,.055)
 
-func begin_kick(power: float,duration: float,style: String="laces") -> void:
+func begin_kick(power: float,duration: float,style: String="laces",point: Vector3=Vector3.INF,direction: Vector3=Vector3.ZERO,pressure: float=0) -> void:
+	if point.is_finite(): ball_actions.prepare_kick(self,point,direction,pressure)
 	kick_power=power
-	kick_duration=duration
+	kick_duration=duration+ball_actions.difficulty*0.04
 	kick_style=style if style in ["inside","laces","chip"] else "laces"
-	kick_timer=duration
+	kick_timer=kick_duration
 	receive_timer=0
 	idle_rest=0
 	shot_preparation=0
@@ -448,31 +500,38 @@ func begin_kick(power: float,duration: float,style: String="laces") -> void:
 	kick_start_pose.clear()
 	for joint in kick_joints: kick_start_pose.append(joint.rotation)
 
-func begin_receive(style: String) -> void:
+func begin_receive(style: String,point: Vector3=Vector3.INF,incoming: Vector3=Vector3.ZERO,reach: float=0) -> void:
 	if action_timer>0 or kick_timer>0 or keeper: return
 	receive_style=style if style in ["chest","thigh","foot"] else "foot"
 	receive_duration=0.46 if receive_style=="chest" else (0.38 if receive_style=="thigh" else 0.30)
+	receive_duration+=clampf(incoming.length()/25,0,1)*0.12+reach*0.07
 	receive_timer=receive_duration
+	ball_actions.begin_receive(self,point if point.is_finite() else position+facing*0.55+Vector3.UP*0.23,incoming,reach)
+
+func identity() -> Dictionary:
+	return {"name":display_name,"shirt":shirt_number,"height_cm":height_cm,"weight_kg":weight_kg,"keeper":keeper,"attributes":attributes.duplicate()}
+
+func apply_identity(data: Dictionary) -> void:
+	display_name=data.get("name",display_name)
+	shirt_number=int(data.get("shirt",shirt_number))
+	attributes=data.get("attributes",Attributes.profile(team,shirt_number-1,keeper)).duplicate()
+	var fallback := Physique.profile(team,shirt_number-1,keeper)
+	height_cm=clampi(int(data.get("height_cm",fallback.height_cm)),166,199)
+	weight_kg=clampi(int(data.get("weight_kg",fallback.weight_kg)),58,96)
+	apply_build()
+	refresh_shirt()
 
 func apply_build() -> void:
-	var seed: int=shirt_number if shirt_number>0 else number
-	var height := 1.20
-	var width := 1.25
-	if official:
-		height=1.18; width=1.22
-	elif keeper:
-		height=1.28; width=1.22
-	elif number in [2,3,4,5]:
-		height=1.24+fmod(float(seed)*0.017,0.05)
-		width=1.28
-	elif number in [7,11]:
-		height=1.16+fmod(float(seed)*0.013,0.04)
-		width=1.18
-	else:
-		height=1.18+fmod(float(seed)*0.021,0.06)
-		width=1.22+fmod(float(seed)*0.019,0.08)
-	body_scale=Vector3(width,height,width)
-	idle_habit=seed%4
+	# Preserve the established match-world scale, with real roster proportions.
+	var height := 1.20*height_cm/180.0
+	var mass_ratio := weight_kg/76.0*180.0/height_cm
+	var width := clampf(1.25*sqrt(mass_ratio),1.10,1.40)
+	var depth := clampf(1.25*pow(mass_ratio,0.42),1.12,1.38)
+	if official: height=1.18; width=1.22; depth=1.22
+	body_scale=Vector3(width,height,depth)
+	# Vary the build without stretching faces with the shoulders.
+	head_joint.scale=Vector3(clampf(1.25/width,.94,1.07),clampf(1.20/height,.96,1.05),clampf(1.25/depth,.94,1.07))
+	idle_habit=shirt_number%4
 	stance=0.08 if keeper else (0.055 if number in [2,3,4,5] else 0.0)
 	rig.scale=body_scale
 	if body_collision!=null and body_collision.shape is CapsuleShape3D:
@@ -480,6 +539,7 @@ func apply_build() -> void:
 		shape.height=1.72*(height/1.20)
 		shape.radius=0.33*(width/1.25)
 		body_collision.position.y=shape.height*0.5
+	call_label.position.y=2.65*height/1.20
 
 func animate_shot(delta: float,amount: float,stride: float) -> void:
 	var ready := shot_preparation if action_timer<=0 and kick_timer<=0 else 0.0
@@ -489,7 +549,8 @@ func animate_shot(delta: float,amount: float,stride: float) -> void:
 		# Charging is a running/standing ready posture, never a held backswing.
 		# Leave both legs in their gait so support keeps alternating naturally.
 		var balance := shot_ready_blend
-		spine.rotation=spine.rotation.lerp(Vector3(-0.12-amount*0.12,-0.2-wrapping*0.15,0.025),balance)
+		var side := -1.0 if ball_actions.foot==0 else 1.0
+		spine.rotation=spine.rotation.lerp(Vector3(-0.12-amount*0.12,(-0.2-wrapping*0.15)*side+ball_actions.kick_turn*0.32,0.025*side),balance)
 		left_arm.rotation=left_arm.rotation.lerp(Vector3(-stride*0.42*amount+0.08,0,-0.38-wrapping*0.1),balance)
 		right_arm.rotation=right_arm.rotation.lerp(Vector3(stride*0.42*amount-0.15,0,0.32),balance)
 		left_elbow.rotation.x=lerpf(left_elbow.rotation.x,0.65+stride*0.14*amount,balance)
@@ -505,7 +566,7 @@ func animate_shot(delta: float,amount: float,stride: float) -> void:
 	# The ball is released immediately; only the visual follow-through takes time.
 	var inside: float=1.0 if kick_style=="inside" else 0.0
 	var chip: float=1.0 if kick_style=="chip" else 0.0
-	var hip := lerpf(lerpf(0.42,lerpf(lerpf(0.85,0.72,inside),lerpf(1.24,0.92,inside),kick_power),sweep),0.12,recoil)
+	var hip := lerpf(lerpf(lerpf(0.42,0.20,inside),lerpf(lerpf(0.85,0.44,inside),lerpf(1.24,0.92,inside),kick_power),sweep),0.12,recoil)
 	if chip>0: hip=lerpf(lerpf(0.50,lerpf(0.95,1.18,kick_power),sweep),0.18,recoil)
 	var knee := lerpf(lerpf(-0.12,-0.28,sweep),-0.86,recoil)
 	var open := inside*lerpf(0.0,0.46,sweep)
@@ -518,30 +579,21 @@ func animate_shot(delta: float,amount: float,stride: float) -> void:
 		Vector3(lerpf(0.62,0.4,sweep)+recoil*0.25,0,0),
 		Vector3(lerpf(0.85,0.5,sweep)+recoil*0.2,0,0)
 	]
+	poses[4].z+=ball_actions.difficulty*0.16*sweep
+	poses[5].z-=ball_actions.difficulty*0.28*sweep
+	poses[6].z+=ball_actions.difficulty*0.22*sweep
+	poses=ball_actions.mirror_poses(poses)
+	# Footwork mirrors; turning toward the aimed direction must not.
+	poses[4].y+=ball_actions.kick_turn*0.24*sweep
 	for i in range(kick_joints.size()):
 		var joint := kick_joints[i]
-		var weight := plant if i in [0,2] else 1-recover
+		var support := i in ([0,2] if ball_actions.foot==1 else [1,3])
+		var weight := plant if support else 1-recover
 		var rotation_target := joint.rotation.lerp(poses[i],weight)
-		joint.rotation=kick_start_pose[i].lerp(rotation_target,entry) if kick_start_pose.size()==kick_joints.size() else rotation_target
+		joint.quaternion=Quaternion.from_euler(kick_start_pose[i]).slerp(Quaternion.from_euler(rotation_target),entry) if kick_start_pose.size()==kick_joints.size() else Quaternion.from_euler(rotation_target)
 
 func apply_receive() -> void:
-	var progress := 1.0-receive_timer/maxf(receive_duration,0.01)
-	var hold := smoothstep(0,0.16,progress)*(1.0-smoothstep(0.58,1.0,progress))
-	if receive_style=="chest":
-		spine.rotation.x=lerpf(spine.rotation.x,-0.08+0.22*hold,hold)
-		left_arm.rotation=left_arm.rotation.lerp(Vector3(1.15,0,-0.72),hold)
-		right_arm.rotation=right_arm.rotation.lerp(Vector3(1.15,0,0.72),hold)
-		left_elbow.rotation.x=lerpf(left_elbow.rotation.x,0.55,hold)
-		right_elbow.rotation.x=lerpf(right_elbow.rotation.x,0.55,hold)
-	elif receive_style=="thigh":
-		right_leg.rotation.x=lerpf(right_leg.rotation.x,0.95,hold)
-		right_knee.rotation.x=lerpf(right_knee.rotation.x,-0.28,hold)
-		spine.rotation.x=lerpf(spine.rotation.x,-0.18,hold)
-		left_arm.rotation.z=lerpf(left_arm.rotation.z,-0.55,hold)
-	else:
-		right_leg.rotation.x=lerpf(right_leg.rotation.x,0.42,hold)
-		right_knee.rotation.x=lerpf(right_knee.rotation.x,-0.72,hold)
-		spine.rotation.x=lerpf(spine.rotation.x,-0.16,hold)
+	ball_actions.apply_receive(self)
 
 func animate(delta: float) -> void:
 	var amount: float=clampf(Vector2(velocity.x,velocity.z).length()/8.7,0,1)
@@ -635,22 +687,9 @@ func animate(delta: float) -> void:
 			left_arm.rotation.z = -1.35
 			right_arm.rotation.z = 0.85
 		elif pose=="dive": animate_dive()
+		elif pose=="header": animate_header()
 		elif pose in ["stumble","fall"]:
-			var progress := 1-action_timer/impact_duration
-			var envelope := smoothstep(0,0.14,progress)*(1-smoothstep(0.52,1.0,progress))
-			rig.rotation.x=-envelope*(1.3 if pose=="fall" else 0.35)
-			rig.rotation.z=envelope*0.14
-			rig.position.y=0.12*envelope
-			spine.rotation=Vector3(-0.2*envelope,0,0)
-			left_leg.rotation.x=0.6*envelope
-			right_leg.rotation.x=-0.4*envelope
-			left_knee.rotation.x=-0.55*envelope
-			right_knee.rotation.x=-0.7*envelope
-			left_arm.rotation.z=-1.1*envelope
-			right_arm.rotation.z=1.2*envelope
-			if pose=="fall":
-				body_collision.rotation.x=-1.25*envelope
-				body_collision.position.y=lerpf(0.87,0.38,envelope)
+			impact_motion.apply(self)
 	else:
 		pose = "run"
 		# Keep the supporting boot on the turf as the hip and knee flex.
@@ -693,7 +732,13 @@ func animate(delta: float) -> void:
 		right_arm.rotation.z=0.65-sway*0.3
 	if celebration!="" and action_timer<=0:
 		var pulse := sin(motion_clock*8.5+number)
-		if celebration=="cheer":
+		if celebration=="handshake":
+			right_arm.rotation=Vector3(1.02,.48,-.08)
+			right_elbow.rotation.x=.24+sin(motion_clock*9)*.09
+			spine.rotation.x=-.06
+			left_arm.rotation=Vector3(.15,0,-.16)
+			left_elbow.rotation.x=.35
+		elif celebration=="cheer":
 			if number%3==1:
 				right_arm.rotation=Vector3(0.15,0,2.72+pulse*0.22)
 				left_arm.rotation=Vector3(0.4,0,-0.35)
@@ -730,6 +775,8 @@ func animate(delta: float) -> void:
 				right_elbow.rotation.x=1.0
 
 	body_language.apply_pose(self)
+	apply_contest_pose()
+	reaction.apply(self)
 	locomotion.finish_pose(self)
 	if discipline_pose!="" and action_timer<=0:
 		var pulse := sin(motion_clock*6.2+number)*0.12
@@ -767,7 +814,8 @@ func animate_dive() -> void:
 	var spread := launch*(1-recover)
 	var airborne_roll := lerpf(1.48,1.25,(dive_height-0.2)/2.1)
 	var roll := spread*lerpf(airborne_roll,1.46,smoothstep(0.50,0.76,time))
-	rig.basis = (Basis(Vector3.FORWARD,dive_direction*roll)*Basis(Vector3.UP,dive_yaw)).scaled(body_scale)
+	# Scale in body space: a broader torso must not become longer when diving.
+	rig.basis = (Basis(Vector3.FORWARD,dive_direction*roll)*Basis(Vector3.UP,dive_yaw)).scaled_local(body_scale)
 	# Rotate around the pelvis, not the feet: the body lands above the turf.
 	var pelvis_height := lerpf(1.08,0.44,spread)
 	if time<0.10: pelvis_height -= smoothstep(0.0,0.1,time)*0.17
@@ -823,6 +871,7 @@ func leave_skid() -> void:
 
 func apply_kit(colors: Dictionary) -> void:
 	if official or kit_materials.is_empty(): return
+	kit_colors=colors.duplicate()
 	var keeper_color := Color("d7b83c") if team==0 else Color("5998ac")
 	var primary: Color=colors.primary
 	if Vector3(keeper_color.r-primary.r,keeper_color.g-primary.g,keeper_color.b-primary.b).length()<0.45: keeper_color=Color("d096bd")
@@ -832,11 +881,16 @@ func apply_kit(colors: Dictionary) -> void:
 	kit_materials.shorts.albedo_color=Color("171d23") if keeper else colors.shorts
 	kit_clean={"jersey":kit_materials.jersey.albedo_color,"socks":kit_materials.socks.albedo_color,"shorts":kit_materials.shorts.albedo_color}
 	kit_soil=0
-	shirt_label.modulate=colors.accent
-	if kit_pattern!=null:
-		kit_pattern.scale=Vector3(1,1,1) if int(colors.pattern)==0 else (Vector3(0.32,4.1,1) if int(colors.pattern)==1 else Vector3(1.03,2.3,1))
-		kit_pattern.rotation.z=deg_to_rad(-24) if int(colors.pattern)==2 else 0.0
-	apply_build()
+	refresh_shirt()
+
+func refresh_shirt() -> void:
+	if official or kit_colors.is_empty() or kit_materials.is_empty(): return
+	var colors := kit_colors.duplicate()
+	if keeper:
+		colors.primary=kit_clean.jersey
+		colors.accent=Color("17272b")
+	kit_materials.printed.albedo_texture=KitGraphics.shirt(colors,shirt_number,keeper)
+	kit_materials.printed.albedo_color=Color.WHITE.lerp(Color(.48,.40,.28),kit_soil*.50)
 
 func stain(delta: float) -> void:
 	if official or kit_clean.is_empty() or kit_materials.is_empty(): return
@@ -849,5 +903,23 @@ func stain(delta: float) -> void:
 	kit_soil=minf(0.82,kit_soil+gain)
 	var dirt := Color(0.24,0.19,0.11)
 	kit_materials.jersey.albedo_color=kit_clean.jersey.lerp(dirt,kit_soil*0.40)
+	kit_materials.printed.albedo_color=Color.WHITE.lerp(Color(.48,.40,.28),kit_soil*.50)
 	kit_materials.shorts.albedo_color=kit_clean.shorts.lerp(dirt,kit_soil*0.55)
 	kit_materials.socks.albedo_color=kit_clean.socks.lerp(dirt,kit_soil*0.64)
+
+func apply_contest_pose() -> void:
+	if not (action_timer<=0 or pose=="header") or set_piece_pose!="" or celebration!="": return
+	if contest_weight>0:
+		var local := contest_direction.rotated(Vector3.UP,-rig.rotation.y)
+		var load: float=contest_weight*Attributes.multiplier(144-attributes.balance,.18)
+		spine.rotation.z=lerpf(spine.rotation.z,-local.x*.19,load)
+		spine.rotation.y=lerpf(spine.rotation.y,local.x*.12,load)
+		var arm: Node3D=left_arm if local.x<0 else right_arm
+		arm.rotation=arm.rotation.lerp(Vector3(.48,0,signf(local.x)*.48),load)
+		var elbow: Node3D=left_elbow if local.x<0 else right_elbow
+		elbow.rotation.x=lerpf(elbow.rotation.x,1.15,load)
+	if landing_age<.32:
+		var absorb := sin(landing_age/.32*PI)*landing_strength
+		left_knee.rotation.x-=absorb*.24; right_knee.rotation.x-=absorb*.21
+		spine.rotation.x-=absorb*.10
+		rig.position.y-=absorb*.055

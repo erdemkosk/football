@@ -16,6 +16,19 @@ var danger := 0.0
 var home_attack := -1.0
 var excitement := 0.0
 var follow := 0.0
+var progress := 0.0
+var margin := 0
+var home_support := .35
+var away_support := .35
+var hush := 0.0
+var event_side := 0
+
+func context(score: Array,time: float,length: float) -> void:
+	progress=clampf(time/maxf(1,length),0,1)
+	margin=int(score[0])-int(score[1])
+	var late := smoothstep(.65,.95,progress)
+	home_support=.34+late*(.57 if margin in [-1,0] else (.3 if margin==1 else .05))
+	away_support=.34+late*(.57 if margin in [0,1] else (.3 if margin== -1 else .05))
 var ball_focus := Vector3.ZERO
 var cloth := [Color("23363a"),Color("34434c"),Color("29483f"),Color("4b5554"),Color("647267"),Color("706654"),Color("76524d"),Color("a2a493"),Color("536a79"),Color("393933")]
 var skins := [Color("ba9073"),Color("aa7b59"),Color("755340"),Color("c4a18b"),Color("916443")]
@@ -94,6 +107,10 @@ func reset() -> void:
 	excitement = 0
 	follow = 0
 	ball_focus = Vector3.ZERO
+	hush=0; home_support=.35; away_support=.35; progress=0; margin=0
+	material.set_shader_parameter("home_support",home_support)
+	material.set_shader_parameter("away_support",away_support)
+	material.set_shader_parameter("hush",0.0)
 	material.set_shader_parameter("danger",0.0)
 	material.set_shader_parameter("follow",0.0)
 	material.set_shader_parameter("ball_focus",Vector3.ZERO)
@@ -112,13 +129,16 @@ func react(kind: String,team: int,location: Vector3) -> void:
 	if kind=="shot" and event_kind=="shot" and event_age<0.35: return
 	if kind=="tackle" and event_age<1.0: return
 	event_kind = kind
+	event_side=team
 	event_age = 0
 	event_duration = {"entrance":6.0,"goal":19.0,"shot":3.8,"save":4.5,"miss":3.5,"tackle":2.8}.get(kind,2.5)
 	material.set_shader_parameter("event_style",{"shot":1,"save":2,"miss":3,"tackle":4}.get(kind,0))
 	material.set_shader_parameter("event_team",float(team))
 	material.set_shader_parameter("event_goal",kind=="goal")
 	material.set_shader_parameter("event_entrance",kind=="entrance")
-	material.set_shader_parameter("event_strength",1.0 if kind in ["goal","save"] else (0.9 if kind=="shot" else 0.75))
+	var significance := 1.0
+	if kind=="goal" and progress>.8 and abs(margin)<=1: significance=1.3
+	material.set_shader_parameter("event_strength",significance if kind in ["goal","save"] else (0.9 if kind=="shot" else 0.75))
 	material.set_shader_parameter("event_duration",event_duration)
 	material.set_shader_parameter("event_age",0.0)
 	if kind=="goal" and team==0: start_wave(location,3.5)
@@ -132,6 +152,8 @@ func start_wave(location: Vector3,delay: float = 0.35) -> void:
 
 func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int,playing: bool,late_close_match: bool) -> void:
 	clock += delta
+	var silence: float=1.0 if event_kind=="goal" and event_side==1 and event_age<2.3 else (.55 if event_kind=="miss" and event_side==0 and event_age<1.4 else 0.0)
+	hush=move_toward(hush,silence,delta*(3 if silence>hush else .65))
 	event_age += delta
 	wave_age += delta
 	wave_cooldown = maxf(0,wave_cooldown-delta)
@@ -153,6 +175,9 @@ func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int
 	material.set_shader_parameter("danger_team",float(team))
 	material.set_shader_parameter("follow",follow)
 	material.set_shader_parameter("ball_focus",ball_focus)
+	material.set_shader_parameter("home_support",home_support)
+	material.set_shader_parameter("away_support",away_support)
+	material.set_shader_parameter("hush",hush)
 
 func follow_weight(perimeter: float) -> float:
 	var azimuth := fposmod(atan2(ball_focus.z/60.0,ball_focus.x/45.0)/TAU,1.0)

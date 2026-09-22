@@ -1,7 +1,24 @@
 extends "res://scripts/menu_screen.gd"
 const Preview = preload("res://scripts/kit_preview.gd")
 const SquadCard = preload("res://scripts/squad_card.gd")
-const MINT := Color("8ee4bd")
+const MINT := Color("a8e1be")
+const Portraits = preload("res://scripts/squad_portraits.gd")
+var portraits := Portraits.new()
+const GROUPS := ["KALECİ","DEFANS","ORTA SAHA","FORVET"]
+const ROLE_COLORS := [Color("ead091"),Color("a4c9eb"),Color("a8dfc0"),Color("f0b29a")]
+const LINES := [
+	[[0],[1,2,3,4],[5,6,7,8],[9,10]],
+	[[0],[1,2,3,4],[5,6,7],[8,9,10]],
+	[[0],[1,2,3],[4,5,6,7,8],[9,10]]]
+
+func slot_group(index: int) -> int:
+	for group in range(4):
+		if index in LINES[game.management.formation][group]: return group
+	return 2
+
+func natural_group(shirt: int,keeper: bool) -> int:
+	return game.management.natural_role(shirt,keeper)
+
 var reserve_buttons: Array[Button] = []
 var preview_reserve := -1
 var swap_action: Button
@@ -28,6 +45,10 @@ var age := 0.0
 
 func _ready() -> void:
 	setup_style()
+	add_child(portraits)
+	portraits.portrait_ready.connect(func(_key):
+		queue_redraw()
+		for card in slot_buttons+reserve_buttons: card.queue_redraw())
 	visible=false
 	controls=Control.new()
 	controls.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -94,6 +115,7 @@ func build_teams() -> void:
 		preview.size=Vector2(294,294)
 		controls.add_child(preview)
 		preview.show_kit(game.clubs.kit(side),side)
+		preview.player.apply_identity(game.clubs.member(side,game.clubs.lineups[side][9]))
 		previews.append(preview)
 		make_button(controls,Rect2(x+30,688,62,48),"‹",cycle_team.bind(side,-1))
 		make_button(controls,Rect2(x+534,688,62,48),"›",cycle_team.bind(side,1))
@@ -132,18 +154,20 @@ func cycle_difficulty() -> void:
 	controls.get_child(10).grab_focus()
 
 func slot_position(index: int) -> Vector2:
-	var pos: Vector2=game.management.SHAPES[game.management.formation][index]
-	var y := maxf(252,246+(pos.y+10)*5.65)
-	# Keep readable gaps between cards while preserving the formation's shape.
-	if index==0: y=572
-	elif index==6 and game.management.formation!=0: y-=12
-	return Vector2(482+pos.x*12,y)
+	var group := slot_group(index)
+	var line: Array=LINES[game.management.formation][group]
+	var column: int=line.find(index)
+	var spread := 650.0 if line.size()==5 else (570.0 if line.size()==4 else 500.0)
+	if line.size()==2: spread=280.0
+	var x := 483.0 if line.size()==1 else 483.0-spread/2+spread*column/(line.size()-1)
+	return Vector2(x,[566.0,473.0,373.0,270.0][group])
 
 func player_data(kind: String,index: int) -> Dictionary:
 	var data: Dictionary
 	if kind=="slot":
 		var p=game.players[index]
 		data={"name":p.display_name,"shirt":p.shirt_number,"keeper":p.keeper,"energy":1.0 if prematch else p.energy,"yellow":0 if prematch else p.yellow_cards,"dismissed":false if prematch else p.dismissed,"role":ROLES[game.management.formation][index],"status":""}
+		data.merge({"height_cm":p.height_cm,"weight_kg":p.weight_kg,"attributes":p.attributes.duplicate(),"appearance_number":p.number,"group":slot_group(index),"natural_group":natural_group(p.shirt_number,p.keeper)})
 		if not prematch:
 			if p.dismissed: data.status="İHRAÇ"
 			elif game.management.transit.has(index): data.status="DEĞİŞİYOR"
@@ -156,6 +180,11 @@ func player_data(kind: String,index: int) -> Dictionary:
 			if item.slot<11 and item.reserve==index: data.status="GİRECEK"
 		for slot in game.management.transit:
 			if slot<11 and game.management.transit[slot].reserve==index: data.status="DEĞİŞİYOR"
+	if kind=="bench":
+		data.group=natural_group(data.shirt,data.keeper)
+		data.natural_group=data.group
+		data.role=["KL","DF","OS","FV"][data.group]
+	data.position_label=GROUPS[data.group]
 	data.kit=game.clubs.kit(0).duplicate()
 	if data.keeper: data.kit.primary=Color("d7b83c"); data.kit.accent=Color("17272b")
 	return data
@@ -171,22 +200,7 @@ func replacement_reason(slot: int,reserve: int) -> String:
 	var b: Dictionary=game.management.bench[0][reserve]
 	if p.keeper!=b.keeper: return "Kaleci yalnızca yedek kaleciyle değişir."
 	if prematch: return ""
-	if game.training: return "Antrenmanda oyuncu değişikliği yok."
-	if p.dismissed: return "İhraç edilen oyuncu değiştirilemez."
-	if game.management.transit.has(slot): return "Bu oyuncu şu anda değişiyor."
-	if b.used: return "Bu yedek maçta zaten kullanıldı."
-	var count: int=game.management.used[0]
-	for other in game.management.transit:
-		if other<11:
-			if game.management.transit[other].reserve==reserve: return "Bu yedek şu anda sahaya giriyor."
-			if game.management.transit[other].phase=="out": count+=1
-	for item in game.management.pending:
-		if item.slot<11:
-			count+=1
-			if item.slot==slot: return "Bu oyuncunun bekleyen değişikliğini önce iptal et."
-			if item.reserve==reserve: return "Bu yedek başka bir oyuncu için seçildi."
-	if count>=5: return "Beş oyuncu değişikliği hakkı doldu."
-	return ""
+	return game.management.substitution_reason(slot,reserve)
 
 func make_card(kind: String,index: int,rect: Rect2) -> Button:
 	var card := SquadCard.new()
@@ -195,15 +209,16 @@ func make_card(kind: String,index: int,rect: Rect2) -> Button:
 	card.eligible=kind=="slot" or replacement_reason(selected_slot,index)==""
 	if kind=="bench" and not card.eligible:
 		card.data.unavailable="MEVKİ UYUMSUZ" if game.players[selected_slot].keeper!=card.data.keeper else "SEÇİLEMİYOR"
+	card.portrait_key=portraits.request(card.data)
 	card.position=rect.position; card.size=rect.size
 	controls.add_child(card)
 	return card
 
 func build_tactics() -> void:
 	for i in range(11):
-		slot_buttons.append(make_card("slot",i,Rect2(slot_position(i)-Vector2(56,38),Vector2(112,76))))
-	make_button(controls,Rect2(925,45,219,48),"İLK 11 & YEDEKLER",set_pane.bind(0),pane==0)
-	make_button(controls,Rect2(1158,45,242,48),"TAKTİK PLANI",set_pane.bind(1),pane==1)
+		slot_buttons.append(make_card("slot",i,Rect2(slot_position(i)-Vector2(59,44),Vector2(118,88))))
+	make_button(controls,Rect2(925,45,219,48),"KADROM",set_pane.bind(0),pane==0)
+	make_button(controls,Rect2(1158,45,242,48),"OYUN PLANI",set_pane.bind(1),pane==1)
 	if pane==0:
 		for j in range(7):
 			reserve_buttons.append(make_card("bench",j,Rect2(52+j*192,694,184,92)))
@@ -218,7 +233,7 @@ func build_tactics() -> void:
 				var button := make_button(controls,Rect2(976+j*136,234+i*99,128,42),row[1][j],set_tactic.bind(row[3],j),j==row[2])
 				button.add_theme_font_size_override("font_size",14)
 	make_button(controls,Rect2(40,834,222,49),"← Takım seçimi" if prematch else "← Maça dön",back)
-	undo_button=make_button(controls,Rect2(848,834,240,49),"X  SON İŞLEMİ GERİ AL",undo_last)
+	undo_button=make_button(controls,Rect2(848,834,240,49),"SON DEĞİŞİKLİĞİ GERİ AL",undo_last)
 	undo_button.add_theme_font_size_override("font_size",12)
 	undo_button.disabled=history.is_empty()
 	first_focus=make_button(controls,Rect2(1112,834,288,49),"MAÇA ÇIK  →" if prematch else "MAÇA DÖN  →",confirm,true)
@@ -396,78 +411,99 @@ func draw_teams() -> void:
 	center("VS",Vector2(720,503),25,GOLD,true)
 
 func draw_tactics() -> void:
-	draw_rect(Rect2(0,0,1440,900),Color("07171e"))
-	for i in range(20): draw_line(Vector2(800+i*45,0),Vector2(390+i*45,900),Color(0.15,0.34,0.32,0.06),1)
-	badge(Vector2(68,67),game.clubs.data(0),0.94)
-	text("TAKIM YÖNETİMİ",Vector2(113,65),31,PAPER,true)
-	text(game.team_name(0)+"  /  "+("MAÇ ÖNCESİ" if prematch else "%02d'  ·  %d – %d" % [int(game.match_time/game.LENGTH*90),game.score[0],game.score[1]]),Vector2(115,88),12,MUTE)
-	draw_line(Vector2(40,113),Vector2(1400,113),Color("284447"),1)
-	text("İLK 11",Vector2(42,140),11,MINT,true)
-	text("Oyuncuyu seç → yedeği seç. İstersen sürükleyip bırak.",Vector2(115,140),12,MUTE)
-	text("SINIRSIZ KADRO DÜZENLEME" if prematch else "DEĞİŞİKLİK  %d / 5   ·   BEKLEYEN  %d" % [game.management.used[0],game.management.pending.filter(func(item): return item.slot<11).size()],Vector2(980,140),11,MINT,true)
-	box(Rect2(40,155,886,476),Color("102d32"),12,Color("345455"))
-	text(game.management.FORMATIONS[game.management.formation],Vector2(65,187),22,PAPER,true)
-	text("HÜCUM ↑",Vector2(824,186),10,MUTE,true)
+	draw_rect(Rect2(0,0,1440,900),Color("102722"))
+	for i in range(18): draw_line(Vector2(700+i*60,0),Vector2(300+i*60,900),Color(.4,.65,.52,.035),1)
+	badge(Vector2(69,64),game.clubs.data(0),1.02)
+	text("BİZİM TAKIM.",Vector2(116,62),33,PAPER,true)
+	text(game.team_name(0)+"  /  "+("MAÇ GÜNÜ · KADRO & TAKTİK" if prematch else "%02d'  ·  %d – %d" % [int(game.match_time/game.LENGTH*90),game.score[0],game.score[1]]),Vector2(118,86),11,MUTE)
+	draw_line(Vector2(40,112),Vector2(1400,112),Color("335246"),1)
+	text("İLK ON BİR",Vector2(43,139),12,MINT,true)
+	text("Bir oyuncu seç. Yedekten taze bir hamle yap.",Vector2(156,139),12,Color("b2c7ba"))
+	text("MAÇ ÖNCESİ · SERBEST KADRO SEÇİMİ" if prematch else "DEĞİŞİKLİK  %d / 3   ·   BEKLEYEN  %d" % [game.management.used[0],game.management.pending.filter(func(item): return item.slot<11).size()],Vector2(980,139),11,MINT,true)
+	box(Rect2(40,155,886,476),Color("264d3e"),16,Color("50705b"))
+	text(game.management.FORMATIONS[game.management.formation],Vector2(64,188),25,PAPER,true)
+	text("HÜCUM YÖNÜ ↑",Vector2(782,185),10,Color("b9cdb5"),true)
 	var pitch := Rect2(78,209,810,402)
-	for i in range(8): draw_rect(Rect2(pitch.position+Vector2(0,i*pitch.size.y/8),Vector2(pitch.size.x,pitch.size.y/8)),Color(0.27,0.49,0.41,0.10 if i%2 else 0.025))
-	var line := Color(0.49,0.66,0.59,0.28)
+	for i in range(8): draw_rect(Rect2(pitch.position+Vector2(0,i*pitch.size.y/8),Vector2(pitch.size.x,pitch.size.y/8)),Color(.6,.78,.52,.045 if i%2 else .012))
+	var line := Color(.71,.84,.66,.23)
 	draw_rect(pitch,line,false,1)
 	draw_line(Vector2(78,410),Vector2(888,410),line,1)
 	draw_arc(Vector2(483,410),58,0,TAU,72,line,1,true)
 	draw_circle(Vector2(483,410),2,line)
 	for y in [209,536]: draw_rect(Rect2(326,y,314,75),line,false,1)
 	for y in [209,585]: draw_rect(Rect2(414,y,138,26),line,false,1)
-	box(Rect2(952,155,448,476),Color("10272f"),12,Color("2a454c"))
+	for group in range(4):
+		var baseline: float=[570,424,324,222][group]
+		text(GROUPS[group],Vector2(89,baseline),9,Color("c1d3b9"),true)
+	box(Rect2(952,155,448,476),Color("19382f"),16,Color("3c5a49"))
 	if pane==0: draw_comparison()
 	else:
-		text("OYUN PLANI",Vector2(976,186),12,MINT,true)
-		for i in range(4): text(["DİZİLİŞ","OYUN ANLAYIŞI","PRES YOĞUNLUĞU","SAVUNMA ÇİZGİSİ"][i],Vector2(978,222+i*99),10,MUTE,true)
+		text("NASIL OYNAYALIM?",Vector2(976,186),14,MINT,true)
+		for i in range(4): text(["DİZİLİŞ","OYUN ANLAYIŞI","PRES YOĞUNLUĞU","SAVUNMA ÇİZGİSİ"][i],Vector2(978,222+i*99),10,Color("b6c8ba"),true)
 		text("Yoğun pres daha fazla enerji tüketir.",Vector2(978,592),12,MUTE)
-	box(Rect2(40,649,1360,153),Color("0c2028"),10,Color("294248"))
+	box(Rect2(40,649,1360,153),Color("19382f"),14,Color("3c5a49"))
 	if pane==0:
 		text("YEDEK KULÜBESİ",Vector2(56,676),12,PAPER,true)
-		text("7 OYUNCU  ·  SEÇEREK DEĞİŞTİR  ·  SÜRÜKLEYEREK SAHAYA TAŞI",Vector2(905,676),10,MUTE)
+		text("7 OYUNCU  ·  SEÇEREK VEYA SÜRÜKLEYEREK DEĞİŞTİR",Vector2(982,676),10,MUTE)
 	else:
-		text("TAKTİK ÖZETİ",Vector2(65,680),12,MINT,true)
+		text("SAHAYA YANSIYAN PLAN",Vector2(65,680),12,MINT,true)
 		var items := [["DİZİLİŞ",game.management.FORMATIONS[game.management.formation]],["YAKLAŞIM",["Savunmacı","Dengeli","Hücumcu"][game.management.mentality]],["PRES",["Geri çekil","Dengeli","Yoğun"][game.management.pressing]],["SAVUNMA",["Derin","Normal","Önde"][game.management.line_height]]]
 		for i in range(4):
 			text(items[i][0],Vector2(66+i*335,716),10,MUTE,true)
 			text(items[i][1],Vector2(66+i*335,748),24,PAPER,true)
-			if i<3: draw_line(Vector2(365+i*335,701),Vector2(365+i*335,772),Color("2b4349"),1)
+			if i<3: draw_line(Vector2(365+i*335,701),Vector2(365+i*335,772),Color("365447"),1)
 	if game.controller.using_gamepad:
 		game.controller.Glyphs.draw_hints(self,Vector2(42,818),[["LS / D-PAD","Gez"],["A","Seç"],["B","Geri"],["LB / RB","Sekme"],["X","Geri al"],["VIEW","Ayarlar"]],game.controller.family,font,23,10,20)
 	else: text("YÖN TUŞLARI  GEZ    ENTER  SEÇ    ESC  GERİ    Z  GERİ AL    P  AYARLAR",Vector2(42,819),10,MUTE)
-	text(status.left(74) if status!="" else "Formayı seç. Değişikliği sahaya yansıt.",Vector2(284,863),12,MINT)
+	text(status.left(70) if status!="" else "Takımın hazır. Sıra sende.",Vector2(284,863),12,MINT)
 
 func draw_player_detail(data: Dictionary,at: Vector2,title: String,color: Color) -> void:
 	text(title,at,10,color,true)
-	SquadCard.shirt(self,at+Vector2(38,51),68,data.kit,data.shirt,bold)
-	text(data.name,at+Vector2(90,32),26,PAPER,true)
-	text("%02d  ·  %s" % [data.shirt,"KALECİ" if data.keeper else data.role],at+Vector2(91,55),12,MUTE)
+	var group_color: Color=ROLE_COLORS[data.group]
+	box(Rect2(at+Vector2(0,12),Vector2(90,90)),Color("2f5142"),12)
+	draw_circle(at+Vector2(45,60),37,Color(group_color,.14))
+	var photo: Texture2D=portraits.photo(data)
+	if photo!=null: draw_texture_rect(photo,Rect2(at+Vector2(-3,6),Vector2(96,96)),false)
+	else: SquadCard.shirt(self,at+Vector2(45,56),63,data.kit,data.shirt,bold)
+	text(data.name,at+Vector2(106,34),25 if str(data.name).length()<11 else 21,PAPER,true)
+	text("#%02d  ·  %s" % [data.shirt,data.position_label],at+Vector2(107,55),12,group_color,true)
+	var stats: Dictionary=data.get("attributes",preload("res://scripts/player_attributes.gd").profile(0,int(data.shirt)-1,data.keeper))
+	text("%d cm · %d kg · %s · ZAYIF %d/5" % [data.height_cm,data.weight_kg,"SOL" if stats.preferred_foot==0 else "SAĞ",stats.weak_foot],at+Vector2(108,76),10,MUTE)
 	var energy: float=data.energy
 	var tint := SquadCard.energy_color(energy)
-	text("ENERJİ",at+Vector2(91,78),10,MUTE,true)
-	text("%d%%" % roundi(energy*100),at+Vector2(349,78),12,tint,true)
-	box(Rect2(at+Vector2(91,88),Vector2(295,5)),Color("2c4549"),2)
-	box(Rect2(at+Vector2(91,88),Vector2(maxf(2,295*energy),5)),tint,2)
+	text("ENERJİ",at+Vector2(108,93),9,MUTE,true)
+	text("%d%%" % roundi(energy*100),at+Vector2(349,93),11,tint,true)
+	box(Rect2(at+Vector2(108,99),Vector2(279,4)),Color("38584a"),2)
+	box(Rect2(at+Vector2(108,99),Vector2(maxf(2,279*energy),4)),tint,2)
+
+	for i in range(6):
+		var x: float=at.x+i*66
+		text(preload("res://scripts/player_attributes.gd").LABELS[i],Vector2(x,at.y+115),8,MUTE,true)
+		text(str(stats[preload("res://scripts/player_attributes.gd").KEYS[i]]),Vector2(x+42,at.y+115),11,PAPER,true)
+		box(Rect2(x,at.y+121,57,3),Color("38584a"),1)
+		box(Rect2(x,at.y+121,57*float(stats[preload("res://scripts/player_attributes.gd").KEYS[i]])/100,3),color,1)
 
 func draw_comparison() -> void:
-	text("OYUNCU DEĞİŞİKLİĞİ",Vector2(976,186),12,MINT,true)
+	text("OYUNCU ODAĞI",Vector2(976,186),12,MINT,true)
 	var outgoing := player_data("slot",selected_slot)
-	draw_player_detail(outgoing,Vector2(977,215),"SEÇİLİ OYUNCU",Color("eca18b"))
+	draw_player_detail(outgoing,Vector2(977,213),"SEÇİLİ OYUNCU",GOLD)
 	var pending := pending_for(selected_slot)
 	var incoming: int=pending.reserve if not pending.is_empty() else preview_reserve
-	draw_line(Vector2(978,328),Vector2(1375,328),Color("2a444b"),1)
+	draw_line(Vector2(978,342),Vector2(1375,342),Color("39594a"),1)
 	if incoming>=0:
-		draw_player_detail(player_data("bench",incoming),Vector2(977,357),"GİRECEK · BEKLEMEDE" if not pending.is_empty() else "GİRECEK OYUNCU",MINT)
+		draw_player_detail(player_data("bench",incoming),Vector2(977,365),"GİRECEK · BEKLEMEDE" if not pending.is_empty() else "GİRECEK OYUNCU",MINT)
 		var reason := replacement_reason(selected_slot,incoming) if pending.is_empty() else "İlk duraklamada kenardan oyuna girecek."
-		text(reason if reason!="" else ("İlk 11 anında güncellenir." if prematch else "İlk duraklamada sahaya girecek."),Vector2(977,495),12,MUTE)
+		text(reason if reason!="" else ("İlk 11 anında güncellenir." if prematch else "İlk duraklamada sahaya girecek."),Vector2(977,509),12,MUTE)
 		var difference: int=roundi((1.0-float(outgoing.energy))*100)
-		if reason=="" and difference>0: text("+%d PUAN ENERJİ · TAZE OYUNCU" % difference,Vector2(977,526),11,MINT,true)
+		if reason=="" and difference>0: text("+%d ENERJİ · TAZE OYUNCU" % difference,Vector2(977,536),11,MINT,true)
 	else:
-		text("TAZE BİR HAMLE.",Vector2(977,383),24,PAPER,true)
-		text("Alttaki yedeklerden birini seç.",Vector2(978,416),14,MUTE)
-		text("Oyuncuları sürükleyerek de",Vector2(978,442),14,MUTE)
-		text("doğrudan değiştirebilirsin.",Vector2(978,466),14,MUTE)
-		if outgoing.dismissed: text("İHRAÇ · BU OYUNCU DEĞİŞTİRİLEMEZ",Vector2(978,526),11,Color("f28172"),true)
-		elif outgoing.yellow>0: text("SARI KART · İKİNCİ KARTA DİKKAT",Vector2(978,526),11,GOLD,true)
+		text("HERKESİN BİR YERİ VAR.",Vector2(977,379),19,PAPER,true)
+		for group in range(1,4):
+			var x := 978+(group-1)*134
+			box(Rect2(x,398,123,66),Color("244638"),8)
+			center(str(LINES[game.management.formation][group].size()),Vector2(x+61,429),24,ROLE_COLORS[group],true)
+			center(GROUPS[group],Vector2(x+61,450),9,Color("bad0c0"),true)
+		text("Değiştirmek için aşağıdan bir yedek seç.",Vector2(978,498),13,MUTE)
+		text("Oyuncuları sürükleyip bırakabilirsin.",Vector2(978,522),12,MUTE)
+		if outgoing.dismissed: text("İHRAÇ · DEĞİŞTİRİLEMEZ",Vector2(978,547),10,Color("f28172"),true)
+		elif outgoing.yellow>0: text("SARI KART · İKİNCİ KARTA DİKKAT",Vector2(978,547),10,GOLD,true)

@@ -40,13 +40,13 @@ Kutlamadan sonra topun durduğu son konuma en yakın oyuncu aynı fiziksel topu 
 
 Hızlı Maç sırası: **Takım ve rakip seçimi → İlk 11 ve taktik → Seremoni → Maç**. Sekiz kurgusal kulübün ayrı isimleri, kadroları, armaları ve iki forma seçeneği bulunur: Kıyı Spor, Atlas FC, Demirspor, Güneş FK, Orman Birliği, Kuzey Yıldızı, Liman Athletic ve Kapadokya SK. Formayı 3D oyuncu üzerinde görürsün; isimler, formalar, yayın grafikleri ve stadyum tabelaları seçime göre güncellenir.
 
-Kadro ekranında ilk 11, kulübün formalarını taşıyan kartlarla saha üzerine yerleşir; yedi yedek altta birlikte görünür. Oyuncuyu, ardından yedeği tıkla veya formaları saha ile kulübe arasında sürükle. Kontrolcüde analog/D-pad ile gez, **A** ile oyuncuyu seç; seçim doğrudan uygun yedeklere geçer, tekrar **A** ile değiştir. Sağ panel gerçek isimleri, forma numaralarını ve enerjiyi karşılaştırır; kartlar ve bekleyen değişiklikler sahada işaretlenir. **Xbox X / klavye Z** son değişikliği geri alır; bekleyen değişikliği sağdaki düğmeden tek tek iptal edebilirsin. Maç öncesindeki ilk 11 düzenlemesi maç içindeki beş değişiklik hakkını tüketmez. Diziliş, pres, oyun anlayışı ve savunma çizgisi ayrı taktik bölümündedir.
+Kadro ekranında ilk 11, kulübün formalarını taşıyan kartlarla saha üzerine yerleşir; yedi yedek altta birlikte görünür. Oyuncuyu, ardından yedeği tıkla veya formaları saha ile kulübe arasında sürükle. Kontrolcüde analog/D-pad ile gez, **A** ile oyuncuyu seç; seçim doğrudan uygun yedeklere geçer, tekrar **A** ile değiştir. Sağ panel gerçek isimleri, forma numaralarını ve enerjiyi karşılaştırır; kartlar ve bekleyen değişiklikler sahada işaretlenir. **Xbox X / klavye Z** son değişikliği geri alır; bekleyen değişikliği sağdaki düğmeden tek tek iptal edebilirsin. Maç öncesindeki ilk 11 düzenlemesi maç içindeki üç değişiklik hakkını tüketmez. Diziliş, pres, oyun anlayışı ve savunma çizgisi ayrı taktik bölümündedir.
 
 **K / Xbox View** maç sırasında kadro ve taktik ekranını açar. **P** veya ana menüdeki **Ayarlar** düğmesi yalnızca ses, kontrolcü, tuş atama ve görüntü/oyun tercihlerini açar. Kadro ayarlarda bulunmaz. İki ekran da maç saatini ve fiziği duraklatır; fare, Tab/yön tuşları ve Xbox sol analog/D-pad ile kullanılır. **A** seçer, **B/Esc** geri döner. Ana menü, antrenman, hava seçimi, takım/forma seçimi, kadro/taktik, mola, devre arası ve maç sonu ekranları da tamamen kontrolcüyle kullanılabilir. Seçili düğme belirgin bir çerçeveyle gösterilir; geri dönünce seçim korunur.
 
 Ayarlarda **sol/sağ** ses ve analog çubuklarını veya seçenekleri değiştirir; **yukarı/aşağı** satır değiştirir. **LB/RB** ayar bölümleri arasında, kadro ekranında ilk 11 ve taktik planı arasında geçer. **View** hazırlık ekranından ayarları açar. Uzun tuş listesi seçili satıra kayar. Xbox tuş ataması sırasında **View/Start** iptal eder (B oyuna atanabilir); klavye atamasını **B** ile de iptal edebilirsin. Analog menülerde kontrollü tekrar yapar; ekran geçişinde yeniden merkezlenene kadar seçimi kaydırmaz. Menü A/B işlevleri oyun içindeki özel tuş atamalarından bağımsızdır.
 
-- **Kadro:** Yedi yedek, maç başına beş değişiklik. Kaleci kaleciyle değiştirilir; ihraç edilen oyuncu değiştirilemez. Değişiklikler ilk duraklamada gerçekleşir. Oyuncu kenara yürür; yeni isim ve forma numarasıyla yedek sahaya girer. Bu yürüyüşlerde kondisyon harcanmaz. Rakip de yorgun oyuncularını değiştirebilir.
+- **Kadro:** Yedi yedek, maç başına üç değişiklik. Kaleci kaleciyle değiştirilir; ihraç edilen oyuncu değiştirilemez. Değişiklikler ilk duraklamada gerçekleşir. Oyuncu kenara hızlı koşar; yeni isim ve forma numarasıyla yedek sahaya girer. Bu çıkışlarda kondisyon harcanmaz. Rakip de yorgun oyuncularını değiştirebilir.
 - **Taktik:** 4-4-2, 4-3-3 veya 3-5-2; savunmacı/dengeli/hücumcu anlayış, pres yoğunluğu ve savunma çizgisi. Zorluk rakibin karar süresini, pas isabetini ve baskısını değiştirir.
 - **Ses ve kontrol:** Stadyum, alkış ve davul seviyeleri bağımsızdır. Analog hassasiyeti, ölü bölge, titreşim ve gol tekrarı ayarlanabilir.
 - **Tuş atama:** Oyun hareketleri klavyede ve Xbox tuşlarında yeniden atanabilir; çakışmalar yer değiştirir. Yön tuşları, sol analog ve menü kısayolları sabittir. Ayarlar Godot kullanıcı klasöründeki `match_settings.cfg` dosyasına kaydedilir.
@@ -70,7 +70,8 @@ Hakem, avantajlı bir takım arkadaşı topu aldığında oyunu üç saniye sür
 | Hızlı koş | R1 | RB |
 | Oyuncu değiştir | L1 | LB |
 | Top koruma / falsolu şut | L2 | LT |
-| Ayakta müdahale | R2 | RT |
+| Anlık oyun planı | R2 + ← / ↑ / → | RT + ← / ↑ / → |
+| Değişiklik önerisini kabul / geç | R2 + × / ○ | RT + A / B |
 | Verkaç | L1 + × | LB + A |
 | Aşırtma | L1 + □ | LB + X |
 | Havadan uzun pas | L1 + △ | LB + Y |
@@ -95,6 +96,8 @@ Sol analog hareket eder; sağ analog veya yön düğmeleri koşudan bağımsız 
 | D basılıyken sol / sağ yön tuşu | Şut nişanını yavaşça ayarla |
 | X | Kayarak müdahale |
 | F1 | Kontrol rehberini aç / kapat |
+| F5 / F6 / F7 | Savunmacı / dengeli / hücumcu oyun planı |
+| F8 / F9 | Yorgun oyuncu değişikliği önerisini kabul et / geç |
 | F | FPS panelini aç / kapat; anlık FPS, kare süresi ve performans grafiği |
 | G | Ayakta top alma; boşa uzanırsan kısa toparlanma, önce rakibe temas edersen faul |
 | E basılı | Top sendeyken vücuduyla koru; şut şarjındayken falso; topsuzken topa dönük yavaş savunma adımları |
@@ -114,7 +117,7 @@ Sol analog hareket eder; sağ analog veya yön düğmeleri koşudan bağımsız 
 | H | Açık → yağmurlu → sağanak; menüde hava düğmesi de kullanılabilir |
 | Space / Enter (seremonide) | Seremoniyi atlayıp santraya geç |
 
-Xbox kontrolcüsü: **sol analog** hareket ve yön, **X** top sendeyken şut (basılı tut → bırak), topsuzken ayakta top alma, **LB + X** aşırtma, **B** top sendeyken orta, topsuzken kayarak müdahale; **A** pas (basılı tut → bırak) / topsuzken pas iste, **LB + A** verkaç, **RB** basılıyken hızlı koşma (stamina harcar), **LB** oyuncu değiştirme. Analog eğimi yürüyüş hızını belirler; merkezdeki %18 ölü bölge sürüklenmeyi önler. Duran toplarda da sol analogla nişan, X/A/B ile vuruş kullanılır. Menülerde **A** seçili düğmeyi çalıştırır; seremonide ve devre arasında devam eder. **Y** hücumda koşu yoluna pas (basılı tut → bırak), savunmada basılı tutulduğu sürece kaleciyi çıkarma, **LT** top koruma / karşılama, **RT** ayakta müdahale, **sağ analog basma (R3)** topu ileri açma, **Start** mola ve **View** kadro ve taktik. Şut ve temaslarda ayarlanabilir titreşim vardır. Klavye çalışmaya devam eder; ekrandaki ipuçları son kullanılan girişe göre değişir. Kontrolcü bağlantısı kesilirse hazırlanan vuruş iptal edilir ve maç duraklar.
+Xbox kontrolcüsü: **sol analog** hareket ve yön, **X** top sendeyken şut (basılı tut → bırak), topsuzken ayakta top alma, **LB + X** aşırtma, **B** top sendeyken orta, topsuzken kayarak müdahale; **A** pas (basılı tut → bırak) / topsuzken pas iste, **LB + A** verkaç, **RB** basılıyken hızlı koşma (stamina harcar), **LB** oyuncu değiştirme. Analog eğimi yürüyüş hızını belirler; merkezdeki %18 ölü bölge sürüklenmeyi önler. Duran toplarda da sol analogla nişan, X/A/B ile vuruş kullanılır. Menülerde **A** seçili düğmeyi çalıştırır; seremonide ve devre arasında devam eder. **Y** hücumda koşu yoluna pas (basılı tut → bırak), savunmada basılı tutulduğu sürece kaleciyi çıkarma, **LT** top koruma / karşılama, **RT + sol/yukarı/sağ** savunmacı/dengeli/hücumcu oyun planı, **sağ analog basma (R3)** topu ileri açma, **Start** mola ve **View** kadro ve taktik. Şut ve temaslarda ayarlanabilir titreşim vardır. Klavye çalışmaya devam eder; ekrandaki ipuçları son kullanılan girişe göre değişir. Kontrolcü bağlantısı kesilirse hazırlanan vuruş iptal edilir ve maç duraklar.
 
 **LB + X — aşırtma:** Top sendeyken LB'yi tutup X ile şutu doldur, bırakınca top kalecinin üzerinden yumuşak bir kavisle gider. Nişan normal şutla aynıdır; falso eklenmez. Klavyede şutu doldururken **Q** aynı işi görür. LB tek başına top sendeyken bırakıldığında oyuncu değiştirir; savunmada yine basıldığı anda değiştirir.
 
@@ -261,6 +264,18 @@ Canlı beden dili: Oyuncular yaklaşan pasın öncesinde kısa omuz kontrolü ya
 
 Bakış yönü/sınırları, pas öncesi tarama, acil top kontrolü, açık/kapalı pas yolu, sağ/sol işaret, iptal geçişi, eşzamanlılık, gerçek oyuncu teması, top saklama, giriş gecikmesi olmaması, şut/taç önceliği ve tekrar: `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/body_language_check.gd`. Yakın plan görüntüler: `godot --path . --fixed-fps 120 --script res://tests/body_language_check.gd -- --visual`.
 
+Topa göre hareketler: Kontrol ve vuruş ayağı topun oyuncuya göre konumundan, ortadaki toplarda mevcut adımdaki ayak mesafesinden seçilir. Kısa pas daha küçük salınım, sert şut kalça dönüşü ve devam hareketi kullanır; ters yön, baskı, yorgunluk ve denge kaybı gövdenin hazırlığını değiştirir. Sağ/sol ayak değişse de gövde nişan alınan tarafa döner. Animasyon vuruşu geciktirmez ve seçilen şut yönünü değiştirmez.
+
+Yumuşak ve sert paslar farklı ayak hareketleriyle karşılanır; sert pasta bacak topun gelişiyle geri çekilir. Uygun yükseklikte yaklaşan hava topu uyluk veya göğüsle yumuşatılır ve yerçekimiyle yere düşer. İlk kontrol gerçek topa sınırlı bir fizik itkisi uygular; konumu taşınmaz. Hız, baskı, yorgunluk ve uzanma mesafesi kontrol sonrasında kalan momentumu etkiler. Son anda yetişilen topa uzanmak topu sektirebilir ve anında sahiplik sağlamaz. Koşarken kontrol mevcut adımdan başlayıp yeniden koşuya karışır.
+
+Darbe yönü korunur: öne, arkaya ve yana düşüşlerde gövde farklı eğilir, eller zemine destek olur ve kalkışta bir bacak ağırlığı devralır. Dönen çarpışma şekli çime teğet kalır. Kaçan şut başını tutma, kesilen/kötü pas kısa özür işareti, kurtarış yakındaki takım arkadaşlarında alkış üretir. Canlı top yakına geldiğinde veya seçili oyuncuya hareket girdisi verildiğinde tepki söner; hareket ve vuruş kontrolü kilitlenmez.
+
+Gerçek pas/şut ve kurtarış olayları, iki ayakla vuruş, yönlü gövde dönüşü, yumuşak/sert ilk kontrol, uyluk/göğüs, uzanma ve seken top, hareket geçişleri, dört yöne düşüş, el-zemin teması ve kısa tepkiler: `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/context_actions_check.gd`. Yakın plan görüntüler: `godot --path . --fixed-fps 120 --script res://tests/context_actions_check.gd -- --visual`; `tests/context-*.png` dosyalarına yazılır.
+
+Kafa vuruşu: Orta yaklaşırken normal şut tuşuna (klavye D, Xbox X, PlayStation kare) basıp yön vererek bırak. Kısa süre önce verilen komut saklanır; oyuncu topun gelişine göre fiziksel olarak yükselir, ancak top kafasına ulaşırsa vurur. Güç, temas kalitesi, baskı ve yorgunluk sonucu etkiler. D-pad/sağ analogla koşudan bağımsız nişan kullanılabilir. Yerde aynı tuş normal şut veya mevcut ayakta müdahale işlevini korur. Kafa vuruşunda göğüs kontrolü araya girmez; kaçırılan top uzaktan yön değiştirmez. Seçilmeyen takım arkadaşları kullanıcıdan habersiz kafa şutu atmaz. Mola, oyuncu değişimi ve başka bir hareket komutu bekleyen vuruşu iptal eder. Kontrol rehberi ve maç içi simgenin yanında bağlama göre “Kafa” açıklaması bulunur.
+
+Gerçek B ortası → oyuncu seçimi → X ile kafa golü, klavye/iki kontrolcü ailesi, fiziksel yükselme ve iniş, temas mesafesi, güç/yön, boşa çıkan komut, ofsayt ve kullanıcı yetkisi: `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/heading_check.gd`. Yakın plan görüntüler: `godot --path . --fixed-fps 120 --script res://tests/heading_check.gd -- --visual`.
+
 Kaleci dengesi: 72 fiziksel şutta kolay top, uzak köşe, sert köşe ve yakın mesafe; tepki süresi, zorluk, yağmur/yorgunluk/görüş, gerçek eldiven erişimi ve canlı seken top: `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/keeper_balance_check.gd`. Dalışta eldivenler aynı karşılama noktasına yaklaşır; aralarında topun kaçtığı yapay boşluk kalmaz. Tepki süresi normal zorlukta yaklaşık 0,23 saniyedir. Sert toplarda okuma hatası artar; kurtarış alanı büyütülmez ve topun sonucu önceden belirlenmez.
 
 İki kalede, sağ/sol köşelerde, üç vuruş açısında ve farklı rastgele okumalarla 84 ek fiziksel şut: `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/keeper_corner_check.gd`. Alçak, yüksek, uzak, ceza sahası içi ve sert yakın köşeler ayrı sınanır; ulaşılabilir şutların çoğunun kurtarılması ve zor bitirişlerin hâlâ gol olabilmesi birlikte kontrol edilir.
@@ -309,6 +324,10 @@ godot --path . --script res://tests/visual_check.gd
 - `scripts/footballer.gd`: oyuncu modeli, hareket ve animasyon.
 - `scripts/locomotion.gd`: yönlü adımlar, dönüş/frenleme ağırlık aktarımı ve iki eklemle destek ayağı teması.
 - `scripts/body_language.gd`: top takibi, pas öncesi çevre kontrolü, boşluk işaretleri ve fiziksel temasa görsel denge tepkisi.
+- `scripts/ball_actions.gd` ve `scripts/first_touch.gd`: topa göre ayak seçimi, vuruş/kontrol hareketleri ve ilk dokunuşun fiziksel sonucu.
+- `scripts/heading.gd`: yaklaşan orta için kafa vuruşu komutu, sıçrama zamanlaması, gerçek temas ve yönlü kafa şutu.
+- `scripts/impact_motion.gd`: darbe yönüne göre düşüş, el desteği ve ayağa kalkış.
+- `scripts/match_reactions.gd` ve `scripts/player_reaction.gd`: maç olaylarından kısa, kesilebilir oyuncu tepkileri.
 - `scripts/stadium.gd`: saha, kaleler, tribünler, ışık ve çevre.
 - `scripts/stadium_lighting.gd`: bağımsız gündüz/gece seçimi, yönlü güneş, çatılara bağlı projektörler ve yağmurla birlikte aydınlatma.
 - `scripts/stadium_architecture.gd`: üst tribünler, çatı makasları, dış cephe, tünel ve canlı skor tabelaları.
@@ -320,6 +339,14 @@ godot --path . --script res://tests/visual_check.gd
 - `shaders/`: çim ve ağ malzemeleri.
 
 Referanslar: [NSS 3 maç ekranı](https://www.gamewatcher.com/games/new-star-soccer-3/screens), [Godot RigidBody3D](https://docs.godotengine.org/en/stable/classes/class_rigidbody3d.html).
+
+Antrenman düğmesi üç mod açar: **Serbest antrenman** mevcut tek oyuncu/kaleci düzenidir; **Orta & kafa** çalışmasında kanattaki takım arkadaşı iki taraftan sırayla gerçek fiziksel orta açar, pas tuşuyla daha erken orta istenebilir ve şut tuşuyla kafa vurulur; **Serbest vuruş** kaleci ve dört kişilik barajla üç farklı noktadan tekrarlanır. Gol, dışarı çıkan top, kalecinin tuttuğu top veya biten pozisyon sonrasında yeni çalışma kurulur; seken topa devam edilebilir. **R** yeni deneme, **T** (kolda **View / dokunmatik yüzey**) mod seçimi açar. Kontrolcüyle yeni deneme mola menüsündedir. Menü fare, klavye, Xbox ve PlayStation ile kullanılabilir. Antrenman partnerinin otomatik ortası yalnızca bu modda etkindir; maçta kendi takımının pas/şut kontrolü oyuncuda kalır.
+
+Antrenman seçimi, fiziksel orta + kafa vuruşu, baraj hazırlığı, kontrolcü serbest vuruşu, tekrarlar, duraklatma ve mod temizliği: `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/training_modes_check.gd`. `-- --visual` ile seçim, orta ve serbest vuruş görüntüleri kaydedilir.
+
+Kulüp armaları ve forma baskıları `scripts/kit_graphics.gd` ile üretilir: sekiz farklı arma, kumaşa oturan desenler ve sırt numaraları aynı UV dokusundadır. Göğüste ayrı kutu/decal, sırtta havada duran yazı yoktur. Menü ve formalar aynı armaları kullanır; deplasman ve kaleci formalarında kulüp arması kendi renklerini korur. 512×192 mipmap dokular önbelleğe alınır; çamur için yeniden üretilmez.
+
+144 oyuncunun boy/kilo profilleri kulüp ve oyuncu kimliğine bağlıdır (`scripts/player_physique.gd`). Mevcut kadrolar 168–198 cm aralığındadır; kilo boya uygun sınırlarda üretilir. Boy, omuz/gövde genişliği, derinlik ve çarpışma kapsülü bu ölçülere uyar; yüzler aşırı esnetilmez. Kadro değişimi, yedekten giriş ve maç sıfırlama aynı oyuncunun ölçülerini korur. Kadro karşılaştırmasında cm/kg gösterilir. Kontrol: `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/kit_physique_check.gd`; `-- --visual` ile forma ön/arka, eğilme, kulüp armaları ve menü görüntüleri kaydedilir.
 
 Stadyum ambiyansı, olay alkışları, öncelik, mola, ses kapatma ve yeni maç temizliği: `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/stadium_audio_check.gd`.
 
@@ -346,3 +373,34 @@ Kadro ekranı; gerçek fare tıklamaları, iki yönlü sürükle-bırak, Xbox se
 Gündüz/gece seçimi, fare/Xbox, hava bağımsızlığı, seremoni ve devre arası: `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/match_lighting_check.gd`. Headless olmadan `-- --visual` eklemek ekran görüntülerini alır ve gerçek gölgeleri açık/kapalı görüntüler üzerinden, gece saha parlaklığını da piksel ölçümüyle kontrol eder.
 
 Çevrede binaların yolları kapatmaması, kesintisiz araç rotaları, çizim bütçesi, gündüz/gece geçişi ve maç sırasında trafik güncellemesinin kapanması: `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/district_check.gd`. Görseller ve canlı ana menü performansı için `godot --path . --script res://tests/district_check.gd -- --visual --measure`; ölçümler `/tmp/football-district-performance.json` dosyasına yazılır. Apple M4 Pro / Metal / 1440×900 yerel ölçümünde gündüz yaklaşık 119, gece 107 FPS görüldü; değerler cihaz ve sahne yüküne göre değişir.
+
+
+İkili mücadelede hafif yan temas artık otomatik faul değildir. Ayakta müdahale topa yetişirse topu söker; boşa uzanma veya hafif sürtüşme oyunu durdurmaz. Arkadan bacak arasına uzanma, geç hamle ve yüksek hızla sert giriş faul olarak kalır. Kaymada temas alanı gerçek bacak hattına daraltılmıştır; topa ilk dokunuş için küçük bir tolerans vardır. Yapay zekâ kapalı topa arkadan dalmak yerine pozisyon alır, yalnızca açık topa uygun açıdan kayar. Kontrol: `godot --headless --path . --script res://tests/duel_balance_check.gd`.
+
+Top toplayıcıların bekleme noktaları yan hakem koridorunun dışındadır. `sideline_spacing.gd` kişiler arasında açıklık bırakır; top almaya giderken hakemin çevresinden dolaşılır, top tam hakemin yanındaysa hakem ofsayt hizasını koruyarak yana açılır. Top ve oyuncular için yeni bir fiziksel engel eklenmez. Kontrol: `godot --headless --path . --script res://tests/sideline_spacing_check.gd`.
+
+Kadro ekranı portreli oyuncu kartları, kaleci/defans/orta saha/forvet grupları, mevkisine göre renkli etiketler, gerçek enerji/kart bilgisi ve karşılaştırma paneli kullanır. Yedeklerin de mevkileri gösterilir. `squad_portraits.gd`, mevcut oyuncu modellerini tek bir küçük stüdyoda sırayla fotoğraflayıp önbelleğe alır; stüdyo tamamlanınca silinir, maç sırasında portre çizimi yapılmaz. Üç diziliş, portre kimliği, değişiklik ve geri alma kontrolü: `godot --path . --script res://tests/tactics_portrait_check.gd` (grafik arayüz gerektirir). Mevcut fare, sürükle-bırak ve kontrolcü kontrolleri `squad_management_check.gd` ile doğrulanır.
+
+### Kenardan talimat ve hızlı değişiklik
+
+RT/R2 basılıyken yön düğmeleri oyun planını seçer: sol savunmacı, yukarı dengeli, sağ hücumcu. Teknik direktör ilgili el ve beden hareketiyle talimat verir; oyun durmaz. Sol analogla hareket sürer. RT/R2 bu özelliğe ayrılmıştır; topsuz ayakta müdahale X/□ ile yapılır.
+
+Enerjisi azalan oyuncuya, sahadaki mevkisine uygun kullanılmamış bir yedek önerilir. RT+A (R2+×) kabul eder, RT+B (R2+○) öneriyi geçer; klavyede F8/F9, fareyle kart düğmeleri de kullanılabilir. Kabul edilen değişiklik ilk duraklamada uygulanır. Çıkan oyuncu stamina harcamadan kenara koşar; yedek girdikten sonra sayılır. Her iki takımın da maç başına üç hakkı vardır; bekleyen ve hâlen sahaya giren değişiklikler bu sınırda yer tutar.
+
+Rakip hücumları boşluk, baskı, ofsayt çizgisi ve kalecinin konumuna göre kısa pas, verkaç ve dönüş pası, ara pas, havadan kanat değiştirme, yüksek veya yerden sert orta, aşırtma/falsolu şut, çalım ve topu ileri açmayı seçebilir. Havadan gelen topa aynı gerçek temas sistemiyle kafa şutu, kafa pası veya uzaklaştırma yapar. Kullanıcının takımı kendiliğinden pas ve şut atmaz; topsuz koşu ve savunma desteği sürer.
+
+### Maçın gidişine göre atmosfer ve futbol
+
+Tribün desteği skor ve kalan zamana bağlıdır: son bölümde beraberlik arayan takımın taraftarı hareketlenir, deplasman golünde ana tribün kısa süre durulur, kaçan fırsatta tepki söner. Yakın skorlu maçın sonundaki goller daha güçlü sıçrama ve kulübe tepkisi üretir. Mevcut stadyum ve alkış kayıtlarının seviyesi bu akışa uyar; yeni saha sesi, anons veya ses dosyası eklenmemiştir.
+
+Geç dakikada attığı gole rağmen hâlâ geride olan takımın golcüsü kutlama yerine gerçek topu ağdan alıp santraya taşır. Topa yaklaşırken frenler, eğilip alır, kaldırır ve orta noktaya bırakır; stamina harcamaz. Takım arkadaşları yerlerine döner. Son bölümde öne geçiren golün grup kutlaması daha büyüktür; mevcut kutlama geçme tuşu kullanılabilir.
+
+Oyuncuların kulüp ve kimliğine bağlı hız, ivme, ilk kontrol, denge, kafa ve şut değerleri ile güçlü/zayıf ayak bilgisi vardır. Kanat oyuncusu daha çabuk hızlanır, güçlü stoper hava topunda avantajlıdır; baskı altındaki kontrol ve ters ayakla şut gerçek top hızını etkiler. Değerler kadro karşılaştırmasında görülür ve oyuncu değişikliğinde kimlikle birlikte taşınır. Şut çizgisi, vuruşla aynı hesabı kullanır.
+
+Savunma birlikte kayar: tek oyuncu baskıya çıkar, biri arkasını kapatır, diğerleri ortak derinliği ve pas yollarını korur. Kullanıcının pres ve savunma çizgisi ayarları ayrı ayrı geçerlidir. Rakip son bölümde gerideyse daha ileri çıkar ve riskli paslara yönelir; öndeyse daha temkinli oynar. Bu görevler kullanıcının seçili oyuncusunun yön kontrolünü devralmaz.
+
+Yakın omuz mücadelesinde iki oyuncu birbirine yaslanır; sınırlı karşılıklı itiş kilo farkını dikkate alır ve tek başına faul üretmez. Hava topunda yer tutma, dengeye bağlı kontrol ve inişte kısa diz/gövde esnemesi vardır. Kurtarış ve gerçek yön değiştiren şut sekmeleri sonrası her iki takım en uygun oyuncuyu topa yollar; ikinci oyuncu bitiricilik veya kale koruması için yer alır. Kullanıcı takımında otomatik pas/şut eklenmez.
+
+Duraklamalarda kaçan fırsat, kenardan talimat ve oyuncu değişikliği için en fazla iki saniyelik yakın kamera görüntüleri kullanılır. Oyun hazırlığı arkada sürer; duran top hazırsa kamera hemen döner. **Space/Enter**, Xbox **A/B** veya PlayStation **×/○** ile geçilir; diğer oyun tuşları da görüntüyü kapatır. Oyuncu değişikliğinde yedek kulübeden kenara gelir, çıkan oyuncuyla kısa selamlaşır ve sahaya girer. Üç değişiklik sınırı korunur.
+
+Yeni davranış kontrolleri: `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/realism_check.gd`. İki kale yönünde gerçek top taşıma, selamlaşma, stamina ve iniş testi: aynı komutla `res://tests/realism_flow_check.gd`; görüntüler için `--headless --disable-render-loop` kaldırılıp `-- --visual` eklenir.

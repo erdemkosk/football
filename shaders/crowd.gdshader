@@ -15,9 +15,14 @@ uniform float wave_age=100.0;
 uniform float wave_origin=0.0;
 uniform vec3 ball_focus=vec3(0.0);
 uniform float follow=0.0;
+uniform float home_support=0.35;
+uniform float away_support=0.35;
+uniform float hush=0.0;
 void vertex(){
  float phase=INSTANCE_CUSTOM.r*6.28318;
  float fan_team=step(0.5,INSTANCE_CUSTOM.g);
+ float support_level=mix(home_support,away_support,fan_team);
+ float quiet=hush*(1.0-fan_team);
  float supporting=1.0-step(0.5,abs(fan_team-event_team));
  if(event_entrance) supporting=1.0;
  float delay=INSTANCE_CUSTOM.r*0.32+INSTANCE_CUSTOM.b*0.14;
@@ -50,6 +55,8 @@ void vertex(){
  float ambient=1.0-clamp(max(envelope*event_strength,wave),0.0,1.0);
  float chant=max(chorus*step(0.24,personality),solo*0.8);
  chant*=ambient*(0.82+personality*0.18);
+ chant*=clamp(0.48+support_level,0.0,1.45)*(1.0-quiet*0.92);
+ anticipation*=1.0-quiet*0.8;
  float ball_az=fract(atan(ball_focus.z/60.0,ball_focus.x/45.0)/6.2831853);
  float around=min(abs(INSTANCE_CUSTOM.a-ball_az),1.0-abs(INSTANCE_CUSTOM.a-ball_az));
  float near_stand=smoothstep(0.22,0.04,around)*(1.0-INSTANCE_CUSTOM.b*0.42);
@@ -67,6 +74,7 @@ void vertex(){
  VERTEX.z-=local_stand*0.16*weight;
  VERTEX.y-=local_sit*0.11*weight;
  float hopping=max(chorus*step(0.62,personality),solo*step(0.88,personality))*ambient;
+ hopping*=clamp(0.5+support_level,0.0,1.35)*(1.0-quiet);
  float beat=sin(crowd_time*(7.0+INSTANCE_CUSTOM.r*2.5)+phase);
  VERTEX.y+=pow(max(0.0,beat),2.0)*hopping*(0.17+INSTANCE_CUSTOM.r*0.13);
  VERTEX.y-=max(0.0,-beat)*hopping*0.045*weight;

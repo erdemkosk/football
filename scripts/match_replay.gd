@@ -42,7 +42,7 @@ func capture(delta: float) -> void:
 
 func origin() -> void:
 	# A restart that can score immediately must not replay the previous open play.
-	if not enabled or game.training: return
+	if not enabled or game.training or game.menu_match.running: return
 	frames.clear()
 	sample_age=0
 	restart_clip=true

@@ -6,7 +6,7 @@ const DEADZONE := 0.18
 var sensitivity := 1.0
 var deadzone := DEADZONE
 var vibration := true
-var bindings: Dictionary = {JOY_BUTTON_A:KEY_S,JOY_BUTTON_B:KEY_A,JOY_BUTTON_X:KEY_D,JOY_BUTTON_Y:KEY_Y,JOY_BUTTON_RIGHT_SHOULDER:KEY_W,JOY_BUTTON_LEFT_SHOULDER:KEY_Q,JOY_BUTTON_LEFT_STICK:KEY_X,JOY_BUTTON_RIGHT_STICK:KEY_V,100+JOY_AXIS_TRIGGER_LEFT:KEY_E,100+JOY_AXIS_TRIGGER_RIGHT:KEY_G}
+var bindings: Dictionary = {JOY_BUTTON_A:KEY_S,JOY_BUTTON_B:KEY_A,JOY_BUTTON_X:KEY_D,JOY_BUTTON_Y:KEY_Y,JOY_BUTTON_RIGHT_SHOULDER:KEY_W,JOY_BUTTON_LEFT_SHOULDER:KEY_Q,JOY_BUTTON_LEFT_STICK:KEY_X,JOY_BUTTON_RIGHT_STICK:KEY_V,100+JOY_AXIS_TRIGGER_LEFT:KEY_E}
 var game
 var device := -1
 var family := "xbox"
@@ -61,6 +61,7 @@ func family_label() -> String:
 	return "PLAYSTATION" if family=="playstation" else "XBOX"
 
 func button_for(action: int) -> int:
+	if action==KEY_G and KEY_G not in bindings.values(): return button_for(KEY_D)
 	for button in bindings:
 		if bindings[button]==action: return button
 	return -1
@@ -136,7 +137,7 @@ func translate(event: InputEvent) -> InputEventKey:
 		elif event.button_index==JOY_BUTTON_A and game.state in ["menu","finished","paused","ceremony","halftime","replay","goal"]: code=KEY_ENTER
 		elif event.button_index==JOY_BUTTON_A and game.state=="restart" and game.restart_type=="SANTRA": code=KEY_ENTER
 		elif code==KEY_A and game.state=="playing" and not game.has_ball_control(game.controlled): code=KEY_X
-		elif code==KEY_D and game.state=="playing" and not game.has_ball_control(game.controlled): code=KEY_G
+		elif code==KEY_D and game.state=="playing" and not game.has_ball_control(game.controlled) and not game.heading.can_request(game.controlled): code=KEY_G
 		if code==0: return null
 		held[event.button_index]=code
 	else:
@@ -168,6 +169,7 @@ func connection_changed(id: int,connected: bool) -> void:
 	clear_shot_aim()
 	held.clear()
 	menus.reset()
+	game.coaching.reset_input()
 	combos.cancel()
 	using_gamepad=false
 	game.charging=false
@@ -192,6 +194,7 @@ func rumble(strength: float,shot: bool=false) -> void:
 	Input.start_joy_vibration(device,clampf(strength*0.55,0,1),clampf(strength*(0.85 if shot else 1.0),0,1),0.16 if shot else 0.25)
 
 func rebind(action: int,button: int) -> void:
+	if button==100+JOY_AXIS_TRIGGER_RIGHT: return
 	var old := -1
 	for key in bindings:
 		if bindings[key]==action: old=key; break
@@ -204,11 +207,12 @@ func rebind(action: int,button: int) -> void:
 	prompts_changed.emit()
 
 func reset_bindings() -> void:
-	bindings={JOY_BUTTON_A:KEY_S,JOY_BUTTON_B:KEY_A,JOY_BUTTON_X:KEY_D,JOY_BUTTON_Y:KEY_Y,JOY_BUTTON_RIGHT_SHOULDER:KEY_W,JOY_BUTTON_LEFT_SHOULDER:KEY_Q,JOY_BUTTON_LEFT_STICK:KEY_X,JOY_BUTTON_RIGHT_STICK:KEY_V,100+JOY_AXIS_TRIGGER_LEFT:KEY_E,100+JOY_AXIS_TRIGGER_RIGHT:KEY_G}
+	bindings={JOY_BUTTON_A:KEY_S,JOY_BUTTON_B:KEY_A,JOY_BUTTON_X:KEY_D,JOY_BUTTON_Y:KEY_Y,JOY_BUTTON_RIGHT_SHOULDER:KEY_W,JOY_BUTTON_LEFT_SHOULDER:KEY_Q,JOY_BUTTON_LEFT_STICK:KEY_X,JOY_BUTTON_RIGHT_STICK:KEY_V,100+JOY_AXIS_TRIGGER_LEFT:KEY_E}
 	held.clear()
 	prompts_changed.emit()
 
 func label_for(action: int) -> String:
+	if action==KEY_G and KEY_G not in bindings.values(): return label_for(KEY_D)
 	for button in bindings:
 		if bindings[button]==action: return {0:"A",1:"B",2:"X",3:"Y",7:"L3",8:"R3",9:"LB",10:"RB",104:"LT",105:"RT"}.get(button,"Tuş %d" % button)
 	return "Atanmamış"

@@ -147,7 +147,7 @@ func run() -> void:
 	check(player.kick_timer>0 and player.locomotion.plant_weight==0 and player.right_leg.rotation.x>0.65,"A shot immediately overrides the directional gait and foot lock")
 	player.receive_impact(Vector3.RIGHT,0.9)
 	await tick(12)
-	check(player.pose=="fall" and player.body_collision.rotation.x< -0.2 and player.locomotion.plant_leg==-1,"A tackle interrupts locomotion and drives the falling body")
+	check(player.pose=="fall" and player.body_collision.basis.y.dot(Vector3.RIGHT)>0.2 and player.locomotion.plant_leg==-1,"A tackle interrupts locomotion and drives the body in the impact direction")
 	game.reset_practice()
 	check(player.locomotion.plant_leg==-1 and player.locomotion.side==0 and player.locomotion.braking==0,"Practice reset clears old contacts and movement blends")
 	await reset()

@@ -1,6 +1,7 @@
 extends RefCounted
 ## Roster slots remain stable for physics and AI; shirt identity is independent.
 var game
+const MAX_SUBS := 3
 var formation := 0
 var mentality := 1
 var pressing := 1
@@ -21,7 +22,7 @@ const SHAPES := [
 	[Vector2(0,46),Vector2(-16,31),Vector2(0,33),Vector2(16,31),Vector2(-26,9),Vector2(-12,13),Vector2(0,20),Vector2(12,13),Vector2(26,9),Vector2(-7,-7),Vector2(7,-7)]]
 
 func setup() -> void:
-	for p in game.players: originals.append({"name":p.display_name,"shirt":p.number})
+	for p in game.players: originals.append(p.identity())
 	reset()
 
 func reset() -> void:
@@ -34,13 +35,12 @@ func reset() -> void:
 	for team in range(2):
 		for j in range(7):
 			bench[team].append({"name":(["EFE","UMUT","TUNA","OZAN","BARAN","YİĞİT","ATA"] if team==0 else ["JOEL","MIRO","NOAH","LARS","LUIS","ADAM","FINN"])[j],"shirt":12+j,"keeper":j==0,"used":false})
+			bench[team][-1].merge(preload("res://scripts/player_physique.gd").profile(team,11+j,j==0))
 	for side in range(2):
 		if not reserve_originals[side].is_empty(): bench[side]=reserve_originals[side].duplicate(true)
 	for i in range(originals.size()):
 		var p=game.players[i]
-		p.display_name=originals[i].name
-		p.shirt_number=originals[i].shirt
-		p.shirt_label.text=str(p.shirt_number)
+		p.apply_identity(originals[i])
 	apply_formation()
 
 func apply_formation() -> void:
@@ -49,41 +49,89 @@ func apply_formation() -> void:
 		var pos: Vector2=shape[p.number-1]
 		p.home=Vector3(pos.x,0,pos.y)*(-game.attack_sign(p.team))
 
-func queue_sub(slot: int,reserve: int) -> String:
+func committed(team: int) -> int:
+	var count: int=used[team]
+	for index in transit:
+		if game.players[index].team==team and transit[index].phase=="out": count+=1
+	for item in pending:
+		if game.players[item.slot].team==team: count+=1
+	return count
+
+func substitution_reason(slot: int,reserve: int) -> String:
 	if game.training or game.state in ["menu","finished"]: return "Oyuncu değişikliği maç sırasında yapılır."
 	if slot<0 or slot>=game.players.size() or reserve<0 or reserve>=7: return "Geçersiz seçim."
 	var p=game.players[slot]
 	var b: Dictionary=bench[p.team][reserve]
+	if p.dismissed: return "İhraç edilen oyuncu değiştirilemez."
 	if transit.has(slot): return "Bu oyuncunun değişikliği devam ediyor."
-	if p.dismissed or b.used or p.keeper!=b.keeper: return "Uygun yedek seç: kaleci kaleciyle değişir; ihraç edilen değiştirilemez."
-	var count: int=used[p.team]
+	if b.used: return "Bu yedek maçta zaten kullanıldı."
+	if p.keeper!=b.keeper: return "Kaleci yalnızca yedek kaleciyle değişir."
 	for index in transit:
-		if game.players[index].team==p.team:
-			if transit[index].reserve==reserve: return "Bu yedek sahaya giriyor."
-			if transit[index].phase=="out": count+=1
+		if game.players[index].team==p.team and transit[index].reserve==reserve: return "Bu yedek şu anda sahaya giriyor."
 	for item in pending:
-		if game.players[item.slot].team==p.team: count+=1
-		if item.slot==slot or (item.reserve==reserve and game.players[item.slot].team==p.team): return "Bu oyuncu için değişiklik zaten bekliyor."
-	if count>=5: return "Beş oyuncu değişikliği hakkı doldu."
+		if item.slot==slot: return "Bu oyuncunun bekleyen değişikliğini önce iptal et."
+		if game.players[item.slot].team==p.team and item.reserve==reserve: return "Bu yedek başka bir oyuncu için seçildi."
+	if committed(p.team)>=MAX_SUBS: return "Üç oyuncu değişikliği hakkı doldu."
+	return ""
+
+func queue_sub(slot: int,reserve: int) -> String:
+	var reason := substitution_reason(slot,reserve)
+	if reason!="": return reason
 	pending.append({"slot":slot,"reserve":reserve})
-	return "%s → %s · Bir sonraki duraklamada" % [p.display_name,b.name]
+	game.stadium.sidelines.instruct(game.players[slot].team,"substitute")
+	return "%s → %s · Bir sonraki duraklamada" % [game.players[slot].display_name,bench[game.players[slot].team][reserve].name]
+
+static func natural_role(shirt: int,keeper: bool) -> int:
+	if keeper: return 0
+	if shirt in [2,3,4,5,13,14]: return 1
+	if shirt in [6,7,8,9,15,16]: return 2
+	return 3
+
+func slot_role(index: int) -> int:
+	var p=game.players[index]
+	if p.keeper: return 0
+	var slot := index%11
+	var shape: int=formation if p.team==0 else 0
+	if slot<=(3 if shape==2 else 4): return 1
+	if slot>=(8 if shape==1 else 9): return 3
+	return 2
+
+func suggestion(team: int,threshold: float=0.40,excluded: Array=[]) -> Dictionary:
+	if committed(team)>=MAX_SUBS or game.training: return {}
+	var best: Dictionary={}
+	var lowest := threshold
+	for slot in range(team*11+1,team*11+11):
+		var p=game.players[slot]
+		if not p.visible or p.dismissed or p.energy>=lowest or p.shirt_number in excluded: continue
+		for reserve in range(1,7):
+			var b: Dictionary=bench[team][reserve]
+			if natural_role(b.shirt,b.keeper)!=slot_role(slot) or substitution_reason(slot,reserve)!="": continue
+			lowest=p.energy
+			best={"slot":slot,"reserve":reserve,"shirt":p.shirt_number,"incoming":b.shirt}
+			break
+	return best
+
+func live_plan(value: int) -> void:
+	value=clampi(value,0,2)
+	mentality=value; pressing=value; line_height=value
+	game.stadium.sidelines.instruct(0,["defend","balance","attack"][value])
 
 func prepare_substitutions() -> void:
 	if game.training: return
-	# The opponent also refreshes tired players at a stoppage.
-	if game.match_time>75 and used[1]<5 and pending.is_empty():
-		var tired := -1
-		var lowest := 0.32
-		for i in range(12,22):
-			if not game.players[i].dismissed and game.players[i].energy<lowest:
-				lowest=game.players[i].energy; tired=i
-		if tired>=0:
-			for j in range(1,7):
-				if not bench[1][j].used: queue_sub(tired,j); break
+	# Each team's allowance includes accepted and still-running changes.
+	# The opponent's decision never depends on whether our team queued a change.
+	if game.match_time>60:
+		var next := suggestion(1,.36)
+		if not next.is_empty(): queue_sub(next.slot,next.reserve)
 	for item in pending:
 		var p=game.players[item.slot]
-		if p.dismissed: continue
+		if p.dismissed or bench[p.team][item.reserve].used or transit.has(item.slot): continue
+		var reserved: int=used[p.team]
+		for index in transit:
+			if game.players[index].team==p.team and transit[index].phase=="out": reserved+=1
+		if reserved>=MAX_SUBS: continue
 		transit[item.slot]={"reserve":item.reserve,"phase":"out","target":p.position,"old":p.display_name}
+		game.stadium.sidelines.start_entry(item.slot,item.reserve,Vector3(32.8,0,(-3 if p.team==0 else 3)+(item.slot%11)*1.2))
 	pending.clear()
 
 func update_substitutions(delta: float) -> bool:
@@ -99,6 +147,7 @@ func update_substitutions(delta: float) -> bool:
 		destination=game.set_pieces.recovery.around_goal(p.position,destination)
 		var offset: Vector3=(destination-p.position)*Vector3(1,0,1)
 		var distance_to_destination := offset.length()
+		var greeted: bool=game.stadium.sidelines.step_entry(index,p,delta) if item.phase=="out" else true
 		if item.has("waypoint") and game.flat_distance(p.position,item.waypoint)<0.4: item.erase("waypoint")
 		if not item.has("waypoint") and offset.length()>0.8:
 			var ahead := offset.normalized()
@@ -111,20 +160,24 @@ func update_substitutions(delta: float) -> bool:
 					break
 		if item.has("waypoint"): offset=(item.waypoint-p.position)*Vector3(1,0,1)
 		p.desired=offset.normalized()*minf(1,offset.length())
-		if distance_to_destination<0.7:
+		if distance_to_destination<(0.22 if item.phase=="out" else 0.7):
 			item.erase("waypoint")
 			if item.phase=="out":
+				if not greeted:
+					p.desired=Vector3.ZERO
+					continue
 				var b: Dictionary=bench[p.team][item.reserve]
 				b.used=true
 				used[p.team]+=1
-				p.display_name=b.name
-				p.shirt_number=b.shirt
-				p.shirt_label.text=str(p.shirt_number)
+				p.apply_identity(b)
+				p.apply_kit(game.clubs.kit(p.team))
 				p.reset_stamina()
 				p.yellow_cards=0
 				p.fouls_committed=0
 				p.action_timer=0
 				p.pose="run"
+				p.celebration=""
+				game.stadium.sidelines.finish_entry(index)
 				item.phase="in"
 				game.announce("DEĞİŞİKLİK · "+item.old+" → "+p.display_name)
 			else: transit.erase(index)
@@ -158,6 +211,9 @@ func adjust_target(index: int,target: Vector3) -> Vector3:
 	elif game.carrier>=0 and game.players[game.carrier].team==0:
 		var gap: float=game.flat_distance(p.position,game.ball.position)
 		if gap<[5.0,9.0,13.0][difficulty]: target=target.lerp(game.ball.position,[0.2,0.5,0.75][difficulty])
+	elif p.team==1 and game.carrier>=0 and game.players[game.carrier].team==1:
+		# Late chasing teams commit runners; a leading team keeps more cover.
+		target.z+=forward*(game.team_tactics.plan_for(1)-1)*(4 if slot_role(index)==1 else 6)
 	target.x=clampf(target.x,-29,29)
 	target.z=clampf(target.z,-45,45)
 	return target

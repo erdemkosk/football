@@ -8,10 +8,15 @@ var targets: Dictionary = {}
 var group: Array[int] = []
 var next_jump: Dictionary = {}
 var gathered_age := 0.0
+var urgent := false
+var late_winner := false
+var collection := "approach"
+var collection_age := 0.0
 
 func clear() -> void:
 	age=0
 	gathered_age=0
+	urgent=false; late_winner=false; collection="approach"; collection_age=0
 	scorer=-1
 	targets.clear()
 	group.clear()
@@ -29,6 +34,8 @@ func begin(team: int) -> void:
 				var distance: float=game.flat_distance(p.position,game.ball.position)
 				if distance<nearest: nearest=distance; scorer=i
 	if scorer<0: return
+	urgent=game.match_time>game.LENGTH*.68 and game.score[team]<game.score[1-team]
+	late_winner=game.match_time>game.LENGTH*.85 and game.score[team]==game.score[1-team]+1
 	var side := -1.0 if game.players[scorer].position.x<0 else 1.0
 	# The away end is in the south-east corner; celebrate toward those fans.
 	if team==1: side=1
@@ -55,10 +62,19 @@ func begin(team: int) -> void:
 		var angle := TAU*(j if inner else j-5)/(5.0 if inner else maxf(1,teammates.size()-5))+ (0.0 if inner else 0.4)
 		targets[index]=gathering+Vector3(cos(angle),0,sin(angle))*(1.65 if inner else 3.05)
 	for i in group: next_jump[i]=2.0+(i%5)*0.23
+	if urgent:
+		for i in targets:
+			targets[i]=game.players[i].home
+			game.players[i].celebration=""
+		game.stadium.sidelines.instruct(team,"attack")
+		game.announce("TOPU AL · SANTRAYA DÖN")
 	game.match_camera.cinematic()
 
 func update(delta: float) -> void:
 	age+=delta
+	if urgent:
+		update_urgent(delta)
+		return
 	var arrived := 0
 	for i in targets:
 		var p=game.players[i]
@@ -72,7 +88,7 @@ func update(delta: float) -> void:
 			if close:
 				arrived+=1
 				if age>float(next_jump[i]) and p.is_on_floor() and p.action_timer<=0:
-					p.velocity.y=4.8 if i==scorer else 3.8
+					p.velocity.y=(4.8 if i==scorer else 3.8)+(0.35 if late_winner else 0.0)
 					next_jump[i]=age+1.2+(i%3)*0.15
 		# Distinct gathering slots and lateral yielding keep the group moving.
 		if offset.length()>0.6:
@@ -91,7 +107,7 @@ func update(delta: float) -> void:
 				p.facing=look.normalized()
 				p.rig.rotation.y=lerp_angle(p.rig.rotation.y,atan2(-p.facing.x,-p.facing.z),1-exp(-delta*10))
 	if arrived>=maxi(4,group.size()-2): gathered_age+=delta
-	if (age>12 and gathered_age>3.0) or age>19:
+	if (age>(15 if late_winner else 12) and gathered_age>(4.0 if late_winner else 3.0)) or age>(23 if late_winner else 19):
 		clear()
 		game.begin_restart("SANTRA",1-game.goal_team,Vector3.ZERO)
 
@@ -100,14 +116,17 @@ func skip() -> void:
 	clear()
 	if game.training:
 		game.reset_practice()
-		game.state="playing"
-		game.ball.active=true
 		return
 	game.begin_restart("SANTRA",1-game.goal_team,Vector3.ZERO)
 	game.set_pieces.snap_ready()
 
 func update_camera(delta: float) -> void:
 	var player_focus: Vector3=game.players[scorer].position if scorer>=0 else gathering
+	if urgent:
+		game.match_camera.apply_projection()
+		var shot: Dictionary=game.match_camera.apply(player_focus,game.zoom,delta)
+		game.camera.position=shot.eye; game.camera.look_at(shot.look)
+		return
 	var focus := player_focus.lerp(Vector3(signf(gathering.x)*38,0,gathering.z),0.24)
 	focus.y=0
 	game.camera_focus=game.camera_focus.lerp(focus,1-exp(-delta*2.2))
@@ -116,3 +135,60 @@ func update_camera(delta: float) -> void:
 	var offset := Vector3(0,52,38).lerp(Vector3(-signf(gathering.x)*20,24,-signf(gathering.z)*24),close)
 	game.camera.position=game.camera.position.lerp(game.camera_focus+offset,1-exp(-delta*2.8))
 	game.camera.look_at(game.camera_focus)
+
+func update_urgent(delta: float) -> void:
+	collection_age+=delta
+	var p=game.players[scorer]
+	var ball=game.ball
+	var destination: Vector3=ball.position*Vector3(1,0,1)
+	if collection=="approach":
+		p.set_piece_pose=""
+		if ball.position.y>.9 or ball.linear_velocity.length()>5: destination=p.position
+		elif game.flat_distance(p.position,ball.position)<1.2:
+			collection="pickup"; collection_age=0
+			p.facing=((ball.position-p.position)*Vector3(1,0,1)).normalized()
+	elif collection=="pickup":
+		p.set_piece_pose="pickup"; p.handling_blend=smoothstep(0,.4,collection_age)
+		destination=p.position
+		if game.flat_distance(p.position,ball.position)>1.3:
+			collection="approach"
+		elif collection_age>.42 and (p.hand_center().distance_to(ball.position)<.9 or game.flat_distance(p.position,ball.position)<1.05):
+			ball.hold(p); collection="lift"; collection_age=0
+	elif collection=="lift":
+		p.set_piece_pose="pickup"; p.handling_blend=1-smoothstep(0,.5,collection_age)
+		destination=p.position
+		if collection_age>.58: collection="carry"; collection_age=0
+	elif collection=="carry":
+		p.set_piece_pose="carry"; p.handling_blend=0
+		destination=Vector3.ZERO
+		if game.flat_distance(p.position,Vector3.ZERO)<.5:
+			collection="place"; collection_age=0
+	elif collection=="place":
+		destination=p.position
+		p.set_piece_pose="pickup"; p.handling_blend=smoothstep(0,.45,collection_age)
+		ball.hold_target=Vector3(0,.23,0)
+		if collection_age>.6:
+			ball.place(Vector3(0,.23,0))
+			clear(); game.begin_restart("SANTRA",1-game.goal_team,Vector3.ZERO)
+			return
+	if ball.held_by==p and collection!="place": ball.hold_target=p.hand_center()
+	destination=game.set_pieces.recovery.around_goal(p.position,destination)
+	# Reach a ball inside the net from inside its mouth.
+	if collection=="approach" and absf(ball.position.x)<3.66 and absf(ball.position.z)>50 and absf(ball.position.z)<52.5 and absf(p.position.x)<3.1:
+		destination=Vector3(clampf(ball.position.x,-3.1,3.1),0,signf(ball.position.z)*minf(absf(ball.position.z),51.9))
+	for i in targets:
+		var q=game.players[i]
+		if not q.visible: continue
+		var to: Vector3=destination if i==scorer else game.set_pieces.recovery.around_goal(q.position,targets[i])
+		var offset: Vector3=(to-q.position)*Vector3(1,0,1)
+		# Brake before reaching the ball so the runner does not kick it away
+		# with their capsule while bending down to pick it up.
+		var approach_rate := .35 if i==scorer and collection in ["approach","carry"] else 1.6
+		q.desired=offset.normalized()*minf(1,offset.length()*approach_rate)
+		q.stamina_free_movement=true
+		var pace := 9.5 if i==scorer and collection in ["approach","carry"] else 0.0
+		if i==scorer and collection=="carry": pace=minf(pace,sqrt(12*maxf(0,offset.length()-.1)))
+		q.step(delta,pace)
+		q.stamina_free_movement=false
+	if age>23:
+		clear(); game.begin_restart("SANTRA",1-game.goal_team,Vector3.ZERO)

@@ -76,7 +76,7 @@ func prepare() -> void:
 		for j in range(mini(5,attackers.size())):
 			var spaces = [Vector3(-4,0,forward*44),Vector3(4,0,forward*42),Vector3(0,0,forward*37),Vector3(-12,0,forward*34),Vector3(13,0,forward*32)]
 			targets[attackers[j]] = spaces[j]
-		for j in range(mini(5,defenders.size())):
+		for j in range(mini(5,mini(defenders.size(),attackers.size()))):
 			targets[defenders[j]] = targets[attackers[j]]+Vector3(0.9,0,forward*1.1)
 	if kind in ["SERBEST VURUŞ","ENDİREKT VURUŞ"] and distance<36:
 		var count := 4 if distance<29 else 3

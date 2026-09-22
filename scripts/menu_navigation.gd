@@ -16,6 +16,7 @@ func screen() -> String:
 		return "settings:%d:%d" % [game.match_menu.page,game.match_menu.capture_action]
 	if is_instance_valid(game.frontend) and game.frontend.visible:
 		return "frontend:"+game.frontend.stage+str(game.frontend.pane)
+	if is_instance_valid(game.training_menu) and game.training_menu.visible: return "training_menu"
 	if game.state=="goal" or (game.state=="restart" and game.restart_type=="SANTRA" and not game.training): return game.state
 	return game.state if game.state in ["menu","paused","finished","halftime","ceremony","replay"] else ""
 
@@ -97,6 +98,8 @@ func handle(event: InputEvent) -> bool:
 		else: game.match_menu.handle(event)
 	elif game.frontend.visible:
 		game.frontend.handle(event)
+	elif game.training_menu.visible:
+		game.training_menu.handle(event)
 	else: game.hud.handle_pad(event.button_index)
 	return true
 
@@ -131,7 +134,9 @@ func activate() -> void:
 		popup_option=focus
 		focus.show_popup()
 		focus.get_popup().set_focused_item(focus.selected)
-	elif focus is BaseButton and not focus.disabled: focus.pressed.emit()
+	elif focus is BaseButton and not focus.disabled:
+		if game.training_menu.visible and focus in game.training_menu.cards: game.training_menu.start()
+		else: focus.pressed.emit()
 
 func popup_input(event: InputEvent,option: OptionButton) -> void:
 	popup_option=option

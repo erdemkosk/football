@@ -203,10 +203,10 @@ func resolve_tackles() -> void:
 			if q.team==p.team or not q.visible: continue
 			var q_point: Vector3=q.position*Vector3(1,0,1)
 			var near=Geometry3D.get_closest_point_to_segment(q_point,start,end)
-			if near.distance_to(q_point)<0.68 and near.distance_to(start)<first:
+			if near.distance_to(q_point)<0.48 and near.distance_to(start)<first:
 				first=near.distance_to(start)
 				victim=j
-		if victim>=0 and (not ball_hit or first+0.12<near_ball.distance_to(start)) and not game.training:
+		if victim>=0 and (not ball_hit or first+0.28<near_ball.distance_to(start)) and not game.training:
 			var reckless: bool=p.facing.dot(game.players[victim].facing)>0.5 and p.velocity.length()>8
 			var severe: bool=reckless and not ball_hit and first>0.45 and p.velocity.length()>16.5
 			game.tackle_impact(index,victim)

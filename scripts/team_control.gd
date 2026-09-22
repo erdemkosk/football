@@ -21,6 +21,7 @@ func select(index: int,manual: bool=false) -> void:
 	var p=game.players[index]
 	if not p.visible or p.dismissed or p.team!=0: return
 	if game.controlled!=index:
+		game.heading.cancel(game.controlled)
 		game.players[game.controlled].shot_preparation=0
 		game.controlled=index
 		game.charging=false; game.charge=0; game.cancel_pass()
@@ -50,7 +51,7 @@ func update(delta: float) -> void:
 		if p.team==0 and (not p.keeper or game.last_touch==0 or game.dribbler==owner) and p.visible and p.action_timer<=0 and p.touch_cooldown<=0:
 			if owner!=game.controlled and game.requested_receiver<0: select(owner)
 			return
-	if game.charging or game.pass_charging or game.requested_receiver>=0: return
+	if game.charging or game.pass_charging or game.heading.active(game.controlled) or game.requested_receiver>=0: return
 	if current.visible and not current.dismissed and (cooldown>0 or manual_hold>0 or current.action_timer>0): return
 	var threat: Vector3=game.ball.position+game.ball.linear_velocity.limit_length(20)*0.3
 	if game.ball.held_by!=null: return

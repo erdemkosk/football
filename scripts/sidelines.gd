@@ -14,6 +14,39 @@ var game
 var fetch_phase := ""
 var fetch_boy: Node3D
 var fetch_age := 0.0
+var coach_orders: Array = [{},{}]
+var entries: Dictionary = {}
+
+func start_entry(slot: int,reserve: int,gate: Vector3) -> void:
+	var team: int=game.players[slot].team
+	for actor in actors:
+		if actor.role=="substitute" and actor.team==team and actor.number==12+reserve:
+			entries[slot]={"actor":actor,"gate":gate+Vector3(.85,0,0),"age":0.0,"greet":false}
+			actor.visible=true
+			break
+
+func step_entry(slot: int,p,delta: float) -> bool:
+	if not entries.has(slot): return true
+	var item: Dictionary=entries[slot]
+	var actor=item.actor
+	actor.target_point=item.gate
+	var near: bool=game.flat_distance(actor.position,item.gate)<.15 and game.flat_distance(p.position,item.gate)<1.12
+	actor.animate_actor(delta,clock,p.position,"handshake" if near else "entry",1)
+	if near:
+		p.facing=Vector3.RIGHT; p.celebration="handshake"
+		if not item.greet:
+			item.greet=true
+			game.broadcast.offer("substitution",slot,actor)
+		item.age+=delta
+	return item.age>.7
+
+func finish_entry(slot: int) -> void:
+	if not entries.has(slot): return
+	entries[slot].actor.visible=false
+	entries.erase(slot)
+
+func instruct(team: int,order: String) -> void:
+	coach_orders[team]={"kind":order,"time":5.2}
 
 func _ready() -> void:
 	for team in range(2): build_dugout(team)
@@ -21,7 +54,7 @@ func _ready() -> void:
 	reset()
 
 func build_touchline() -> void:
-	for corner in [Vector3(33.5,0,-48.6),Vector3(33.5,0,48.6),Vector3(-33.5,0,-48.6),Vector3(-33.5,0,48.6),Vector3(33.5,0,0),Vector3(-33.5,0,0)]:
+	for corner in [Vector3(35.1,0,-48.6),Vector3(35.1,0,48.6),Vector3(-35.1,0,-48.6),Vector3(-35.1,0,48.6),Vector3(35.1,0,0),Vector3(-35.1,0,0)]:
 		add_actor(0 if corner.z<0 else 1,"ball_boy",30+actors.size(),corner)
 	add_actor(0,"fourth",40,Vector3(38.35,0,0))
 	add_actor(0,"photographer",41,Vector3(33.7,0,-22.4))
@@ -100,8 +133,12 @@ func reset() -> void:
 	event_age = 100
 	event_duration = 0
 	attention = 0
+	coach_orders=[{},{}]
+	entries.clear()
 	clear_fetch()
 	for actor in actors:
+		actor.visible=true
+		actor.avoid_people.clear()
 		actor.position = actor.home
 		actor.response = 0
 		actor.target_point=Vector3.INF
@@ -114,9 +151,12 @@ func react(kind: String,team: int,_location: Vector3) -> void:
 	event_team = team
 	event_age = 0
 	event_duration = 12.0 if kind=="goal" else (2.5 if kind=="save" else 1.8)
+	if kind=="goal" and is_instance_valid(game) and game.match_time>game.LENGTH*.85 and game.score[team]==game.score[1-team]+1: event_duration=22
 
 func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int,playing: bool,stoppage: String="",restart_point: Vector3=Vector3.ZERO) -> void:
 	clock += delta
+	for order in coach_orders:
+		if not order.is_empty(): order.time=maxf(0,order.time-delta)
 	event_age += delta
 	team_focus = team
 	var pressure := 0.0
@@ -127,12 +167,21 @@ func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int
 	step_fetch(delta,stoppage,restart_point,ball_position)
 	var collector := fetch_boy if fetch_phase!="" else collector_for(stoppage,restart_point)
 	for actor in actors:
+		if not actor.visible: continue
+		var entering := false
+		for entry in entries.values():
+			if entry.actor==actor: entering=true; break
+		if entering: continue
 		var actor_mode := "encourage" if attention>0.35 else "watch"
 		var intensity := attention*0.75
 		actor.target_point=Vector3.INF
 		var delay := float(actor.number%7)*0.065
 		var age := event_age-delay
 		if actor.role=="ball_boy":
+			actor.avoid_people.clear()
+			if is_instance_valid(game):
+				for official in game.referees.actors:
+					if official.visible: actor.avoid_people.append(official.position*Vector3(1,0,1))
 			if actor==fetch_boy and fetch_phase!="":
 				actor_mode=fetch_mode()
 				intensity=1
@@ -168,6 +217,10 @@ func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int
 			elif event_kind=="shot":
 				actor_mode = "encourage"
 				intensity = strength*0.9
+		if actor.role=="coach" and not coach_orders[actor.team].is_empty() and coach_orders[actor.team].time>0 and not (event_kind=="goal" and age<event_duration):
+			actor_mode="tactic_"+coach_orders[actor.team].kind
+			intensity=minf(1,coach_orders[actor.team].time*2)
+			actor.target_point=actor.home+Vector3(-.45,0,-1.0 if actor.team==0 else 1.0)
 		actor.animate_actor(delta,clock,ball_position,actor_mode,intensity)
 
 func collector_for(stoppage: String,restart_point: Vector3) -> Node3D:
@@ -183,7 +236,7 @@ func collector_for(stoppage: String,restart_point: Vector3) -> Node3D:
 func outside(point: Vector3) -> Vector3:
 	var at := Vector3(point.x,0,point.z)
 	if absf(at.x)>=absf(at.z)*32.0/50.0:
-		at.x=signf(at.x if absf(at.x)>0.2 else 1.0)*33.45
+		at.x=signf(at.x if absf(at.x)>0.2 else 1.0)*34.55
 		at.z=clampf(at.z,-48.8,48.8)
 	else:
 		at.z=signf(at.z if absf(at.z)>0.2 else 1.0)*51.15

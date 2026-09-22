@@ -219,6 +219,7 @@ func update(index: int,delta: float) -> Vector3:
 			if not game.rules.before_touch(index,false): return target
 			game.saves[p.team]+=1
 			game.stadium.react("save",p.team,ball)
+			game.reactions.saved(index)
 			game.dribbler=-1
 			game.last_touch=p.team
 			game.last_kicker=index
@@ -232,6 +233,7 @@ func update(index: int,delta: float) -> Vector3:
 			if not game.strike(index,loose_parry(index) if spill else safe_parry(index),0,true): return target
 			game.saves[p.team]+=1
 			game.stadium.react("save",p.team,ball)
+			game.reactions.saved(index)
 			p.touch_cooldown=0.9
 			game.announce("KALECİDEN SEKTİ · TOP OYUNDA" if spill else "KALECİ TOPU YANA ÇELDİ")
 		elif bv.length()<9:

@@ -82,9 +82,11 @@ func _draw() -> void:
 	if is_instance_valid(game.controls_help) and game.controls_help.visible: return
 	if game.match_menu!=null and game.match_menu.visible: return
 	if game.frontend!=null and game.frontend.visible: return
+	if game.training_menu!=null and game.training_menu.visible: return
 	if game.controller.using_gamepad:
-		pad_hints(Vector2(live_mid()-pad_hint_width([["START","Mola"],["VIEW","Kadro & taktik"]],20,11)*0.5,20),[["START","Mola"],["VIEW","Kadro & taktik"]],20,11)
-	else: center("P · AYARLAR     K · KADRO & TAKTİK",Vector2(live_mid(),22),11,MUTE)
+		var items := [["START","Mola"],["VIEW","Antrenmanlar" if game.training else "Kadro & taktik"]]
+		pad_hints(Vector2(live_mid()-pad_hint_width(items,20,11)*0.5,20),items,20,11)
+	else: center("P · AYARLAR     T · ANTRENMANLAR" if game.training else "P · AYARLAR     K · KADRO & TAKTİK",Vector2(live_mid(),22),11,MUTE)
 	if game.state=="replay":
 		panel(Rect2(0,0,1440,72))
 		text("GOL TEKRARI  ·  0.8×",Vector2(45,46),23,GOLD,true)
@@ -106,6 +108,16 @@ func _draw() -> void:
 		if game.state=="paused": modal()
 		return
 	scoreboard()
+	if game.broadcast.active:
+		game.broadcast.draw(self)
+		if game.state=="paused": modal()
+		return
+	if game.training and game.training_drills.mode!="free":
+		panel(Rect2(470,35,495,77),Color(.035,.09,.10,.95),5)
+		center(game.training_drills.title()+" · DENEME %d" % game.training_drills.attempt,Vector2(717,59),13,GOLD)
+		center(game.training_drills.instruction(),Vector2(717,82),10,PAPER,false)
+		if game.controller.using_gamepad: pad_hints(Vector2(610,99),[["START","Yeni deneme için mola"]],18,9)
+		else: center("R · YENİ DENEME     T · ANTRENMAN SEÇİMİ",Vector2(717,100),9,MUTE,false)
 	if game.state=="halftime": halftime_overlay(); return
 	if not game.management.transit.is_empty():
 		panel(Rect2(480,90,480,40))
@@ -129,6 +141,10 @@ func _draw() -> void:
 		var curl: bool = game.shot_finesse and not chip
 		var launch: Vector3=game.shot_velocity(game.aim_direction(),game.charge,curl,chip)
 		var curve: float = game.finesse_curve(game.aim_direction()) if curl else 0.0
+		if game.heading.active(game.controlled):
+			launch=game.heading.launch_velocity(game.controlled,game.aim_direction(),game.charge)
+			curve=0
+			center("KAFA",origin+Vector2(0,-18),11,GOLD)
 		var color := Color("8ec6e8",0.92) if chip else (Color("ecad72",0.9) if curl else Color(GOLD,0.8))
 		draw_shot_guide(launch,curve,color)
 		if chip: center("AŞIRT",origin+Vector2(0,-18),11,color)
@@ -157,6 +173,7 @@ func _draw() -> void:
 		panel(Rect2(475,153,490,42),Color(0.035,0.08,0.1,0.94),4)
 		draw_rect(Rect2(489,163,14,22),Color("e45a43") if game.rules.card_red else GOLD)
 		center(game.rules.card_text,Vector2(733,181),14,PAPER)
+	game.coaching.draw(self)
 	if game.state in ["paused","finished"]: modal()
 	elif game.state=="playing" and game.controller.using_gamepad:
 		panel(Rect2(32,852,1070,36),Color(0.04,0.09,0.11,0.94),5,Color(GOLD,0.18))
@@ -242,7 +259,8 @@ func draw_landing_disc(point: Vector3,color: Color,lob: bool) -> void:
 func action_hints() -> Array:
 	var on_ball: bool=game.has_ball_control(game.controlled)
 	var teammate: bool=not on_ball and game.carrier>=0 and game.players[game.carrier].team==0
-	return [[action_label(KEY_D),"Şut" if on_ball else "Müdahale"],[action_label(KEY_A),"Orta" if on_ball else "Kayma"],[action_label(KEY_S),"Pas" if on_ball else "Pas iste"],[action_label(KEY_Y),"Ara pas" if on_ball else ("Ara pas iste" if teammate else "Kaleciyi çıkar")],[action_label(KEY_W),"Hızlı koş"],[action_label(KEY_Q),"Oyuncu seç"]]
+	var shot_label := "Kafa" if game.heading.can_request(game.controlled) else ("Şut" if on_ball else "Müdahale")
+	return [[action_label(KEY_D),shot_label],[action_label(KEY_A),"Orta" if on_ball else "Kayma"],[action_label(KEY_S),"Pas" if on_ball else "Pas iste"],[action_label(KEY_Y),"Ara pas" if on_ball else ("Ara pas iste" if teammate else "Kaleciyi çıkar")],[action_label(KEY_W),"Hızlı koş"],[action_label(KEY_Q),"Oyuncu seç"]]
 
 func ceremony_overlay() -> void:
 	draw_rect(Rect2(0,0,1440,60),Color(0.02,0.04,0.055,0.96))
@@ -291,7 +309,7 @@ func scoreboard() -> void:
 	else:
 		center(game.stadium.light_rig.label()+"  ·  "+game.weather.label()+"  ·  C "+game.match_camera.label(),Vector2(live_mid(),LIVE.end.y+22),11,MUTE,true)
 	if game.training:
-		text("GOL: %d    ŞUT: %d    R: TOPU YENİLE" % [game.practice_goals,game.shots[0]],Vector2(34,126),11,GOLD,true)
+		text("GOL: %d    ŞUT: %d" % [game.practice_goals,game.shots[0]]+("    R: YENİ DENEME" if not game.controller.using_gamepad else ""),Vector2(34,126),11,GOLD,true)
 
 func can_skip_to_kickoff() -> bool:
 	return game.state=="goal" or (game.state=="restart" and game.restart_type=="SANTRA" and not game.training)
@@ -422,9 +440,9 @@ func modal() -> void:
 		center("OYUN SENİ BEKLER.",Vector2(720,339),35,PAPER)
 		center("Kısa bir nefes. Sonra tekrar sahaya.",Vector2(720,380),16,MUTE)
 		button(Rect2(490,420,460,55),"DEVAM ET","ESC",true)
-		button(Rect2(490,485,460,48),"KADRO & TAKTİK","K / VIEW",false)
+		button(Rect2(490,485,460,48),"YENİ DENEME" if game.training else "KADRO & TAKTİK","R" if game.training else "K / VIEW",false)
 		button(Rect2(490,543,460,48),"AYARLAR","P",false)
-		button(Rect2(490,601,220,48),"HIZLI MAÇ","R",false)
+		button(Rect2(490,601,220,48),"ANTRENMANLAR" if game.training else "HIZLI MAÇ","T" if game.training else "R",false)
 		button(Rect2(730,601,220,48),"ANA MENÜ","←",false)
 	else:
 		center(game.ending_reason if game.ending_reason!="" else "SON DÜDÜK",Vector2(720,313),18 if game.ending_reason!="" else 35,PAPER)
@@ -441,6 +459,7 @@ func sync_navigation() -> void:
 	var state: String=game.state if game.state in ["menu","paused","finished","halftime","ceremony","replay","goal"] else ""
 	if state=="" and can_skip_to_kickoff(): state="kickoff_skip"
 	var covered: bool=(is_instance_valid(game.match_menu) and game.match_menu.visible) or (is_instance_valid(game.frontend) and game.frontend.visible) or (is_instance_valid(game.controls_help) and game.controls_help.visible)
+	covered=covered or (is_instance_valid(game.training_menu) and game.training_menu.visible) or (game.broadcast.active and game.state!="paused")
 	help_launcher.visible=not covered and state in ["","finished"]
 	help_launcher.text="" if game.controller.using_gamepad else "F1  ·  KONTROL REHBERİ"
 	help_glyphs.visible=game.controller.using_gamepad
@@ -455,14 +474,14 @@ func sync_navigation() -> void:
 		match state:
 			"menu":
 				nav_button(Rect2(68,601,345,64),game.frontend.open_selection)
-				nav_button(Rect2(68,681,345,56),game.start_match.bind(true))
+				nav_button(Rect2(68,681,345,56),game.training_menu.open_menu)
 				nav_button(Rect2(68,751,345,46),game.match_menu.open_menu)
 				nav_button(Rect2(68,820,345,48),game.controls_help.open_panel)
 			"paused":
 				nav_button(Rect2(490,420,460,55),game.resume)
-				nav_button(Rect2(490,485,460,48),game.frontend.open_tactics)
+				nav_button(Rect2(490,485,460,48),game.reset_practice if game.training else game.frontend.open_tactics)
 				nav_button(Rect2(490,543,460,48),game.match_menu.open_menu)
-				nav_button(Rect2(490,601,220,48),game.frontend.open_selection)
+				nav_button(Rect2(490,601,220,48),game.training_menu.open_menu if game.training else game.frontend.open_selection)
 				nav_button(Rect2(730,601,220,48),game.return_menu)
 				nav_button(Rect2(490,660,460,34),game.controls_help.open_panel)
 			"finished":
@@ -506,7 +525,9 @@ func handle_pad(code: int) -> void:
 		return
 	if code==JOY_BUTTON_BACK:
 		if game.state in ["menu","finished"]: game.match_menu.open_menu()
-		elif game.state=="paused" and game.before_pause not in ["ceremony","replay"]: game.frontend.open_tactics()
+		elif game.state=="paused" and game.before_pause not in ["ceremony","replay"]:
+			if game.training: game.training_menu.open_menu()
+			else: game.frontend.open_tactics()
 	elif code in [JOY_BUTTON_B,JOY_BUTTON_START]:
 		if game.state=="paused": game.resume()
 		elif game.state=="finished": game.return_menu()

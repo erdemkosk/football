@@ -80,6 +80,12 @@ func enter(next: String) -> void:
 
 func step(delta: float) -> void:
 	var game=setup.game
+	# The boy may claim the ball after the original player was dispatched.
+	# Transfer the recovery job as well: a player cannot pick up a held ball.
+	var lines=game.stadium.sidelines
+	if phase in ["watch","retrieve","pickup","receive"] and game.restart_type=="TAÇ" and is_instance_valid(lines) and lines.is_fetching():
+		if game.ball.held_by==lines.fetch_boy or phase in ["watch","retrieve","pickup"]:
+			enter("sideline")
 	# Let the out-of-play ball finish its flight/roll before sending anyone on
 	# a long chase. Re-evaluate at its real position, never at the whistle spot.
 	if phase=="watch":
@@ -104,7 +110,6 @@ func step(delta: float) -> void:
 	var rate := 0.9
 	if phase=="sideline":
 		for i in setup.targets: setup.move_player(i,setup.targets[i],delta)
-		var lines=game.stadium.sidelines
 		if not is_instance_valid(lines) or (not lines.is_fetching() and ball.held_by==null):
 			choose_collector()
 			set_delivery()

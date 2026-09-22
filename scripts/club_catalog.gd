@@ -1,4 +1,5 @@
 extends RefCounted
+const Physique = preload("res://scripts/player_physique.gd")
 var game
 var selected := [0,1]
 var alternate := [false,false]
@@ -19,7 +20,7 @@ func data(side: int) -> Dictionary:
 
 func kit(side: int) -> Dictionary:
 	var club := data(side)
-	return {"primary":Color(club.alt if alternate[side] else club.primary),"accent":Color(club.alt_trim if alternate[side] else club.accent),"shorts":Color(club.alt if alternate[side] else club.shorts),"pattern":int(club.pattern)}
+	return {"primary":Color(club.alt if alternate[side] else club.primary),"accent":Color(club.alt_trim if alternate[side] else club.accent),"shorts":Color(club.alt if alternate[side] else club.shorts),"pattern":int(club.pattern),"club_id":selected[side],"badge_primary":Color(club.primary),"badge_accent":Color(club.accent)}
 
 func choose(side: int,id: int) -> void:
 	var direction := -1 if id<selected[side] else 1
@@ -36,7 +37,10 @@ func choose(side: int,id: int) -> void:
 
 func member(side: int,id: int) -> Dictionary:
 	var names: PackedStringArray=data(side).squad.split(",")
-	return {"name":names[id],"shirt":id+1,"keeper":id in [0,11],"used":false}
+	var result := {"name":names[id],"shirt":id+1,"keeper":id in [0,11],"used":false}
+	result.merge(Physique.profile(selected[side],id,result.keeper))
+	result.attributes=preload("res://scripts/player_attributes.gd").profile(selected[side],id,result.keeper)
+	return result
 
 func swap_starter(slot: int,reserve: int) -> bool:
 	var a: int=lineups[0][slot]

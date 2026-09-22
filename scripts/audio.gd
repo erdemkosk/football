@@ -24,6 +24,14 @@ var cheer_cooldown := 0.0
 var effects: AudioStreamPlayer
 var muted := false
 var background := false
+var crowd_lift := 0.0
+var crowd_hush := 0.0
+var score_margin := 0
+var match_progress := 0.0
+
+func crowd_context(home: float,danger: float,hush: float,margin: int,progress: float) -> void:
+	crowd_lift=clampf(danger*.7+maxf(0,home-.35)*.6,0,1)
+	crowd_hush=hush; score_margin=margin; match_progress=progress
 var clips: Dictionary = {}
 var contacts: Array[AudioStreamPlayer] = []
 var contact_cursor := 0
@@ -174,6 +182,10 @@ func react(kind: String,_team: int,_location: Vector3) -> void:
 	cheer_age=0.25 if was_playing else 0.0
 	cheer_duration={"goal":13.0,"save":5.0,"shot":3.5,"miss":2.8,"tackle":2.6}[kind]
 	cheer_level={"goal":-10.0,"save":-12.0,"shot":-15.0,"miss":-18.0,"tackle":-17.0}[kind]
+	# Reuse the user's stadium recordings; no new voices, effects or anthems.
+	if _team==1: cheer_level-=5.0
+	if kind=="goal" and match_progress>.8 and abs(score_margin)<=1: cheer_level+=2
+	if kind=="miss": cheer_duration=1.35; cheer_level-=2
 	cheer_cooldown=cheer_duration+1.5
 	if not was_playing:
 		cheering.volume_db=-80
@@ -193,7 +205,7 @@ func update_atmosphere(delta: float,state: String) -> void:
 	if state=="menu": stop_atmosphere(); return
 	cheer_cooldown=maxf(0,cheer_cooldown-delta)
 	update_drums(delta,state)
-	var target := 0.0 if muted else db_to_linear(-18 if state=="halftime" else -12)
+	var target := 0.0 if muted else db_to_linear(-18 if state=="halftime" else (-12+crowd_lift*4-crowd_hush*7))
 	ambience_gain=move_toward(ambience_gain,target,delta*0.25)
 	# Fade at the recording's loop boundary to avoid a hard audio click.
 	var position := ambience.get_playback_position()

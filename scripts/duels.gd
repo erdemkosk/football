@@ -66,8 +66,9 @@ func ball_exposed(challenger: int,owner: int) -> bool:
 func feint(index: int) -> void:
 	var p=game.players[index]
 	if game.dribbler!=index or p.action_timer>0 or p.skill_cooldown>0 or p.energy<0.06: return
-	game.cancel_pass()
-	game.charging=false
+	if game.is_user_player(index):
+		game.cancel_pass()
+		game.charging=false
 	feint_side=-feint_side
 	p.feint_side=feint_side
 	p.feint_time=0.48
@@ -77,8 +78,9 @@ func feint(index: int) -> void:
 func push_ahead(index: int) -> void:
 	var p=game.players[index]
 	if game.dribbler!=index or p.action_timer>0 or p.skill_cooldown>0 or p.energy<0.05: return
-	game.clear_pass_request()
-	game.charging=false
+	if game.is_user_player(index):
+		game.clear_pass_request()
+		game.charging=false
 	if game.strike(index,p.facing*clampf(Vector2(p.velocity.x,p.velocity.z).length()+4.5,7,13)+Vector3.UP*0.12):
 		p.skill_cooldown=0.8
 		p.energy=maxf(0,p.energy-0.025)
@@ -107,19 +109,47 @@ func resolve(delta: float) -> void:
 		var ball: Vector3=game.ball.position*Vector3(1,0,1)
 		var victim := -1
 		var body_distance := INF
+		var body_offset := INF
 		for j in range(game.players.size()):
 			var q=game.players[j]
 			if not q.visible or q.team==p.team: continue
 			var body: Vector3=q.position*Vector3(1,0,1)
-			if Geometry3D.get_closest_point_to_segment(body,a,end).distance_to(body)<0.43 and a.distance_to(body)<body_distance:
+			var offset := Geometry3D.get_closest_point_to_segment(body,a,end).distance_to(body)
+			if offset<0.43 and a.distance_to(body)<body_distance:
 				victim=j
 				body_distance=a.distance_to(body)
+				body_offset=offset
 		var reaches_ball: bool=Geometry3D.get_closest_point_to_segment(ball,a,end).distance_to(ball)<poke_ball_radius(owner) and game.ball.position.y<0.75
 		if reaches_ball and (victim<0 or a.distance_to(ball)<body_distance+poke_body_slack(owner)) and ball_exposed(i,owner):
 			game.strike(i,p.facing*4.8+Vector3.UP*0.15,0,false,"ball_tackle")
 		elif victim>=0 and body_distance<1.05:
-			game.tackle_impact(i,victim)
-			if not game.training: game.rules.foul(i,victim)
+			var q=game.players[victim]
+			var from_victim: Vector3=(a-q.position*Vector3(1,0,1)).normalized()
+			var behind: bool=from_victim.dot(q.facing)<-0.48
+			var closing: float=maxf(0,(p.velocity-q.velocity).dot(-from_victim))
+			var late: bool=a.distance_to(ball)>poke_reach(owner)+0.25 or game.ball.position.y>1.1
+			# A missed poke beside the carrier is a duel, not an automatic trip.
+			# Penalize a foot through the legs from behind, a late lunge or a forceful charge.
+			var trip: bool=body_offset<0.27 and (behind or late or closing>7.5)
+			if trip:
+				game.tackle_impact(i,victim)
+				if not game.training: game.rules.foul(i,victim,closing>10.0 and (behind or late))
+			else:
+				q.body_language.contact(q,-from_victim,0.25)
+				p.velocity*=0.88
+
+func ai_can_challenge(index: int,owner: int,sliding: bool=false) -> bool:
+	if owner<0: return false
+	var p=game.players[index]
+	var q=game.players[owner]
+	var start: Vector3=p.position*Vector3(1,0,1)
+	var ball: Vector3=game.ball.position*Vector3(1,0,1)
+	var body: Vector3=q.position*Vector3(1,0,1)
+	var near := Geometry3D.get_closest_point_to_segment(body,start,ball)
+	var blocked := near.distance_to(body)<(0.64 if sliding else 0.36) and start.distance_to(body)+0.15<start.distance_to(ball)
+	if blocked or not ball_exposed(index,owner): return false
+	# AI slides only into a loose, reachable ball; jockeying handles protected possession.
+	return not sliding or (ball_opened(owner) and game.ball.position.y<0.65 and start.distance_to(ball)<2.2)
 
 func switch_choice() -> int:
 	var threat: Vector3=game.ball.position+game.ball.linear_velocity.limit_length(20)*0.38

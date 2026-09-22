@@ -31,11 +31,11 @@ func contact(kind: String,index: int,point: Vector3,direction: Vector3,strength:
 	strength=clampf(strength,0,1)
 	var nearby: bool=game.flat_distance(point,game.players[game.controlled].position)<16
 	var personal: bool=game.is_user_player(index) or game.is_user_player(victim)
-	game.audio.contact(kind,strength,1.0 if personal else (0.65 if nearby else 0.32))
-	if personal: game.controller.rumble(strength,kind=="shot")
+	game.audio.contact("shot" if kind=="header" else kind,strength,1.0 if personal else (0.65 if nearby else 0.32))
+	if personal: game.controller.rumble(strength,kind in ["shot","header"])
 	if personal or nearby:
 		age=0
-		duration=0.23 if kind=="shot" else 0.30
+		duration=0.23 if kind in ["shot","header"] else 0.30
 		amplitude=lerpf(0.055,0.19,strength)*(1.0 if personal else 0.35)
 		if kind=="body_hit": amplitude*=1.25
 		axis=Vector3(direction.x,0,direction.z).normalized()

@@ -123,8 +123,7 @@ func make_button(parent: Node,rect: Rect2,value: String,callback: Callable,prima
 	return button
 
 func badge(at: Vector2,data: Dictionary,scale_value: float=1.0) -> void:
-	var points := PackedVector2Array([Vector2(-26,-29),Vector2(26,-29),Vector2(23,9),Vector2(0,34),Vector2(-23,9)])
-	for i in range(points.size()): points[i]=at+points[i]*scale_value
-	draw_colored_polygon(points,Color(data.primary))
-	draw_polyline(points+PackedVector2Array([points[0]]),Color(data.accent),2,true)
-	center(data.short,at+Vector2(0,5*scale_value),int(15*scale_value),Color(data.accent),true)
+	var graphics=preload("res://scripts/kit_graphics.gd")
+	var id: int=graphics.SHORTS.find(data.short)
+	var texture: Texture2D=graphics.badge(id,Color(data.primary),Color(data.accent))
+	draw_texture_rect(texture,Rect2(at-Vector2(34,34)*scale_value,Vector2(68,68)*scale_value),false)

@@ -1,4 +1,6 @@
 extends Node3D
+const Spacing = preload("res://scripts/sideline_spacing.gd")
+var avoid_people: Array[Vector3] = []
 const G = preload("res://scripts/geometry.gd")
 var kit_material: StandardMaterial3D
 var bib_material: StandardMaterial3D
@@ -98,15 +100,20 @@ func animate_actor(delta: float,clock: float,ball_position: Vector3,next_mode: S
 	response = lerpf(response,intensity,blend)
 	var seat_target := 1.0 if role in ["substitute","physio"] else (0.42 if role=="photographer" else 0.0)
 	if mode in ["celebrate","disappointed","encourage","jog","collect"]: seat_target *= 1-response
-	if mode in ["jog","collect"]: seat_target=0
+	if mode in ["jog","collect","entry","handshake"]: seat_target=0
 	seated = lerpf(seated,seat_target,1-exp(-delta*5))
 	var destination := home
 	if target_point.is_finite(): destination=target_point
 	elif role=="coach":
 		destination.z += sin(clock*0.38+team*1.7)*1.6*(1-response*0.75)
 	elif role in ["substitute","physio"]: destination.x -= (1-seated)*0.85
+	if role=="ball_boy": destination=Spacing.route(position,destination,avoid_people)
 	var old := position
 	position = position.lerp(destination,1-exp(-delta*(2.2 if mode in ["collect","carry"] else 3.5)))
+	if mode in ["entry","handshake"]: position=old.move_toward(position,delta*6.5)
+	if role=="ball_boy":
+		position=old.move_toward(position,delta*7.2)
+		position=Spacing.separate(position,avoid_people)
 	velocity=(position-old)/maxf(delta,0.001)
 	var speed := velocity.length()
 	travel_phase += speed*delta*7
@@ -128,7 +135,25 @@ func animate_actor(delta: float,clock: float,ball_position: Vector3,next_mode: S
 		knees[i].rotation.x = lerpf(-0.12-maxf(0,-stride*side)*0.65,-PI*0.5,seated)
 		var arm_target := Vector3(0.15+seated*0.40-stride*side*0.3,0,side*0.10)
 		var elbow_target := Vector3(0.48+seated*0.12,0,0)
-		if mode=="celebrate":
+		if mode=="handshake":
+			arm_target=Vector3(1.02,.48,-.08) if i==1 else Vector3(.15,0,-.16)
+			elbow_target.x=.24+sin(clock*9)*.09 if i==1 else .35
+		elif mode.begins_with("tactic_"):
+			var beat := sin(clock*6+number)
+			if mode=="tactic_attack":
+				arm_target=Vector3(1.5+beat*.22,0,side*.28)
+				elbow_target.x=.22+maxf(0,beat)*.35
+				spine.rotation.x=.12
+			elif mode=="tactic_defend":
+				arm_target=Vector3(.85+beat*.10,0,side*.75)
+				elbow_target.x=.30
+			elif mode=="tactic_substitute":
+				arm_target=Vector3(1.35,0,side*(.28+beat*.17))
+				elbow_target.x=1.25
+			else:
+				arm_target=Vector3(.85,0,side*.5)
+				elbow_target.x=.6+beat*.12
+		elif mode=="celebrate":
 			arm_target = arm_target.lerp(Vector3(0.12+sin(clock*5+number)*0.12,0,side*2.75),response)
 			elbow_target.x = lerpf(elbow_target.x,0.28+sin(clock*7+number)*0.15,response)
 			if role=="substitute" and number%3==1:

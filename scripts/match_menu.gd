@@ -151,7 +151,7 @@ func show_page(index: int) -> void:
 			pad_hint([[game.controller.label_for(KEY_W),"Hızlı koş"],[game.controller.label_for(KEY_Q),"Oyuncu seç"],["LB + X","Aşırtma"]])
 			pad_hint([["B × 2","Yerden sert orta"],["LB + Y","Havadan uzun pas"]])
 			pad_hint([["LB + A","Verkaç"],[game.controller.label_for(KEY_E),"Top koruma / falso"]])
-			pad_hint([[game.controller.label_for(KEY_G),"Ayakta müdahale"],[game.controller.label_for(KEY_V),"Topu aç"]])
+			pad_hint([["RT + D-PAD","Oyun planı"],[game.controller.label_for(KEY_V),"Topu aç"]])
 			pad_hint([["START","Mola"],["VIEW","Kadro & taktik"]])
 		2:
 			var header := HBoxContainer.new()
@@ -262,6 +262,8 @@ func handle(event: InputEvent) -> void:
 		elif capture_pad and event is InputEventJoypadButton and event.pressed: code=event.button_index
 		elif capture_pad and event is InputEventJoypadMotion and event.axis in [JOY_AXIS_TRIGGER_LEFT,JOY_AXIS_TRIGGER_RIGHT] and event.axis_value>0.65: code=100+event.axis
 		if code<0: return
+		if capture_pad and code==100+JOY_AXIS_TRIGGER_RIGHT:
+			status.text="RT / R2 maç içi taktiklere ayrılmıştır. Başka bir tuş seç."; get_viewport().set_input_as_handled(); return
 		if (not capture_pad and (code not in range(KEY_A,KEY_Z+1) or code in [KEY_P,KEY_K,KEY_C,KEY_M,KEY_H,KEY_F,KEY_T,KEY_R])) or (capture_pad and code in [JOY_BUTTON_START,JOY_BUTTON_BACK,JOY_BUTTON_DPAD_UP,JOY_BUTTON_DPAD_DOWN,JOY_BUTTON_DPAD_LEFT,JOY_BUTTON_DPAD_RIGHT]):
 			status.text="Klavye için A–Z seç; menü, geri ve yön tuşları menüye ayrılmıştır."; get_viewport().set_input_as_handled(); return
 		if capture_pad: game.controller.rebind(capture_action,code)
@@ -285,7 +287,7 @@ func save_settings() -> void:
 	for name in ["formation","mentality","pressing","line_height","difficulty"]: cfg.set_value("tactics",name,game.management.get(name))
 	for name in ["stadium_volume","cheer_volume","drum_volume"]: cfg.set_value("audio",name,game.audio.get(name))
 	for name in ["sensitivity","deadzone","vibration","bindings"]: cfg.set_value("pad",name,game.controller.get(name))
-	cfg.set_value("pad","bindings_version",2)
+	cfg.set_value("pad","bindings_version",3)
 	cfg.set_value("input","keys",keys)
 	cfg.set_value("match","replay",game.replay.enabled)
 	cfg.set_value("match","pass_assistance",game.pass_assistance)
@@ -312,7 +314,16 @@ func load_settings() -> void:
 		var valid: Dictionary={}
 		for button in bindings:
 			if bindings[button] in ACTIONS and int(button) in [0,1,2,3,7,8,9,10,104,105]: valid[int(button)]=int(bindings[button])
-		var complete := valid.size()==10
+		var previous_rt: int=valid.get(100+JOY_AXIS_TRIGGER_RIGHT,0)
+		valid.erase(100+JOY_AXIS_TRIGGER_RIGHT)
+		# Keep a core action the player had moved onto RT. Standing tackle now
+		# shares the shot button, freeing its old binding for that displaced action.
+		if previous_rt>0 and previous_rt not in [KEY_G,KEY_Z] and previous_rt not in valid.values():
+			for button in valid:
+				if valid[button] in [KEY_G,KEY_Z]:
+					valid[button]=previous_rt
+					break
+		var complete := valid.size()==9
 		var seen: Array=[]
 		for action in valid.values():
 			if action in seen: complete=false

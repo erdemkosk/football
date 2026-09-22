@@ -65,7 +65,7 @@ func run() -> void:
 	await capture("xbox")
 	tap(JOY_BUTTON_RIGHT_SHOULDER)
 	check(guide.page==1 and root.gui_get_focus_owner()==guide.tabs[1],"RB switches to Defence and keeps visible focus")
-	check(guide.rows()[0].keys=="X / RT" and guide.rows()[1].keys=="B" and guide.rows()[2].keys=="Y","Defensive X, B and held Y actions are documented separately")
+	check(guide.rows()[0].keys=="X" and guide.rows()[1].keys=="B" and guide.rows()[2].keys=="Y","Defensive X, B and held Y actions are documented separately; RT is reserved for tactics")
 	await capture("defence")
 	tap(JOY_BUTTON_LEFT_SHOULDER)
 	check(guide.page==0,"LB returns to Attack")

@@ -140,6 +140,11 @@ func move_actor(actor,destination: Vector3,look: Vector3,delta: float) -> void:
 			var gap: Vector3=(actor.position-player.position)*Vector3(1,0,1)
 			if gap.length()>0.01 and gap.length()<2.0: actor.desired+=gap.normalized()*(2-gap.length())*0.6
 	actor.step(delta)
+	if actor.assistant:
+		var obstacles: Array[Vector3]=[]
+		for person in game.stadium.sidelines.actors:
+			if person.role=="ball_boy": obstacles.append(person.position*Vector3(1,0,1))
+		actor.position=preload("res://scripts/sideline_spacing.gd").separate(actor.position,obstacles)
 	actor.reset_stamina()
 	look.y=0
 	if look.length()>0.1:
@@ -215,4 +220,10 @@ func update(delta: float) -> void:
 			elif decision=="KORNER": flag_pose="flag_corner"
 			elif decision=="KALE VURUŞU": flag_pose="flag_goal_kick"
 		actors[i].signal_pose(flag_pose)
+		var sideline=game.stadium.sidelines
+		if sideline.fetch_boy!=null and sideline.fetch_phase in ["run","pickup"]:
+			var point: Vector3=game.ball.position
+			if absf(point.z-targets[i].z)<2.2 and absf(point.x-targets[i].x)<1.0 and sideline.fetch_boy.position.distance_to(point)<4.5:
+				# Step out briefly for a pickup while retaining the correct offside z-line.
+				targets[i].x=(-1 if i==1 else 1)*35.0
 		move_actor(actors[i],targets[i],flag_look,delta)

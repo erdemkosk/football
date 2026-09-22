@@ -1,0 +1,100 @@
+extends RefCounted
+## Contact-aware footwork. Physics chooses the contact; this follows its outcome.
+const BOOT := Vector3(0,-0.42,-0.05)
+var foot := 1
+var kick_turn := 0.0
+var difficulty := 0.0
+var receive_foot := 1
+var receive_offset := Vector3(0.18,0.22,-0.45)
+var incoming := Vector3.ZERO
+var firmness := 0.0
+var stretch := 0.0
+var receive_speed := 0.0
+var receive_start: Array[Quaternion] = []
+var control_grace := 0.0
+var contact_cooldown := 0.0
+
+func reset(p) -> void:
+	foot=1; receive_foot=1; kick_turn=0; difficulty=0
+	control_grace=0; contact_cooldown=0
+	p.receive_timer=0; p.receive_style=""
+	receive_start.clear()
+
+func update(delta: float) -> void:
+	control_grace=maxf(0,control_grace-delta)
+	contact_cooldown=maxf(0,contact_cooldown-delta)
+
+func choose_foot(p,point: Vector3) -> int:
+	var local: Vector3=p.rig.to_local(point)
+	# A clearly lateral ball belongs to that foot; central balls use the nearer
+	# boot in the current stride, with a dead band to avoid rapid foot swapping.
+	if absf(local.x)>0.09: return 0 if local.x<0 else 1
+	var left: float=p.left_knee.to_global(BOOT).distance_to(point)
+	var right: float=p.right_knee.to_global(BOOT).distance_to(point)
+	return (0 if left<right else 1) if absf(left-right)>0.10 else int(p.attributes.preferred_foot)
+
+func prepare_kick(p,point: Vector3,direction: Vector3,pressure: float=0) -> void:
+	foot=choose_foot(p,point)
+	var forward: Vector3=-p.rig.global_basis.z.normalized()
+	var aim := (direction*Vector3(1,0,1)).normalized()
+	kick_turn=clampf(forward.signed_angle_to(aim,Vector3.UP),-1.05,1.05) if aim.length()>0.1 else 0.0
+	var reach: float=Vector2(point.x-p.position.x,point.z-p.position.z).length()
+	var balance: float=p.body_language.balance_strength if p.body_language.balance_age<0.45 else p.locomotion.cut*0.5
+	difficulty=clampf(absf(kick_turn)*0.35+pressure*0.35+balance*0.35+maxf(0,reach-0.9)*0.35+(1-p.energy)*0.15,0,1)
+
+func begin_receive(p,point: Vector3,velocity: Vector3,reach: float) -> void:
+	receive_foot=choose_foot(p,point)
+	foot=receive_foot
+	receive_offset=p.rig.to_local(point)
+	receive_offset.x=clampf(receive_offset.x,-0.62,0.62)
+	receive_offset.z=clampf(receive_offset.z,-0.72,0.28)
+	incoming=velocity.rotated(Vector3.UP,-p.rig.rotation.y)
+	firmness=clampf(velocity.length()/19,0,1)
+	stretch=clampf(reach,0,1)
+	receive_speed=Vector2(p.velocity.x,p.velocity.z).length()
+	receive_start.clear()
+	for joint in p.kick_joints: receive_start.append(joint.quaternion)
+
+func apply_receive(p) -> void:
+	var progress: float=1-p.receive_timer/maxf(p.receive_duration,0.01)
+	var entry := smoothstep(0,0.12,progress)
+	var hold := 1-smoothstep(0.46,1.0,progress)
+	var side := -1.0 if receive_foot==0 else 1.0
+	if p.receive_style=="chest":
+		# Open to meet it, then yield backwards to take the pace off the ball.
+		p.spine.rotation.x=lerpf(p.spine.rotation.x,0.18-firmness*0.28*smoothstep(0.15,0.55,progress),hold)
+		p.left_arm.rotation=p.left_arm.rotation.lerp(Vector3(0.72,0,-0.72),hold)
+		p.right_arm.rotation=p.right_arm.rotation.lerp(Vector3(0.72,0,0.72),hold)
+	else:
+		var leg: Node3D=p.left_leg if receive_foot==0 else p.right_leg
+		var knee: Node3D=p.left_knee if receive_foot==0 else p.right_knee
+		if p.receive_style=="thigh":
+			leg.rotation=leg.rotation.lerp(Vector3(0.95-firmness*0.24*smoothstep(0.2,0.6,progress),-side*0.14,side*0.10),hold)
+			knee.rotation.x=lerpf(knee.rotation.x,-1.24,hold)
+		else:
+			var target := receive_offset
+			# A firm pass draws the boot back with the incoming ball. On the run,
+			# the toe opens into the next stride instead of stopping both legs.
+			target+=incoming.normalized()*firmness*0.19*smoothstep(0.15,0.65,progress)
+			target.z-=minf(receive_speed/9,1)*0.10*progress
+			target.y=clampf(target.y,0.13,0.42)
+			target.x=lerpf(side*0.16,target.x,0.75)
+			var hip_start: Quaternion=leg.quaternion
+			var knee_start: Quaternion=knee.quaternion
+			p.locomotion.solve_leg(leg,knee,target-leg.position,1.0)
+			leg.quaternion=hip_start.slerp(leg.quaternion,hold)
+			knee.quaternion=knee_start.slerp(knee.quaternion,hold)
+			leg.rotation.y+=-side*0.24*hold*(1-stretch)
+		p.spine.rotation=p.spine.rotation.lerp(Vector3(-0.12-stretch*0.18,-side*stretch*0.15,-side*stretch*0.10),hold*0.7)
+		p.left_arm.rotation.z=lerpf(p.left_arm.rotation.z,-0.40-stretch*0.45,hold)
+		p.right_arm.rotation.z=lerpf(p.right_arm.rotation.z,0.40+stretch*0.45,hold)
+	if receive_start.size()==p.kick_joints.size():
+		for i in range(p.kick_joints.size()):
+			var joint: Node3D=p.kick_joints[i]
+			joint.quaternion=receive_start[i].slerp(joint.quaternion,entry)
+
+func mirror_poses(poses: Array[Vector3]) -> Array[Vector3]:
+	if foot==1: return poses
+	var result: Array[Vector3]=[]
+	for i in [1,0,3,2,4,6,5,8,7]: result.append(poses[i]*Vector3(1,-1,-1))
+	return result

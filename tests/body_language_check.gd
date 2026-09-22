@@ -196,7 +196,7 @@ func run() -> void:
 	await capture("recovered")
 	player.receive_impact(Vector3.RIGHT,0.95)
 	await tick(16)
-	check(player.pose=="fall" and player.body_collision.rotation.x< -0.2 and player.body_language.balance_age>=0.58,"A strong tackle keeps the physical fall and cancels the subtle layer")
+	check(player.pose=="fall" and player.body_collision.basis.y.dot(Vector3.RIGHT)>0.2 and player.body_language.balance_age>=0.58,"A strong tackle falls in the impact direction and cancels the subtle layer")
 	await reset()
 	player.protecting=true
 	player.body_language.contact(player,Vector3.RIGHT,0.65)
