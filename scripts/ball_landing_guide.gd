@@ -60,7 +60,8 @@ func update(game,delta: float) -> void:
 func ring(hud,point: Vector3,radius: float,color: Color,fill: bool=false) -> void:
 	if hud.game.camera.is_position_behind(point): return
 	var at: Vector2=hud.game.screen_position(point)
-	if not Rect2(24,115,1392,650).has_point(at): return
+	var screen: Rect2=hud.game.ui.bounds()
+	if not Rect2(screen.position+Vector2(24,115),screen.size-Vector2(48,250)).has_point(at): return
 	var points := PackedVector2Array()
 	for i in range(33):
 		var angle := TAU*i/32.0

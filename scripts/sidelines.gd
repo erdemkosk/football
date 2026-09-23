@@ -17,6 +17,27 @@ var fetch_boy: Node3D
 var fetch_age := 0.0
 var coach_orders: Array = [{},{}]
 var entries: Dictionary = {}
+var departures: Array=[]
+
+func retain_departing(p) -> void:
+	var actor=game.Player.new()
+	actor.team=p.team; actor.number=p.number; actor.keeper=p.keeper
+	add_child(actor)
+	actor.apply_identity(p.identity()); actor.apply_kit(game.clubs.kit(p.team))
+	actor.position=p.position; actor.facing=p.facing; actor.rig.transform=p.rig.transform
+	for i in range(p.kick_joints.size()): actor.kick_joints[i].transform=p.kick_joints[i].transform
+	actor.head_joint.transform=p.head_joint.transform
+	actor.collision_layer=0; actor.collision_mask=1; actor.marker.hide()
+	var target:=Vector3(P.HALF_WIDTH+5.5,0,-12 if p.team==0 else 12)
+	departures.append({"player":actor,"target":target})
+
+func _physics_process(delta: float) -> void:
+	if not is_instance_valid(game) or game.state in ["paused","replay","career"]: return
+	for item in departures:
+		var p=item.player
+		var offset: Vector3=(item.target-p.position)*Vector3(1,0,1)
+		p.desired=offset.normalized()*minf(1,offset.length())
+		p.stamina_free_movement=true; p.step(delta,3.2); p.marker.hide()
 
 func start_entry(slot: int,reserve: int,gate: Vector3) -> void:
 	var team: int=game.players[slot].team
@@ -130,6 +151,8 @@ func add_actor(team: int,role: String,number: int,location: Vector3) -> void:
 	actors.append(actor)
 
 func reset() -> void:
+	for item in departures: item.player.queue_free()
+	departures.clear()
 	clock = 0
 	event_kind = ""
 	event_age = 100

@@ -61,7 +61,7 @@ void fragment(){
  float ring=1.0-smoothstep(0.015,0.05,abs(length(fract(p*1.6)-0.5)-phase*0.55));
  vec3 water=vec3(0.12,0.16,0.16)+ring*(1.0-phase)*rain*0.045;
  ALBEDO=palette_color(mix(turf,water,puddle*0.65));
- ROUGHNESS=mix(1.0,0.48,wetness)*(1.0-puddle*0.55);
+ ROUGHNESS=clamp(mix(.96+grain*.3,.56+broken*.12,wetness)*(1.0-puddle*.62),.18,1.0);
  SPECULAR=wetness*(0.22+puddle*0.22);
  // The strongest reflected lamp produces one broken highlight, not a luminous field.
  float glint=0.0;

@@ -95,6 +95,20 @@ func run() -> void:
 	player.sprinting=false
 	await simulate(player,18)
 	check(Vector2(player.velocity.x,player.velocity.z).length()>full_sprint*0.7,"Releasing sprint keeps surplus speed instead of snapping to a jog")
+	player.start_slide(Vector3.FORWARD)
+	await simulate(player,int(player.slide_duration*120)+2)
+	check(player.pose=="rise" and player.rig.rotation.x>0.12,"A finished slide sits up instead of snapping into a run")
+	await simulate(player,int(player.slide_rise*120)+4)
+	check(player.pose=="run" and player.action_timer==0 and absf(player.rig.rotation.x)<0.16,"Slide recovery stands the body back up")
+	player.reset_stamina()
+	player.energy=0.28
+	player.exhausted=true
+	player.sprint_load=3.4
+	player.desired=Vector3.ZERO
+	player.velocity=Vector3.ZERO
+	player.sprinting=false
+	await simulate(player,20)
+	check(player.breath>0.35 and player.spine.rotation.x<-0.28,"A spent sprint plants the hands on the knees to breathe")
 	var south=game.players[0]
 	south.visible=true
 	south.position=Vector3(0,0,43)

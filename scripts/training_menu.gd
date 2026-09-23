@@ -7,10 +7,12 @@ var back_button: Button
 var return_state := "menu"
 var return_freeze := false
 var return_focus: Control
+var studios: Array=[]
 const DESCRIPTIONS := [
 	["ON BİR OYUNCU.","Kendi takımın sahada; oto seçim maçtaki gibi.","Pas ver, kontrol değişir, kaleciye karşı oyna."],
 	["ORTAYA HAREKETLEN.","Takım arkadaşın sırayla iki kanattan orta açar.","Yerini al, şut tuşuyla kafa vur veya kontrol et."],
-	["BARAJI AŞ.","Yön tuşlarıyla noktayı seç, A ile oradan vur.","Yön, güç ve falsoyu birlikte dene."]]
+	["BARAJI AŞ.","Yön tuşlarıyla noktayı seç, A ile oradan vur.","Yön, güç ve falsoyu birlikte dene."],
+	["RAKİBİNİ OKU.","Yana çek, dur–kalk, topu açıp diğer yandan geç.","Sabit rakip → müdahale → serbest savunmacı."]]
 
 func _ready() -> void:
 	setup_style(); hide()
@@ -19,13 +21,28 @@ func _ready() -> void:
 		for state in ["normal","hover","pressed"]: card.add_theme_stylebox_override(state,StyleBoxEmpty.new())
 		card.focus_entered.connect(choose.bind(i))
 		cards.append(card)
+		var studio=preload("res://scripts/training_preview.gd").new()
+		studio.mode=i; studio.game=game
+		studio.position=Vector2(67+i*450,305); studio.size=Vector2(405,270)
+		add_child(studio)
+		studio.viewport.gui_disable_input=true
+		move_child(card,-1)
+		studio.player.number=9+i
+		studios.append(studio)
+	var duel_card := make_button(self,Rect2(54,706,1332,65),"",choose.bind(3))
+	for state in ["normal","hover","pressed"]: duel_card.add_theme_stylebox_override(state,StyleBoxEmpty.new())
+	duel_card.focus_entered.connect(choose.bind(3)); cards.append(duel_card)
 	back_button=make_button(self,Rect2(54,818,220,60),"← Geri",close_menu)
 	start_button=make_button(self,Rect2(1050,818,336,60),"ANTRENMANA BAŞLA  →",start,true)
 	for i in range(3):
 		cards[i].focus_neighbor_left=cards[i].get_path_to(cards[posmod(i-1,3)])
 		cards[i].focus_neighbor_right=cards[i].get_path_to(cards[(i+1)%3])
-		cards[i].focus_neighbor_bottom=cards[i].get_path_to(start_button)
+		cards[i].focus_neighbor_bottom=cards[i].get_path_to(duel_card)
 		cards[i].focus_neighbor_top=cards[i].get_path_to(back_button)
+	duel_card.focus_neighbor_top=duel_card.get_path_to(cards[0])
+	duel_card.focus_neighbor_bottom=duel_card.get_path_to(start_button)
+	duel_card.focus_neighbor_left=duel_card.get_path_to(cards[2])
+	duel_card.focus_neighbor_right=duel_card.get_path_to(cards[0])
 	start_button.focus_neighbor_left=start_button.get_path_to(back_button)
 	back_button.focus_neighbor_right=back_button.get_path_to(start_button)
 	game.controller.prompts_changed.connect(queue_redraw)
@@ -68,21 +85,27 @@ func handle(event: InputEvent) -> void:
 		elif event.button_index==JOY_BUTTON_START: start()
 
 func _draw() -> void:
-	backdrop("ANTRENMANINI SEÇ.","Serbest oyna ya da tek bir pozisyonu tekrar tekrar çalış.","SEFC  /  ANTRENMAN SAHASI")
+	preload("res://scripts/quick_match_art.gd").backdrop(self)
+	draw_texture_rect(Brand.CREST,Rect2(48,28,42,51),false)
+	text("ANTRENMAN",Vector2(108,65),29,PAPER,true)
+	text("BİR SONRAKİ GOLÜ HAZIRLA.",Vector2(54,166),40,PAPER,true)
+	text(DESCRIPTIONS[selected][1],Vector2(56,200),14,GOLD,true)
 	for i in range(3):
 		var at := Vector2(54+i*450,246)
 		var chosen := selected==i
-		box(Rect2(at,Vector2(432,444)),Color("173b3d") if chosen else PANEL,8,GOLD if chosen else Color("29454a"))
-		text("0%d  /  %s" % [i+1,"SEÇİLİ" if chosen else "ÇALIŞMA"],at+Vector2(25,35),11,GOLD if chosen else MUTE,true)
-		pitch_diagram(at+Vector2(28,64),i)
-		text(game.training_drills.TITLES[i],at+Vector2(25,288),24,PAPER,true)
-		text(DESCRIPTIONS[i][0],at+Vector2(25,323),11,GOLD,true)
-		text(DESCRIPTIONS[i][1],at+Vector2(25,355),13,MUTE)
-		text(DESCRIPTIONS[i][2],at+Vector2(25,380),13,MUTE)
-		text("OTOMATİK YENİ DENEME" if i>0 else "ÖZGÜRCE OYNA",at+Vector2(25,418),10,GOLD,true)
+		box(Rect2(at,Vector2(432,444)),Color("152d36") if chosen else PANEL,18,GOLD if chosen else Color("29404c"))
+		text("0%d" % (i+1),at+Vector2(20,104),88,Color(GOLD,.16),true)
+		text(["SAHA SENİN","HAVADAN BİTİR","DURAN TOP USTASI"][i],at+Vector2(24,36),12,GOLD,true)
+		text(game.training_drills.TITLES[i],at+Vector2(25,351),27,PAPER,true)
+		text(["11 oyuncu · Serbest oyun","Kafa · Vole · Röveşata","Yön · Güç · Falso"][i],at+Vector2(25,382),15,MUTE)
+		text("SEÇİLİ  ●" if chosen else "ÇALIŞMAYI SEÇ  →",at+Vector2(25,420),11,GOLD if chosen else MUTE,true)
+	box(Rect2(54,706,1332,65),Color("152d36") if selected==3 else PANEL,12,GOLD if selected==3 else Color("29404c"))
+	text("04  BİRE BİR ATÖLYESİ",Vector2(77,745),22,GOLD,true)
+	text("Yana çek · Dur–kalk · Aç ve dolaş  /  3 aşama",Vector2(490,745),16,PAPER)
+	text("SEÇİLİ ●" if selected==3 else "SEÇ →",Vector2(1240,745),13,GOLD,true)
 	if game.controller.using_gamepad:
-		game.controller.Glyphs.draw_hints(self,Vector2(56,743),[["START","Mola / yeni deneme"],["VIEW","Antrenman seçimi"]],game.controller.family,font,28,13)
-	else: text("R · Yeni deneme     T · Antrenman seçimi",Vector2(56,743),14,PAPER)
+		game.controller.Glyphs.draw_hints(self,Vector2(56,798),[["LS / D-PAD","Çalışma"],["A","Seç"],["START","Başla"],["B","Geri"]],game.controller.family,font,26,12)
+	else: text("YÖN TUŞLARI · Çalışma     ENTER · Seç     ESC · Geri",Vector2(56,802),13,MUTE)
 
 func pitch_diagram(at: Vector2,mode: int) -> void:
 	var rect := Rect2(at,Vector2(376,196))

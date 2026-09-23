@@ -1,0 +1,41 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce RTX 3070
+ERROR: Can't create shader cache folder, no shader caching will happen: user://
+   at: RendererCompositorRD (servers/rendering/renderer_rd/renderer_compositor_rd.cpp:337)
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+PASS: Default daytime uses one real shadow-casting sun
+PASS: Four roof floodlights are present and off during the day
+PASS: A rainy night adds pitch fog and four floodlight shafts
+PASS: Daylight clears fog and hides the floodlight volumes
+PASS: D-pad reaches match time from the pre-match continue button
+PASS: Xbox A selects warm evening and preserves menu focus
+PASS: Evening uses a low golden sun
+PASS: Xbox A selects night and preserves menu focus
+PASS: Night completely disables sunlight
+PASS: All four real spotlights illuminate and cast shadows at night
+PASS: Visible roof lamp glass lights up at night
+PASS: Floodlight is mounted on the roof and aimed down into the pitch
+PASS: Floodlight is mounted on the roof and aimed down into the pitch
+PASS: Floodlight is mounted on the roof and aimed down into the pitch
+PASS: Floodlight is mounted on the roof and aimed down into the pitch
+PASS: Mouse toggles back to daytime and turns off emissive lamps
+PASS: Mouse cycles from noon to evening
+PASS: Weather and time choices are independent, including a rainy night
+PASS: Night and rain persist into the entrance ceremony
+PASS: Repeated weather updates cannot restore the day sun
+PASS: Changing ends at halftime does not rotate the stadium lights
+PASS: Changing match time does not alter weather or physical friction
+PASS: Night grass stays bright enough to read the game
+SHADOW PIXELS: 13570
+PASS: Rendered daylight contains actual directional shadows on the turf
+SHADOW PIXELS: 56
+ERROR: FAIL: Rendered floodlights cast localized player shadows without striping the whole pitch
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/match_lighting_check.gd:9)
+       [1] visual_checks (res://tests/match_lighting_check.gd:109)
+       [2] capture (res://tests/match_lighting_check.gd:28)
+       [3] settle (res://tests/match_lighting_check.gd:12)
+MATCH LIGHTING CHECK: 25 checks, 1 failures

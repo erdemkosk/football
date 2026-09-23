@@ -44,7 +44,7 @@ func grandstand(crowd,angle: float,width: float,start: float,base: float,back: f
 	# A concourse separates the existing lower terrace from the upper tier.
 	G.block(stand,Vector3(width,0.32,2.2),Vector3(0,base-0.55,start-1.6),stone)
 	G.block(stand,Vector3(width,0.8,0.18),Vector3(0,base-0.02,start-2.6),trim)
-	for row in range(6):
+	for row in range(10):
 		var y = base+row*0.63
 		var z = start+row*0.95
 		G.block(stand,Vector3(width,0.6,1),Vector3(0,y,z),stone)
@@ -52,7 +52,7 @@ func grandstand(crowd,angle: float,width: float,start: float,base: float,back: f
 		var count = int(seat_width/0.84)-2
 		for col in range(count):
 			var x = (-seat_width*0.5+1+col*0.84)*width/seat_width
-			if col%22 in [0,1]:
+			if col%22==0:
 				G.block(stand,Vector3(0.84,0.025,0.06),Vector3(x,y+0.32,z-0.37),frame)
 				continue
 			crowd.seat(stand.transform*Vector3(x,y+0.3,z),angle,row,col/22)

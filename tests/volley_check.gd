@@ -95,7 +95,7 @@ func run() -> void:
 	p=game.players[9]
 	await reset()
 	check(game.volleys.can_request(9) and not game.heading.can_request(9),"A waist-height cross offers a volley rather than a header")
-	check(game.hud.action_hints()[0][1]=="Vole","The shot icon describes the available volley")
+	check(game.hud.action_hints()[0][1]=="Yan vole","The shot icon describes the lateral volley technique")
 	key(true)
 	check(game.volleys.active(9) and game.charging,"Keyboard D buffers a volley before the ball reaches the foot")
 	await tick(8); key(false); await tick(85)
@@ -113,7 +113,7 @@ func run() -> void:
 	await reset(Vector3(-3,.95,-.55),Vector3(13,0,0))
 	key(true); key(false); await tick(45)
 	print("LOW CONTACT: ",contact_kind," ",contact_height," ",contacts," launch=",game.ball.kick_velocity)
-	check(contacts==1 and contact_kind=="volley" and contact_height<1.05,"A low airborne volley is not mislabeled as a bounced half-volley")
+	check(contacts==1 and contact_kind=="side_volley" and contact_height<1.05,"A low lateral airborne volley is not mislabeled as a bounced half-volley")
 	for frame in range(100):
 		await tick(1,true)
 		if game.practice_goals>0: break

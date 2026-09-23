@@ -5,6 +5,11 @@ const DRY_DAMPING := 0.12
 const DRY_AIR := 0.0026
 const MAGNUS := 0.10
 const GRAVITY := 9.81
+static var flight_origin := Vector3.INF
+static var flight_velocity := Vector3.INF
+static var flight_spin := INF
+static var flight_drag := INF
+static var flight_samples: Dictionary={}
 
 static func profile(surface,point: Vector3) -> Vector2:
 	if is_instance_valid(surface) and surface.has_method("ball_resistance"): return surface.ball_resistance(point)
@@ -71,8 +76,15 @@ static func decay_spin(spin: float,delta: float,airborne: bool,rolling_resistanc
 	return move_toward(spin,0,delta*(0.17 if airborne else rolling_resistance*0.45))
 
 static func sample_flight(origin: Vector3,velocity: Vector3,spin: float,seconds: float,steps: int,surface=null) -> PackedVector3Array:
-	var points := PackedVector3Array([origin])
 	var drag := air_drag(surface)
+	# Cover, receiving runs and second-ball support ask for the same flight.
+	# Reuse only identical physical inputs; a deflection invalidates immediately.
+	if origin!=flight_origin or velocity!=flight_velocity or spin!=flight_spin or drag!=flight_drag:
+		flight_samples.clear()
+		flight_origin=origin; flight_velocity=velocity; flight_spin=spin; flight_drag=drag
+	var key := [seconds,steps]
+	if flight_samples.has(key): return flight_samples[key].duplicate()
+	var points := PackedVector3Array([origin])
 	var delta := seconds/float(maxi(1,steps))
 	var position := origin
 	var flight := velocity
@@ -83,6 +95,8 @@ static func sample_flight(origin: Vector3,velocity: Vector3,spin: float,seconds:
 		curve=decay_spin(curve,delta,true)
 		position+=flight*delta
 		points.append(position)
+	if flight_samples.size()>=8: flight_samples.clear()
+	flight_samples[key]=points.duplicate()
 	return points
 
 static func lob_velocity(origin: Vector3,target: Vector3,flight: float,surface=null) -> Vector3:

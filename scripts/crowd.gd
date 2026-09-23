@@ -1,12 +1,20 @@
 extends RefCounted
 ## Five instanced material groups per pose keep thousands of articulated fans inexpensive.
 const G = preload("res://scripts/geometry.gd")
+const KitGraphics = preload("res://scripts/kit_graphics.gd")
 var rng := RandomNumberGenerator.new()
 var fans: Array[Dictionary] = []
 var chairs: Array[Transform3D] = []
 var chair_colors: Array[Color] = []
+var chair_marks: Array[Dictionary] = []
+var seat_nodes: Array[MultiMeshInstance3D] = []
+var seat_sources: Array[PackedInt32Array] = []
+var home_kit := {}
+var away_kit := {}
 var material := ShaderMaterial.new()
 var cloth_material: ShaderMaterial
+var prop_materials: Array[ShaderMaterial] = []
+var prop_fans: Array[Dictionary] = []
 var animation_uniforms: Array[String] = []
 var clock := 0.0
 var event_age := 100.0
@@ -23,8 +31,16 @@ var margin := 0
 var home_support := .35
 var away_support := .35
 var hush := 0.0
+var hush_team := 0
 var anticipation := 0.0
+var surge := 0.0
 var event_side := 0
+var home_only := false
+var session_fill := 1.0
+
+static func visiting(position: Vector3) -> bool:
+	# Opposite long stand, +z half: the sideline camera actually sees this block.
+	return position.x<-18.0 and position.z>12.0
 
 func context(score: Array,time: float,length: float) -> void:
 	progress=clampf(time/maxf(1,length),0,1)
@@ -37,12 +53,47 @@ var cloth := [Color("23363a"),Color("34434c"),Color("29483f"),Color("4b5554"),Co
 var skins := [Color("ba9073"),Color("aa7b59"),Color("755340"),Color("c4a18b"),Color("916443")]
 var hairs := [Color("302820"),Color("463a2c"),Color("605443"),Color("242828"),Color("807c6c")]
 
+func seat_tint(mark: Dictionary,home: Dictionary={},visitor: Dictionary={}) -> Color:
+	if home.is_empty(): home=home_kit
+	if visitor.is_empty(): visitor=away_kit
+	var away: bool=mark.get("away",false)
+	var kit: Dictionary=visitor if away else home
+	var primary: Color=kit.get("badge_primary",kit.get("primary",Color("2a4a40") if not away else Color("7a3a34")))
+	var accent: Color=kit.get("badge_accent",kit.get("accent",Color("c4b07a") if not away else Color("d8c6a0")))
+	# Plastic seats stay darker than shirts so the bowl reads as a mass.
+	var base := primary.darkened(0.24).lerp(Color("1a2422"),0.16)
+	if base.get_luminance()>0.42: base=base.lerp(Color("1a2422"),0.42)
+	var stripe := accent.darkened(0.10).lerp(primary,0.30)
+	if stripe.get_luminance()>0.48: stripe=stripe.lerp(Color("1a2422"),0.35)
+	var row: int=int(mark.get("row",0))
+	var section: int=int(mark.get("section",0))
+	if away:
+		if row%4==0 or row%4==1: base=stripe.darkened(0.04)
+	elif row%6==0:
+		base=stripe.darkened(0.08)
+	if not away and section%3==1: base=base.darkened(0.08)
+	return base.lerp(Color("24302c"),float(mark.get("speck",0.0))*0.14)
+
+func paint_seats(home: Dictionary={},visitor: Dictionary={}) -> void:
+	if home.is_empty(): home=home_kit
+	if visitor.is_empty(): visitor=away_kit
+	for i in range(chair_marks.size()):
+		chair_colors[i]=seat_tint(chair_marks[i],home,visitor)
+	for batch in range(seat_nodes.size()):
+		var multi: MultiMesh=seat_nodes[batch].multimesh
+		var sources: PackedInt32Array=seat_sources[batch]
+		for i in range(sources.size()):
+			multi.set_instance_color(i,chair_colors[sources[i]])
+
 func seat(position: Vector3, angle: float, row: int, section: int) -> void:
 	var transform := Transform3D(Basis(Vector3.UP,angle),position)
+	var away := visiting(position)
+	var mark := {"away":away,"row":row,"section":section,"speck":rng.randf()}
 	chairs.append(transform)
-	chair_colors.append(Color("324b44").lerp(Color("485550"),rng.randf()*0.32))
+	chair_marks.append(mark)
+	chair_colors.append(seat_tint(mark))
 	# Small contiguous gaps replace a regular checkerboard of occupied seats.
-	var occupancy := 0.94 if section%3!=0 else 0.85
+	var occupancy := 0.97 if section%3!=0 else 0.93
 	if rng.randf()>occupancy: return
 	var pose := 0
 	var random := rng.randf()
@@ -53,7 +104,6 @@ func seat(position: Vector3, angle: float, row: int, section: int) -> void:
 	var person := Transform3D(Basis(Vector3.UP,angle+rng.randf_range(-0.13,0.13)).scaled(Vector3(rng.randf_range(0.91,1.10),scale_value,1)),position+Vector3(rng.randf_range(-0.07,0.07),0,rng.randf_range(-0.07,0.07)))
 	var shirt: Color = cloth[rng.randi()%cloth.size()]
 	if section%4==0 and rng.randf()>0.55: shirt = Color("31584b")
-	var away := position.x>38 and position.z>25
 	if away: shirt = Color("88584f").lerp(shirt,0.45)
 	var perimeter := fposmod(atan2(position.z/60,position.x/45)/TAU,1.0)
 	fans.append({"transform":person,"pose":pose,"cloth":shirt.darkened(rng.randf()*0.13),"skin":skins[rng.randi()%skins.size()],"hair":hairs[rng.randi()%hairs.size()],"pants":Color("293234").lerp(Color("4f5450"),rng.randf()*0.65),"phase":Color(rng.randf(),(0.5 if away else 0.0)+rng.randf()*0.49,float(row)/12,perimeter)})
@@ -100,7 +150,51 @@ func build(parent: Node3D) -> void:
 			var animated := ArrayMesh.new()
 			animated.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
 			instances(parent,"Fans_%s_%d" % [part,pose],animated,transforms,colors[part],phases,cloth_material if part=="cloth" else material)
+	build_supporter_props(parent)
 	reset()
+	set_session(false)
+
+func build_supporter_props(parent: Node3D) -> void:
+	# Sparse, spatially separated holders; no per-fan processing or dynamic lights.
+	var occupied: Dictionary = {}
+	var transforms := {"banner":[],"flag":[]}
+	var phases := {"banner":[],"flag":[]}
+	var colors := {"banner":[],"flag":[]}
+	for fan in fans:
+		if fan.pose!=3: continue
+		var at: Vector3=fan.transform.origin
+		var cell := Vector3i(floori(at.x/11.0),floori(at.y/6.0),floori(at.z/11.0))
+		if occupied.has(cell): continue
+		occupied[cell]=true
+		var kind := "flag" if prop_fans.size()%2==0 else "banner"
+		if prop_fans.size()>=96: break
+		prop_fans.append({"kind":kind,"transform":fan.transform,"phase":fan.phase})
+		transforms[kind].append(fan.transform)
+		phases[kind].append(fan.phase)
+		colors[kind].append(Color.WHITE)
+	for kind in ["banner","flag"]:
+		var mat := ShaderMaterial.new()
+		mat.shader=load("res://shaders/supporter_"+kind+".gdshader")
+		mat.set_shader_parameter("supporter_prop",true)
+		if kind=="flag": mat.set_shader_parameter("flag_prop",true)
+		if kind=="banner": mat.set_shader_parameter("slogan",load("res://assets/branding/supporter-slogan.svg"))
+		prop_materials.append(mat)
+		var surface := SurfaceTool.new()
+		surface.begin(Mesh.PRIMITIVE_TRIANGLES)
+		if kind=="banner":
+			box(surface,Vector3(1.12,.48,.025),Vector3(0,2.065,-.11))
+		else:
+			cylinder(surface,.018,.018,1.30,Vector3(.25,2.42,-.11))
+			surface.deindex()
+			# Subdivided fabric bends along the pole and ripples toward its free edge.
+			for y in range(6):
+				for x in range(12):
+					for corner in [Vector2(0,0),Vector2(1,0),Vector2(1,1),Vector2(0,0),Vector2(1,1),Vector2(0,1)]:
+						var uv := Vector2((x+corner.x)/12.0,(y+corner.y)/6.0)
+						surface.set_normal(Vector3.FORWARD)
+						surface.set_uv(uv)
+						surface.add_vertex(Vector3(.27+uv.x*1.35,2.17+uv.y*.88,-.11))
+		instances(parent,"Supporter_"+kind,surface.commit(),transforms[kind],colors[kind],phases[kind],mat)
 
 func reset() -> void:
 	home_attack=-1.0
@@ -114,10 +208,12 @@ func reset() -> void:
 	excitement = 0
 	follow = 0
 	ball_focus = Vector3.ZERO
-	hush=0; anticipation=0; home_support=.35; away_support=.35; progress=0; margin=0
+	hush=0; hush_team=0; anticipation=0; surge=0; home_support=.35; away_support=.35; progress=0; margin=0
 	material.set_shader_parameter("home_support",home_support)
 	material.set_shader_parameter("away_support",away_support)
 	material.set_shader_parameter("hush",0.0)
+	material.set_shader_parameter("hush_team",0.0)
+	material.set_shader_parameter("surge",0.0)
 	material.set_shader_parameter("danger",0.0)
 	material.set_shader_parameter("follow",0.0)
 	material.set_shader_parameter("ball_focus",Vector3.ZERO)
@@ -132,14 +228,32 @@ func reset() -> void:
 	sync_cloth()
 
 func set_clubs(home: Dictionary,away: Dictionary) -> void:
+	home_kit=home; away_kit=away
 	for pair in [["home",home],["away",away]]:
 		cloth_material.set_shader_parameter(pair[0]+"_color",pair[1].badge_primary)
 		cloth_material.set_shader_parameter(pair[0]+"_accent",pair[1].badge_accent)
+		for prop in prop_materials:
+			prop.set_shader_parameter(pair[0]+"_color",pair[1].badge_primary)
+			prop.set_shader_parameter(pair[0]+"_accent",pair[1].badge_accent)
+			if prop.get_shader_parameter("flag_prop")==true:
+				prop.set_shader_parameter(pair[0]+"_badge",KitGraphics.badge(int(pair[1].get("club_id",0)),pair[1].badge_primary,pair[1].badge_accent))
+	paint_seats(home,home if home_only else away)
+
+func set_session(practice: bool) -> void:
+	home_only=practice
+	session_fill=0.08 if practice else 1.0
+	for mat in [material,cloth_material]+prop_materials:
+		if mat==null: continue
+		mat.set_shader_parameter("home_only",home_only)
+		mat.set_shader_parameter("occupancy",session_fill)
+	if not home_kit.is_empty(): paint_seats(home_kit,home_kit if practice else away_kit)
 
 func sync_cloth() -> void:
 	if cloth_material==null: return
 	for key in animation_uniforms:
 		cloth_material.set_shader_parameter(key,material.get_shader_parameter(key))
+		if key in ["supporter_prop","flag_prop"]: continue
+		for prop in prop_materials: prop.set_shader_parameter(key,material.get_shader_parameter(key))
 
 func react(kind: String,team: int,location: Vector3) -> void:
 	# A pass or save must not cut off an ongoing goal celebration.
@@ -159,6 +273,8 @@ func react(kind: String,team: int,location: Vector3) -> void:
 	material.set_shader_parameter("event_strength",significance if kind in ["goal","save"] else (0.9 if kind=="shot" else 0.75))
 	material.set_shader_parameter("event_duration",event_duration)
 	material.set_shader_parameter("event_age",0.0)
+	hush_team=team if kind=="miss" else (1-team if kind=="goal" else 0)
+	material.set_shader_parameter("hush_team",float(hush_team))
 	if kind=="goal" and team==0: start_wave(location,3.5)
 
 func start_wave(location: Vector3,delay: float = 0.35) -> void:
@@ -170,7 +286,7 @@ func start_wave(location: Vector3,delay: float = 0.35) -> void:
 
 func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int,playing: bool,late_close_match: bool) -> void:
 	clock += delta
-	var silence: float=1.0 if event_kind=="goal" and event_side==1 and event_age<2.3 else (.55 if event_kind=="miss" and event_side==0 and event_age<1.4 else 0.0)
+	var silence: float=1.0 if event_kind=="goal" and event_age<2.8 else (.55 if event_kind=="miss" and event_age<1.4 else 0.0)
 	silence=maxf(silence,anticipation*0.55)
 	hush=move_toward(hush,silence,delta*(3 if silence>hush else .65))
 	event_age += delta
@@ -178,10 +294,16 @@ func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int
 	wave_cooldown = maxf(0,wave_cooldown-delta)
 	var forward := home_attack if team==0 else -home_attack
 	var target := 0.0
-	if playing and ball_position.z*forward>28 and absf(ball_position.x)<24:
-		target = clampf((ball_position.z*forward-28)/19,0,1)
-		if ball_velocity.z*forward< -3: target *= 0.25
+	if playing and ball_position.z*forward>8:
+		var depth := clampf((ball_position.z*forward-8.0)/34.0,0,1)
+		var width := 1.0-smoothstep(18.0,34.0,absf(ball_position.x))*0.32
+		target=depth*width
+		if ball_position.z*forward>28 and absf(ball_position.x)<24:
+			target=maxf(target,clampf((ball_position.z*forward-28)/19,0,1))
+		if ball_velocity.z*forward< -3: target*=0.35
 	danger = lerpf(danger,target,1-exp(-delta*(3.5 if target>danger else 1.3)))
+	var home_push: float=danger if team==0 else 0.0
+	surge=lerpf(surge,home_push,1-exp(-delta*(3.2 if home_push>surge else 1.4)))
 	if playing and late_close_match and team==0 and danger>0.65 and event_age>3:
 		start_wave(ball_position)
 	excitement = maxf(danger*0.55,(1.0 if event_kind=="goal" else 0.82)*clampf((event_duration-event_age)/1.5,0,1))
@@ -196,7 +318,9 @@ func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int
 	material.set_shader_parameter("ball_focus",ball_focus)
 	material.set_shader_parameter("home_support",home_support)
 	material.set_shader_parameter("away_support",away_support)
+	material.set_shader_parameter("surge",surge)
 	material.set_shader_parameter("hush",hush)
+	material.set_shader_parameter("hush_team",float(hush_team))
 	sync_cloth()
 
 func follow_weight(perimeter: float) -> float:
@@ -236,7 +360,13 @@ func instance_section(parent: Node3D,label: String,mesh: Mesh,transforms: Array,
 	node.multimesh = multi
 	node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	if not phases.is_empty(): node.extra_cull_margin=0.8
+	if label.begins_with("Supporter_flag"): node.extra_cull_margin=1.2
 	parent.add_child(node)
+	if label.begins_with("Seats"):
+		seat_nodes.append(node)
+		var packed := PackedInt32Array()
+		for source in indices: packed.append(source)
+		seat_sources.append(packed)
 
 func person_meshes(pose: int) -> Dictionary:
 	var tools: Dictionary = {}

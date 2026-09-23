@@ -7,3 +7,8 @@ static func text(seconds: float,duration: float,half: int=2,extended: bool=false
 		return "%d+%d" % [boundary,ceili((played-boundary*60)/60.0)]
 	var total := mini(7200 if extended else 5400,int(played))
 	return "%02d:%02d" % [total/60,total%60]
+
+static func session(seconds: float) -> String:
+	var total := maxi(0,int(seconds))
+	if total>=3600: return "%d:%02d:%02d" % [total/3600,(total/60)%60,total%60]
+	return "%d:%02d" % [total/60,total%60]

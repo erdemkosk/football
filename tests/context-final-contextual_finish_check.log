@@ -1,0 +1,15 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Back-to-goal high ball with space selects bicycle
+PASS: Exhausted players do not attempt acrobatics
+PASS: Nearby opponent prevents a dangerous overhead attempt
+PASS: Lateral cross selects side volley
+PASS: Real bounce selects half volley
+BICYCLE PLAN: { "time": 0.16666666666667, "point": (0.0, 1.70108, -39.59698), "jump": 2.2, "kind": "bicycle" }
+PASS: Overhead intent can be armed against actual ball flight
+PASS: Aerial contact changes velocity without moving the ball
+BICYCLE CONTACT: 1 gap=0.32122042775154 kind=bicycle
+PASS: Overhead shot requires actual animated boot contact
+PASS: Overhead recovery returns to locomotion
+PASS: Recovery clears acrobatic body rotation
+CONTEXTUAL FINISH: 10 checks, 0 failures

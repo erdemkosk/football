@@ -234,6 +234,7 @@ func update_substitutions(delta: float) -> bool:
 				b.used=true
 				used[p.team]+=1
 				game.career.remember_player(p)
+				game.stadium.sidelines.retain_departing(p)
 				p.apply_identity(b)
 				p.apply_kit(game.clubs.kit(p.team))
 				refresh_captains()

@@ -31,7 +31,9 @@ func _ready() -> void:
 		G.block(left_arm,Vector3(0.17,0.065,0.14),Vector3(0,-0.21,0),G.material(Color("111518")))
 
 func signal_pose(value: String) -> void:
-	if gesture!=value: gesture_age=0
+	if gesture!=value:
+		flush_running_pose()
+		gesture_age=0
 	gesture=value
 
 func animate(delta: float) -> void:

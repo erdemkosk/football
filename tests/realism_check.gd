@@ -87,6 +87,26 @@ func run() -> void:
 	check(game.team_tactics.plan_for(1)==2,"A losing opponent takes more risk late in the match")
 	game.score=[1,2]
 	check(game.team_tactics.plan_for(1)==0,"A leading opponent protects its advantage late in the match")
+	setup()
+	game.state="playing"; game.training=false; game.half=1
+	game.dribbler=-1; game.carrier=-1; game.last_touch=0
+	game.team_tactics.age=0; game.team_tactics.observed_owner=9
+	game.ball.position=Vector3(20,7.2,-36); game.ball.linear_velocity=Vector3(-16,1.2,-8)
+	var far := -1
+	var far_x := 0.0
+	for i in range(12,22):
+		var back=game.players[i]
+		if back.keeper or game.management.slot_role(i)!=1: continue
+		back.position=Vector3(back.home.x,0,-18)
+		if back.home.x<far_x: far_x=back.home.x; far=i
+	check(far>=0 and game.team_tactics.incoming_delivery(),"An unclaimed cross into the box is read as an incoming delivery")
+	game.team_tactics.update(.2)
+	game.update_ai(.2)
+	var far_player=game.players[far]
+	check(game.team_tactics.roles.get(far,"")=="recover" and far_player.sprinting and far_player.desired.z< -0.25,"The far-side defender sprints into the line when nobody is at the drop")
+	setup()
+	game.match_time=game.LENGTH*.9
+	game.score=[1,2]
 	game.carrier=20
 	var cautious: Vector3=game.management.adjust_target(17,Vector3.ZERO)
 	game.score=[2,1]
@@ -128,7 +148,7 @@ func run() -> void:
 	crowd.context([0,1],game.LENGTH*.96,game.LENGTH)
 	check(crowd.home_support>early+.4 and crowd.home_support>crowd.away_support,"The home crowd rallies for a late equalizer independently of the away end")
 	crowd.react("goal",1,Vector3.ZERO); crowd.update(.2,Vector3.ZERO,Vector3.ZERO,1,false,true)
-	check(crowd.hush>.1 and crowd.material.get_shader_parameter("event_team")==1.0,"An away goal quiets the main stands while the away supporters celebrate")
+	check(crowd.hush>.1 and crowd.hush_team==0 and crowd.material.get_shader_parameter("event_team")==1.0,"An away goal quiets the main stands while the away supporters celebrate")
 	crowd.reset(); crowd.context([0,0],game.LENGTH*.96,game.LENGTH); crowd.react("goal",0,Vector3.ZERO)
 	check(crowd.material.get_shader_parameter("event_strength")>1,"A late decisive goal increases the crowd's visible response")
 	setup()

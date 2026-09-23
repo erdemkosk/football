@@ -57,7 +57,7 @@ func tick(count: int=1) -> void:
 		game.kick_contact.prepare(DT)
 		for q in game.players:
 			if q.visible: q.step(DT)
-		game.kick_contact.resolve()
+		game.skills.resolve(); game.kick_contact.resolve()
 		game.defending.resolve(); game.finishing.resolve(); game.keeper_distribution.resolve()
 		game.update_contacts(DT)
 		await physics_frame

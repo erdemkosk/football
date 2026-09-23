@@ -35,7 +35,9 @@ static func collect(node: Node,root: Node3D,excluded: Array,groups: Dictionary) 
 	if node is MeshInstance3D and node.mesh!=null and node.visible and node.mesh.get_surface_count()==1:
 		var mat=node.get_active_material(0)
 		# Transparent sorting and shader-local coordinates must stay independent.
-		if mat is StandardMaterial3D and mat.transparency==BaseMaterial3D.TRANSPARENCY_DISABLED:
+		# Explicit opt-in only for opaque shaders using world-space coordinates.
+		var batchable: bool=(mat is StandardMaterial3D and mat.transparency==BaseMaterial3D.TRANSPARENCY_DISABLED) or (mat is ShaderMaterial and mat.get_meta("static_world_space_opaque",false))
+		if batchable:
 			var location: Vector3=root.to_local(node.global_position)
 			var cell := Vector3i(floori(location.x/CELL_SIZE),floori(location.y/CELL_SIZE),floori(location.z/CELL_SIZE))
 			var key := "%s:%s:%s:%s" % [mat.get_instance_id(),node.cast_shadow,node.layers,cell]

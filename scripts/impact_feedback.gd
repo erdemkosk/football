@@ -1,5 +1,10 @@
 extends RefCounted
 ## Short contact cues run on match time; they never stop or accelerate the ball.
+const P = preload("res://scripts/pitch_dimensions.gd")
+const BallSize = preload("res://scripts/ball_dimensions.gd")
+const POST_X := 3.66
+const BAR_Y := 2.44
+const WOODWORK_REACH := 0.36
 var game
 var age := 1.0
 var duration := 0.28
@@ -8,6 +13,8 @@ var axis := Vector3.RIGHT
 var hurt := 0.0
 var last_kind := ""
 var event_count := 0
+var woodwork_in := 0.0
+var previous_velocity := Vector3.ZERO
 
 func reset() -> void:
 	age=1
@@ -15,10 +22,13 @@ func reset() -> void:
 	hurt=0
 	last_kind=""
 	event_count=0
+	woodwork_in=0
+	previous_velocity=Vector3.ZERO
 
 func update(delta: float) -> void:
 	age+=delta
 	hurt=move_toward(hurt,0,delta*3.5)
+	woodwork_in=maxf(0,woodwork_in-delta)
 
 func offset() -> Vector3:
 	if age>=duration: return Vector3.ZERO
@@ -60,3 +70,53 @@ func contact(kind: String,index: int,point: Vector3,direction: Vector3,strength:
 		var wet: float=game.weather.wetness
 		var mud: float=game.weather.mud_at(point)
 		game.weather.splash(point,direction*5,4+int(strength*6),mud if wet>0.25 else 1.0)
+
+func nearest_woodwork(point: Vector3) -> Dictionary:
+	var best := INF
+	var at := Vector3.ZERO
+	var normal := Vector3.RIGHT
+	for side in [-1.0,1.0]:
+		var z: float=side*P.HALF_LENGTH
+		for x in [-POST_X,POST_X]:
+			var post := Vector3(x,clampf(point.y,0.0,BAR_Y),z)
+			var gap: float=point.distance_to(post)
+			if gap<best:
+				best=gap; at=post
+				var away: Vector3=point-post
+				normal=away.normalized() if away.length()>0.001 else Vector3(-signf(x),0,0)
+		var bar := Vector3(clampf(point.x,-POST_X,POST_X),BAR_Y,z)
+		var bar_gap: float=point.distance_to(bar)
+		if bar_gap<best:
+			best=bar_gap; at=bar
+			var away: Vector3=point-bar
+			normal=away.normalized() if away.length()>0.001 else Vector3.UP
+	return {"point":at,"gap":best,"normal":normal}
+
+func woodwork(point: Vector3,direction: Vector3,strength: float) -> void:
+	if game.menu_match.running or game.state!="playing": return
+	strength=clampf(strength,0,1)
+	last_kind="woodwork"
+	event_count+=1
+	age=0
+	duration=lerpf(0.14,0.20,strength)
+	amplitude=lerpf(0.16,0.28,strength)
+	axis=Vector3(direction.x,direction.y*.35,direction.z)
+	if axis.length()<0.1: axis=Vector3.RIGHT
+	else: axis=axis.normalized()
+	woodwork_in=0.38
+	if is_instance_valid(game.controller):
+		game.controller.rumble(0.22+strength*0.28,false,0.16)
+
+func watch_woodwork() -> void:
+	var ball=game.ball
+	var velocity: Vector3=ball.linear_velocity
+	var previous: Vector3=previous_velocity
+	previous_velocity=velocity
+	if woodwork_in>0 or game.menu_match.running or game.state!="playing": return
+	if ball.held_by!=null or ball.pending_kick or ball.pending_reset: return
+	var read := nearest_woodwork(ball.position)
+	if read.gap>WOODWORK_REACH+BallSize.RADIUS: return
+	var incoming := -previous.dot(read.normal)
+	if incoming<4.2: return
+	if velocity.distance_to(previous)<5.0 and velocity.dot(read.normal)>-1.0: return
+	woodwork(read.point,read.normal,clampf((incoming-4.0)/20.0,0.28,1.0))

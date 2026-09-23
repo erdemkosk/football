@@ -108,16 +108,16 @@ func reset() -> void:
 
 func terrace(team: int) -> Vector3:
 	if team==1:
-		return Vector3(rng.randf_range(38.5,51.5),rng.randf_range(1.7,6.6),rng.randf_range(26.0,49.5))
+		return Vector3(rng.randf_range(-52.0,-38.0),rng.randf_range(1.7,10.4),rng.randf_range(16.0,66.0))
 	var pick := rng.randi()%5
 	if pick==0:
-		return Vector3(rng.randf_range(-46.0,36.0),rng.randf_range(1.5,5.9),rng.randf_range(58.2,66.6))
+		return Vector3(rng.randf_range(-16.0,36.0),rng.randf_range(1.5,5.9),rng.randf_range(58.2,66.6))
 	if pick==1:
 		return Vector3(rng.randf_range(-46.0,46.0),rng.randf_range(1.5,5.9),rng.randf_range(-66.6,-58.2))
 	if pick==2:
 		return Vector3(rng.randf_range(-40.0,40.0),rng.randf_range(6.6,10.4),rng.randf_range(-78.0,-68.0))
 	if pick==3:
-		return Vector3(rng.randf_range(-62.0,-54.0),rng.randf_range(8.0,12.4),rng.randf_range(-40.0,40.0))
+		return Vector3(rng.randf_range(-62.0,-54.0),rng.randf_range(8.0,12.4),rng.randf_range(-40.0,10.0))
 	return Vector3(rng.randf_range(54.0,62.0),rng.randf_range(8.0,12.4),rng.randf_range(-40.0,22.0))
 
 func begin(team: int,_at: Vector3) -> void:
@@ -160,8 +160,8 @@ func place_banners(team: int,club: Dictionary,kit: Dictionary) -> void:
 	var faces: Array
 	var lines: Array
 	if team==1:
-		spots=[Vector3(41.5,3.2,32.0),Vector3(46.0,4.6,42.5),Vector3(39.4,2.7,28.4)]
-		faces=[Vector3(-1,0,-0.35),Vector3(-1,0,-0.2),Vector3(-0.8,0,-0.5)]
+		spots=[Vector3(-44.5,3.4,36.0),Vector3(-50.2,6.2,48.0),Vector3(-28.0,3.1,58.4)]
+		faces=[Vector3(1,0,-0.2),Vector3(1,0,-0.15),Vector3(0.15,0,-1)]
 		lines=[str(club.short),str(club.short)+" · DEPLASMAN",str(club.get("city",""))]
 	else:
 		spots=[Vector3(-20.0*P.WIDTH_RATIO,3.15,-57.45),Vector3(16.0*P.WIDTH_RATIO,3.55,-57.45),Vector3(-56.4,8.8,10.0)]

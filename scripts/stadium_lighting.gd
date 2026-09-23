@@ -102,6 +102,7 @@ func apply_weather(rain: float) -> void:
 	var evening := period==2
 	var sun: DirectionalLight3D=stadium.sun
 	var env: Environment=stadium.env
+	apply_color_grade(env,night,evening)
 	sun.visible=not night
 	sun.rotation_degrees=Vector3(-32,-64,0) if evening else Vector3(-62,-38,0)
 	sun.light_color=(Color("ffc788") if evening else Color("fff5e9")).lerp(Color("d8e3ed"),rainfall)
@@ -171,3 +172,13 @@ func apply_weather(rain: float) -> void:
 	glass.emission_energy_multiplier=3.4 if night else 0.0
 	glass.albedo_color=Color("e6efff") if night else Color("a2b0ab")
 	stadium.architecture.district.set_night(night)
+
+func apply_color_grade(env: Environment,night: bool,evening: bool) -> void:
+	# Use the existing environment tonemap stage; no screen-copy material or LUT.
+	# Keep contrast gentle so dark kits and white pitch markings retain detail.
+	env.adjustment_enabled=true
+	env.adjustment_brightness=lerpf(1.015 if night else 1.0,1.025,rainfall)
+	env.adjustment_contrast=lerpf(1.055 if night else (1.035 if evening else 1.025),1.015,rainfall)
+	env.adjustment_saturation=lerpf(.97 if night else (.99 if evening else .96),.93,rainfall)
+	var exposure := 1.68 if night else (1.62 if evening else 1.65)
+	env.tonemap_exposure=exposure if RenderingServer.get_current_rendering_method()!="gl_compatibility" else 1.0

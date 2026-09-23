@@ -1,0 +1,14 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: A carrier with rear pressure sees a moving outlet and can shield
+PASS: Facing pressure can be invited while a teammate opens an outlet
+PASS: AI chooses to protect a ball while the immediate passing outlet is marked
+PASS: Holding keeps the body between rear pressure and the ball
+PASS: Holding has a bounded duration rather than trapping the AI in an animation
+PASS: Cooldown prevents repetitive stop-and-hold loops
+PASS: The opened outlet becomes a pass after drawing pressure
+PASS: The release pass is completed through the ordinary boot-contact system
+PASS: A second presser immediately ends the invitation
+PASS: No moving outlet means no purposeless invitation
+PASS: Lost possession clears the hold without protecting the ball from the opponent
+AI HOLD PLAY CHECK: 11 checks, 0 failures

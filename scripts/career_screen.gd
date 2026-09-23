@@ -92,9 +92,9 @@ func turn_page(direction: int) -> void:
 func apply_career_style() -> void:
 	for type in ["Button","OptionButton"]:
 		for state in ["normal","hover","pressed","focus","disabled"]:
-			var style:=StyleBoxFlat.new(); style.set_corner_radius_all(7)
+			var style:=StyleBoxFlat.new(); style.set_corner_radius_all(12)
 			style.content_margin_left=12; style.content_margin_right=12
-			style.bg_color=Color("1c3043") if state=="normal" else Color("314e60")
+			style.bg_color=Color("152a35") if state=="normal" else Color("29404c")
 			if state=="disabled": style.bg_color=Color("162333")
 			if state=="focus":
 				style.bg_color=Color.TRANSPARENT; style.set_border_width_all(3)

@@ -1,0 +1,9 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce RTX 3070
+
+BENCHMARK context-merged size=(1440, 900) scale=1.0 renderer=mobile physics=120
+{"draws":1195.0,"fps":518.563327697239,"frames":2594,"gpu_ms":1.35218003288819,"p50_ms":1.819,"p95_ms":2.677,"p99_ms":3.321,"physics_hz":119.945256984712,"physics_ms":0.0940636083269083,"render_cpu_ms":0.931004240316157,"scene":"day-static"}
+{"draws":1139.26573426573,"fps":57.0119631431612,"frames":286,"gpu_ms":2.43815034982208,"p50_ms":16.697,"p95_ms":24.303,"p99_ms":34.565,"physics_hz":119.804859612028,"physics_ms":8.31209790209794,"render_cpu_ms":1.34758041684444,"scene":"day-match"}
+{"draws":1403.27391304348,"fps":46.0000276000166,"frames":230,"gpu_ms":3.73929130305415,"p50_ms":22.94,"p95_ms":25.061,"p99_ms":25.885,"physics_hz":119.800071880043,"physics_ms":8.0544956521739,"render_cpu_ms":3.32356086813885,"scene":"night-match"}
+{"draws":1595.98994974874,"fps":39.681281541883,"frames":199,"gpu_ms":5.29264320440628,"p50_ms":25.013,"p95_ms":31.142,"p99_ms":33.092,"physics_hz":120.24026517465,"physics_ms":9.28989949748745,"render_cpu_ms":3.480276379753,"scene":"rain-match"}
+{"draws":3067.0,"fps":223.302952536827,"frames":1117,"gpu_ms":2.14045389123334,"p50_ms":4.389,"p95_ms":5.385,"p99_ms":5.743,"physics_hz":120.147783773172,"physics_ms":0.503535362578332,"render_cpu_ms":2.745736796619,"scene":"stadium"}

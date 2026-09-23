@@ -1,0 +1,12 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Body proportions follow each selected squad member's actual height
+PASS: Defenders sit lower in their stance and idle habits differ by shirt
+PASS: A tired runner shortens the stride and folds the torso
+PASS: A short inside-foot pass opens the hip instead of swinging through like a laces kick
+PASS: A lofted kick leans the torso back through contact
+PASS: A high ball is taken on the chest with both arms opening
+PASS: A bouncing ball raises the receiving thigh with a folded knee
+PASS: The receiving boot reaches a low pass without sinking through the turf
+PASS: Goal celebrations are not the same two-arm raise for every shirt
+TOUCH IDENTITY CHECK: 0 failures

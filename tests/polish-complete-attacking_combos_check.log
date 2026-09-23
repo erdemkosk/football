@@ -1,0 +1,42 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Holding LB in possession leaves the passer selected for the chord
+PASS: LB + A makes a ground one-two instead of a normal pass
+PASS: The original passer plays physically and control moves to the wall player
+PASS: Only the original passer receives the explicit one-two run
+PASS: One-two cuts inside toward a fixed target about ten metres away
+PASS: Holding or releasing the chord cannot repeat the pass, switch again, or shoot
+PASS: The real footballer reaches the short run's endpoint and the command ends
+PASS: The attacking run spends normal stamina
+PASS: Second-half one-two runs reverse toward the correct goal and still cut inside
+PASS: Opponent possession cancels the attacking run
+PASS: An obstructed runner times out rather than running forever
+PASS: The distance budget counts detours, not just straight-line displacement
+PASS: A whistle cancels the one-two run
+PASS: Taking manual control of the runner cancels the automatic run
+PASS: Tapping LB alone still switches players on release
+PASS: Near-simultaneous A then LB also resolves as a one-two
+PASS: LB + X prepares a chip shot instead of a one-two
+PASS: Releasing X chips the ball over the keeper line without curl
+PASS: The chip keeps the aimed heading
+PASS: LB + RT + X waits for all three and selects power instead of a chip
+PASS: No teammate means no forced shot, remote pass, or phantom run
+PASS: One-two target selection avoids an offside wall player
+PASS: Holding cross starts preparation without kicking
+PASS: The held cross has a visible kicking preparation
+PASS: Full power still waits for release
+PASS: Release commits one airborne cross
+PASS: Sprint plus cross produces one hard ground cross
+PASS: Driven cross keeps the passer selected and counts as a pass
+PASS: A rapid repeat cannot cause a second kick or an accidental receiver slide
+PASS: Repeated held button events do not change the cross type
+PASS: Losing the ball during the hold cancels without a remote kick or slide
+PASS: Pause and resume discard a pending cross
+PASS: Disconnect discards the pending cross
+PASS: A second controller cannot alter or cancel the first controller's gesture
+PASS: Ordinary off-ball B still slides immediately
+PASS: Set-piece B still uses the existing throw/cross control
+PASS: The real driven cross skims the turf instead of becoming an aerial cross
+PASS: Ground friction slows the hard cross naturally
+PASS: Moving the receiver after launch cannot redirect the physical ball
+ATTACKING COMBOS CHECK: 39 checks, 0 failures

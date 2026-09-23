@@ -40,6 +40,10 @@ func skill_gesture(direction: Vector3) -> void:
 	var fancy: bool=game.controller.action_held(KEY_E) or Input.is_key_pressed(KEY_E)
 	var forward: float=direction.dot(p.facing)
 	var lateral: float=direction.dot(p.facing.cross(Vector3.UP))
+	if game.controller.action_held(KEY_W):
+		roll_side=0
+		game.skills.start(game.controlled,"stop_go" if forward<-.35 else "knock_around",-1 if lateral<0 else 1)
+		return
 	if fancy:
 		roll_side=0
 		if forward<-.35: game.skills.start(game.controlled,"rainbow",side())
@@ -121,6 +125,8 @@ func handle(event: InputEvent) -> bool:
 		if event.keycode==KEY_SPACE:
 			game.defending.pressing=event.pressed; return true
 		if not event.pressed or event.echo: return false
+		if event.keycode==KEY_9: game.skills.start(index,"stop_go",side()); return true
+		if event.keycode==KEY_0: game.skills.start(index,"knock_around",side()); return true
 		if event.keycode in [KEY_1,KEY_2,KEY_3,KEY_4]:
 			game.skills.start(index,["roulette","roll","elastico","scoop"][event.keycode-KEY_1],side()); return true
 		if event.keycode in [KEY_6,KEY_7,KEY_8]:
@@ -168,6 +174,10 @@ func handle(event: InputEvent) -> bool:
 	var lb: bool=shoulder_held()
 	var rb: bool=pad_down.has(JOY_BUTTON_RIGHT_SHOULDER) and pad.bindings.get(JOY_BUTTON_RIGHT_SHOULDER)==KEY_W
 	var lt: bool=pad.action_held(KEY_E)
+	if button==JOY_BUTTON_RIGHT_STICK and lt and game.training and game.training_drills.mode=="duel":
+		game.training_drills.duel.next_stage(); consumed[button]="stage"; return true
+	if button==JOY_BUTTON_RIGHT_STICK and game.training and game.training_drills.mode=="duel":
+		game.reset_practice(); consumed[button]="stage"; return true
 	if action==KEY_D:
 		if game.finishing.active(index): consumed[button]="timing"; game.finishing.timing_press(); return true
 		if lt and game.dribbler!=index and game.last_touch!=game.players[index].team and not game.can_request_aerial(index):
@@ -199,7 +209,14 @@ func draw(hud) -> void:
 		var point: Vector3=p.position+Vector3.UP*2.75
 		var at: Vector2=game.screen_position(point)
 		if not game.camera.is_position_behind(point) and game.ui.bounds().grow(-36).has_point(at):
+			var selected=game.players[game.controlled]
+			var selected_at: Vector2=game.screen_position(selected.position+Vector3.UP*(selected.height_cm/100.0+.30))
+			if absf(at.x-selected_at.x)<80 and absf(at.y-selected_at.y)<40:
+				var anchor := at
+				at.x=selected_at.x+(-90 if at.x<selected_at.x else 90)
+				hud.draw_line(anchor,at,Color("9fcbe2",.55),1,true)
 			# A hollow arrow previews the same candidate used by LB/L1/Q.
+			hud.draw_polyline(PackedVector2Array([at+Vector2(-5,-4),at+Vector2(5,-4),at+Vector2(0,3),at+Vector2(-5,-4)]),Color("101c22"),4.5,true)
 			hud.draw_polyline(PackedVector2Array([at+Vector2(-5,-4),at+Vector2(5,-4),at+Vector2(0,3),at+Vector2(-5,-4)]),Color("9fcbe2",.8),1.5,true)
 			if game.controller.using_gamepad:
 				game.controller.Glyphs.draw_sequence(hud,at+Vector2(-9,-19),game.controller.label_for(KEY_Q),game.controller.family,hud.font,18,9)

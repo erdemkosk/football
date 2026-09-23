@@ -18,9 +18,9 @@ const RATE := 20.0
 const SECONDS := 5.0
 const CUTS: PackedStringArray = ["sideline","end","net"]
 const CUT_HOLD := 1.15
-const FADE_OUT := .18
-const FADE_HOLD := .06
-const FADE_IN := .24
+const FADE_OUT := .09
+const FADE_HOLD := .02
+const FADE_IN := .13
 var cut_age := 0.0
 var pending_cut := -1
 var cut_transition := -1.0
@@ -45,6 +45,7 @@ func collect(node: Node3D) -> void:
 		if child is Node3D and not child is MeshInstance3D and not child is Label3D: collect(child)
 
 func snapshot() -> Dictionary:
+	game.flush_running_poses()
 	var transforms: Array[Transform3D] = []
 	for node in nodes: transforms.append(node.transform)
 	var visibility: Array[bool] = []
@@ -113,6 +114,8 @@ func begin() -> bool:
 	previous_point=first.ball
 	display_seconds=first.seconds; display_score=first.score
 	for i in range(nodes.size()): nodes[i].transform=first.transforms[i]
+	for p in game.players: p.reset_physics_interpolation()
+	game.ball.reset_physics_interpolation()
 	for i in range(game.players.size()): game.players[i].visible=first.visible[i]
 	game.broadcast.show_graphic("goal",game.broadcast.goal_caption())
 	place_camera(0)
@@ -121,7 +124,7 @@ func begin() -> bool:
 func update(delta: float) -> void:
 	entry_left=maxf(0,entry_left-delta)
 	cut_age+=delta
-	age+=delta*0.8
+	age+=delta*playback_speed()
 	var frame_index := age*RATE
 	if frame_index>=frames.size()-1: finish(); return
 	var a: Dictionary=frames[int(frame_index)]
@@ -155,6 +158,13 @@ func choose_cut() -> void:
 	elif cut>0 and approach>27: next=0
 	if next!=cut:
 		pending_cut=next; cut_transition=0
+
+func playback_speed() -> float:
+	if goal_at<0: return .8
+	# Ease only the recorded timeline, never live physics or input timing.
+	var entry:=smoothstep(goal_at-.50,goal_at-.18,age)
+	var leave:=smoothstep(goal_at+.12,goal_at+.43,age)
+	return lerpf(.8,.38,entry*(1-leave))
 
 func place_camera(delta: float=0.0) -> void:
 	var point: Vector3=game.ball.position
@@ -202,6 +212,8 @@ func finish() -> void:
 	if saved.is_empty(): return
 	exit_left=.28; entry_left=0; cut_transition=-1; pending_cut=-1
 	for i in range(nodes.size()): nodes[i].transform=saved.transforms[i]
+	for p in game.players: p.reset_physics_interpolation()
+	game.ball.reset_physics_interpolation()
 	for i in range(game.players.size()): game.players[i].visible=saved.visible[i]
 	game.ball.freeze=saved.freeze
 	game.ball.active=saved.active

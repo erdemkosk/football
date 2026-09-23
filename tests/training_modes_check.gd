@@ -37,6 +37,7 @@ func capture(label: String) -> void:
 	root.get_texture().get_image().save_png("res://tests/training-"+label+".png")
 	game.ball.freeze=freeze; game.ball.linear_velocity=velocity
 func run() -> void:
+	if DisplayServer.get_name()=="headless": root.size=Vector2i(1440,900)
 	visual="--visual" in OS.get_cmdline_user_args()
 	game=load("res://main.tscn").instantiate(); root.add_child(game); await physics_frame
 	game.set_physics_process(false); game.set_process(false)
@@ -54,6 +55,10 @@ func run() -> void:
 	check(not game.training_menu.visible and game.state=="menu" and not game.ball.freeze,"B cancels the selector and restores the main menu")
 	key(KEY_T); key(KEY_T,false); key(KEY_ENTER); key(KEY_ENTER,false)
 	check(game.training and game.state=="playing" and game.training_drills.mode=="free","Enter starts the unchanged free practice mode")
+	check(game.stadium.crowd.home_only and game.stadium.crowd.session_fill<0.15,"Training has no visiting stand and only a handful of home spectators")
+	var Clock := preload("res://scripts/match_clock.gd")
+	check(Clock.session(95)=="1:35" and Clock.session(3661)=="1:01:01","Training HUD uses elapsed session time instead of a ninety-minute clock")
+	check(game.training_drills.title()=="SERBEST ANTRENMAN","The training scoreboard titles the current exercise")
 	check(game.players.filter(func(p): return p.visible and p.team==0).size()==11 and game.players[11].visible and game.controlled==9,"Free practice fields the full team against a goalkeeper")
 	check(game.team_control.automatic(),"Free practice uses the same automatic player selection as a match")
 	await tick(5)

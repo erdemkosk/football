@@ -10,6 +10,10 @@ Gökyüzü öğlen, akşam ve gece paletleriyle ince bir gradyan ve farklı hız
 
 ## Başlat
 
+**Bire bir atölyesi ve temel çalımlar:** Antrenman menüsündeki dördüncü seçenek sabit rakip, müdahale eden rakip ve serbest savunmacı aşamalarını açar. İki başarılı geçiş bir sonraki aşamaya götürür; `F3` / `LT + R3` aşamayı değiştirir, `R` / `R3` denemeyi yeniler. `2 + yön` / sağ analog yana: **yana çek**; `9` / sprint tuşu + sağ analog geri: **dur–kalk**; `0 + yön` / sprint tuşu + sağ analog yana: **aç ve dolaş**. Son harekette top seçilen yana, oyuncu diğer yana gider; rakip fiziksel topu kazanabilir. Bu üç hareket topu yalnızca ölçülen ayak temasında yönlendirir. Hazırlıkta pasla vazgeçilebilir; temas başladıktan sonra hareketin bitmesi beklenir. Enerji, toparlanma ve top erişimi nedeniyle reddedilen girişler oyuncu kartının üstünde açıklanır. AI da aynı hareketleri kullanır; hareketlenen pas seçeneği varken topu saklayıp baskıyı çekebilir, en fazla 0,65 saniye sonra veya ikinci baskı geldiğinde yeniden karar verir. Doğrulama: `tests/ground_skills_check.gd` ve `tests/ai_hold_play_check.gd`.
+
+Maç hissi güncellemesi: koşu adımları çarpışma sonrası gerçek yer değiştirmeyi izler; frenlemede kısa denge adımı ve temas şiddetine göre gövde tepkisi vardır. Yavaş yer toplarında taban, sert paslarda ayak içi kontrol kullanılır; kaçan ilk kontrolün sebebi oyuncu kartında kısa süre görünür. Falsolu vuruşlarda iç ayak hareketi, vuruş gücü ve dönüş açısına göre kısa hazırlık uygulanır; top yine gerçek ayak temasında çıkar. Kalecinin alçak kurtarıştan kalkışı tek diz üzerinden ilerler. Oyuncu değişiminde kısa seçim halkası ve kontrastlı isim etiketi vardır. Kamera hızlı hücumlarda sınırlı ileri bakış ve genişleme kullanır. Kaçan şut tepkisi tribünün şut beklentisini sonlandırır. Maç sonu şut/isabet, pas, kurtarış ve topa sahip olma verilerini gösterir; **Tekrar oyna** aynı takımlarla doğrudan yeni maç başlatır. İsabet, gol olan veya kalecinin durdurduğu kale yönündeki kayıtlı şutlardan sayılır; tutulan ortalar dahil edilmez. Kontrol: `godot --headless --path . --script tests/match_feel_check.gd`.
+
 Godot 4.3+ ile `project.godot` dosyasını aç ve **F5** tuşuna bas. Godot 4.7.2 / macOS üzerinde doğrulandı.
 
 FPS incelemesi, uygulanan CPU optimizasyonları ve tekrarlanabilir ölçüm komutları
@@ -31,6 +35,12 @@ godot --headless --path . --export-release "Windows Desktop"
 Simge boyutlarını ana PNG'den yeniden üretmek: `python3 tools/build_brand_icons.py` (macOS, Python 3 + Pillow ve sistemin `iconutil` aracı). macOS paketi yerel test için ad-hoc imzalıdır. Platform simgeleri [Godot'un yerel simge ayarları](https://docs.godotengine.org/en/stable/classes/class_projectsettings.html#class-projectsettings-property-application-config-macos-native-icon) ve [Windows EXE simgesi](https://docs.godotengine.org/en/stable/tutorials/export/changing_application_icon_for_windows.html) üzerinden bağlanır.
 
 Açılışta **Hızlı Maç / Enter / Xbox A** takım seçimini açar. Kendi kulübünü ve rakibini seç, formalarını belirle, ardından kadro ve taktik ekranından maça çık. **T** kaleciye karşı antrenmanı açar. Maçlar 4 dakika sürer; gösterge 90 maç dakikasına ölçeklenir.
+
+Hızlı Maç, büyük kulüp kartları, forma önizlemeleri ve hücum/orta saha/defans güç çubuklarıyla seçim sırasını gösterir. İki takım onaylandıktan sonra taktik ekranı sağ alttaki **Maça Başla** düğmesine odaklanır; tek A / × ile devam edilir. Maç içindeki kadro ekranı ise seçili oyuncuya açılır. Skor, oyuncu kartı, mini harita ve köşe düğmeleri gerçek ekran kenarlarını izler; menüler ortalanmış kalır.
+
+Gol tekrarı sabit kamera tarafı, yatay ufuk, sınırlı kamera hızı ve kısa kararma geçişleri kullanır; gol çizgisi geçişi kamera kesmesine denk getirilmez. Golcülerin beş farklı sevinci vardır, takım arkadaşları farklı jestlerle katılır. Oyuncular ve yedekler ilk kareden canlı duruşla başlar; giriş, selamlaşma ve koşu geçişleri mevcut pozdan karışır. Top korurken arkadaki baskıya göre dirsek bükülür. Koşu adımları yeni model boyuna göre ayarlanır, vuruş sonrası ayak gövdenin gerisinde takılı kalmaz.
+
+Pas ve şut nişanı kısa, saydam yön göstergesi ve ayrı güç çubuğuyla okunur. Ara pas yarışında AI topun ve rakibin hareketine göre, enerjisi izin verdiğinde sprint yapar. Ulaşılabilir havadan toplarda şut isteği kısa yaklaşma desteği alır; top erişim dışına saparsa boş vuruş iptal edilir ve hareket sürer. Kaleciler göğüs hizasındaki uygun topları iki elle karşılar. Ayakta müdahalede topun görünür ayağa yaklaşması gerekir; yalnızca oyuncunun yakınından geçmek topu uzaktan kapmaya yetmez.
 
 Ana menüde mevcut uzak stadyum açısının arkasında iki yapay zekâ takımı canlı maç oynar. Gerçek top fiziği, paslar, şutlar, hakemler, tribün tepkileri, gol sevinci ve duran toplar çalışır; kamera maç sırasında yakın plana geçmez. Maç bitince yenisi başlar. Ayarlar bu gösteri maçını duraklatır; Hızlı Maç ise skor, süre, kondisyon ve kartları temizleyerek kendi maçına hazırlanmanı sağlar.
 
@@ -146,7 +156,7 @@ Kupa testleri tüm sezonda 97 kupa maçı, ligden ayrı puan/gol tabloları, gru
 | Verkaç | L1 + × | LB + A |
 | Aşırtma | L1 + □ | LB + X |
 | Havadan uzun pas | L1 + △ | LB + Y |
-| Yerden sert orta | ○ iki kez | B iki kez |
+| Yerden sert orta | R1 + ○ tut → bırak | RB + B tut → bırak |
 | Mola | Options | Start |
 | Kadro / taktik | Share / Create | View |
 
@@ -157,7 +167,7 @@ Sol analog hareket eder; sağ analog veya yön düğmeleri koşudan bağımsız 
 | Yön tuşları | Hareket; son hareket yönü şut yönüdür |
 | W + yön tuşu | Stamina harcayarak sprint; yorulunca W'yi bırakıp toparlan |
 | S basılı tut → bırak | Top sendeyken pas gücü ve hedef → vuruş; kısa dokunuş yakın pas. Topsuzken pas iste |
-| A | Top sendeyken orta; topsuzken havadan pas iste |
+| A basılı tut → bırak | Orta gücünü ve yönünü ayarla, bırakınca vur; W + A yerden sert orta. Topsuzken havadan pas iste |
 | Y basılı tut → bırak | Hücumda koşu yoluna pas; savunmada basılı tutarak kaleciyi çıkar, bırakınca geri dönsün |
 | D basılı tut → bırak | Şut gücü → vuruş |
 | D basılıyken E / Xbox LT | Finesse: nişan değişmez, iç ayak falso uzak köşeye kıvrılır |
@@ -196,7 +206,7 @@ Xbox kontrolcüsü: **sol analog** hareket ve yön, **X** top sendeyken şut (ba
 
 **LB + Y — havadan uzun pas:** Top sendeyken LB'yi tut, sol analogla kanadı hedefle ve Y'yi basılı tutup bırak. Kısa basış yakın, uzun basış uzak oyuncuyu tercih eder; güç 0,65 saniyede dolar. Havada çizilen yay, alıcı ve güç çubuğu vuruştan önce görünür. Pas yardımı ayarı uygulanır, ofsayttaki oyuncu hedef seçilmez; manuel modda doğrudan seçtiğin yöne oynarsın. Alıcının koşusu ve hava direnci ilk vuruşta hesaplanır; top havadayken hedef takip etmez. LB'yi önce bırakmak pası bozmaz. Tek başına Y koşu yoluna pas / savunmada kaleci çağırma olarak kalır.
 
-**B × 2 — yerden sert orta:** B'ye 0,23 saniye içinde iki ayrı basış yap. Top yerden yaklaşık 27–31 m/sn hızla çıkar; zemin ve hava koşullarına göre sürtünmeyle yavaşlar, hedefe kendiliğinden yönelmez. İlk B kısa bir ayak hazırlığı başlatır; ikinci basış gelmezse normal havadan orta çıkar. Topsuz B hâlâ kayar; duran top kontrolleri aynıdır. Mola, top kaybı veya bağlantı kesilmesi bekleyen ortayı iptal eder.
+**B / ○ basılı tut → bırak — orta:** Basılı tutarken gücü ve sol analogla yönü ayarla; tam güce ulaşsa bile bıraktığın ana kadar vurmaz. **RB + B / R1 + ○** aynı kontrolle yerden sert orta açar. Klavyede **A**, yerden orta için **W + A** kullanılır. Mola, top kaybı veya bağlantı kesilmesi hazırlığı iptal eder. Topsuz B / ○ kayarak müdahale olarak kalır.
 
 
 İlk yarı, seremoni tamamlandığında veya atlandığında **santra vuruşuyla** başlar. Top orta noktada bekler; takımlar kendi yarısında, rakipler merkez çemberinin dışında yerleşir. **S / Xbox A / PlayStation çarpı** ile ilk pası verene kadar maç saati ilerlemez. Seremoniyi geçme tuşu aynı anda pas vermez. İkinci yarıya rakip santrasıyla devam edilir.
@@ -470,7 +480,9 @@ Güce ve zemine bağlı gerçek durma mesafesi, 30/60/120 Hz tutarlılığı, ç
 
 Tüm menülerde kontrolcü gezinmesi, analog tekrar/ölü bölge, seçenekler, kayan tuş listesi, yeniden atama, ekran geçişleri ve bağlantı kesilmesi: `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/menu_controller_check.gd`. `-- --visual` ile seçim çerçevelerinin ekran görüntüleri alınır.
 
-Verkaç (LB + A), aşırtma (LB + X) ve çift B ortası; Xbox olayları, sınırlı fiziksel koşu/stamina, tek ve çift basış ayrımı, iptaller, alıcı kontrolü ve gerçek top fiziği: `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/attacking_combos_check.gd`. `-- --visual` ile görsel kayıt alınır.
+Verkaç (LB + A), aşırtma (LB + X) ve basılı tutup bırakılan ortalar; Xbox olayları, fiziksel koşu/stamina, güç/yön ayarı, RB + B yerden orta, iptaller ve alıcı kontrolü: `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/attacking_combos_check.gd`. `-- --visual` ile görsel kayıt alınır.
+
+Hızlı maç ve tek tuşla devam akışı: `tests/quick_match_polish_check.gd`. Tekrar geçişleri ve gol anı: `tests/replay_comfort_check.gd`. Farklı ekran oranlarında HUD, orta, top koruma, AI sprinti ve sevinç çeşitleri: `tests/match_polish_check.gd`. İlk kare duruşu, boş vole iptali ve iki takım kalecisinin el teması: `tests/animation_continuity_check.gd`. Bu testler `godot --headless --path . --script <dosya>` ile çalışır; ilk üçü `-- --visual` ile normal pencerede görüntü de kaydeder.
 
 LB + Y havadan pas; basış/bırakış sırası, mesafe seçimi, yardım/ofsayt, iptal ve kuru/yağmurlu zeminde fiziksel uçuş: `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/lofted_switch_check.gd`.
 
@@ -601,3 +613,17 @@ Kariyerde sol analog / yön tuşları ile gezinilir; Xbox A / PlayStation çarp�
 Arayüz doğrulaması: `godot --headless --path . --script tests/career_visual_check.gd`. Gerçek ekran görüntüleri için `--headless` kaldırılıp sonuna `-- --visual` eklenir. Kariyer, kiralama, kupa ve teknik direktör akış testleri mevcut kayıt ve maç işlemlerini ayrıca doğrular.
 
 Kamera ayarları **P → Görüntü & Oyun** bölümündedir: başlangıç kamerası, %70–150 uzaklık ve %65–160 yükseklik/açı. Klavye, fare ve kol ile ayarlanır; sonraki maçlarda korunur. Fare tekerleği perspektif kameraları da yakınlaştırır. Duran top yakın planları kendi kadrajını korur. Sıfırla düğmesi kenar kamerayı ve %100 değerlerini geri getirir. Yeni kontrol ve kayıt testleri: `tests/sticky_control_check.gd`, `tests/camera_settings_check.gd`.
+
+### Maç sunumu ve hareket güncellemesi
+
+Hızlı maçta kulüp armaları, canlı forma modelleri ve üç güç göstergesi; taktiklerde sahaya yerleşmiş oyuncu portreleri kullanılır. Antrenmandaki üç kart aynı ayakta duran modeli tekrarlamaz: koniler ve takım arkadaşlarıyla top sürme, kaleye orta/kafa ve baraja karşı serbest vuruş için ayrı hareketli 3B sahneler gösterir. Bu sahneler menü kapalıyken çizilmez. Kariyer, antrenman ve mola menüsü ortak koyu yüzeyler, açık yeşil vurgu ve belirgin kol odağı kullanır.
+
+Canlı oyuncu değişikliği önerisi View / touchpad ile açılır; yön tuşları seçim, A / çarpı onay, B / daire kapatma yapar. Tetikle açma da korunur. Kabul edilen değişiklikte çıkan oyuncu kenara koşar; yeni oyuncunun girişi sırasında eski oyuncunun modeli kaybolmak yerine kulübeye yürür.
+
+Yakın ikili mücadelelerde iki rakip temas tarafına doğru gövdesini yükler; paralel koşuda omuzla, yüz yüze temasta bükülü kolla mesafe korur. Yakınlık ve göreli hız hareketin ağırlığını değiştirir. Ayrılınca normal koşuya yumuşakça döner; vuruş ve özel aksiyonlar önceliklidir. Bu görsel katman top sahipliği veya fiziksel itme kuvvetini değiştirmez.
+
+Top sürme ve sprintte ayrı basma/salınım döngüsü, alçak ayak yayı ve yumuşatılmış krampon yolları kullanılır. Topa gerçek temas korunur. Hızlı top için fizik örnekleri arasındaki görüntü enterpole edilir; fizik 120 Hz kalır. Büyük lastik esnemesi azaltılmış, hayalet top kopyaları kaldırılmıştır. Yeniden başlatmada eski görüntü yolu temizlenir.
+
+Gelen topun yüksekliği, geliş yönü, son sekmesi ve oyuncunun duruşu yarım vole, yan vole veya uygun durumda röveşata seçimini etkiler. Röveşata yeterli enerji, bitiricilik ve çevrede boşluk ister; temas gerçek krampon mesafesinde gerçekleşir. Yapay zekâ da uygun pozisyonda kullanabilir. Normal/zor AI, açık alan ve yeterli enerjide power shot; öne çıkan kaleciye karşı aşırtma değerlendirebilir. Gol tekrarında çizgi geçişi çevresinde hız yumuşakça 0,38× olur; diğer kısımlar 0,8× kalır. Kısa kamera geçişleri gol anını kapatmaz.
+
+Yeni doğrulamalar: `tests/contextual_finish_check.gd`, `tests/carry_gait_check.gd`, `tests/duel_animation_check.gd`, `tests/presentation_refresh_check.gd`. Grafik ortamında `tests/ball_render_check.gd` hızlı yer/hava topunun gerçek ara karelerini kontrol eder. `tests/performance_safety_check.gd` birleşen model parçalarının köşe ve UV verilerini, malzemelerini ve mevcut fizik davranışını doğrular. Rijit baş, diz ve önkol parçalarını birleştirmek oyuncu başına beş çizim nesnesini kaldırır; geometri, forma ve gölge ayrıntısı azaltılmaz.

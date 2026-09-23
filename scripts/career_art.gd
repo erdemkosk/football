@@ -1,24 +1,24 @@
 extends RefCounted
 const WHITE=Color("f3f5ee")
 const MUTED=Color("93a6b8")
-const LIME=Color("b3f594")
+const LIME=Color("d6f77a")
 const BLUE=Color("7acde3")
 
 func fade(s,rect: Rect2,left: Color,right: Color) -> void:
 	s.draw_polygon(PackedVector2Array([rect.position,rect.position+Vector2(rect.size.x,0),rect.end,rect.position+Vector2(0,rect.size.y)]),PackedColorArray([left,right,right,left]))
 
 func surface(s,rect: Rect2,accent: Color=LIME) -> void:
-	s.box(rect,Color("122234"),12,Color("29394a"))
+	s.box(rect,Color("10202b"),18,Color("29404c"))
 	fade(s,Rect2(rect.position+Vector2.ONE,rect.size-Vector2(2,2)),Color(accent,.08),Color(accent,0))
 	s.draw_line(rect.position+Vector2(20,0),rect.position+Vector2(74,0),accent,3,true)
 
 func background(s) -> void:
-	s.draw_rect(s.game.ui.bounds(),Color("091321"))
-	fade(s,s.game.ui.bounds(),Color("152939"),Color("080f1c"))
+	s.draw_rect(s.game.ui.bounds(),Color("081019"))
+	fade(s,s.game.ui.bounds(),Color("122630"),Color("081019"))
 	for i in range(9):
 		s.draw_line(Vector2(720+i*106,0),Vector2(100+i*106,900),Color(.5,.7,.8,.025),26,true)
 	s.draw_arc(Vector2(1160,485),460,-2.4,1.6,90,Color(.5,.8,.8,.045),2,true)
-	s.draw_rect(Rect2(0,817,1440,83),Color("0b1623"))
+	s.draw_rect(Rect2(0,817,1440,83),Color("081019"))
 	s.draw_line(Vector2(52,807),Vector2(1396,807),Color("314252"),1)
 	s.draw_texture_rect(s.Brand.CREST,Rect2(49,26,51,51),false)
 	s.text("SEFC",Vector2(112,51),25,WHITE,true)
@@ -132,11 +132,12 @@ func players(s) -> void:
 	var keys: Array=["pace","finishing","passing","control","defending","stamina"] if not p.keeper else ["reflexes","handling","positioning","passing","pace","stamina"]
 	var labels: Array=["HIZ","ŞUT","PAS","TEKNİK","SAVUNMA","FİZİK"] if not p.keeper else ["REFLEKS","TUTUŞ","POZİSYON","PAS","HIZ","FİZİK"]
 	for n in range(6):
-		var at:=Vector2(915+(n%3)*156,451+(n/3)*49)
+		var at:=Vector2(963+(n%3)*151,454+(n/3)*46)
 		var val: int=p.attributes.get(keys[n],72)
-		s.text(labels[n],at,10,MUTED); s.text(str(val),at+Vector2(101,0),19,WHITE,true)
-		s.box(Rect2(at+Vector2(0,10),Vector2(132,4)),Color("34465a"),2)
-		s.box(Rect2(at+Vector2(0,10),Vector2(132*val/100.0,4)),LIME if val>=70 else BLUE,2)
+		s.draw_arc(at,17,-PI*.8,PI*.8,28,Color("29404c"),2.4,true)
+		s.draw_arc(at,17,-PI*.8,lerpf(-PI*.8,PI*.8,val/100.0),28,LIME if val>=70 else BLUE,2.4,true)
+		s.center(str(val),at+Vector2(0,5),15,WHITE,true)
+		s.center(labels[n],at+Vector2(0,28),8,MUTED)
 	var loan: Dictionary=p.get("loan",{}); var retiring: bool=p.get("retirement_year",0)>0
 	s.text("MAAŞ  "+c.money(p.wage)+" / AY",Vector2(916,548),14,WHITE,true)
 	s.text("EMEKLİLİK  HAZİRAN "+str(p.retirement_year) if retiring else "SÖZLEŞME  HAZİRAN "+str(p.contract),Vector2(916,576),12,Color("e8bb99") if retiring else MUTED)

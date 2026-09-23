@@ -1,11 +1,11 @@
 extends Control
 const Brand = preload("res://scripts/branding.gd")
 ## Shared typography and restrained stadium-broadcast styling.
-const INK := Color("09171d")
-const PANEL := Color("10282f")
-const PAPER := Color("f4f0df")
-const GOLD := Color("e9ce87")
-const MUTE := Color("90acae")
+const INK := Color("081019")
+const PANEL := Color("10202b")
+const PAPER := Color("f4f5ed")
+const GOLD := Color("d6f77a")
+const MUTE := Color("91a7b5")
 var font := SystemFont.new()
 var bold := SystemFont.new()
 var prompt_controller
@@ -23,13 +23,13 @@ func setup_style() -> void:
 	for type in ["Button","OptionButton"]:
 		for state in ["normal","hover","pressed","focus"]:
 			var style := StyleBoxFlat.new()
-			style.bg_color=Color("19373e") if state=="normal" else Color("2d5056")
-			style.set_corner_radius_all(6)
+			style.bg_color=Color("152a35") if state=="normal" else Color("29404c")
+			style.set_corner_radius_all(10)
 			style.content_margin_left=16; style.content_margin_right=16
 			style.content_margin_top=9; style.content_margin_bottom=9
 			if state=="focus":
 				style.bg_color=Color.TRANSPARENT
-				style.set_border_width_all(2); style.border_color=PAPER
+				style.set_border_width_all(2); style.border_color=GOLD
 				style.set_expand_margin_all(3)
 			skin.set_stylebox(state,type,style)
 		skin.set_color("font_color",type,PAPER)

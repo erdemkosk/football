@@ -27,8 +27,9 @@ func apply(p) -> void:
 	var recover := smoothstep(0.53,1.0,progress)
 	var hit := smoothstep(0,0.24,progress)*(1-recover)
 	var falling: bool=p.pose=="fall"
-	var pitch := local_direction.z*hit*(1.15 if falling else 0.32)
-	var roll := -local_direction.x*hit*(1.15 if falling else 0.26)
+	var force := lerpf(.65,1.15,clampf(p.impact_strength,0,1))
+	var pitch := local_direction.z*hit*(1.15 if falling else 0.32)*force
+	var roll := -local_direction.x*hit*(1.15 if falling else 0.26)*force
 	var orientation := Basis(Vector3.UP,yaw)*Basis.from_euler(Vector3(pitch,0,roll))
 	p.rig.basis=orientation.scaled_local(p.body_scale)
 	if falling:
@@ -46,6 +47,10 @@ func apply(p) -> void:
 		var leg: Node3D=p.left_leg if i==0 else p.right_leg
 		var knee: Node3D=p.left_knee if i==0 else p.right_knee
 		var support := (i==0)==support_left
+		if not falling:
+			# The free foot catches balance after the struck shoulder recoils.
+			var catch_step := sin(smoothstep(.25,.95,progress)*PI)*force
+			leg.rotation.z+=(-1.0 if i==0 else 1.0)*catch_step*.16
 		leg.rotation.x=lerpf(leg.rotation.x,0.72 if support else -0.24,hit)
 		knee.rotation.x=lerpf(knee.rotation.x,-0.95 if support else -0.62,hit)
 		if falling and local_direction.z>0.35:

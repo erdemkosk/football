@@ -1,0 +1,14 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce RTX 3070
+
+PASS: Render interpolation is enabled without changing physics frequency
+BALL airborne=false interpolation_error=0.0 partial=90 backwards=0 shape=1.02330338954926
+PASS: Fast ball renders between physics samples without backward jitter: airborne=false
+PASS: Motion keeps a compact, stable ball silhouette
+PASS: Fast travel never draws displaced duplicate balls
+BALL airborne=true interpolation_error=0.0 partial=90 backwards=0 shape=1.0
+PASS: Fast ball renders between physics samples without backward jitter: airborne=true
+PASS: Motion keeps a compact, stable ball silhouette
+PASS: Fast travel never draws displaced duplicate balls
+PASS: Restart clears the old interpolation path
+BALL RENDER: failures=0

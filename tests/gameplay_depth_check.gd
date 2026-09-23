@@ -17,6 +17,7 @@ func setup() -> void:
 	game.start_match(false,false)
 	game.set_physics_process(false)
 	game.set_process(false)
+	game.management.formation=0; game.management.apply_formation()
 	for p in game.players:
 		p.visible=false
 		p.collision_layer=0
@@ -25,8 +26,11 @@ func setup() -> void:
 	game.players[9].visible=true
 	game.players[9].position=Vector3.ZERO
 	game.players[9].facing=Vector3.FORWARD
+	game.players[9].rig.rotation=Vector3.ZERO
+	game.players[9].body_language.enabled=false
+	game.players[9].animate(1)
 	game.kick_lock=0
-	game.ball.place(Vector3(0,0.23,-0.82))
+	game.ball.place(Vector3(0,game.ball.GROUND_HEIGHT,-0.55))
 	await physics_frame
 	await physics_frame
 func contact() -> void:
@@ -58,7 +62,8 @@ func run() -> void:
 	game.players[11].position.z=-49
 	game.players[12].position.z=-47
 	game.players[8].position=Vector3(24,0,-33)
-	game.ball.place(Vector3(24,0.23,-34))
+	game.players[8].facing=Vector3.FORWARD; game.players[8].rig.rotation=Vector3.ZERO; game.players[8].animate(1)
+	game.ball.place(Vector3(24,game.ball.GROUND_HEIGHT,-33.55))
 	await physics_frame
 	await physics_frame
 	game.dribbler=8
@@ -124,7 +129,9 @@ func run() -> void:
 		await physics_frame
 		max_side=maxf(max_side,absf(game.ball.position.x))
 		if frame==18: await capture("feint",game.players[9].position)
-	check(max_side>0.15 and game.dribbler==9,"The feint moves the physical ball sideways without losing close control")
+	# A body feint is a compact touch, distinct from the full lateral ball roll.
+	# Measure its displacement against the resized ball rather than the old rig.
+	check(max_side>game.ball.RADIUS*.5 and game.dribbler==9,"The feint moves the physical ball sideways without losing close control")
 	var cooldown: float=game.players[9].skill_cooldown
 	key(KEY_Z,true); key(KEY_Z,false)
 	check(game.players[9].skill_cooldown==cooldown,"Skill cooldown prevents repeated input spam")
@@ -191,8 +198,9 @@ func run() -> void:
 	await physics_frame
 	await physics_frame
 	game.dribbler=17
-	game.players[9].position=Vector3(0,0,-3.08)
-	check(game.duels.ball_opened(17) and game.duels.poke_reach(17)>1.5,"A sprinting carrier opens the ball for a longer standing poke")
+	game.players[9].position=Vector3(0,0,-2.30)
+	game.players[9].facing=Vector3.BACK; game.players[9].rig.rotation.y=PI; game.players[9].animate(1)
+	check(game.duels.ball_opened(17) and game.duels.poke_reach(17)>game.duels.POKE_REACH*game.players[17].WORLD_SCALE,"A sprinting carrier opens the ball for a longer standing poke at the current body scale")
 	key(KEY_G,true); key(KEY_G,false)
 	for frame in range(22):
 		game.players[9].step(1.0/120)
@@ -279,9 +287,14 @@ func run() -> void:
 	await physics_frame
 	await physics_frame
 	game.last_touch=0
-	game.goalkeeping.update(11,0.01)
+	# A hand save now includes the brief preparation before glove contact.
+	for frame in range(40):
+		game.goalkeeping.update(11,1.0/120)
+		keeper.step(1.0/120)
+		await physics_frame
+		if game.ball.held_by==keeper: break
 	check(game.goalkeeping.holding==11 and game.ball.held_by==keeper,"A slow ball at the gloves can be caught")
-	for frame in range(270):
+	for frame in range(500):
 		game.goalkeeping.update(11,1.0/120)
 		game.keeper_distribution.update(1.0/120)
 		game.ai_attack.finishing.game=game

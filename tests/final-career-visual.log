@@ -1,0 +1,29 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce RTX 3070
+
+PASS: Every controller action reachable: squad
+PASS: Every controller action reachable: market
+PASS: Every controller action reachable: tactics
+PASS: Every controller action reachable: league
+PASS: Every controller action reachable: finance
+PASS: Every controller action reachable: development
+PASS: Every controller action reachable: academy
+PASS: Every controller action reachable: relations
+PASS: Every controller action reachable: board
+PASS: Every controller action reachable: jobs
+PASS: A portrait card is reachable without a mouse
+PASS: Confirming a card changes the detailed player and actions
+PASS: Returning from a tab restores player identity and controller focus
+PASS: RT advances the roster while retaining the grid column and row
+PASS: Holding a trigger does not skip several roster pages
+PASS: LT returns to the previous roster page
+PASS: Roster filtering remains reachable from the card grid
+PASS: Paging cannot replace controls underneath an open filter
+PASS: xbox can page through the transfer catalogue
+PASS: xbox confirms the next player-card page
+PASS: playstation can page through the transfer catalogue
+PASS: playstation confirms the next player-card page
+PASS: The 3D hero stops rendering outside the hub
+PASS: The 3D hero resumes only on the hub
+PASS: The 3D hero stops when returning to gameplay
+CAREER VISUAL CHECKS: 25 / FAILURES: 0

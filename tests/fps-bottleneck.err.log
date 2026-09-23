@@ -1,0 +1,47 @@
+ERROR: Failed to open log file for writing: user://logs/godot.log
+   at: rotate_file (core/io/logger.cpp:169)
+ERROR: Can't create shader cache folder, no shader caching will happen: user://
+   at: RendererCompositorRD (servers/rendering/renderer_rd/renderer_compositor_rd.cpp:337)
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "instruction" variable because the value doesn't have a set type.
+   at: GDScript::reload (res://scripts/duel_training.gd:74)
+   GDScript backtrace (most recent call first):
+       [0] run (res://tests/fps_bottleneck.gd:17)
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+   at: GDScript::reload (res://scripts/training_drills.gd:0)
+   GDScript backtrace (most recent call first):
+       [0] run (res://tests/fps_bottleneck.gd:17)
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+   at: GDScript::reload (res://scripts/game.gd:0)
+   GDScript backtrace (most recent call first):
+       [0] run (res://tests/fps_bottleneck.gd:17)
+ERROR: Failed to load script "res://scripts/game.gd" with error "Compilation failed".
+   at: load (modules/gdscript/gdscript_resource_format.cpp:46)
+   GDScript backtrace (most recent call first):
+       [0] run (res://tests/fps_bottleneck.gd:17)
+SCRIPT ERROR: Invalid call. Nonexistent function 'new' in base 'GDScript'.
+   at: @implicit_new (res://scripts/training_drills.gd:6)
+   GDScript backtrace (most recent call first):
+       [0] @implicit_new (res://scripts/training_drills.gd:6)
+       [1] @implicit_new (res://scripts/game.gd:142)
+       [2] run (res://tests/fps_bottleneck.gd:17)
+SCRIPT ERROR: Invalid assignment of property or key 'game' with value of type 'Node3D (game.gd)' on a base object of type 'Nil'.
+   at: begin (res://scripts/training_drills.gd:21)
+   GDScript backtrace (most recent call first):
+       [0] begin (res://scripts/training_drills.gd:21)
+       [1] start_match (res://scripts/game.gd:291)
+       [2] _ready (res://scripts/game.gd:270)
+       [3] run (res://tests/fps_bottleneck.gd:17)
+SCRIPT ERROR: Invalid assignment of property or key 'game' with value of type 'Node3D (game.gd)' on a base object of type 'Nil'.
+   at: begin (res://scripts/training_drills.gd:21)
+   GDScript backtrace (most recent call first):
+       [0] begin (res://scripts/training_drills.gd:21)
+       [1] start_match (res://scripts/game.gd:291)
+       [2] prepare (res://tests/performance_benchmark.gd:11)
+       [3] run (res://tests/fps_bottleneck.gd:22)
+SCRIPT ERROR: Invalid call. Nonexistent function 'hide' in base 'RefCounted (crowd.gd)'.
+   at: run (res://tests/fps_bottleneck.gd:29)
+   GDScript backtrace (most recent call first):
+       [0] run (res://tests/fps_bottleneck.gd:29)
+       [1] measure (res://tests/fps_bottleneck.gd:15)

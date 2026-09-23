@@ -119,7 +119,7 @@ func run() -> void:
 	burst.begin(1,Vector3(0,1,50))
 	var away_ok := true
 	for flare in burst.flares:
-		if flare.life>0 and not (flare.position.x>35.0 and flare.position.z>22.0): away_ok=false
+		if flare.life>0 and not (flare.position.x<-18.0 and flare.position.z>12.0): away_ok=false
 	check(away_ok,"Away flares stay in the visiting section")
 	burst.reset()
 	check(burst.banners.all(func(banner): return not banner.node.visible) and burst.flares.all(func(flare): return flare.life<=0),"A new match clears stand celebrations")

@@ -26,10 +26,8 @@ func arrange(victim: Vector3,ball: Vector3,facing: Vector3=Vector3.FORWARD) -> v
 	game.last_kicker=-1
 func poke() -> void:
 	game.duels.standing_tackle(9)
-	poke_pose()
-	game.duels.resolve(.13)
-func poke_pose() -> void:
 	game.players[9].step(.13)
+	game.duels.resolve(.13)
 func run() -> void:
 	game=load("res://main.tscn").instantiate(); root.add_child(game)
 	await physics_frame

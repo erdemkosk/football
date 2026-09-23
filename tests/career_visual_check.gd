@@ -4,7 +4,7 @@ func run() -> void:
 	game.set_process(false); game.set_physics_process(false); game.controller.set_process(false)
 	game.controller.device=0; game.controller.using_gamepad=true; game.ball.freeze=true
 	var c=game.career; var ui=game.career_screen
-	c.save_root="/tmp/sefc-career-visual"; DirAccess.make_dir_recursive_absolute(c.save_root)
+	c.save_root="res://tests/career-visual.tmp"; DirAccess.make_dir_recursive_absolute(c.save_root)
 	c.new_career("c00",1); ui.open_entry(); await capture("new-entry")
 	ui.choose(1); await capture("new-choose")
 	ui.open_hub(); await capture("new-hub")

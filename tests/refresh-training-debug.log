@@ -1,0 +1,47 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: T opens three training choices with free practice selected
+PASS: Free practice copy describes the full team and automatic selection
+PASS: The control guide opens above the training selector
+PASS: Closing the guide restores the training selection
+PASS: B cancels the selector and restores the main menu
+PASS: Enter starts the unchanged free practice mode
+PASS: Training HUD uses elapsed session time instead of a ninety-minute clock
+PASS: The training scoreboard titles the current exercise
+PASS: Free practice fields the full team against a goalkeeper
+PASS: Free practice uses the same automatic player selection as a match
+PASS: Controller right selects the cross exercise
+PASS: Controller A starts crosses without leaking a pass or duplicate activation
+PASS: A teammate joins on the wing while control stays on the finisher
+PASS: The pass button asks the exercise partner for a cross
+PASS: The teammate performs one real kick to launch the cross
+PASS: The cross physically travels through the air
+PASS: The delivered exercise cross can be headed using the normal shot button
+PASS: Retry alternates wings and clears the previous aerial action
+PASS: Pausing freezes the delivery countdown
+PASS: The pause menu offers a controller-accessible new attempt
+PASS: View opens training choices during an exercise
+PASS: The controller switches directly to free-kick practice
+PASS: Free-kick practice waits for the user to place only the ball
+PASS: The stick moves the chosen free-kick spot
+PASS: A confirms the chosen spot
+PASS: Free-kick practice reaches the normal user-controlled set-piece state
+PASS: A legal four-player wall and a goalkeeper are set up without a full match
+PASS: The free-kick ball is physically settled at the spot
+PASS: Retry returns to spot selection and keeps the last mark
+PASS: A distant training free kick still forms a wall
+PASS: Controller X takes a physical free kick through the existing run-up and power system
+PASS: A taken free kick enters the rebound phase
+PASS: A wall block ends the attempt like an out
+PASS: A keeper save ends the attempt like an out
+PASS: Skipping a training goal returns to spot selection
+PASS: An out-of-play ball automatically returns to spot selection
+PASS: A keeper holding the ball automatically triggers the next delivery
+PASS: Cancelling the mode menu resumes the same attempt and countdown
+PASS: PlayStation navigation selects free practice with the same menu controls
+PASS: PlayStation confirm starts the selected mode
+CARD CLICK 0 focus=@Button@6211:<Button#383141295390>
+START CLICK training_setup mode=free
+PASS: Returning to the main menu cleans up all practice fixtures
+PASS: The exercise partner's automation never changes teammate authority in a match
+TRAINING MODES CHECK: 44 checks, 2 failures

@@ -1,0 +1,40 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: The right back overlaps a right-wing attack
+PASS: Forwards occupy separate near/far-post receiving spaces: ["box", "box", (-5.5, 0.0, -45.0), (7.5, 0.0, -46.0)]
+PASS: A midfielder offers the cutback behind the forwards
+PASS: Support runs stay behind the current offside line
+PASS: A real pass starts a forward give-and-go run
+PASS: Losing possession cancels attacking give-and-go runs
+PASS: Away-team overlapping runs mirror the correct fullback and attacking end
+PASS: A teammate waits for the user before returning a give-and-go pass
+PASS: The user's pass request returns an open give-and-go pass to the runner
+PASS: A defender blocking the lane prevents a forced one-two return
+PASS: Z starts a short skill move and spends stamina
+PASS: Skill cooldown prevents repeated input spam
+PASS: V releases the ball for a push into space
+PASS: The pushed ball actually travels ahead of the player
+PASS: Holding E engages ball protection
+PASS: The protecting body blocks a reach from behind
+PASS: A defender on the ball side can still challenge a shield
+PASS: E without possession jockeys sideways while facing the ball
+PASS: G makes a standing foot challenge win an exposed ball
+PASS: Standing tackle changes the real ball's momentum
+PASS: A body-first standing challenge from behind awards a foul
+PASS: A sprinting carrier opens the ball for a longer standing poke at the current body scale
+PASS: G / Xbox X nicks a sprinting player's opened ball from a step away
+PASS: A tucked jog keeps the short standing-tackle reach
+PASS: The same distant poke cannot steal a ball kept at the feet
+PASS: Q chooses the covering defender ahead of a dangerous moving ball
+PASS: Keeper shifts along the shooting angle
+PASS: Keeper comes out to close an isolated attacker
+PASS: Keeper stays on the angle instead of chasing a ball outside the area
+PASS: A reachable cross triggers a two-handed aerial claim
+PASS: Cross claim physically jumps and raises the gloves
+PASS: An aerial claim cannot save a distant cross
+PASS: The predicted cross is caught only when it reaches the airborne gloves
+PASS: A slow ball at the gloves can be caught
+PASS: Keeper releases a held ball through a real distribution
+PASS: Parry chooses the unmarked side away from the central danger area
+PASS: A whistle clears all active skill, run and keeper decisions
+GAMEPLAY DEPTH CHECK: 1 failures

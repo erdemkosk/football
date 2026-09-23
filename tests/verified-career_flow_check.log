@@ -1,0 +1,43 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Career is reachable from the main menu by controller
+PASS: Controller opens the save-slot screen and pauses the stadium
+PASS: A new career slot is reachable
+PASS: The league selector is reachable
+PASS: Changing division retains focus on its selector
+PASS: A lower-league club card is reachable
+PASS: Choosing a club preserves the controller focus
+PASS: The start-career action is reachable
+PASS: The chosen lower-league career starts from controller input
+PASS: Every enabled action is reachable on career page: hub
+PASS: Every enabled action is reachable on career page: squad
+PASS: Every enabled action is reachable on career page: tactics
+PASS: Every enabled action is reachable on career page: league
+PASS: Every enabled action is reachable on career page: market
+PASS: Every enabled action is reachable on career page: finance
+PASS: A squad row can be selected with the pad
+PASS: Selecting a player does not jump focus to the top tabs
+PASS: RB moves to the next career tab
+PASS: Formation is reachable from the tactics page
+PASS: Controller A opens the formation popup
+PASS: Controller confirms and applies a tactical option
+PASS: An empty free-agent search remains usable
+PASS: The offer action is reachable in the 3D negotiation room
+PASS: The club negotiation proceeds without prematurely transferring ownership
+PASS: The player contract offer is reachable
+PASS: Player agreement opens the signature summary
+PASS: Final signature is reachable by controller
+PASS: Controller confirmation completes the transfer exactly once
+PASS: Career match preparation enters the normal pre-match flow
+PASS: The match bench covers keeper, defence, midfield and forward roles
+PASS: The actual 3D career match simulates and advances its match clock
+PASS: Detailed live tactics freeze both match time and ball physics
+PASS: Closing detailed tactics resumes the match with the new plan
+PASS: A real substitution applies the incoming player's saved fitness
+PASS: Both departing and entering identities remain in the match record
+PASS: A career match completes after substitutions
+PASS: The outgoing player's appearance, fatigue and card persist
+PASS: The substitute is credited with the appearance and goal
+PASS: Full time returns to the same career hub with its fixture recorded
+PASS: Leaving career restores the normal stadium and quick-match catalogue
+CAREER FLOW CHECK: 40 checks, 0 failures

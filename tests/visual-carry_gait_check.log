@@ -1,0 +1,12 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce RTX 3070
+
+GAIT sprint=false height=0.34134920535143 grounded=137 touches=6 gap=0.55262070894241
+PASS: Carrying feet follow low arcs and retain alternating ground support
+PASS: Both carrying speeds retain real boot contacts and ball control
+GAIT sprint=true height=0.3701613174635 grounded=90 touches=6 gap=0.78019237518311
+PASS: Carrying feet follow low arcs and retain alternating ground support
+PASS: Both carrying speeds retain real boot contacts and ball control
+STRIDE { "jerk": 0.03074250370264, "step": 0.11415104568005, "gap": 0.82485574483871, "lost": 0 }
+PASS: Cuts and sprint changes preserve continuous toe paths
+CARRY GAIT: 5 checks, 0 failures

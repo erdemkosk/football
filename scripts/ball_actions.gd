@@ -29,6 +29,10 @@ var support_duration := .18
 var support_weight := 0.0
 var receive_direction := Vector3.ZERO
 var receive_distance := 0.0
+var receive_contact := "inside"
+var receive_error := 0.0
+var receive_reason := ""
+var receive_feedback_time := 0.0
 
 func reset(p) -> void:
 	p.receiving_facing=Vector3.ZERO
@@ -38,9 +42,12 @@ func reset(p) -> void:
 	receive_start.clear()
 	contact_pending=false; support_foot=-1; support_age=1; support_weight=0; release_age=1
 	receive_direction=Vector3.ZERO; receive_distance=0
+	receive_contact="inside"; receive_error=0; receive_reason=""
+	receive_feedback_time=0
 	p.motion_transition.reset()
 
 func update(delta: float) -> void:
+	receive_feedback_time=maxf(0,receive_feedback_time-delta)
 	control_grace=maxf(0,control_grace-delta)
 	settle_time=maxf(0,settle_time-delta)
 	contact_cooldown=maxf(0,contact_cooldown-delta)
@@ -76,6 +83,9 @@ func begin_receive(p,point: Vector3,velocity: Vector3,reach: float) -> void:
 	firmness=clampf(velocity.length()/19,0,1)
 	stretch=clampf(reach,0,1)
 	receive_speed=Vector2(p.velocity.x,p.velocity.z).length()
+	receive_contact="sole" if p.receive_style=="foot" and velocity.length()<7 and receive_speed<1.2 and point.y-p.position.y<.35 else "inside"
+	receive_error=0; receive_reason=""
+	receive_feedback_time=0
 	receive_start.clear()
 	for joint in p.kick_joints: receive_start.append(joint.quaternion)
 	receive_direction=Vector3.ZERO; receive_distance=0
@@ -99,6 +109,9 @@ func apply_receive(p) -> void:
 			knee.rotation.x=lerpf(knee.rotation.x,-1.24,hold)
 		else:
 			var target := receive_offset
+			if receive_contact=="sole":
+				target.y+=.12*hold
+				target.z+=.08*smoothstep(.15,.65,progress)
 			# A firm pass draws the boot back with the incoming ball. On the run,
 			# the toe opens into the next stride instead of stopping both legs.
 			target+=incoming.normalized()*firmness*0.19*smoothstep(0.15,0.65,progress)
@@ -111,13 +124,17 @@ func apply_receive(p) -> void:
 			p.locomotion.solve_leg(leg,knee,target-leg.position,1.0)
 			leg.quaternion=hip_start.slerp(leg.quaternion,hold)
 			knee.quaternion=knee_start.slerp(knee.quaternion,hold)
-			leg.rotation.y+=-side*0.24*hold*(1-stretch)
+			leg.rotation.y+=-side*(.05 if receive_contact=="sole" else .24)*hold*(1-stretch)
 		p.spine.rotation=p.spine.rotation.lerp(Vector3(-0.12-stretch*0.18,-side*stretch*0.15,-side*stretch*0.10),hold*0.7)
 		p.left_arm.rotation.z=lerpf(p.left_arm.rotation.z,-0.40-stretch*0.45,hold)
 		p.right_arm.rotation.z=lerpf(p.right_arm.rotation.z,0.40+stretch*0.45,hold)
 	if receive_direction.length_squared()>.1:
 		var turn: float=p.facing.signed_angle_to(receive_direction,Vector3.UP)
 		p.spine.rotation.y+=clampf(turn,-1.1,1.1)*.24*hold*smoothstep(0,.25,progress)
+	# A spilled touch opens the arms and shifts weight toward the escaping ball.
+	p.spine.rotation.z+=-side*receive_error*.13*hold
+	p.left_arm.rotation.z-=receive_error*.25*hold
+	p.right_arm.rotation.z+=receive_error*.25*hold
 	if receive_start.size()==p.kick_joints.size():
 		for i in range(p.kick_joints.size()):
 			var joint: Node3D=p.kick_joints[i]

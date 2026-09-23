@@ -21,6 +21,10 @@ func run() -> void:
  var options: Array[Dictionary]=game.ai_attack.options(20)
  options.reverse()
  check(game.ai_attack.decisions.select(20,options).kind=="shot","Reordering feasible candidates does not change the best decision")
+ setup(Vector3(0,0,36)); player(18,Vector3(6,0,8)); player(0,Vector3(1,0,43))
+ check(game.ai_attack.through_on_goal(20) and kind() in ["shot","low","chip"],"A one-on-one with the keeper is not recycled to a teammate behind")
+ setup(Vector3(2,0,28)); player(18,Vector3(-5,0,10)); player(0,Vector3(0,0,42))
+ check(kind() not in ["pass","return_pass","one_two","driven_pass"],"An isolated run at goal does not pass backwards")
  setup(); player(18,Vector3(-9,0,8)); player(4,Vector3(1.8,0,0))
  var kinds: Array=[]
  for option in game.ai_attack.options(20): kinds.append(option.kind)

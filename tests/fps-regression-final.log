@@ -1,0 +1,15 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Cached flights exactly preserve integration and isolate caller mutations
+PASS: 80 randomized support layouts preserve destinations and assignments
+PASS: 80 randomized carrying/pressure layouts preserve chosen direction
+SUPPORT old_us=1258.875 new_us=513.3375
+CARRY old_us=250.8875 new_us=54.85
+PASS: Off-ball running accumulates unseen pose work
+PASS: Rendering consumes the accumulated time without dropping animation time
+PASS: Replay snapshots flush pending poses before recording joints
+PASS: A kick bypasses deferred rendering for physical contact
+PASS: Shielding and physical contests retain synchronous poses
+PASS: Reset/identity poses discard pending old-match time
+PASS: Physics frequency and render resolution remain unchanged
+FPS REGRESSION: 10 checks, 0 failures

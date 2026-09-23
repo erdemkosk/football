@@ -1,0 +1,20 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+preparation: 666.369166666667 us (1200 samples)
+ai: 1057.09416666667 us (1200 samples)
+contact-preparation: 100.4525 us (1200 samples)
+body-language: 149.43 us (1200 samples)
+players-step: 2978.5175 us (1200 samples)
+resolve: 22.0741666666667 us (1200 samples)
+contacts: 122.079166666667 us (1200 samples)
+replay-boundaries: 5.3225 us (1200 samples)
+player timers-weather: 9.63204545454546 us
+player steering: 5.84132575757576 us
+player body-physics: 38.8301515151515 us
+player facing-locomotion: 13.8072727272727 us
+player body-language: 4.77943181818182 us
+player ball-actions: 4.56507575757576 us
+player animation: 47.3882954545455 us
+player footprints: 5.73287878787879 us

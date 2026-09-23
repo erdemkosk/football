@@ -1,0 +1,16 @@
+ERROR: Failed to open log file for writing: user://logs/godot.log
+   at: rotate_file (core/io/logger.cpp:169)
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+ERROR: FAIL: Mouse selection and the start button open the selected exercise
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/training_modes_check.gd:12)
+       [1] run (res://tests/training_modes_check.gd:147)
+       [2] tick (res://tests/training_modes_check.gd:29)
+ERROR: FAIL: Enter on Back returns to the current free kick without restarting it
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/training_modes_check.gd:12)
+       [1] run (res://tests/training_modes_check.gd:149)
+       [2] tick (res://tests/training_modes_check.gd:29)

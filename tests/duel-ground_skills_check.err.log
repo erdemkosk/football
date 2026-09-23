@@ -1,0 +1,5 @@
+SCRIPT ERROR: Invalid access to property or key '9' on a base object of type 'Dictionary'.
+   at: run (res://tests/ground_skills_check.gd:99)
+   GDScript backtrace (most recent call first):
+       [0] run (res://tests/ground_skills_check.gd:99)
+       [1] setup (res://tests/ground_skills_check.gd:18)

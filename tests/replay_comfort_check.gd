@@ -80,7 +80,12 @@ func run() -> void:
 		check(game.replay.exit_left>0 and game.replay.transition_alpha()>.99,"Return to live play is covered by the exit fade")
 		game.replay.update_outro(.3); game.hud.replay_frame.sync()
 		check(not game.hud.replay_frame.visible,"Exit overlay clears after the short transition")
-	record_goal(); game.replay.begin(); game.replay.update(1.3)
+	record_goal(); game.replay.begin()
+	game.replay.age=game.replay.goal_at
+	check(is_equal_approx(game.replay.playback_speed(),.38),"The goal-line crossing receives the gentle slow-motion peak")
+	game.replay.age=game.replay.goal_at-.6
+	check(is_equal_approx(game.replay.playback_speed(),.8),"Normal replay speed is retained before the goal approach")
+	game.replay.age=0; game.replay.update(1.3)
 	var age: float=game.replay.age; var phase: float=game.replay.cut_transition
 	game.before_pause="replay"; game.state="paused"; game.simulate_match(.2); game.hud.replay_frame.sync()
 	check(game.replay.age==age and game.replay.cut_transition==phase and not game.hud.replay_frame.visible,"Pausing freezes replay and its transition without covering the pause UI")

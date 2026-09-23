@@ -123,16 +123,16 @@ func rows() -> Array:
 	if page==4:
 		return [
 			advanced_entry("Roulette","Topu saklayarak tam dönüş. Analog yönleri oyuncunun baktığı yöne göredir.","RS ↓","1"),
-			advanced_entry("Ball roll","Tabanla yana taşı. Sağ / sol yön hangi ayağın kullanılacağını seçer.","RS ← / →","2 + YÖN"),
+			advanced_entry("Yana çek","Uzanan müdahale ayağından kaç. Rakip beklerse otomatik geçemezsin.","RS ← / →","2 + YÖN"),
+			advanced_entry("Dur–kalk","Topu durdur, rakip akarken hızlan. Hazırlıkta pasla vazgeçebilirsin.","RB + RS ↓","9"),
+			advanced_entry("Aç ve dolaş","Topu seçtiğin yana aç, rakibin diğer yanından koş. Top serbesttir.","RB + RS ← / →","0 + YÖN"),
 			advanced_entry("Elastico","Dışa göster, içe çek. Sağ analogu hızla bir yandan diğerine çevir.","RS → ←","3 + YÖN"),
 			advanced_entry("Scoop turn","Topu hafif kaldırarak çapraz dön. Düşük hızda daha kontrollüdür.","RS ↑","4 + YÖN"),
 			advanced_entry("Rainbow","Topuğuyla topu arkadan üzerinden atar.","LT + RS ↓","6"),
 			advanced_entry("Heel flick","Topukla topu arkaya bırakır; savunmayı keser.","LT + RS ↑","7"),
 			advanced_entry("Flick up","Topu önünde havaya kaldırır; vole veya kafa için.","LT + RS ← / →","8"),
 			entry("Kısa vücut çalımı","Yakın kontrolde kısa aldatma; koşuya devam edebilirsin.",binding(KEY_Z)),
-			entry("Topu ileri aç","Topu öne it; boş alanda arkasından hızlan.",binding(KEY_V)),
-			advanced_entry("Bağlama göre sağ analog","Top ayağında: çalım. Savunmada: oyuncu seç. Şut hazırlarken: nişan.","RS","YÖN TUŞLARI"),
-			advanced_entry("Hareket sınırı","Çalımlar kondisyon harcar; kısa toparlanma ister. Rakip topu alabilir.","LS","↑ ↓ ← →")]
+			entry("Topu ileri aç","Topu öne it; boş alanda arkasından hızlan. Rakip topu alabilir.",binding(KEY_V))]
 	if page==5:
 		return [
 			advanced_entry("Alçak sert şut","Hazırla ve bırak; güçlü, düşük yükselişli vuruş.","RB + "+binding(KEY_D),"CTRL + "+binding(KEY_D)),

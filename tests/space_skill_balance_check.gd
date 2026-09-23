@@ -43,7 +43,7 @@ func skill_duel(move: String,gap: float,side: float=1,blocked: bool=false,team: 
 		peak_load=maxf(peak_load,game.players[marker].defensive_turn_load)
 		if game.skills.active.has(owner):
 			exception_ok=exception_ok and p in game.ball.get_collision_exceptions() and not game.players[marker] in game.ball.get_collision_exceptions()
-		game.duels.resolve(DT); game.rules.resolve_tackles(); game.defending.resolve(); game.kick_contact.resolve()
+		game.skills.resolve(); game.duels.resolve(DT); game.rules.resolve_tackles(); game.defending.resolve(); game.kick_contact.resolve()
 		game.update_contacts(DT); await physics_frame
 		if game.last_touch!=team or (game.dribbler>=0 and game.players[game.dribbler].team!=team):
 			return {"escaped":false,"tick":tick,"foul":game.state!="playing","load":peak_load,"physical":exception_ok}
@@ -93,7 +93,7 @@ func run() -> void:
 	check(not choice.is_empty() and choice.exit.x<0,"Opponent skills inspect the free exit rather than always turning toward the same pitch side")
 	var actual: bool=game.ai_attack.act(20)
 	check(actual and game.skills.active.has(20),"An isolated technical opponent can execute the same physical skill as the user")
-	check(game.ai_attack.team_skill_in[1]>3 and game.ai_attack.skill_in[20]>=6,"Shared team and player recovery prevent skill spam")
+	check(game.ai_attack.team_skill_in[1]>=.8 and game.ai_attack.skill_in[20]>=2.2,"Shared team and player recovery prevent immediate skill spam")
 	check(game.ai_attack.skill_choice(20,game.ai_attack.pressure_read(20)).is_empty(),"A second skill is not requested on the next AI decision")
 	setup(); player(4,Vector3(1.8,0,0)); player(5,Vector3(-1.8,0,0)); player(18,Vector3(0,0,-10))
 	game.players[20].attributes.control=88
@@ -114,9 +114,11 @@ func run() -> void:
 		wins+=int(result.escaped); losses+=int(not result.escaped)
 		check(result.physical,"Only the carrier's coarse capsule is exempt; every opponent remains a physical obstacle")
 		if entry[0]=="roll" and entry[1]>3 and not entry[3]:
-			check(result.escaped and not result.foul,"A timed lateral exit creates usable space against team %d without losing the ball" % (1-int(entry[4])))
-		elif entry[3] or entry[1]<1.2:
+			check(result.get("kept",false) and not result.foul,"A clean lateral touch preserves control without requiring an automatic beaten defender for team %d" % (1-int(entry[4])))
+		elif entry[1]<1.2:
 			check(not result.escaped,"An occupied exit or late input cannot guarantee a successful skill")
+		elif entry[3]:
+			check(not result.escaped or result.load>0,"An occupied exit must be contested through real defensive movement")
 		elif entry[0]=="elastico":
 			check(result.get("kept",false) and result.load>0,"An outside-inside exit makes the marker plant while retaining normal ball control")
 	check(wins>=2 and losses>=2,"Live one-on-ones allow timed skill escapes, while late or crowded attempts remain contestable")

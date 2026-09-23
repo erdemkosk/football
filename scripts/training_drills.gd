@@ -1,8 +1,9 @@
 extends RefCounted
 const P = preload("res://scripts/pitch_dimensions.gd")
 ## Script only the exercise partner; every delivery, shot and save uses live physics.
-const MODES := ["free","cross","free_kick"]
-const TITLES := ["SERBEST ANTRENMAN","ORTA & KAFA","SERBEST VURUŞ"]
+const MODES := ["free","cross","free_kick","duel"]
+const TITLES := ["SERBEST ANTRENMAN","ORTA & KAFA","SERBEST VURUŞ","BİRE BİR ATÖLYESİ"]
+var duel := preload("res://scripts/duel_training.gd").new()
 var game
 var mode := "free"
 var attempt := 0
@@ -17,6 +18,7 @@ var place_point := Vector3(0,0,-26)
 var wall: Array[int] = []
 
 func begin(value: String) -> void:
+	duel.game=game; duel.reset()
 	mode=value if value in MODES else "free"
 	attempt=0; phase=""; age=0; held_age=0; finish_wait=-1; wall.clear()
 	place_point=Vector3(0,0,-26)
@@ -37,6 +39,7 @@ func station_for(p) -> Vector3:
 
 func setup() -> void:
 	attempt+=1; age=0; held_age=0; finish_wait=-1; wall.clear()
+	if mode=="duel": duel.setup(); return
 	phase="free" if mode=="free" else "waiting"
 	if mode=="free":
 		for i in range(game.players.size()):
@@ -79,9 +82,11 @@ func setup() -> void:
 	game.match_camera.snap=true
 
 func manages(index: int) -> bool:
+	if game.training and mode=="duel": return index==14 and (duel.stage<2 or duel.wait>=0)
 	return game.training and ((mode=="cross" and index==feeder) or (mode=="free_kick" and index in wall))
 
 func actor(index: int) -> void:
+	if mode=="duel": duel.actor(index); return
 	var p=game.players[index]
 	p.desired=Vector3.ZERO; p.sprinting=false
 	if index==feeder and mode=="cross":
@@ -117,6 +122,8 @@ func deliver_cross() -> bool:
 	return true
 
 func handle(event: InputEvent) -> bool:
+	if mode=="duel" and game.state=="playing" and event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_F3:
+		duel.next_stage(); return true
 	if not placing() or game.state=="paused": return false
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode in [KEY_S,KEY_ENTER]:
 		confirm_place()
@@ -164,6 +171,9 @@ func confirm_place() -> void:
 
 func update(delta: float) -> void:
 	if not game.training or mode=="free" or game.state not in ["playing","restart","set_piece"]: return
+	if mode=="duel":
+		if game.state=="playing": duel.update(delta)
+		return
 	if mode=="free_kick" and phase=="place":
 		steer_place(delta)
 		return

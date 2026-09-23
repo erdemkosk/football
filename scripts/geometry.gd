@@ -1,4 +1,17 @@
 extends RefCounted
+static var rigid_meshes: Dictionary={}
+
+static func combine_rigid(parent: Node3D,parts: Array,cache_key: String) -> MeshInstance3D:
+	# Same vertices, normals, UVs and material; fewer moving render instances.
+	if not rigid_meshes.has(cache_key):
+		var builder:=SurfaceTool.new()
+		builder.begin(Mesh.PRIMITIVE_TRIANGLES)
+		for part in parts: builder.append_from(part.mesh,0,part.transform)
+		rigid_meshes[cache_key]=builder.commit()
+	var result:=mesh(parent,rigid_meshes[cache_key],parts[0].material_override,Vector3.ZERO)
+	result.name="Rigid_"+cache_key
+	for part in parts: part.free()
+	return result
 
 static func material(color: Color, roughness: float = 0.85) -> StandardMaterial3D:
 	var m = StandardMaterial3D.new()

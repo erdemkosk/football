@@ -1,0 +1,6 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Duel training fields only the learner and defender
+PASS: Training keeps control on the learner and starts with a stationary defender
+PASS: Starts roll on side -1
+PASS: Preparation cannot move the ball before contact: roll

@@ -26,6 +26,8 @@ func run() -> void:
 	game.ball.freeze=true
 	game.hud.visible=false
 	crowd=game.stadium.crowd
+	check(crowd.home_only and crowd.session_fill<0.15 and crowd.material.get_shader_parameter("occupancy")<0.15,"Training keeps a sparse home terrace")
+	check(crowd.material.get_shader_parameter("home_only") and game.stadium.supporter_banners.any(func(banner): return banner.away and not banner.label.get_parent().visible),"Training hides the visiting stand and its banners")
 	game.camera.position=Vector3(23,14,-24)
 	game.camera.look_at(Vector3(44,3.8,-24))
 	game.camera.size=21
@@ -37,9 +39,21 @@ func run() -> void:
 	check(reach>0.7,"Seated fans have a real standing, raised-arm target pose")
 	check(crowd.fans.size()>3000,"The full stadium uses instanced animated supporters")
 	var away_count := 0
+	var high_deck := 0
 	for fan in crowd.fans:
 		if fan.phase.g>=0.5: away_count+=1
-	check(away_count>0 and away_count<crowd.fans.size()/2,"Away supporters occupy their own minority section")
+		if fan.transform.origin.y>12.15: high_deck+=1
+	var away_on_far := true
+	for fan in crowd.fans:
+		if fan.phase.g>=0.5 and fan.transform.origin.x>-10.0: away_on_far=false
+	check(away_count>80 and away_count<crowd.fans.size()/2 and away_on_far,"Away supporters occupy a visible block on the opposite stand")
+	check(high_deck>200,"The upper tier is filled beyond a thin six-row band")
+	var home_seat: Color=crowd.seat_tint({"away":false,"row":2,"section":0,"speck":0.2},game.clubs.kit(0),game.clubs.kit(1))
+	var away_seat: Color=crowd.seat_tint({"away":true,"row":2,"section":0,"speck":0.2},game.clubs.kit(0),game.clubs.kit(1))
+	var stripe_seat: Color=crowd.seat_tint({"away":false,"row":0,"section":0,"speck":0.2},game.clubs.kit(0),game.clubs.kit(1))
+	check(Vector3(home_seat.r,home_seat.g,home_seat.b).distance_to(Vector3(away_seat.r,away_seat.g,away_seat.b))>0.08,"Home and away terraces use different seat colors")
+	check(Vector3(stripe_seat.r,stripe_seat.g,stripe_seat.b).distance_to(Vector3(home_seat.r,home_seat.g,home_seat.b))>0.02,"Seat rows form terrace stripes instead of a flat stone slab")
+	check(crowd.chair_colors.size()==crowd.chairs.size() and crowd.seat_nodes.size()>0,"Club colours reach the instanced seat batches")
 	await capture("crowd-calm")
 	if visual:
 		advance(0.35)
@@ -48,6 +62,7 @@ func run() -> void:
 		await capture("crowd-idle-chant")
 	advance(1,Vector3(0,0,-44),Vector3(0,0,-22),true)
 	check(crowd.danger>0.7,"Support builds during a dangerous attacking position")
+	check(crowd.surge>0.45 and crowd.material.get_shader_parameter("surge")>0.4,"A home attack stands the home terrace across the bowl")
 	crowd.reset()
 	advance(1.2,Vector3(28,0,-44),Vector3.ZERO,true)
 	var near_end: float=crowd.follow_weight(fposmod(atan2(-44.0/60.0,28.0/45.0)/TAU,1.0))
@@ -62,6 +77,7 @@ func run() -> void:
 	check(crowd.event_kind=="shot","An actual shot triggers the crowd reaction")
 	game.goal(0)
 	check(crowd.event_kind=="goal" and crowd.wave_age<0 and crowd.wave_cooldown>0,"A home goal triggers celebration and queues the Mexican wave")
+	check(crowd.hush_team==1,"A home goal hushes the away stand instead of the home terrace")
 	advance(1.1)
 	await capture("crowd-celebration")
 	crowd.react("shot",0,Vector3.ZERO)
@@ -69,6 +85,7 @@ func run() -> void:
 	crowd.reset()
 	game.goal(1)
 	check(crowd.material.get_shader_parameter("event_team")==1.0 and crowd.wave_age==100,"Away goals celebrate only their supporters without starting a home wave")
+	check(crowd.hush_team==0,"An away goal hushes the home stands while the visiting end stays up")
 	crowd.reset()
 	crowd.start_wave(Vector3(44,0,-42),0)
 	advance(0.45)
@@ -85,6 +102,9 @@ func run() -> void:
 	crowd.reset()
 	advance(4,Vector3(0,0,-45),Vector3(0,0,-8),true,true)
 	check(crowd.wave_cooldown>0,"Late pressure in a close match can start a support wave")
+	game.start_match(false,false)
+	check(not crowd.home_only and is_equal_approx(crowd.session_fill,1.0) and not crowd.material.get_shader_parameter("home_only"),"A match restores the full two-stand crowd")
+	check(game.stadium.supporter_banners.all(func(banner): return banner.label.get_parent().visible),"Match day shows both terrace banners")
 	game.start_match(true)
 	check(crowd.event_kind=="" and crowd.danger==0 and crowd.wave_age==100 and crowd.follow==0,"A fresh match resets crowd reactions")
 	crowd.react("save",0,Vector3(0,1,47))

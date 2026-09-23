@@ -27,7 +27,15 @@ void fragment() {
 	float zone=garment==0 ? smoothstep(.40,.93,UV.y) : (garment==1 ? .4+.6*UV.y : .85);
 	float dirt=smoothstep(1.0-soil*.95,1.04,patch)*zone;
 	cloth=mix(cloth,vec3(.22,.145,.072),dirt*.88);
-	cloth*=1.0-wetness*.065;
+	// Filter the weave out at match distance to avoid crawling/moiré on shirts.
+	vec2 weave_uv=UV*vec2(150.0,110.0);
+	float weave_filter=1.0-smoothstep(.18,.6,max(length(dFdx(weave_uv)),length(dFdy(weave_uv))));
+	float weave=sin(weave_uv.x*6.283185)*sin(weave_uv.y*6.283185)*weave_filter;
+	float fabric=garment<3 ? 1.0 : 0.0;
+	cloth*=1.0+weave*.045*fabric;
+	float damp=wetness*(.75+.25*patch);
+	cloth*=1.0-damp*.11;
 	ALBEDO = palette_color(cloth);
-	ROUGHNESS = mix(.88,.58,wetness);
+	ROUGHNESS = clamp(mix(.88,.54,damp)+weave*.045*fabric,.45,.95);
+	SPECULAR = mix(.22,.40,damp);
 }

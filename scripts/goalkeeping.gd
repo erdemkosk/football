@@ -218,6 +218,7 @@ func update(index: int,delta: float) -> Vector3:
 	elif in_box and game.last_touch!=p.team and ball.y>=.65 and ball.y<1.95 and bv.length()<19 and game.flat_distance(p.position,ball)<1.65 and not reacting:
 		p.keeper_motion.start(p,"catch",ball+bv*.10)
 	if in_box and p.can_save(ball) and p.touch_cooldown<=0 and game.kick_lock<=0 and (not reacting or bv.length()<8):
+		var was_on_target: bool=game.reactions.save_on_target(index,bv)
 		var opponent: bool=game.last_touch!=p.team or rebound
 		var glove_distance: float=minf(p.left_hand.global_position.distance_to(ball),p.right_hand.global_position.distance_to(ball))
 		var spill := handling_error(index,read)
@@ -226,7 +227,7 @@ func update(index: int,delta: float) -> Vector3:
 			if not game.rules.before_touch(index,false): return target
 			game.saves[p.team]+=1
 			game.stadium.react("save",p.team,ball)
-			game.reactions.saved(index)
+			game.reactions.saved(index,was_on_target)
 			game.dribbler=-1
 			game.last_touch=p.team
 			game.last_kicker=index
@@ -243,7 +244,7 @@ func update(index: int,delta: float) -> Vector3:
 			if not game.strike(index,loose_parry(index) if spill else safe_parry(index),0,true): return target
 			game.saves[p.team]+=1
 			game.stadium.react("save",p.team,ball)
-			game.reactions.saved(index)
+			game.reactions.saved(index,was_on_target)
 			p.keeper_motion.saved(p)
 			game.hint("KALECİDEN SEKTİ · TOP OYUNDA" if spill else "KALECİ TOPU YANA ÇELDİ")
 		elif bv.length()<9:

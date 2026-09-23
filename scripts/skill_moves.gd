@@ -1,44 +1,70 @@
 extends RefCounted
-const NAMES := {"roulette":"ROULETTE", "roll":"BALL ROLL", "elastico":"ELASTICO", "scoop":"SCOOP TURN", "rainbow":"RAINBOW", "heel":"HEEL FLICK", "flick":"FLICK UP"}
+const NAMES := {"roulette":"ROULETTE", "roll":"YANA ÇEK", "stop_go":"DUR–KALK", "knock_around":"AÇ VE DOLAŞ", "elastico":"ELASTICO", "scoop":"SCOOP TURN", "rainbow":"RAINBOW", "heel":"HEEL FLICK", "flick":"FLICK UP"}
+const Ground = preload("res://scripts/ground_skills.gd")
 var game
 var active: Dictionary = {}
+var notice := ""
+var notice_time := 0.0
+
+func explain(index: int,message: String) -> void:
+	if not game.is_user_player(index): return
+	notice=message; notice_time=1.6
+
+func interrupt_preparation(index: int) -> bool:
+	if not active.has(index): return true
+	var s: Dictionary=active[index]
+	if s.kind not in Ground.KINDS or s.age>=Ground.PREPARE: return false
+	cancel(index); game.players[index].skill_cooldown=.12
+	return true
 
 func cancel(index: int) -> void:
-	game.players[index].skill_move.clear()
+	game.players[index].skill_move={}
 	game.players[index].dribble_motion.release_collision()
 	active.erase(index)
 
 func reset() -> void:
 	for i in active.keys(): cancel(i)
+	notice=""; notice_time=0
 
 func start(index: int,kind: String,side: float=1) -> bool:
 	var p=game.players[index]
-	if not NAMES.has(kind) or not game.has_ball_control(index) or p.keeper or p.action_timer>0 or p.skill_cooldown>0 or p.energy<.07 or game.ball.position.y>.6: return false
+	if not NAMES.has(kind) or p.keeper: return false
+	var reason := ""
+	if active.has(index) or p.action_timer>0 or p.skill_cooldown>0: reason="ÖNCE DENGENİ TOPLA"
+	elif p.energy<.07: reason="KONDİSYON DÜŞÜK"
+	elif game.ball.position.y>.6: reason="TOPU ÖNCE YERE İNDİR"
+	elif not game.has_ball_control(index): reason="TOP ÖNCE AYAĞINA GELSİN"
+	if reason!="": explain(index,reason); return false
 	if not game.rules.before_touch(index): return false
 	if game.is_user_player(index):
 		game.cancel_pass(); game.charging=false; game.heading.cancel(index); game.volleys.cancel(index)
-	var duration: float={"roulette":.66,"roll":.43,"elastico":.46,"scoop":.46,"rainbow":.82,"heel":.40,"flick":.44}[kind]
+	var duration: float={"roulette":.66,"roll":.60,"stop_go":.78,"knock_around":1.05,"elastico":.46,"scoop":.46,"rainbow":.82,"heel":.40,"flick":.44}[kind]
 	var direction: Vector3=p.facing.normalized()
 	var state := {"kind":kind,"age":0.0,"duration":duration,"side":side,"direction":direction,"lifted":false,"yaw":p.rig.rotation.y}
 	active[index]=state; p.skill_move=state
+	if kind in Ground.KINDS: Ground.setup(game,p,state)
 	p.skill_cooldown=duration+.40; p.energy-=.035 if kind=="roll" else (.07 if kind=="rainbow" else .055)
 	p.recovery_delay=maxf(p.recovery_delay,duration+.35)
 	p.receive_timer=0; p.kick_timer=0; p.feint_time=0
 	game.dribbler=index; game.carrier=index; game.last_kicker=index; game.last_touch=p.team
 	p.dribble_motion.control_collision(p,game.ball)
-	if game.is_user_player(index): game.hint(NAMES[kind])
+	explain(index,{"roll":"YANA ÇEK · UZANAN AYAKTAN KAÇ", "stop_go":"DUR–KALK · RAKİBİN HIZINI KULLAN", "knock_around":"AÇ VE DOLAŞ · TOPA YETİŞ"}.get(kind,NAMES[kind]))
 	return true
 
 func update(delta: float) -> void:
 	if game.state!="playing": reset(); return
+	notice_time=maxf(0,notice_time-delta)
 	for i in active.keys():
 		var p=game.players[i]
 		var s: Dictionary=active[i]
 		s.age+=delta
-		var reach := 2.6 if s.kind=="rainbow" or s.kind=="flick" else 1.8
+		var reach := 5.5 if s.kind=="knock_around" else (2.6 if s.kind=="rainbow" or s.kind=="flick" else 1.8)
 		var lost: bool=(game.dribbler>=0 and game.dribbler!=i) or (game.carrier>=0 and game.carrier!=i)
 		if lost or not p.visible or p.dismissed or p.action_timer>0 or game.ball.held_by!=null or game.flat_distance(p.position,game.ball.position)>reach or (game.last_kicker!=i and game.last_touch!=p.team):
+			if s.kind in Ground.KINDS: explain(i,"TOP AÇILDI · YENİDEN KAZAN")
 			cancel(i); continue
+		if s.kind in Ground.KINDS and s.contacts==0 and s.age>Ground.CONTACT_END:
+			explain(i,"TOPA UZAK KALDIN"); cancel(i); continue
 		if s.age>=s.duration:
 			var ground_move: bool=not s.lifted
 			cancel(i)
@@ -48,6 +74,9 @@ func update(delta: float) -> void:
 				p.ball_actions.control_grace=0
 				p.dribble_motion.contacts+=1
 				p.dribble_motion.previous_direction=p.facing
+			continue
+		if s.kind in Ground.KINDS:
+			Ground.steer(game,p,s)
 			continue
 		var t: float=s.age/s.duration
 		var forward: Vector3=s.direction
@@ -93,9 +122,16 @@ func update(delta: float) -> void:
 		else: p.desired*=.72 if s.kind=="rainbow" else .88
 		p.sprinting=false
 
+func resolve() -> void:
+	for index in active.keys():
+		var s: Dictionary=active[index]
+		if s.kind in Ground.KINDS: Ground.resolve(game,index,s)
+
 static func exit_direction(kind: String,forward: Vector3,side: float) -> Vector3:
 	var right := forward.cross(Vector3.UP)*side
 	match kind:
+		"knock_around": return (forward*.65-right*.8).normalized()
+		"stop_go": return forward
 		"roll": return (forward*.45+right*.9).normalized()
 		"roulette": return (forward*.8+right*.65).normalized()
 		"elastico": return (forward*.65-right*.9).normalized()
@@ -105,6 +141,8 @@ static func exit_direction(kind: String,forward: Vector3,side: float) -> Vector3
 static func pose(p) -> void:
 	if p.skill_move.is_empty() or p.action_timer>0: return
 	var s: Dictionary=p.skill_move
+	if s.kind in Ground.KINDS:
+		Ground.pose(p,s); return
 	var t: float=s.age/s.duration
 	var weight := sin(PI*t)
 	var side: float=s.side

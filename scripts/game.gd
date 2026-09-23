@@ -99,6 +99,7 @@ var ending_reason := ""
 var before_pause := "playing"
 var score := [0,0]
 var shots := [0,0]
+var shots_on_target := [0,0]
 var saves := [0,0]
 var passes := [0,0]
 var possession := [0.0,0.0]
@@ -171,6 +172,7 @@ func team_name(side: int) -> String:
 	return clubs.data(side).name
 
 func _ready() -> void:
+	physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_OFF
 	training_drills.game=self
 	menu_match.game=self
 	team_control.game=self
@@ -313,9 +315,11 @@ func start_match(practice: bool = false,show_ceremony: bool = true,background: b
 	weather.reset_match()
 	ending_reason=""
 	stadium.crowd.reset()
+	stadium.set_session(practice)
 	stadium.sidelines.reset()
 	score = [0,0]
 	shots = [0,0]
+	shots_on_target = [0,0]
 	saves = [0,0]
 	passes = [0,0]
 	possession = [0.0,0.0]
@@ -409,6 +413,7 @@ func reset_positions(team: int) -> void:
 	for p in players:
 		if p.team!=team and flat_distance(p.position,Vector3.ZERO)<9.15:
 			p.position=p.position.normalized()*9.3
+		p.reset_physics_interpolation()
 	ball.place(Vector3(0,Ball.GROUND_HEIGHT,0))
 	carrier = -1
 	kick_lock = 0.3
@@ -649,7 +654,14 @@ func return_menu() -> void:
 	clubs.apply()
 	start_match(false,false,true)
 
+var render_running_poses := true
+
+func flush_running_poses() -> void:
+	for p in players: p.flush_running_pose()
+	for actor in referees.actors: actor.flush_running_pose()
+
 func _process(delta: float) -> void:
+	flush_running_poses()
 	if state=="finished" and career.in_match: career.finish_match()
 	toast_timer = maxf(0,toast_timer-delta)
 	if is_instance_valid(hud) and is_instance_valid(hud.toast_overlay): hud.toast_overlay.queue_redraw()
@@ -696,8 +708,9 @@ func update_camera(delta: float) -> void:
 		return
 	if send_off.update_camera(delta): return
 	if broadcast.camera(): return
-	var focus: Vector3 = ball.position
-	if state=="playing": focus = ball.position.lerp(players[controlled].position,0.26)
+	var rendered_ball: Vector3=ball.get_global_transform_interpolated().origin if delta>0 else ball.position
+	var focus: Vector3 = rendered_ball
+	if state=="playing": focus = rendered_ball.lerp(players[controlled].get_global_transform_interpolated().origin if delta>0 else players[controlled].position,0.26)
 	var kick_view := (not training_drills.placing()) and state in ["restart","set_piece"] and restart_type in ["SERBEST VURUŞ","ENDİREKT VURUŞ","PENALTI","KORNER"] and set_pieces.recovery.phase in ["arrange","ready"]
 	if kick_view:
 		var goal = Vector3(0,0,attack_sign(restart_team)*50)
@@ -737,6 +750,9 @@ func _physics_process(delta: float) -> void:
 	else: simulate_match(delta)
 
 func simulate_match(delta: float) -> void:
+	if state!="playing":
+		flush_running_poses()
+		for p in players: p.defer_running_pose=false
 	for p in players: p.receiving_facing=Vector3.ZERO
 	if state in ["shootout","trophy"]: finale.update(delta); return
 	broadcast.update(delta)
@@ -753,6 +769,7 @@ func simulate_match(delta: float) -> void:
 		weather.update(delta)
 	if state not in ["paused","replay"]:
 		feedback.update(delta)
+		for actor in referees.actors: actor.defer_running_pose=render_running_poses and state=="playing"
 		referees.update(delta)
 	management.update_clock(delta)
 	if send_off.update(delta): return
@@ -813,9 +830,13 @@ func simulate_match(delta: float) -> void:
 			var p = players[i]
 			p.chosen = is_user_player(i)
 			if p.visible:
+				# Keep contact poses at 120 Hz; off-ball running is evaluated at
+				# the next draw (or replay sample), never several times unseen.
+				p.defer_running_pose=render_running_poses and not p.chosen and p.position.distance_squared_to(ball.position)>64.0
 				p.step(delta)
-				p.position.x = clampf(p.position.x,-(P.HALF_WIDTH+2),(P.HALF_WIDTH+2))
-				p.position.z = clampf(p.position.z,-51,51)
+				var bounded: Vector3=p.position.clamp(Vector3(-(P.HALF_WIDTH+2),-INF,-51),Vector3(P.HALF_WIDTH+2,INF,51))
+				if bounded!=p.position: p.position=bounded
+		skills.resolve()
 		duels.resolve(delta)
 		if state!="playing": return
 		rules.resolve_tackles()
@@ -833,6 +854,7 @@ func simulate_match(delta: float) -> void:
 		if not menu_match.running: replay.capture(delta)
 		check_boundaries()
 		previous_ball = ball.position
+		feedback.watch_woodwork()
 	elif state=="restart":
 		if not training:
 			set_pieces.recovery.step(delta)
@@ -972,7 +994,9 @@ func arm_aerial_shot() -> void:
 	if aerial_shot_active(controlled): return
 	# A settled, reachable contact keeps its exact timing. Running and offset
 	# deliveries use approach assistance; volley poses no longer brake the run.
-	if heading.can_request(controlled): heading.arm(controlled,shot_direction,charge)
+	var contextual: Dictionary=volleys.window(controlled,shot_direction)
+	if contextual.get("kind","")=="bicycle": volleys.arm(controlled,shot_direction,charge)
+	elif heading.can_request(controlled): heading.arm(controlled,shot_direction,charge)
 	elif volleys.can_request(controlled) and (players[controlled].velocity*Vector3(1,0,1)).length()<1:
 		volleys.arm(controlled,shot_direction,charge)
 	elif not aerial_assist.arm(controlled,shot_direction,charge) and volleys.can_request(controlled):
@@ -1255,6 +1279,9 @@ func cancel_pass() -> void:
 
 func begin_pass(through: bool=false,lob: bool=false,driven: bool=false) -> void:
 	if state!="playing" or (pass_charging and pass_through==through and pass_lob==lob and pass_driven==driven): return
+	if not skills.interrupt_preparation(controlled):
+		skills.explain(controlled,"TEMASI BİTİR · SONRA PAS VER")
+		return
 	if pass_charging: cancel_pass()
 	if not has_ball_control(controlled):
 		call_for_pass(false,through)
@@ -1709,6 +1736,7 @@ func check_boundaries() -> void:
 	elif training and current.length()>200: reset_practice()
 
 func goal(team: int) -> void:
+	reactions.on_target(team)
 	career.capture_goal(team,last_kicker)
 	support.reset()
 	duels.reset()

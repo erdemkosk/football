@@ -70,6 +70,7 @@ func build_studio(data: Dictionary) -> void:
 	model.number=data.get("appearance_number",data.shirt)
 	model.keeper=data.keeper
 	world.add_child(model)
+	model.physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_OFF
 	model.apply_identity(data)
 	model.apply_kit(data.kit)
 	model.collision_layer=0; model.collision_mask=0

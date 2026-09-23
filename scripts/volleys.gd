@@ -1,6 +1,7 @@
 extends RefCounted
 ## Buffered shot intent. Only a swept contact with the animated boot can strike.
 const Motion = preload("res://scripts/ball_motion.gd")
+const Context = preload("res://scripts/contextual_finish.gd")
 const REACH := 0.36
 const BUFFER := 0.85
 const STEP := 1.0/60.0
@@ -22,7 +23,7 @@ func cancel(index: int) -> void:
 		game.charging=false; game.charge=0
 	requests.erase(index)
 
-func window(index: int) -> Dictionary:
+func window(index: int,aim: Vector3=Vector3.ZERO) -> Dictionary:
 	var p=game.players[index]
 	var ball=game.ball
 	if game.state!="playing" or not p.visible or p.dismissed or p.keeper or p.action_timer>0 or p.kick_timer>0 or p.touch_cooldown>0 or ball.held_by!=null or ball.pending_reset: return {}
@@ -34,6 +35,7 @@ func window(index: int) -> Dictionary:
 	var bounced: bool=ball.ground_bounce_age<0.28
 	var travel: Vector3=p.velocity*Vector3(1,0,1)
 	var drag := Motion.air_drag(game.weather)
+	if aim.length()<.1: aim=game.shot_direction if game.is_user_player(index) and game.charging else Vector3(0,0,game.attack_sign(p.team))
 	for sample in range(1,34):
 		velocity=Motion.apply_spin(Motion.air_velocity(velocity,STEP,drag),spin,STEP)
 		velocity.y-=Motion.GRAVITY*STEP
@@ -45,6 +47,8 @@ func window(index: int) -> Dictionary:
 			velocity.y=absf(velocity.y)*game.weather.ball_bounce(point)
 			bounced=true
 		var time := sample*STEP
+		var technique := Context.technique(game,p,point,velocity,aim,time,bounced)
+		if technique=="bicycle": return {"time":time,"point":point,"jump":2.2,"kind":technique}
 		var hop := maxf(0,point.y-p.position.y-p.body_scale.y*1.40)
 		if time<0.085 or point.y<0.27 or hop>0.20: continue
 		var future: Vector3=p.position+travel*minf(time,0.12)
@@ -56,7 +60,7 @@ func window(index: int) -> Dictionary:
 		var hip := Vector3(-0.14 if local.x<0 else 0.14,0.85,0)
 		if (local-hip).length()>0.84: continue
 		var jump := (hop+10*time*time)/time if hop>.025 else 0.0
-		return {"time":time,"point":point,"jump":jump,"kind":"half_volley" if bounced and point.y<0.85 else "volley"}
+		return {"time":time,"point":point,"jump":jump,"kind":technique}
 	return {}
 
 func can_request(index: int) -> bool:
@@ -64,10 +68,10 @@ func can_request(index: int) -> bool:
 
 func label(index: int) -> String:
 	var plan: Dictionary=requests[index] if active(index) else window(index)
-	return "Yarım vole" if plan.get("kind","")=="half_volley" else "Vole"
+	return {"half_volley":"Yarım vole","side_volley":"Yan vole","bicycle":"Röveşata"}.get(plan.get("kind",""),"Vole")
 
 func arm(index: int,aim: Vector3,power: float=0.0,user: bool=true) -> bool:
-	var plan := window(index)
+	var plan := window(index,aim)
 	if active(index) or plan.is_empty() or game.heading.active(index): return false
 	requests[index]={"age":0.0,"aim":aim,"power":power,"user":user,"released":not user,"launched":false,"kind":plan.kind,"ball":game.ball.position,"boot":Vector3.ZERO}
 	game.players[index].receive_timer=0
@@ -96,11 +100,12 @@ func prepare(delta: float) -> void:
 				p.volley_motion.target=contact_prediction(remaining)
 				var travel: Vector3=p.velocity*Vector3(1,0,1)*remaining
 				var target: Vector3=p.rig.to_local(p.volley_motion.target-travel)
-				if (target-Vector3(0,.85,0)).length()>1.18:
+				var unreachable: bool=game.flat_distance(p.position,p.volley_motion.target)>.95 or p.volley_motion.target.y-p.position.y>2.15 if request.kind=="bicycle" else (target-Vector3(0,.85,0)).length()>1.18
+				if unreachable:
 					cancel(index); continue
 			p.volley_motion.aim=request.aim
 			continue
-		var plan := window(index)
+		var plan := window(index,request.aim)
 		if plan.is_empty() or plan.time>0.24: continue
 		p.volley_motion.begin(p,plan,request.aim)
 		request.kind=plan.kind; request.launched=true
@@ -157,18 +162,19 @@ func resolve() -> void:
 	var p=game.players[best]
 	# The prediction can anticipate a bounce, but the announced finish follows
 	# the actual ground contact, including deflections after the request.
-	request.kind="half_volley" if game.ball.ground_bounce_age<0.28 and game.ball.position.y<0.85 else "volley"
+	if request.kind!="bicycle": request.kind=Context.technique(game,p,game.ball.position,game.ball.linear_velocity,request.aim,0,game.ball.ground_bounce_age<.28)
 	p.volley_motion.kind=request.kind
 	var quality := clampf(1-closest/REACH*0.22-game.first_touch.pressure(best)*0.16-(1-p.energy)*0.12-p.contest_weight*0.12,0.35,1)
 	var velocity := launch_velocity(best,request.aim,request.power,quality)
 	# A successful contact keeps its short follow-through; a failed approach
 	# above releases the locomotion immediately instead of playing an air kick.
 	p.volley_motion.hit=true
+	p.volley_motion.follow_position=p.position
 	cancel(best)
 	if request.user:
 		game.charging=false; game.charge=0; game.shot_chip=false; game.shot_finesse=false
-	if game.strike(best,velocity,0,false,request.kind):
+	if game.strike(best,velocity,0,false,"half_volley" if request.kind=="half_volley" else "volley"):
 		p.volley_motion.hit=true
 		p.volley_motion.target=game.ball.position
 		game.shots[p.team]+=1
-		game.hint("YARIM VOLE" if request.kind=="half_volley" else "VOLE")
+		game.hint({"half_volley":"YARIM VOLE","side_volley":"YAN VOLE","bicycle":"RÖVEŞATA"}.get(request.kind,"VOLE"))

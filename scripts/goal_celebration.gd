@@ -43,8 +43,8 @@ func begin(team: int) -> void:
 	urgent=game.match_time>game.LENGTH*.68 and game.score[team]<game.score[1-team]
 	late_winner=game.match_time>game.LENGTH*.85 and game.score[team]==game.score[1-team]+1
 	var side := -1.0 if game.players[scorer].position.x<0 else 1.0
-	# The away end is in the south-east corner; celebrate toward those fans.
-	if team==1: side=1
+	# The away end sits on the far sideline; celebrate toward those fans.
+	if team==1: side=-1
 	gathering=Vector3(side*21*P.WIDTH_RATIO,0,game.attack_sign(team)*38)
 	var teammates: Array[int] = []
 	for i in range(game.players.size()):

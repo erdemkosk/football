@@ -46,6 +46,7 @@ func begin(index: int,victim: int = -1) -> void:
 	actor.impact_motion.local_direction=source.impact_motion.local_direction
 	actor.impact_motion.start=source.impact_motion.start.duplicate()
 	actor.slide_duration=source.slide_duration
+	actor.slide_rise=source.slide_rise
 	actor.dive_duration=source.dive_duration
 	actor.dive_yaw=source.dive_yaw
 	actor.dive_direction=source.dive_direction

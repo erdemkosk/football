@@ -4,9 +4,11 @@ var passer := -1
 var pass_age := 10.0
 var shooter := -1
 var shot_age := 10.0
+var shot_counted := false
 
 func reset() -> void:
 	passer=-1; shooter=-1; pass_age=10; shot_age=10
+	shot_counted=false
 	for p in game.players: p.reaction.reset()
 
 func update(delta: float) -> void:
@@ -16,10 +18,11 @@ func update(delta: float) -> void:
 		p.reaction.ball_position=game.ball.position
 
 func kicked(index: int,kind: String) -> void:
-	if kind=="shot": shooter=index; shot_age=0; passer=-1
+	if kind=="shot": shooter=index; shot_age=0; passer=-1; shot_counted=false
 	elif kind=="kick": passer=index; pass_age=0; shooter=-1
 
 func received(index: int) -> void:
+	if shooter>=0 and index!=shooter: shooter=-1
 	if passer<0 or pass_age>5 or passer==index: return
 	if game.players[passer].team!=game.players[index].team:
 		game.players[passer].reaction.begin("sorry",game.ball.position)
@@ -69,8 +72,22 @@ func _signal_around(index: int,point: Vector3,kind: String,extra: int) -> void:
 		game.players[i].reaction.begin(kind,point)
 		added+=1
 
-func saved(index: int) -> void:
+func on_target(team: int) -> void:
+	# A parry and the subsequent goal belong to the same shot.
+	if shooter<0 or shot_counted or shot_age>8 or game.players[shooter].team!=team: return
+	game.shots_on_target[team]+=1
+	shot_counted=true
+
+func save_on_target(index: int,incoming: Vector3) -> bool:
+	if shooter<0 or shot_counted or shot_age>8 or game.players[shooter].team==game.players[index].team: return false
+	var goal_z: float=game.attack_sign(game.players[shooter].team)*50
+	if incoming.z*goal_z<=0: return false
+	var route: Dictionary=preload("res://scripts/shot_guide.gd").predict(game.ball.position,incoming,game.ball.spin,goal_z,game.weather)
+	return route.on_target
+
+func saved(index: int,was_on_target: bool=false) -> void:
 	var keeper=game.players[index]
+	if was_on_target: on_target(1-keeper.team)
 	var candidates: Array[int]=[]
 	for i in range(game.players.size()):
 		var p=game.players[i]

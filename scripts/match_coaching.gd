@@ -1,9 +1,11 @@
 extends RefCounted
 ## Live touchline commands consume their own presses/releases; the match keeps moving.
 const TITLES := ["SAVUNMACI","DENGELİ","HÜCUMCU"]
-const OFFER := Rect2(32,568,332,160)
-const ACCEPT := Rect2(46,683,190,31)
-const DISMISS := Rect2(247,683,101,31)
+const OFFER := Rect2(32,574,304,146)
+const ACCEPT := Rect2(44,684,174,26)
+const DISMISS := Rect2(226,684,98,26)
+var offer_latched := false
+var offer_choice := 0
 var game
 var trigger_down := false
 var opened := false
@@ -18,6 +20,7 @@ var notice_time := 0.0
 
 func reset_input() -> void:
 	opened=false
+	offer_latched=false; offer_choice=0
 	trigger_down=false
 	consumed.clear()
 
@@ -45,7 +48,7 @@ func refresh() -> void:
 	offer_time=11 if not proposal.is_empty() else 0
 
 func update(delta: float) -> void:
-	if not available(): opened=false; return
+	if not available(): opened=false; offer_latched=false; return
 	age+=delta
 	notice_time=maxf(0,notice_time-delta)
 	if not proposal.is_empty() and not proposal_valid(): proposal.clear()
@@ -90,6 +93,7 @@ func dismiss(show_notice: bool=true) -> void:
 	return_to_play()
 
 func return_to_play() -> void:
+	offer_latched=false; opened=trigger_down
 	var view: Viewport = game.get_viewport()
 	if view!=null: view.gui_release_focus()
 
@@ -104,10 +108,22 @@ func handle(event: InputEvent) -> bool:
 		if pad.device!=event.device: pad.claim_device(event.device,true)
 		if event.device!=pad.device: return false
 		pad.input_seen=true
+		if event is InputEventJoypadButton and event.button_index==JOY_BUTTON_BACK and available() and (proposal_valid() or offer_latched):
+			if event.pressed:
+				offer_latched=not offer_latched; opened=offer_latched; offer_choice=0
+				pad.using_gamepad=true; pad.stick=Vector2.ZERO; pad.clear_shot_aim(); pad.combos.cancel()
+				game.cancel_pass(); game.charging=false; game.charge=0
+				game.players[game.controlled].shot_preparation=0
+				consumed[JOY_BUTTON_BACK]=true
+			else: consumed.erase(JOY_BUTTON_BACK)
+			return true
+		if offer_latched and event is InputEventJoypadMotion and event.axis in [JOY_AXIS_LEFT_X,JOY_AXIS_LEFT_Y]:
+			if absf(event.axis_value)>.55: offer_choice=1 if event.axis_value>0 else 0
+			return true
 		if event is InputEventJoypadMotion and event.axis==JOY_AXIS_TRIGGER_RIGHT:
 			var was_down := trigger_down
 			trigger_down=event.axis_value>(.35 if trigger_down else .55)
-			if not trigger_down: opened=false
+			if not trigger_down: opened=offer_latched
 			elif not was_down and available() and not power_shot_held():
 				opened=true; pad.using_gamepad=true
 				pad.clear_shot_aim(); pad.combos.cancel()
@@ -119,7 +135,7 @@ func handle(event: InputEvent) -> bool:
 		if event is InputEventJoypadButton:
 			var button: int=event.button_index
 			if button==JOY_BUTTON_LEFT_SHOULDER and event.pressed and pad.bindings.get(button)==KEY_Q:
-				opened=false
+				opened=false; offer_latched=false
 			if consumed.has(button):
 				if not event.pressed: consumed.erase(button)
 				return true
@@ -128,11 +144,17 @@ func handle(event: InputEvent) -> bool:
 					consumed[button]=true
 					pad.using_gamepad=true
 					match button:
-						JOY_BUTTON_DPAD_LEFT: select_plan(0)
+						JOY_BUTTON_DPAD_LEFT:
+							if offer_latched: offer_choice=0
+							else: select_plan(0)
 						JOY_BUTTON_DPAD_UP: select_plan(1)
-						JOY_BUTTON_DPAD_RIGHT: select_plan(2)
+						JOY_BUTTON_DPAD_RIGHT:
+							if offer_latched: offer_choice=1
+							else: select_plan(2)
 						JOY_BUTTON_DPAD_DOWN: refresh()
-						JOY_BUTTON_A: accept()
+						JOY_BUTTON_A:
+							if offer_latched and offer_choice==1: dismiss()
+							else: accept()
 						JOY_BUTTON_B: dismiss()
 				return true
 	if not available(): return false
@@ -151,7 +173,7 @@ func handle(event: InputEvent) -> bool:
 func draw(hud) -> void:
 	if not available(): return
 	var plan: int=game.management.mentality
-	if opened:
+	if opened and not offer_latched:
 		hud.draw_set_transform(game.ui.edge_offset(0,1))
 		hud.panel(Rect2(395,679,810,100),Color("142f2b"),10,Color("9ebc9e"))
 		hud.text("KENARDAN TALİMAT",Vector2(415,707),13,hud.GOLD,true)
@@ -172,14 +194,25 @@ func draw(hud) -> void:
 		hud.draw_set_transform(game.ui.edge_offset(-1,1))
 		var p=game.players[proposal.slot]
 		var incoming: Dictionary=game.management.bench[0][proposal.reserve]
-		hud.panel(OFFER,Color("142f2b"),10,Color("587b61"))
-		hud.text("TAZE BİR HAMLE",Vector2(47,592),12,hud.GOLD,true)
-		hud.text("%d / 3" % game.management.committed(0),Vector2(306,592),11,hud.MUTE)
-		hud.text(p.display_name+"  →  "+incoming.name,Vector2(47,619),18,hud.PAPER,true)
-		hud.text(["KALECİ","DEFANS","ORTA SAHA","FORVET"][game.management.slot_role(proposal.slot)],Vector2(47,641),10,Color("a8e1be"),true)
-		hud.text("ENERJİ  %d%% → 100%%" % roundi(p.energy*100),Vector2(175,641),11,hud.MUTE)
-		hud.panel(ACCEPT,Color("305743"),5)
-		hud.panel(DISMISS,Color("29463a"),5)
-		hud.center("KABUL",ACCEPT.get_center()+Vector2(0,5),11,hud.PAPER)
-		hud.center("GEÇ",DISMISS.get_center()+Vector2(0,5),11,hud.PAPER)
+		var lime:=Color("d6f77a")
+		hud.panel(OFFER,Color("10202b"),8,Color("29404c"))
+		hud.text("TAZE BİR HAMLE",Vector2(44,594),11,lime,true)
+		hud.text("%d / 3" % game.management.committed(0),Vector2(293,594),10,hud.MUTE)
+		for row in range(2):
+			var y:=603+row*27
+			var color:=Color("ed9c8b") if row==0 else Color("7fe4c2")
+			hud.text("↓" if row==0 else "↑",Vector2(44,y+16),13,color,true)
+			hud.center(str(p.shirt_number if row==0 else incoming.shirt),Vector2(68,y+16),11,color)
+			var player_name: String=p.display_name if row==0 else incoming.name
+			while hud.bold.get_string_size(player_name,HORIZONTAL_ALIGNMENT_LEFT,-1,13).x>191:
+				player_name=player_name.trim_suffix("…").left(-1)+"…"
+			hud.text(player_name,Vector2(85,y+16),13,hud.PAPER,true)
+			hud.text("%d%%" % roundi(p.energy*100) if row==0 else "100%",Vector2(289,y+16),10,color)
+		if game.controller.using_gamepad:
+			hud.pad_hints(Vector2(44,661),[["A","Kabul"],["B","Geç"]] if opened else [["VIEW","Aç"],["RT","Basılı tut"]],17,10)
+		else: hud.text("F8 · Kabul     F9 · Geç",Vector2(44,674),10,hud.MUTE)
+		hud.panel(ACCEPT,lime if opened and offer_choice==0 else Color("1b3440"),6)
+		hud.panel(DISMISS,lime if opened and offer_choice==1 else Color("1b3440"),6)
+		hud.center("DEĞİŞİKLİĞİ HAZIRLA",ACCEPT.get_center()+Vector2(0,4),10,Color("081019") if opened and offer_choice==0 else hud.PAPER)
+		hud.center("ŞİMDİ DEĞİL",DISMISS.get_center()+Vector2(0,4),10,Color("081019") if opened and offer_choice==1 else hud.PAPER)
 	hud.draw_set_transform(Vector2.ZERO)

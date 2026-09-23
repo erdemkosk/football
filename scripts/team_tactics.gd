@@ -46,8 +46,22 @@ func update(delta: float) -> void:
 	if owner!=support_owner:
 		if support_time>0: support_rest=maxf(support_rest,2.2)
 		support_time=0; support_player=-1; support_owner=owner
-	if age>0 and owner==observed_owner: return
-	var defending_team: int=1-game.players[owner].team if owner>=0 else 1
+	if age>0 and owner==observed_owner:
+		if incoming_delivery(): incoming_cover()
+		return
+	if owner<0 or (owner>=0 and not game.players[owner].visible):
+		age=.20
+		observed_owner=owner
+		if incoming_delivery():
+			observed_ball=game.ball.position
+			var flight: Vector3=game.ball.kick_velocity if game.ball.pending_kick else game.ball.linear_velocity
+			observed_velocity=flight*Vector3(1,0,1)
+			observation_age=0
+			incoming_cover()
+		else:
+			targets.clear(); roles.clear(); pressers=[-1,-1]
+		return
+	var defending_team: int=1-game.players[owner].team
 	age=([.48,.32,.22][game.opponent_coach.level()] if defending_team==1 else .28)*lerpf(1.30,.74,game.management.identity.team_quality(defending_team,true))
 	var previous_presser: int=pressers[1]
 	targets.clear(); roles.clear(); pressers=[-1,-1]
@@ -57,7 +71,6 @@ func update(delta: float) -> void:
 		if last_opponent_plan>=0: game.stadium.sidelines.instruct(1,["defend","balance","attack"][plans[1]])
 		last_opponent_plan=plans[1]
 	if game.training or game.state!="playing": return
-	if owner<0 or not game.players[owner].visible: return
 	var team: int=1-game.players[owner].team
 	var forward: float=game.attack_sign(team)
 	var ball: Vector3=game.ball.position
@@ -87,7 +100,9 @@ func update(delta: float) -> void:
 			if p.tackle_cooldown>0: cost+=p.tackle_cooldown*2
 		if cost<closest and p.action_timer<=0: closest=cost; pressers[team]=i
 	var presser: int=pressers[team]
-	if presser<0: return
+	if presser<0:
+		incoming_cover()
+		return
 	var trigger: bool=absf(ball.x)>22*P.WIDTH_RATIO or carrier.receive_timer>0 or carrier.energy<.28
 	var press := press_level(team)
 	if team==1 and game.opponent_coach.level()==0: press=mini(press,1)
@@ -97,6 +112,7 @@ func update(delta: float) -> void:
 		pressers[team]=-1
 		if team==1: opponent_duties(owner,-1,-1,false,in_box)
 		spread_cover(ball,in_box,-1)
+		incoming_cover()
 		return
 	# Approach from the goal side, screening the central pass as we close.
 	var exposed: bool=game.duels.ball_opened(owner)
@@ -138,9 +154,70 @@ func update(delta: float) -> void:
 			roles[i]="screen"
 	if team==1: opponent_duties(owner,presser,covering,trigger,in_box)
 	spread_cover(ball,in_box,presser)
+	incoming_cover()
 	for i in targets:
 		targets[i].x=clampf(targets[i].x,-(P.HALF_WIDTH-1),(P.HALF_WIDTH-1))
 		targets[i].z=clampf(targets[i].z,-48,48)
+
+func incoming_delivery() -> bool:
+	if game.training or game.state!="playing": return false
+	if game.ball.held_by!=null or game.ball.pending_reset: return false
+	var velocity: Vector3=game.ball.kick_velocity if game.ball.pending_kick else game.ball.linear_velocity
+	var air: bool=game.ball.position.y>.85 or velocity.y>1.6
+	var driven: bool=velocity.length()>7.5 and game.dribbler<0
+	if not air and not driven: return false
+	var point: Vector3=game.second_balls.landing()
+	for team in range(2):
+		if game.last_touch==team: continue
+		var forward: float=game.attack_sign(team)
+		var toward: float=velocity.dot(Vector3(0,0,-forward))
+		if toward<2.0 and point.z*forward>-26.0: continue
+		if point.z*forward<-22.0 and absf(point.x)<24.0: return true
+		if game.ball.position.z*forward<-28.0 and absf(game.ball.position.x)<22.0 and toward>3.0: return true
+	return false
+
+func incoming_cover() -> void:
+	if not incoming_delivery(): return
+	var point: Vector3=game.second_balls.landing()
+	var attack: int=game.last_touch if game.last_touch in [0,1] else 0
+	var team: int=1-attack
+	var forward: float=game.attack_sign(team)
+	if point.z*forward>-18.0 and game.ball.position.z*forward>-22.0: return
+	var drop := Vector3(clampf(point.x,-(P.HALF_WIDTH-3),(P.HALF_WIDTH-3)),0,forward*clampf(minf(point.z*forward,point.z*forward-1.2),-47,8))
+	var best := -1
+	var best_cost := INF
+	var present := false
+	for i in range(team*11+1,team*11+11):
+		var p=game.players[i]
+		if not p.visible or p.dismissed or p.keeper: continue
+		var gap: float=game.flat_distance(p.position,drop)
+		if gap<2.4: present=true
+		var cost: float=gap+(0.0 if game.management.slot_role(i)==1 else 2.4)
+		if i==pressers[team] and game.dribbler>=0: cost+=8.0
+		if cost<best_cost: best_cost=cost; best=i
+	var side: float
+	if absf(point.x)>8.0: side=signf(point.x)
+	elif absf(game.ball.position.x)>6.0: side=-signf(game.ball.position.x)
+	else: side=-1.0
+	if side==0.0: side=-1.0
+	var far := -1
+	var far_score := -INF
+	for i in range(team*11+1,team*11+11):
+		if i==best or i==pressers[team]: continue
+		var p=game.players[i]
+		if not p.visible or p.dismissed or p.keeper or game.management.slot_role(i)==3: continue
+		var width: float=p.home.x*side
+		if width<4.0: continue
+		var score: float=width-absf(p.position.z*forward-drop.z*forward)*.12
+		if score>far_score: far_score=score; far=i
+	if best>=0 and (not present or best_cost>1.8):
+		targets[best]=drop
+		roles[best]="recover"
+	if far>=0 and far!=best and not present:
+		var post_x: float=clampf(point.x+side*3.6,-(P.HALF_WIDTH-3),(P.HALF_WIDTH-3))
+		if absf(point.x)<8.0: post_x=side*5.5
+		targets[far]=Vector3(post_x,0,forward*clampf(minf(drop.z*forward,-33.5),-47,-26))
+		roles[far]="recover"
 
 func defensive_movement(index: int,target: Vector3) -> Vector3:
 	var p=game.players[index]

@@ -56,7 +56,9 @@ func release_charged(index: int,aim: Vector3,power: float) -> bool:
 	p.volley_motion.contact_time=contact
 	p.volley_motion.duration=contact+(.42 if kind=="power" else .33)
 	p.pose="finish"
-	p.action_timer=p.volley_motion.duration
+	# The held charge already prepared the strike. Start at contact, not at
+	# another backswing after the physical ball has already departed.
+	p.action_timer=p.volley_motion.duration-contact
 	p.volley_motion.hit=true
 	p.volley_motion.apply(p)
 	p.recovery_delay=maxf(p.recovery_delay,contact+(.58 if kind=="power" else .5))

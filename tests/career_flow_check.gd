@@ -46,7 +46,7 @@ func run() -> void:
 	game.controller.device=0; game.ball.freeze=true
 	game.match_menu.config_path="/tmp/sefc-career-flow-settings.cfg"
 	var c=game.career; var ui=game.career_screen
-	c.save_root="/tmp/sefc-career-flow"; DirAccess.make_dir_recursive_absolute(c.save_root)
+	c.save_root="res://tests/career-flow.tmp"; DirAccess.make_dir_recursive_absolute(c.save_root)
 	game.hud.sync_navigation()
 	check(go(game.hud.nav_buttons[4]),"Career is reachable from the main menu by controller")
 	tap(JOY_BUTTON_A)
@@ -138,7 +138,7 @@ func run() -> void:
 	var incoming: String=game.management.bench[0][1].career_id; c.player(incoming).fitness=.61
 	game.management.queue_sub(9,1); game.management.prepare_substitutions()
 	# Put both actors at the exchange gate, then let the normal greeting and identity exchange run.
-	p.position=Vector3(32.8,0,7.8)
+	p.position=Vector3(game.P.HALF_WIDTH+.8,0,7.8)
 	if game.stadium.sidelines.entries.has(9):
 		var entry: Dictionary=game.stadium.sidelines.entries[9]; entry.actor.position=entry.gate
 	for frame in range(130):

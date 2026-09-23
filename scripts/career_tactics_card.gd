@@ -43,12 +43,16 @@ func _draw() -> void:
 	style.bg_color=Color("28484a") if chosen else Color("172d3b")
 	style.border_color=accent if chosen or focused else Color("36505e")
 	style.set_border_width_all(3 if focused else (2 if chosen else 1))
-	draw_style_box(style,Rect2(Vector2.ZERO,size))
+	if not on_pitch: draw_style_box(style,Rect2(Vector2.ZERO,size))
 	var photo: Texture2D=screen.portraits.photo(screen.portrait_data(identity))
 	if on_pitch:
+		draw_circle(Vector2(size.x*.5,25),29,Color("10202b"))
+		draw_arc(Vector2(size.x*.5,25),30,0,TAU,40,accent if chosen or focused else Color("35505c"),3 if focused else 1,true)
 		if photo!=null: draw_texture_rect(photo,Rect2(15,-12,62,62),false)
 		label(str(screen.World.ovr(p)),Vector2(4,17),12,accent)
 		label(screen.World.ROLES[p.role],Vector2(5,34),9,screen.art.MUTED)
+		var pill:=StyleBoxFlat.new(); pill.bg_color=Color("081019"); pill.set_corner_radius_all(6)
+		draw_style_box(pill,Rect2(1,47,size.x-2,20))
 		label(p.name.split(" ")[-1],Vector2(5,61),10,screen.PAPER,size.x-10)
 		if p.get("tactic_status","HAZIR")!="HAZIR": draw_circle(Vector2(size.x-9,10),4,Color("edb98e"))
 	else:

@@ -1,0 +1,47 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+MOVING SHOT power sprint=false { "queued": true, "gap": 0.0, "shot": 1, "speed": 36.5440521240234, "time": 0.00833333333333, "contact_gap": 0.47481134533882 }
+PASS: A moving power shot reaches its real contact, sprint=false
+PASS: The controlled ball stays at the player's feet during power preparation
+MOVING SHOT power sprint=true { "queued": true, "gap": 0.0, "shot": 1, "speed": 36.5440521240234, "time": 0.00833333333333, "contact_gap": 0.83838152885437 }
+PASS: A moving power shot reaches its real contact, sprint=true
+PASS: The controlled ball stays at the player's feet during power preparation
+MOVING SHOT low sprint=false { "queued": true, "gap": 0.0, "shot": 1, "speed": 26.7314014434814, "time": 0.00833333333333, "contact_gap": 0.49653196334839 }
+PASS: A moving low shot reaches its real contact, sprint=false
+PASS: The controlled ball stays at the player's feet during low preparation
+MOVING SHOT low sprint=true { "queued": true, "gap": 0.0, "shot": 1, "speed": 25.7291965484619, "time": 0.00833333333333, "contact_gap": 0.54129511117935 }
+PASS: A moving low shot reaches its real contact, sprint=true
+PASS: The controlled ball stays at the player's feet during low preparation
+MOVING SHOT outside sprint=false { "queued": true, "gap": 0.0, "shot": 1, "speed": 22.6421794891357, "time": 0.00833333333333, "contact_gap": 0.46147635579109 }
+PASS: A moving outside shot reaches its real contact, sprint=false
+PASS: The controlled ball stays at the player's feet during outside preparation
+MOVING SHOT outside sprint=true { "queued": true, "gap": 0.0, "shot": 1, "speed": 22.6421794891357, "time": 0.00833333333333, "contact_gap": 0.65791231393814 }
+PASS: A moving outside shot reaches its real contact, sprint=true
+PASS: The controlled ball stays at the player's feet during outside preparation
+MOVING SHOT timed sprint=false { "queued": true, "gap": 0.62693816423416, "shot": 1, "speed": 22.2098007202148, "time": 0.225, "contact_gap": 0.18282470107079 }
+PASS: A moving timed shot reaches its real contact, sprint=false
+PASS: The controlled ball stays at the player's feet during timed preparation
+MOVING SHOT timed sprint=true { "queued": true, "gap": 0.84570115804672, "shot": 1, "speed": 23.0667686462402, "time": 0.225, "contact_gap": 0.30181166529655 }
+PASS: A moving timed shot reaches its real contact, sprint=true
+PASS: The controlled ball stays at the player's feet during timed preparation
+ANGLED POWER (-1.0, 0.0, 0.0) { "queued": true, "gap": 0.0, "shot": 1, "speed": 36.5440521240234, "time": 0.00833333333333, "contact_gap": 0.6162109375 }
+PASS: A power shot across or against the running direction retains the ball: (-1.0, 0.0, 0.0)
+ANGLED POWER (1.0, 0.0, 0.0) { "queued": true, "gap": 0.0, "shot": 1, "speed": 36.5440521240234, "time": 0.00833333333333, "contact_gap": 0.85825765132904 }
+PASS: A power shot across or against the running direction retains the ball: (1.0, 0.0, 0.0)
+ANGLED POWER (0.0, 0.0, 1.0) { "queued": true, "gap": 0.0, "shot": 1, "speed": 37.9638061523438, "time": 0.00833333333333, "contact_gap": 0.53733241558075 }
+PASS: A power shot across or against the running direction retains the ball: (0.0, 0.0, 1.0)
+CHANGING STRIDE { "jerk": 0.0302157998085, "step": 0.10004633665085, "gap": 0.82973670959473, "lost": 0 }
+PASS: Turns and sprint changes do not snap the dribbling legs between poses
+PASS: Consecutive direction and sprint changes keep the ball controlled
+PASS: A controlled power-shot preparation supplies a bounded settling force
+PASS: An opponent can actually acquire the ball during the backswing
+PASS: Canceling for opponent immediately releases assistance without a phantom shot
+PASS: A controlled power-shot preparation supplies a bounded settling force
+PASS: Canceling for switch immediately releases assistance without a phantom shot
+PASS: A controlled power-shot preparation supplies a bounded settling force
+PASS: Canceling for pause immediately releases assistance without a phantom shot
+PASS: A controlled power-shot preparation supplies a bounded settling force
+PASS: Canceling for impact immediately releases assistance without a phantom shot
+PASS: A controlled power-shot preparation supplies a bounded settling force
+PASS: Canceling for out immediately releases assistance without a phantom shot
+CARRY FINISH CHECK: 32 checks, 0 failures

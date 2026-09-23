@@ -49,6 +49,31 @@ func run() -> void:
 	game.feedback.reset()
 	game.strike(9,Vector3(0,1,-18))
 	check(game.feedback.event_count==0,"An ordinary pass does not trigger the heavy shot cue")
+	game.state="playing"
+	game.feedback.reset()
+	game.feedback.woodwork(Vector3(3.66,1.2,-50),Vector3(-1,0,0),0.85)
+	game.feedback.update(0.03)
+	check(game.feedback.last_kind=="woodwork" and game.feedback.duration<=0.20 and game.feedback.offset().length()>0.08 and game.feedback.offset().length()<0.32,"A post hit gives a short bounded camera punch")
+	game.feedback.update(0.22)
+	check(game.feedback.offset()==Vector3.ZERO,"The woodwork punch settles immediately")
+	var woodwork_events: int=game.feedback.event_count
+	game.feedback.watch_woodwork()
+	check(game.feedback.event_count==woodwork_events,"Woodwork cooldown prevents a second punch on the same rattle")
+	game.start_match(false,false)
+	game.set_physics_process(false)
+	game.state="playing"
+	for actor in game.players: actor.collision_layer=0
+	game.feedback.reset()
+	game.ball.place(Vector3(3.66,1.1,-46),Vector3(0,0,-24))
+	var punched := false
+	for i in range(50):
+		await physics_frame
+		game.feedback.watch_woodwork()
+		if game.feedback.last_kind=="woodwork":
+			punched=true
+			game.feedback.update(0.05)
+			break
+	check(punched and game.feedback.offset().length()>0.05,"A live post collision punches the camera")
 	await arrange()
 	game.players[9].position=Vector3(0,0,-0.8)
 	game.ball.place(Vector3(0,game.ball.GROUND_HEIGHT,-1.15))

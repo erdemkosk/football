@@ -36,6 +36,16 @@ var rubber_axis := Vector3.UP
 var roll_amount := 0.0
 var roll_dir := Vector3.FORWARD
 var ghosts: Array[MeshInstance3D] = []
+var surface_materials: Array[StandardMaterial3D] = []
+var shown_surface_wetness := -1.0
+
+func update_surface_wetness(wet: float) -> void:
+	if absf(wet-shown_surface_wetness)<.002: return
+	shown_surface_wetness=wet
+	for i in range(surface_materials.size()):
+		var material := surface_materials[i]
+		material.roughness=lerpf(.70 if i==0 else .75,.27 if i==0 else .34,wet)
+		material.metallic_specular=lerpf(.35,.55,wet)
 
 func hold(player: Node3D) -> void:
 	if held_by==player: return
@@ -55,6 +65,7 @@ func release_hold() -> void:
 	held_by=null
 
 func _ready() -> void:
+	physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_ON
 	mass = 0.43
 	continuous_cd = true
 	can_sleep = false
@@ -78,8 +89,12 @@ func _ready() -> void:
 	add_child(collision)
 	skin=Node3D.new()
 	skin.name="BallSkin"
+	skin.physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_OFF
 	add_child(skin)
 	shell = G.sphere(skin,RADIUS,Vector3.ZERO,G.material(Color("f1eee2"),0.7))
+	surface_materials.append(shell.material_override)
+	var panel_material := G.material(Color("1a252c"),0.75)
+	surface_materials.append(panel_material)
 	var trail := StandardMaterial3D.new()
 	trail.albedo_color=Color("f1eee2",0.28)
 	trail.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -104,7 +119,7 @@ func _ready() -> void:
 		panel.bottom_radius = panel.top_radius
 		panel.height = RADIUS*0.01364
 		panel.radial_segments = 5
-		var node = G.mesh(skin,panel,G.material(Color("1a252c"),0.75),d*RADIUS)
+		var node = G.mesh(skin,panel,panel_material,d*RADIUS)
 		var axis = Vector3.UP.cross(d)
 		if axis.length()>0.001: node.quaternion = Quaternion(axis.normalized(),acos(Vector3.UP.dot(d)))
 
@@ -173,23 +188,18 @@ func _process(delta: float) -> void:
 		var world: Vector3=rubber_axis if rubber_axis.length()>0.01 else Vector3.UP
 		if streak>0.04: world=world.lerp(streak_dir,streak*0.55)
 		if roll_amount>0.03: world=world.lerp(roll_dir,roll_amount*0.88)
-		var local: Vector3=(global_transform.basis.inverse()*world)
+		var local: Vector3=(get_global_transform_interpolated().basis.inverse()*world)
 		if local.length()<0.01: local=Vector3.UP
-		var along: float=clampf(1.0-rubber*0.52+streak*0.16+roll_amount*0.28,0.58,1.42)
-		var side: float=clampf(1.0+rubber*0.28-streak*0.08-roll_amount*0.14,0.68,1.42)
+		var along: float=clampf(1.0-rubber*0.16+streak*0.035+roll_amount*0.035,.90,1.10)
+		var side: float=clampf(1.0+rubber*0.08-streak*0.015-roll_amount*0.017,.94,1.08)
 		var basis := deform_basis(local,along,side)
-		basis.y*=clampf(1.0-roll_amount*0.18,0.78,1.0)
+		basis.y*=1.0-roll_amount*.015
 		skin.basis=basis
 	if not is_instance_valid(shell): return
 	shell.scale=Vector3.ONE
-	for i in ghosts.size():
-		var ghost: MeshInstance3D=ghosts[i]
-		if streak<=0.04:
-			ghost.visible=false
-			continue
-		ghost.visible=true
-		ghost.global_position=global_position-streak_dir*(0.22+float(i)*0.30)*streak
-		ghost.scale=Vector3.ONE*(0.86-float(i)*0.14)*clampf(streak*1.08,0,1)
+	# A single interpolated ball reads cleanly at speed. Three displaced copies
+	# made its silhouette look like repeated jumps, especially against the grass.
+	for ghost in ghosts: ghost.visible=false
 
 func strike(v: Vector3, curve: float = 0) -> void:
 	ground_bounce_age=INF; previous_vertical_speed=v.y
@@ -218,6 +228,7 @@ func guide(acceleration: Vector3) -> void:
 func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	if pending_reset:
 		state.transform = Transform3D(Basis.IDENTITY,reset_position)
+		reset_physics_interpolation.call_deferred()
 		state.linear_velocity = pending_velocity
 		state.angular_velocity = Vector3.ZERO
 		pending_reset = false

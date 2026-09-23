@@ -1,0 +1,13 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce RTX 3070
+ERROR: Can't create shader cache folder, no shader caching will happen: user://
+   at: RendererCompositorRD (servers/rendering/renderer_rd/renderer_compositor_rd.cpp:337)
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+BENCHMARK optimization-baseline-clean size=(1440, 900) scale=1.0 renderer=mobile physics=120
+{"draws":1212.0,"fps":478.352738749412,"frames":2392,"gpu_ms":1.54637751112814,"p50_ms":1.905,"p95_ms":2.699,"p99_ms":7.763,"physics_hz":119.988145171257,"physics_ms":0.117167642140471,"render_cpu_ms":0.962649665149957,"scene":"day-static"}
+{"draws":1142.50798722045,"fps":62.5789984881074,"frames":313,"gpu_ms":2.69544408534662,"p50_ms":15.853,"p95_ms":20.904,"p99_ms":29.757,"physics_hz":119.959741510749,"physics_ms":6.78104153354634,"render_cpu_ms":1.31024280980753,"scene":"day-match"}
+{"draws":1431.97637795276,"fps":50.6859161399522,"frames":254,"gpu_ms":3.96903149161752,"p50_ms":18.468,"p95_ms":23.685,"p99_ms":24.418,"physics_hz":119.930061417761,"physics_ms":6.71011417322832,"render_cpu_ms":3.4085708678238,"scene":"night-match"}
+{"draws":1647.71090047393,"fps":42.177628985586,"frames":211,"gpu_ms":5.19957345582863,"p50_ms":24.123,"p95_ms":27.537,"p99_ms":32.277,"physics_hz":119.936385741003,"physics_ms":7.58065402843603,"render_cpu_ms":3.68309477946205,"scene":"rain-match"}
+{"draws":3117.0,"fps":213.966278914443,"frames":1070,"gpu_ms":2.68266634317202,"p50_ms":4.523,"p95_ms":5.756,"p99_ms":8.537,"physics_hz":119.981090980062,"physics_ms":0.142831775700934,"render_cpu_ms":2.82836916223865,"scene":"stadium"}

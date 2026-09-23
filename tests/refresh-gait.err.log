@@ -1,0 +1,23 @@
+ERROR: Failed to open log file for writing: user://logs/godot.log
+   at: rotate_file (core/io/logger.cpp:169)
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+ERROR: FAIL: Carrying feet follow low arcs and retain alternating ground support
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/advanced_play_check.gd:13)
+       [1] run (res://tests/carry_gait_check.gd:18)
+       [2] tick (res://tests/advanced_play_check.gd:63)
+ERROR: FAIL: Both carrying speeds retain real boot contacts and ball control
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/advanced_play_check.gd:13)
+       [1] run (res://tests/carry_gait_check.gd:19)
+       [2] tick (res://tests/advanced_play_check.gd:63)
+ERROR: FAIL: Cuts and sprint changes preserve continuous toe paths
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/advanced_play_check.gd:13)
+       [1] run (res://tests/carry_gait_check.gd:21)
+       [2] changing_stride (res://tests/carry_finish_check.gd:63)
+       [3] tick (res://tests/advanced_play_check.gd:63)

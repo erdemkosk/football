@@ -14,9 +14,12 @@ var has_pose := false
 var preferred := DEFAULT
 var distance := 1.0
 var height := 1.0
+var attack_lead := Vector3.ZERO
+var attack_width := 0.0
 
 func reset() -> void:
 	has_pose=false
+	attack_lead=Vector3.ZERO; attack_width=0
 	select(preferred)
 
 func preference(value: String,activate: bool=true) -> void:
@@ -211,7 +214,24 @@ func orient(raw: Vector3) -> Vector3:
 	return (ground_right()*planar.x-ground_forward()*planar.z).normalized()*planar.length()
 
 func apply(focus: Vector3,zoom: float,delta: float) -> Dictionary:
-	var next: Dictionary=pose(focus,zoom)
+	# Follow sustained movement, not every dribble bounce or deflection.
+	var wanted := Vector3.ZERO
+	var width := 0.0
+	if game.state=="playing" and not game.training and not is_tactical():
+		var velocity: Vector3=game.ball.linear_velocity*Vector3(1,0,1)
+		if game.dribbler>=0: velocity=game.players[game.dribbler].velocity*Vector3(1,0,1)
+		wanted=velocity.limit_length(12)*.32
+		width=smoothstep(5,17,velocity.length())
+	var anticipation_blend := 1-exp(-maxf(0,delta)*2.2)
+	attack_lead=attack_lead.lerp(wanted,anticipation_blend)
+	attack_width=lerpf(attack_width,width,anticipation_blend)
+	var ahead := focus+attack_lead
+	ahead.x=clampf(ahead.x,-P.HALF_WIDTH,P.HALF_WIDTH)
+	ahead.z=clampf(ahead.z,-48,48)
+	var next: Dictionary=pose(ahead,zoom)
+	if game.state=="playing" and not is_tactical():
+		next.size*=1+attack_width*.06
+		next.fov+=attack_width*2.5
 	var cam: Camera3D=game.camera
 	cam.projection=next.projection
 	var rate := 1.15 if set_piece_inset()>0.02 else 3.0

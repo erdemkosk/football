@@ -551,8 +551,10 @@ func react(kind: String,_team: int,_location: Vector3) -> void:
 	if priority==0: return
 	# A save can build on a shot and a goal always wins. One reaction player
 	# prevents overlapping copies or repeated events restarting the recording.
-	if cheer_duration>0 and priority<=cheer_priority: return
-	if cheer_cooldown>0 and priority<3: return
+	# A shot ending wide is a new outcome, so let the sigh replace its build-up.
+	var shot_ended := kind=="miss" and cheer_kind=="shot"
+	if cheer_duration>0 and priority<=cheer_priority and not shot_ended: return
+	if cheer_cooldown>0 and priority<3 and not shot_ended: return
 	# Give the important play room: fade the rhythm out under the reaction.
 	if drum_duration>0: drum_duration=minf(drum_duration,drum_age+0.3)
 	for i in range(chants.size()):
@@ -568,6 +570,7 @@ func react(kind: String,_team: int,_location: Vector3) -> void:
 	if _team==1: cheer_level-=5.0
 	if kind=="goal" and match_progress>.8 and abs(score_margin)<=1: cheer_level+=2
 	if kind=="miss": cheer_duration=1.35; cheer_level-=2
+	if kind in ["save","miss"]: cheer_level+=crowd_danger*3.0
 	if dedicated_reaction(kind) or not was_playing or was_dedicated:
 		start_reaction(kind)
 	else:

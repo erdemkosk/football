@@ -218,8 +218,8 @@ func build_teams() -> void:
 	for side in range(2):
 		var x := 48.0 if side==0 else 758.0
 		var preview := Preview.new()
-		preview.position=Vector2(x+314,320)
-		preview.size=Vector2(294,294)
+		preview.position=Vector2(x+196,273)
+		preview.size=Vector2(432,370)
 		controls.add_child(preview)
 		preview.show_kit(game.clubs.kit(side),side)
 		preview.player.apply_identity(game.clubs.member(side,game.clubs.lineups[side][9]))
@@ -233,7 +233,7 @@ func build_teams() -> void:
 		team_select.append(make_button(controls,Rect2(x+84,662,466,48),"TAKIMI SEÇ",pick_side.bind(side),true))
 		team_right.append(make_button(controls,Rect2(x+562,662,48,48),"›",cycle_team.bind(side,1)))
 		var kit_title: String="FORMA · KONTRAST" if game.clubs.contrast_override.has(side) else ("FORMA  B" if game.clubs.alternate[side] else "FORMA  A")
-		kit_buttons.append(make_button(controls,Rect2(x+332,615,262,35),kit_title,toggle_kit.bind(side)))
+		kit_buttons.append(make_button(controls,Rect2(x+445,285,163,31),kit_title,toggle_kit.bind(side)))
 		kit_buttons[-1].add_theme_font_size_override("font_size",12)
 	back_button=make_button(controls,Rect2(48,828,180,48),"← ANA MENÜ",back)
 	weather_button=make_button(controls,Rect2(252,828,220,48),"HAVA  ·  "+game.weather.label(),cycle_weather)
@@ -981,63 +981,7 @@ func tactics_action_label() -> String:
 	return "Uygula" if pane==1 else "Seç"
 
 func draw_tactics() -> void:
-	draw_rect(game.ui.bounds(),Color("09161c"))
-	for i in range(18): draw_line(Vector2(700+i*60,0),Vector2(300+i*60,900),Color(.4,.65,.52,.035),1)
-	badge(Vector2(69,64),game.clubs.data(0),1.02)
-	text("SON HAZIRLIKLAR" if prematch else "KADRO & TAKTİK",Vector2(116,62),30,PAPER,true)
-	text(game.team_name(0)+"  /  "+("MAÇ GÜNÜ · KADRO & TAKTİK" if prematch else "%02d'  ·  %d – %d" % [int(game.match_time/game.LENGTH*90),game.score[0],game.score[1]]),Vector2(118,86),11,MUTE)
-	draw_line(Vector2(40,112),Vector2(1400,112),Color("335246"),1)
-	text("İLK ON BİR",Vector2(43,139),12,MINT,true)
-	var step_text := "KADRON HAZIR  ·  İSTERSEN İKİ OYUNCUYU SEÇEREK YERLERİNİ DEĞİŞTİR"
-	if pane==1: step_text="YÖNLERLE GEZ  ·  SEÇENEĞİ ONAYLAYARAK UYGULA"
-	text(step_text,Vector2(156,139),11,Color("b2c7ba"))
-	text("MAÇ ÖNCESİ · SERBEST KADRO SEÇİMİ" if prematch else "DEĞİŞİKLİK  %d / 3   ·   BEKLEYEN  %d" % [game.management.used[0],game.management.pending.filter(func(item): return item.slot<11).size()],Vector2(980,139),11,MINT,true)
-	box(Rect2(40,155,886,476),Color("183a38"),14,Color("3b6460"))
-	text(game.management.FORMATIONS[game.management.formation],Vector2(64,188),25,PAPER,true)
-	if pane==0:
-		var ref: Dictionary=inspected if swap_stage=="browse" else swap_source
-		var player_name: String=player_data(ref.kind,ref.index).name
-		var caption: String=("ODAK  ·  " if swap_stage=="browse" else "SEÇİLİ  ·  ")+player_name
-		if prematch and get_viewport().gui_get_focus_owner()==first_focus: caption="İLK ON BİR HAZIR"
-		text(caption,Vector2(248,185),13,Color("66efff") if swap_stage=="browse" else GOLD,true)
-	text("HÜCUM YÖNÜ ↑",Vector2(782,185),10,Color("b9cdb5"),true)
-	var pitch := Rect2(78,209,810,402)
-	for i in range(8): draw_rect(Rect2(pitch.position+Vector2(0,i*pitch.size.y/8),Vector2(pitch.size.x,pitch.size.y/8)),Color(.6,.78,.52,.045 if i%2 else .012))
-	var line := Color(.71,.84,.66,.23)
-	draw_rect(pitch,line,false,1)
-	draw_line(Vector2(78,410),Vector2(888,410),line,1)
-	draw_arc(Vector2(483,410),58,0,TAU,72,line,1,true)
-	draw_circle(Vector2(483,410),2,line)
-	for y in [209,536]: draw_rect(Rect2(326,y,314,75),line,false,1)
-	for y in [209,585]: draw_rect(Rect2(414,y,138,26),line,false,1)
-	for group in range(4):
-		var baseline: float=[570,424,324,222][group]
-		text(GROUPS[group],Vector2(89,baseline),9,Color("c1d3b9"),true)
-	box(Rect2(952,155,448,476),Color("10262e"),14,Color("29434c"))
-	if pane==0: draw_comparison()
-	else:
-		text("NASIL OYNAYALIM?",Vector2(976,186),14,MINT,true)
-		for i in range(4): text(["DİZİLİŞ","OYUN ANLAYIŞI","PRES YOĞUNLUĞU","SAVUNMA ÇİZGİSİ"][i],Vector2(978,222+i*99),10,Color("b6c8ba"),true)
-		text("Yoğun pres daha fazla enerji tüketir.",Vector2(978,592),12,MUTE)
-	box(Rect2(40,649,1360,153),Color("10262e"),14,Color("29434c"))
-	if pane==0:
-		text("YEDEK KULÜBESİ",Vector2(56,676),12,PAPER,true)
-		text("SAHADAN VEYA YEDEKTEN BAŞLA",Vector2(1060,676),10,GOLD if swap_stage!="browse" else MUTE)
-	else:
-		text("SAHAYA YANSIYAN PLAN",Vector2(65,680),12,MINT,true)
-		var items := [["DİZİLİŞ",game.management.FORMATIONS[game.management.formation]],["YAKLAŞIM",["Savunmacı","Dengeli","Hücumcu"][game.management.mentality]],["PRES",["Geri çekil","Dengeli","Yoğun"][game.management.pressing]],["SAVUNMA",["Derin","Normal","Önde"][game.management.line_height]]]
-		for i in range(4):
-			text(items[i][0],Vector2(66+i*335,716),10,MUTE,true)
-			text(items[i][1],Vector2(66+i*335,748),24,PAPER,true)
-			if i<3: draw_line(Vector2(365+i*335,701),Vector2(365+i*335,772),Color("365447"),1)
-	if game.controller.using_gamepad:
-		game.controller.Glyphs.draw_hints(self,Vector2(42,818),[["LS / D-PAD","Gez"],["A",tactics_action_label()],["B","Vazgeç" if swap_stage!="browse" else "Geri"],["LB / RB","Sekme"],["X","Geri al"],["VIEW","Ayarlar"]],game.controller.family,font,23,10,20)
-	else: text("YÖN TUŞLARI  GEZ    ENTER  "+tactics_action_label().to_upper()+"    ESC  "+("VAZGEÇ" if swap_stage!="browse" else "GERİ")+"    Z  GERİ AL    P  AYARLAR",Vector2(42,819),10,MUTE)
-	var help := "Turkuaz çerçeve: odak  ·  Altın kart: seçili oyuncu"
-	if prematch and get_viewport().gui_get_focus_owner()==first_focus: help="Hazırsan A / Enter ile sahaya çık. Kadroyu düzenlemek için ↑."
-	if pane==1: help="Turkuaz çerçeve: odak  ·  Altın seçenek: uygulanan"
-	if swap_stage=="confirm": help="Karşılaştırmayı kontrol et, ardından onayla."
-	text(status.left(66) if status!="" else help,Vector2(284,863),11,MINT)
+	preload("res://scripts/tactics_art.gd").draw(self)
 
 func draw_player_detail(data: Dictionary,at: Vector2,title: String,color: Color) -> void:
 	text(title,at,10,color,true)
@@ -1069,6 +1013,9 @@ func draw_comparison() -> void:
 	if prematch and swap_stage=="browse" and get_viewport().gui_get_focus_owner()==first_focus:
 		draw_match_brief()
 		return
+	if swap_stage=="browse":
+		draw_player_spotlight(player_data(inspected.kind,inspected.index))
+		return
 	text({"browse":"1 / 3  ·  İLK OYUNCUYU SEÇ","choose":"2 / 3  ·  İKİNCİ OYUNCUYU SEÇ","confirm":"3 / 3  ·  DEĞİŞİKLİĞİ ONAYLA"}[swap_stage],Vector2(976,186),12,Color("66efff") if swap_stage=="browse" else GOLD,true)
 	var first: Dictionary=inspected if swap_stage=="browse" else swap_source
 	var outgoing := player_data(first.kind,first.index)
@@ -1099,23 +1046,44 @@ func draw_comparison() -> void:
 		elif outgoing.yellow>0: text("SARI KART · İKİNCİ KARTA DİKKAT",Vector2(978,547),10,GOLD,true)
 
 func draw_match_brief() -> void:
-	text("02  /  SAHA ÖNCESİ",Vector2(978,189),11,GOLD,true)
-	text("HAZIRSIN.",Vector2(978,233),32,PAPER,true)
-	text("İlk on bir yerinde. Sıradaki söz senin.",Vector2(980,259),13,MUTE)
-	for side in range(2):
-		var x := 978.0+side*220
-		var club: Dictionary=game.clubs.data(side)
-		badge(Vector2(x+82,322),club,1.10)
-		SelectionArt.fitted(self,str(club.name),Vector2(x,380),18,177)
-		text("EV SAHİBİ" if side==0 else "DEPLASMAN",Vector2(x,403),10,MUTE,true)
-	center("VS",Vector2(1177,331),14,GOLD,true)
-	draw_line(Vector2(978,426),Vector2(1374,426),Color("29434c"),1)
-	text("DİZİLİŞ",Vector2(980,456),10,MUTE,true)
-	text(game.management.FORMATIONS[game.management.formation],Vector2(980,491),26,PAPER,true)
-	text("MAÇ KOŞULLARI",Vector2(1155,456),10,MUTE,true)
-	text(game.weather.label()+" · "+game.stadium.light_rig.label(),Vector2(1155,483),12,PAPER,true)
-	text(["KOLAY","NORMAL","ZOR"][game.management.difficulty],Vector2(1155,505),11,MINT,true)
-	box(Rect2(978,541,396,61),Color("193831"),8,Color("31574a"))
-	draw_circle(Vector2(999,570),4,MINT)
-	text("MAÇA BAŞLA DÜĞMESİ HAZIR",Vector2(1013,566),11,MINT,true)
-	text("A / Enter ile devam et.",Vector2(1013,586),12,PAPER)
+	var club: Dictionary=game.clubs.data(0)
+	SelectionArt.fitted(self,club.name.to_upper(),Vector2(978,207),27,398)
+	text("MAÇ GÜNÜ  /  KIYI ARENA",Vector2(980,234),11,SelectionArt.MUTE)
+	for i in range(5): draw_arc(Vector2(1176,344),94+i*9,-PI*.9,PI*.6,56,Color(SelectionArt.MINT,.10-i*.014),1,true)
+	badge(Vector2(1176,338),club,2.3)
+	badge(Vector2(1002,455),game.clubs.data(1),.63)
+	text("VS",Vector2(1043,459),12,SelectionArt.GOLD,true)
+	SelectionArt.fitted(self,game.team_name(1),Vector2(1075,459),20,290)
+	var ratings: Dictionary=team_ratings(0)
+	for i in range(3): SelectionArt.gauge(self,Vector2(1042+i*133,544),[ratings.att,ratings.mid,ratings.def][i],["HÜCUM","ORTA SAHA","DEFANS"][i],SelectionArt.MINT,26)
+
+func draw_player_spotlight(data: Dictionary) -> void:
+	text(data.role,Vector2(978,192),12,SelectionArt.MINT,true)
+	SelectionArt.fitted(self,str(data.name),Vector2(978,227),29,393)
+	text("%d cm  /  %d kg" % [data.height_cm,data.weight_kg],Vector2(980,252),12,SelectionArt.MUTE)
+	var portrait: Texture2D=portraits.photo(data)
+	draw_circle(Vector2(1122,360),81,Color(SelectionArt.MINT,.08))
+	draw_arc(Vector2(1122,360),89,-PI*.8,PI*.65,64,Color(SelectionArt.MINT,.25),1.4,true)
+	if portrait!=null: draw_texture_rect(portrait,Rect2(1020,258,204,204),false)
+	else: SquadCard.shirt(self,Vector2(1122,357),143,data.kit,data.shirt,bold)
+	text(str(data.ovr),Vector2(1243,371),55,SelectionArt.GOLD,true)
+	text("GÜÇ",Vector2(1252,394),10,SelectionArt.MUTE,true)
+	var stats: Dictionary=data.attributes
+	for i in range(3): SelectionArt.gauge(self,Vector2(1038+i*133,511),[stats.pace,stats.passing,stats.finishing][i],["HIZ","PAS","BİTİRİŞ"][i],SelectionArt.MINT,24)
+	box(Rect2(981,572,390,5),SelectionArt.LINE,2)
+	box(Rect2(981,572,390*data.energy,5),SquadCard.energy_color(data.energy),2)
+	text("ENERJİ",Vector2(981,600),10,SelectionArt.MUTE,true)
+	text("%d%%" % roundi(data.energy*100),Vector2(1337,600),12,SelectionArt.PAPER,true)
+
+func make_button(parent: Node,rect: Rect2,value: String,callback: Callable,primary: bool=false) -> Button:
+	var button: Button=super.make_button(parent,rect,value,callback,primary)
+	for visual in ["normal","hover","pressed","focus"]:
+		var style := StyleBoxFlat.new()
+		style.bg_color=(SelectionArt.GOLD if primary else Color("152a35")).lightened(.10 if visual=="hover" else 0)
+		style.set_corner_radius_all(10)
+		if visual=="focus":
+			style.bg_color=Color.TRANSPARENT; style.border_color=SelectionArt.GOLD
+			style.set_border_width_all(2); style.set_expand_margin_all(3)
+		button.add_theme_stylebox_override(visual,style)
+	for visual in ["font_color","font_hover_color","font_focus_color","font_pressed_color"]: button.add_theme_color_override(visual,SelectionArt.INK if primary else SelectionArt.PAPER)
+	return button

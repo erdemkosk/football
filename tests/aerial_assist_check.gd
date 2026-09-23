@@ -103,7 +103,7 @@ func run() -> void:
 	await scenario(Vector3(-2,1.65,-.45),Vector3(11,0,0))
 	key(true); key(false); await tick(100)
 	print("HOP contacts=",contacts," kind=",count_kind," peak=",peak)
-	check(contacts==1 and count_kind=="volley" and peak>.04 and peak<.4,"A slightly high foot-level ball gets a small physical jumping volley")
+	check(contacts==1 and count_kind=="side_volley" and peak>.04 and peak<.4,"A slightly high lateral ball gets a small physical jumping side volley")
 	for rate in [60,30]:
 		Engine.physics_ticks_per_second=rate; sim_delta=1.0/rate
 		await scenario(Vector3(-6,2.3,-1.7),Vector3(11,0,0))

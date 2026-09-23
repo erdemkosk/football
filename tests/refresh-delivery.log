@@ -1,0 +1,12 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+CHOICE { "kind": "through", "route": { "target": (-6.0, 0.155, 18.6), "velocity": (-6.216638, 0.32, 18.59811), "flight": 1.09221175461537, "lob": false, "through": true, &"receiver": 18 }, "receiver": 18, "one_two": false, &"value": 55.006187029515 } SAFE { "risk": 0.95, "lane_risk": 0.0, "margin": 6.13081797545695, "reachable": false }
+ACT true
+0 gap 0.61446017026901 pending 8 passes [0, 0] receiver [-1, -1] safe { "risk": 0.95, "lane_risk": 0.0, "margin": 6.13081797545695, "reachable": false }
+1 gap 0.54817992448807 pending 8 passes [0, 0] receiver [-1, -1] safe { "risk": 0.95, "lane_risk": 0.0, "margin": 6.13081797545695, "reachable": false }
+2 gap 0.45635363459587 pending 8 passes [0, 0] receiver [-1, -1] safe { "risk": 0.95, "lane_risk": 0.0, "margin": 6.13081797545695, "reachable": false }
+3 gap 0.354283452034 pending 8 passes [0, 0] receiver [-1, -1] safe { "risk": 0.95, "lane_risk": 0.0, "margin": 6.13081797545695, "reachable": false }
+4 gap 0.26397052407265 pending 8 passes [0, 0] receiver [-1, -1] safe { "risk": 0.95, "lane_risk": 0.0, "margin": 6.13081797545695, "reachable": false }
+5 gap 0.20234540104866 pending 8 passes [0, 0] receiver [-1, -1] safe { "risk": 0.95, "lane_risk": 0.0, "margin": 6.13081797545695, "reachable": false }
+6 gap 0.1734516620636 pending 8 passes [0, 0] receiver [-1, -1] safe { "risk": 0.95, "lane_risk": 0.0, "margin": 6.13081797545695, "reachable": false }
+7 gap 0.16966514289379 pending 0 passes [0, 0] receiver [-1, -1] safe { "risk": 0.95, "lane_risk": 0.0, "margin": 6.13081797545695, "reachable": false }

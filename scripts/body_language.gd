@@ -25,6 +25,12 @@ var shielding := 0.0
 var shield_target := Vector3.ZERO
 var shield_seen := false
 var shield_left := false
+var contest_weight := 0.0
+var contest_target := Vector3.ZERO
+var contest_seen := false
+var contest_side := 1.0
+var contest_shoulder := false
+var contest_pressure := 0.0
 
 func reset(p) -> void:
 	clear_intent()
@@ -36,6 +42,7 @@ func reset(p) -> void:
 	contact_cooldown=0
 	contact_count=0
 	shielding=0; shield_seen=false
+	contest_weight=0; contest_seen=false
 	p.head_joint.rotation=Vector3.ZERO
 	for eye in p.eye_joints: eye.rotation=Vector3.ZERO
 
@@ -62,7 +69,23 @@ func observe(game,index: int) -> void:
 	enabled=game.state=="playing" and p.visible
 	ball_target=game.ball.global_position
 	shield_seen=false
+	contest_seen=false
 	if not available(p): return
+	# Read an actual nearby opponent in the ball contest. Both participants
+	# independently brace toward one another; spectators and teammates do not.
+	if can_balance(p) and p.receive_timer<=0 and game.flat_distance(p.position,game.ball.position)<3.2:
+		var closest := 1.10
+		for other in game.players:
+			if not other.visible or other.team==p.team or other.dismissed or other.keeper or other.action_timer>0: continue
+			var gap: Vector3=(other.position-p.position)*Vector3(1,0,1)
+			var distance := gap.length()
+			if distance<.25 or distance>=closest: continue
+			closest=distance; contest_seen=true
+			contest_pressure=clampf((1.15-distance)*2.2+.25+absf((p.velocity-other.velocity).dot(gap.normalized()))*.055,.25,1)
+			contest_target=other.position+Vector3.UP*1.05
+			var local: Vector3=p.rig.global_basis.inverse()*gap.normalized()
+			contest_side=-1.0 if local.x<0 else 1.0
+			contest_shoulder=absf(local.x)>.68 and p.facing.dot(other.facing)>.35
 	if (game.dribbler==index or p.protecting) and not p.keeper:
 		var nearest := 1.55
 		for other in game.players:
@@ -117,6 +140,7 @@ func observe(game,index: int) -> void:
 	point_cooldown=2.15+fmod(p.number*0.53+p.team*0.7,1.8)
 
 func update(p,delta: float) -> void:
+	contest_weight=move_toward(contest_weight,contest_pressure if contest_seen and can_balance(p) and p.receive_timer<=0 else 0.0,delta*(7 if contest_seen else 5))
 	shielding=move_toward(shielding,1.0 if shield_seen and can_balance(p) and p.receive_timer<=0 else 0.0,delta*6)
 	scan_age=minf(SCAN_TIME,scan_age+delta)
 	point_age=minf(POINT_TIME,point_age+delta)
@@ -162,6 +186,26 @@ func collisions(p,travel_velocity: Vector3) -> void:
 
 func apply_pose(p) -> void:
 	if not can_balance(p): return
+	if contest_weight>0:
+		var weight := contest_weight
+		var arm: Node3D=p.left_arm if contest_side<0 else p.right_arm
+		var elbow: Node3D=p.left_elbow if contest_side<0 else p.right_elbow
+		var local: Vector3=(contest_target-p.global_position).rotated(Vector3.UP,-p.rig.rotation.y).normalized()
+		# A compact bent arm at the opponent's upper body, never a punching
+		# extension. The opposite arm opens for balance while feet keep running.
+		var brace := Vector3(-.28,contest_side*.18,contest_side*.72)
+		if not contest_shoulder:
+			var toward: Vector3=(p.spine.global_basis.inverse()*(contest_target-arm.global_position)).normalized()
+			arm.quaternion=arm.quaternion.slerp(Quaternion(Vector3.DOWN,toward),weight*.72)
+		else: arm.rotation=arm.rotation.lerp(brace,weight)
+		elbow.rotation.x=lerpf(elbow.rotation.x,1.05 if contest_shoulder else .8,weight)
+		var counter: Node3D=p.right_arm if contest_side<0 else p.left_arm
+		counter.rotation.z=lerpf(counter.rotation.z,-contest_side*.65,weight*.65)
+		p.spine.rotation.z=lerpf(p.spine.rotation.z,-local.x*.19,weight)
+		p.spine.rotation.x=lerpf(p.spine.rotation.x,local.z*.12,weight)
+		p.spine.rotation.y=lerpf(p.spine.rotation.y,-contest_side*.14,weight)
+		point_cancelled=true
+		return
 	if shielding>0:
 		# A bent forearm feels the opponent behind the shoulder. This is a visual
 		# shielding gesture, never a strike, push impulse or invisible protection.

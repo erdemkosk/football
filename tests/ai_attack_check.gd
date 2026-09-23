@@ -37,6 +37,10 @@ func act_and_contact(index: int) -> bool:
 	for frame in range(24):
 		if game.kick_contact.pending.is_empty(): break
 		var actor=game.players[game.kick_contact.pending.index]
+		# A moving receiver must advance during the passer's approach, as in a
+		# live match; holding it frozen invalidates the predicted lead pass.
+		for other in game.players:
+			if other.visible and other!=actor: other.position+=other.velocity*DT
 		game.kick_contact.prepare(DT)
 		actor.step(DT)
 		game.kick_contact.resolve()
@@ -50,6 +54,12 @@ func run() -> void:
 	check(kind()=="finesse" and absf(game.ai_attack.decide(20).curve)>0,"A wide scoring angle can use a curled shot")
 	setup(Vector3(0,0,33)); game.players[0].position.z=41
 	check(kind()=="chip" and act_and_contact(20) and game.ball.kick_velocity.y>6,"An advancing goalkeeper invites a genuine lofted chip")
+	setup(Vector3(0,0,27)); game.management.difficulty=1; game.players[20].attributes.finishing=84
+	check(game.ai_attack.shot_choice(20).get("kind","")=="power","Normal AI uses a power shot with finishing ability, energy and space")
+	game.players[20].energy=.25
+	check(game.ai_attack.shot_choice(20).get("kind","")!="power","A tired player avoids a costly power shot")
+	game.players[20].energy=1; player(4,Vector3(3,0,28))
+	check(game.ai_attack.shot_choice(20).get("kind","")!="power","Nearby pressure prevents a long power-shot windup")
 	setup(); player(18,Vector3(-6,0,12),Vector3(0,0,4))
 	var route: Dictionary=game.ai_attack.decide(20)
 	var through_available := false

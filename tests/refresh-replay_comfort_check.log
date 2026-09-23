@@ -1,0 +1,35 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Replay entry masks its timeline/camera change at 30 FPS
+CAMERA rate=30 cuts=[0, 1, 2] max_mps=5.74069976806641 max_deg_s=16.5864756699669
+PASS: Three deliberate angles switch under full fade, with a minimum hold
+PASS: Tracking has bounded translation, gentle rotation and no visible FOV pumping
+PASS: The horizon stays level and the camera never jumps across the ball's centre line
+PASS: The ball stays in the camera's forward viewing cone
+PASS: No camera transition covers the ball crossing the goal line
+PASS: Automatic completion restores the live scene and score exactly
+PASS: Return to live play is covered by the exit fade
+PASS: Exit overlay clears after the short transition
+PASS: Replay entry masks its timeline/camera change at 60 FPS
+CAMERA rate=60 cuts=[0, 1, 2] max_mps=5.74069976806641 max_deg_s=16.5934232530132
+PASS: Three deliberate angles switch under full fade, with a minimum hold
+PASS: Tracking has bounded translation, gentle rotation and no visible FOV pumping
+PASS: The horizon stays level and the camera never jumps across the ball's centre line
+PASS: The ball stays in the camera's forward viewing cone
+PASS: No camera transition covers the ball crossing the goal line
+PASS: Automatic completion restores the live scene and score exactly
+PASS: Return to live play is covered by the exit fade
+PASS: Exit overlay clears after the short transition
+PASS: Replay entry masks its timeline/camera change at 120 FPS
+CAMERA rate=120 cuts=[0, 1, 2] max_mps=5.74081420898438 max_deg_s=16.601291310772
+PASS: Three deliberate angles switch under full fade, with a minimum hold
+PASS: Tracking has bounded translation, gentle rotation and no visible FOV pumping
+PASS: The horizon stays level and the camera never jumps across the ball's centre line
+PASS: The ball stays in the camera's forward viewing cone
+PASS: No camera transition covers the ball crossing the goal line
+PASS: Automatic completion restores the live scene and score exactly
+PASS: Return to live play is covered by the exit fade
+PASS: Exit overlay clears after the short transition
+PASS: Pausing freezes replay and its transition without covering the pause UI
+PASS: Reset clears pending cuts and fades before a new match
+REPLAY COMFORT: 29 checks, 0 failures

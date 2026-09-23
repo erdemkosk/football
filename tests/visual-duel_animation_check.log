@@ -1,0 +1,14 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce RTX 3070
+
+PASS: Both nearby rivals participate in the duel
+PASS: Parallel players use shoulder bracing
+PASS: The two torsos lean toward opposing contact directions
+PASS: The inside arms bend naturally against the opponent
+PASS: Live shoulder physics and the paired visual brace remain active while running
+PASS: Face-to-face contact uses an arm brace instead of a side shoulder
+PASS: Separating releases both contest poses
+PASS: Teammates do not visually grapple
+PASS: Players away from the ball keep their ordinary motion
+PASS: A shot retains priority over the contest overlay
+DUEL ANIMATION: 10 checks, 0 failures

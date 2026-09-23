@@ -12,6 +12,25 @@ func original_travel_time(speed: float,distance: float,resistance: Vector2) -> f
 	return (low+high)*.5
 
 func run() -> void:
+	var geometry=preload("res://scripts/geometry.gd")
+	var parent:=Node3D.new(); root.add_child(parent)
+	var material:=geometry.material(Color("cea47a"))
+	var first=geometry.sphere(parent,.205,Vector3(0,.16,0),material); first.scale=Vector3(.86,1.1,.91)
+	var second=geometry.sphere(parent,.045,Vector3(0,.15,-.181),material)
+	var vertices: Array[Vector3]=[]
+	var uv_count:=0
+	for part in [first,second]:
+		var arrays: Array=part.mesh.surface_get_arrays(0)
+		for vertex in arrays[Mesh.ARRAY_VERTEX]: vertices.append(part.transform*vertex)
+		uv_count+=arrays[Mesh.ARRAY_TEX_UV].size()
+	var merged=geometry.combine_rigid(parent,[first,second],"test_head")
+	var data: Array=merged.mesh.surface_get_arrays(0)
+	var same: bool=data[Mesh.ARRAY_VERTEX].size()==vertices.size()
+	if same:
+		for i in range(vertices.size()): same=same and vertices[i].is_equal_approx(data[Mesh.ARRAY_VERTEX][i])
+	check(same,"Merged rigid parts retain every transformed source vertex")
+	check(data[Mesh.ARRAY_TEX_UV].size()==uv_count and merged.material_override==material and parent.get_child_count()==1,"Mesh batching preserves UVs and the material while removing duplicate draw instances")
+	parent.free()
 	var solver_matches := true
 	for resistance in [Vector2(2,.12),Vector2(1.62,.12),Vector2(5.22,.34)]:
 		for speed in [0.0,.1,1.0,4.0,12.0,24.0,40.0]:

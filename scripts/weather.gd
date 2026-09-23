@@ -174,6 +174,9 @@ func apply_look() -> void:
 	var wear := 0.0
 	if is_instance_valid(game): wear=clampf(game.match_time/maxf(game.LENGTH,1.0),0,1)
 	game.stadium.grass.set_shader_parameter("play_wear",wear)
+	game.stadium.chalk.set_shader_parameter("wetness",wetness)
+	game.stadium.chalk.set_shader_parameter("play_wear",wear)
+	game.ball.update_surface_wetness(wetness)
 	game.stadium.light_rig.apply_weather(rain)
 
 func player_step(player, _delta: float) -> void:

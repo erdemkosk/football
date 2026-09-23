@@ -9,35 +9,53 @@ func reset() -> void:
 
 func select(index: int,options: Array[Dictionary]) -> Dictionary:
 	var scored: Array[Dictionary]=[]
+	# This context lives for one synchronous evaluation only, never across ticks.
+	var context: Dictionary={}
 	for option in options:
 		if option.is_empty(): continue
 		var entry := option.duplicate()
-		entry.value=value(index,option)+game.management.identity.decision_bias(index,option)
+		entry.value=value(index,option,context)+game.management.identity.decision_bias(index,option)
 		scored.append(entry)
 	scored.sort_custom(func(a,b): return a.value>b.value)
 	rankings[index]=scored
 	if scored.is_empty() or scored[0].kind=="carry": return {}
 	return scored[0]
 
-func value(index: int,choice: Dictionary) -> float:
+func value(index: int,choice: Dictionary,context: Dictionary={}) -> float:
 	var p=game.players[index]
 	var brain=game.ai_attack
 	var forward: float=game.attack_sign(p.team)
-	var pressure: float=brain.clearance(p.position,p.team)
+	if context.is_empty():
+		context.pressure=brain.clearance(p.position,p.team)
+		context.danger=brain.pressure_read(index)
+		context.isolated=brain.through_on_goal(index)
+	var pressure: float=context.pressure
 	var kind: String=choice.kind
 	var mentality: int=game.team_tactics.plan_for(p.team)
-	var danger: Dictionary=brain.pressure_read(index)
-	if kind in ["carry","push","feint","roll","roulette","elastico","scoop","rainbow","heel","flick"]:
+	var danger: Dictionary=context.danger
+	var isolated: bool=context.isolated
+	if kind in ["shield","invite"]:
+		return 35+minf(4,pressure)*1.2+(float(p.attributes.balance)-72)*.1-danger.urgency*maxf(0,danger.closing-2)*4
+	if kind in ["carry","push","feint","roll","stop_go","knock_around","roulette","elastico","scoop","rainbow","heel","flick"]:
+		# Keep carry_target's cache update even when the option has its own exit.
 		var at: Vector3=choice.get("exit",brain.carry_target(index))
 		var room: float=minf(8,brain.clearance(at,p.team))
-		var score: float=20+room*1.3+(at.z-p.position.z)*forward*.6-maxf(0,3-pressure)*8
+		var crowd: float=brain.clearance(p.position,p.team,false) if isolated else pressure
+		var threat: Dictionary=brain.pressure_read(index,false) if isolated else danger
+		var score: float=20+room*1.3+(at.z-p.position.z)*forward*.6-maxf(0,3-crowd)*8
 		if kind=="push": score+=5+(float(p.attributes.pace)-72)*.10
 		elif kind!="carry": score+=7+(float(p.attributes.control)-72)*.16-maxf(0,.4-p.energy)*12
 		# A crowded own third is a poor place for a speculative individual run.
 		if p.position.z*forward< -25 and pressure<3: score-=9
 		# A sprinting presser several metres away can be more urgent than a
 		# stationary marker. Release a safe pass before the challenge arrives.
-		score-=danger.urgency*clampf(danger.closing,0,8)*2.2
+		score-=threat.urgency*clampf(threat.closing,0,8)*2.2
+		if kind in ["roll","stop_go","knock_around","feint"] and danger.opponent>=0:
+			var defender=game.players[danger.opponent]
+			var exit_direction: Vector3=((at-p.position)*Vector3(1,0,1)).normalized()
+			var committed: float=maxf(0,-defender.velocity.dot(exit_direction))
+			score+=minf(9,committed*2.2)+(5 if defender.pose=="poke" and defender.action_timer>0 else 0)
+		if isolated: score+=12
 		return score
 	if choice.has("velocity") or choice.get("advanced",false):
 		var quality: float=brain.shot_quality(p.position,p.team)
@@ -45,6 +63,7 @@ func value(index: int,choice: Dictionary) -> float:
 		score-=game.first_touch.pressure(index)*5+(1-p.energy)*4
 		if kind=="power": score-=maxf(0,9-pressure)*2.2
 		if kind=="chip": score+=8
+		if isolated: score+=16
 		return score
 	var route: Dictionary=choice.route
 	var risk := 0.0
@@ -61,8 +80,12 @@ func value(index: int,choice: Dictionary) -> float:
 	var own_third: float=clampf((-p.position.z*forward-15)/30,0,1)
 	var risk_cost: float=40+own_third*16-(mentality-1)*5
 	var score: float=25+clampf(progress,-20,24)*(.65+(mentality-1)*.12)+minf(8,free_space)*1.3-risk*risk_cost-float(route.flight)*3
-	score+=danger.urgency*clampf(danger.closing,0,8)*(1-risk)*1.8
-	score+=maxf(0,4-pressure)*3+(float(p.attributes.get("passing",p.attributes.control))-72)*.07
+	if isolated and progress<2.0 and brain.shot_quality(destination,p.team)+.18<brain.shot_quality(p.position,p.team):
+		return -INF
+	if not isolated:
+		score+=danger.urgency*clampf(danger.closing,0,8)*(1-risk)*1.8
+		score+=maxf(0,4-pressure)*3
+	score+=(float(p.attributes.get("passing",p.attributes.control))-72)*.07
 	score+=(float(q.attributes.control)-72)*.06
 	score+=brain.shot_quality(destination,p.team)*24
 	# A nominally open destination is useless if the receiver cannot reach it.

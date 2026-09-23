@@ -20,5 +20,5 @@ func apply(p,delta: float) -> void:
 		var weight := smoothstep(0,DURATION,age)
 		for i in range(p.kick_joints.size()):
 			p.kick_joints[i].quaternion=origin[i].slerp(p.kick_joints[i].quaternion,weight)
-	previous.clear()
-	for joint in p.kick_joints: previous.append(joint.quaternion)
+	if previous.size()!=p.kick_joints.size(): previous.resize(p.kick_joints.size())
+	for i in range(p.kick_joints.size()): previous[i]=p.kick_joints[i].quaternion

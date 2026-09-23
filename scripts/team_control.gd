@@ -16,8 +16,10 @@ var predicted_point := Vector3.ZERO
 var departing_player := -1
 var defence_candidate := -1
 var defence_candidate_age := 0.0
+var selection_age := 1.0
 
 func reset() -> void:
+	selection_age=1
 	cooldown=0
 	manual_hold=0
 	run_receiver=-1
@@ -82,6 +84,7 @@ func select(index: int,manual: bool=false) -> void:
 	var p=game.players[index]
 	if not p.visible or p.dismissed or p.team!=0: return
 	if game.controlled!=index:
+		selection_age=0
 		game.heading.cancel(game.controlled)
 		game.volleys.cancel(game.controlled)
 		game.aerial_assist.cancel(game.controlled)
@@ -94,7 +97,7 @@ func select(index: int,manual: bool=false) -> void:
 		for i in range(game.players.size()): game.players[i].chosen=i==index
 	cooldown=0.75
 	defence_candidate=-1; defence_candidate_age=0
-	if manual: manual_hold=1.0; predicted_receiver=-1
+	if manual: manual_hold=1.0
 
 func opponent_possession() -> bool:
 	if game.ball.held_by!=null: return game.ball.held_by.team==1
@@ -122,6 +125,11 @@ func defender_cost(index: int) -> float:
 	return cost
 
 func switch_choice(exclude_current: bool=true) -> int:
+	var velocity: Vector3=game.ball.kick_velocity if game.ball.pending_kick else game.ball.linear_velocity
+	if game.dribbler<0 and game.ball.held_by==null and (velocity.length()>2 or game.ball.position.y>.6):
+		var reception := predict_receiver(velocity)
+		if reception.index>=0 and not (exclude_current and reception.index==game.controlled):
+			return reception.index
 	var best := -1
 	var cost := INF
 	for i in range(1,11):
@@ -170,9 +178,15 @@ func update(delta: float) -> void:
 		return
 	var opposing := opponent_possession()
 	var committed := committed_challenge(game.controlled)
+	var velocity: Vector3=game.ball.kick_velocity if game.ball.pending_kick else game.ball.linear_velocity
+	var in_flight: bool=game.dribbler<0 and game.ball.held_by==null and (velocity.length()>2 or game.ball.position.y>.6)
 	if eligible(game.controlled):
-		if manual_hold>0 and (current.action_timer<=0 or committed): return
-		if touch_hold>0 and not opposing: return
+		if manual_hold>0 and (current.action_timer<=0 or committed):
+			if not in_flight: return
+			var takeover := predict_receiver(velocity)
+			if takeover.index<0 or takeover.index==game.controlled or takeover.advantage<0.55: return
+			if game.flat_distance(game.players[takeover.index].position,takeover.point)>3.6: return
+		elif touch_hold>0 and not opposing: return
 	if not game.kick_contact.pending.is_empty(): return
 	if game.aerial_shot_active(game.controlled): return
 	if committed: return
@@ -193,18 +207,20 @@ func update(delta: float) -> void:
 		if game.pass_charging: game.cancel_pass()
 		game.charging=false; game.charge=0
 	elif game.charging or game.pass_charging or game.requested_receiver>=0: return
-	var velocity: Vector3=game.ball.kick_velocity if game.ball.pending_kick else game.ball.linear_velocity
 	var changed := velocity.distance_to(previous_velocity)>4
 	previous_velocity=velocity
-	var in_flight: bool=game.dribbler<0 and game.ball.held_by==null and (velocity.length()>2 or game.ball.position.y>.6)
 	var current_available: bool=eligible(game.controlled) and current.action_timer<=0 and current.dummy_time<=0
 	if in_flight and (prediction_in<=0 or changed or not current_available):
 		prediction_in=.08
 		var reception := predict_receiver(velocity)
 		predicted_receiver=reception.index
 		predicted_point=reception.point
-		if reception.index>=0 and reception.index!=game.controlled and (not current_available or ((cooldown<=0 or changed) and reception.advantage>.22)):
-			select(reception.index)
+		if reception.index>=0 and reception.index!=game.controlled:
+			var imminent: bool=game.flat_distance(game.players[reception.index].position,reception.point)<3.8
+			var take: bool=not current_available or reception.advantage>.12
+			if imminent and reception.advantage>.05: take=true
+			if take and (not current_available or cooldown<=0 or changed or imminent):
+				select(reception.index)
 	# Do not undo a valid receiver choice with the ground-defence heuristic,
 	# especially while the real rigid body is still applying a pending kick.
 	if in_flight and predicted_receiver>=0: return
@@ -261,9 +277,8 @@ func predict_receiver(velocity: Vector3) -> Dictionary:
 
 func awaiting_delivery() -> bool:
 	if game.player_lock or game.dribbler>=0 or game.ball.held_by!=null: return false
-	if game.last_touch!=0: return false
 	if game.incoming_receiver==game.controlled and game.incoming_time>0: return true
-	if game.ai_receivers[0]==game.controlled and game.ai_pass_time[0]>0: return true
+	if game.ai_receivers[0]==game.controlled and game.ai_pass_time[0]>0 and game.last_touch==0: return true
 	return predicted_receiver==game.controlled
 
 func reception_direction() -> Vector3:

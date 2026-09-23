@@ -1,0 +1,14 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: A missed poke brushing the carrier's side keeps play live
+PASS: Light duels do not knock the carrier down or lock their controls
+PASS: AI does not lunge through a carrier's legs from behind
+PASS: A deliberate rear trip still awards a free kick
+PASS: A late standing lunge into the legs is still a foul
+PASS: A well timed foot challenge wins the real ball
+PASS: A slide passing beside a player is not an imaginary foul
+PASS: Near simultaneous ball-first contact has a small natural tolerance
+PASS: A slide through the opponent before the ball remains a foul
+PASS: AI may still tackle a genuinely exposed ball from a clear angle
+PASS: Shielding invites jockeying instead of repeated automatic fouls
+DUEL BALANCE CHECK: 11 checks, 0 failures

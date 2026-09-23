@@ -99,6 +99,15 @@ func apply(p) -> void:
 			brace_arm.rotation.x=.95
 		if secured:
 			p.left_elbow.rotation.x=.85; p.right_elbow.rotation.x=.85
+		# Stand through one loaded knee instead of unfolding both legs together.
+		# An unsecured keeper keeps the near glove available for the rebound.
+		var rising := sin(smoothstep(duration*.56,duration,age)*PI)
+		var support_knee: Node3D=p.left_knee if foot==0 else p.right_knee
+		support_knee.rotation.x-=rising*.45
+		p.spine.rotation.z+=side*rising*.10
+		if not secured:
+			var glove: Node3D=p.left_arm if foot==0 else p.right_arm
+			glove.rotation.x+=rising*.20
 	if start_pose.size()==p.kick_joints.size():
 		for i in range(p.kick_joints.size()): p.kick_joints[i].quaternion=start_pose[i].slerp(p.kick_joints[i].quaternion,entry)
 	if kind=="catch":

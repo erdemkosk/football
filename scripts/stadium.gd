@@ -13,7 +13,7 @@ const GoalNet = preload("res://scripts/goal_net.gd")
 var nets: Array[Node3D] = []
 var white := G.material(Color("e9ebe0"))
 var concrete := G.material(Color("484f49"))
-var chalk := G.material(Color("b9c8b4"))
+var chalk := ShaderMaterial.new()
 var steel := G.material(Color("7f9095"),0.5)
 var dark := G.material(Color("17262c"))
 var rng := RandomNumberGenerator.new()
@@ -26,6 +26,11 @@ var light_rig: Node3D
 var pitch_burst: Node3D
 var static_batch_stats: Dictionary = {}
 var supporter_banners: Array[Dictionary] = []
+
+func set_session(practice: bool) -> void:
+	crowd.set_session(practice)
+	for banner in supporter_banners:
+		banner.label.get_parent().visible = not (practice and banner.away)
 
 func _ready() -> void:
 	rng.seed = 913
@@ -66,6 +71,8 @@ func lighting() -> void:
 	add_child(sun)
 
 func pitch() -> void:
+	chalk.shader=preload("res://shaders/pitch_paint.gdshader")
+	chalk.set_meta("static_world_space_opaque",true)
 	var foundation=G.block(self,Vector3(132+P.EXTRA_WIDTH,1,162),Vector3(0,-0.6,0),G.material(Color("202e2d")))
 	foundation.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
@@ -148,7 +155,7 @@ func stands() -> void:
 			for col in range(133):
 				var z = -54+col*0.82
 				if side>0 and row<6 and absf(z)<3.3: continue
-				if col%22 in [0,1]:
+				if col%22==0:
 					G.block(self,Vector3(0.07,0.025,0.82),Vector3(x-side*0.39,y+0.29,z),stair_edge)
 					continue
 				crowd.seat(Vector3(x,y+0.275,z+(row%2)*0.13),side*PI*0.5,row,col/22)
@@ -173,7 +180,7 @@ func stands() -> void:
 			G.block(self,Vector3(99+P.EXTRA_WIDTH,0.55,1),Vector3(0,y,z),concrete)
 			for col in range(117):
 				var x = (-48+col*0.82)*(99+P.EXTRA_WIDTH)/99
-				if col%23 in [0,1]:
+				if col%23==0:
 					G.block(self,Vector3(0.82,0.025,0.07),Vector3(x,y+0.29,z-side*0.39),stair_edge)
 					continue
 				crowd.seat(Vector3(x+(row%2)*0.13,y+0.275,z),PI if side<0 else 0,row,col/23)
@@ -196,7 +203,7 @@ func stands() -> void:
 			if side>0: banner.rotation.y = PI
 			G.block(banner,Vector3(12,0.95,0.035),Vector3.ZERO,front)
 			var title := board_label(banner,["KIYI 1967","HEP BİRLİKTE","BİZİM ŞEHRİMİZ"][section],Vector3(0,0,0.025),Color("bcbda4"),0.015)
-			supporter_banners.append({"label":title,"away":banner.position.x>38 and banner.position.z>25,"section":section})
+			supporter_banners.append({"label":title,"away":Crowd.visiting(banner.position),"section":section})
 
 func details() -> void:
 	var navy = G.material(Color("133540"))

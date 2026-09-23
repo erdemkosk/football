@@ -71,7 +71,7 @@ func capture(label: String) -> void:
 	game.camera.position=p.position+Vector3(3.7,1.9,-3.4)
 	game.camera.look_at(p.position+Vector3(0,.8,-.2))
 	await process_frame; RenderingServer.force_draw(false)
-	root.get_texture().get_image().save_png("/tmp/sefc-carry-"+label+".png")
+	root.get_texture().get_image().save_png("res://tests/sefc-carry-"+label+".png")
 	game.ball.freeze=false; game.ball.linear_velocity=velocity; game.ball.angular_velocity=spin
 
 func cancellation_checks() -> void:

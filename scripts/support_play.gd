@@ -69,6 +69,8 @@ func update(delta: float) -> void:
 	for i in range(game.players.size()):
 		if game.players[i].visible and not game.players[i].dismissed: available|=1<<i
 	settings.append(available)
+	# A newly committed receiver must leave its support assignment immediately.
+	settings.append(game.ai_receivers[team] if game.ai_pass_time[team]>0 else -1)
 	for key in ["width","tempo","runs","fullbacks","anchor"]: settings.append(game.management.detail(team,key))
 	var valid := plan_age>0 and owner==plan_owner and settings==plan_settings and ball.distance_squared_to(plan_ball)<.35*.35
 	if valid:
@@ -81,6 +83,12 @@ func update(delta: float) -> void:
 	targets.clear(); roles.clear()
 	var wing := absf(ball.x)>14
 	var side := signf(ball.x)
+	# The candidate search reads one immutable layout. Cache native positions
+	# once and take square roots only for the two winning distances.
+	var opponents := PackedVector2Array()
+	for q in game.players:
+		if q.visible and q.team!=team: opponents.append(Vector2(q.position.x,q.position.z))
+	var ball_plane := Vector2(ball.x,ball.z)
 	for i in range(game.players.size()):
 		var p=game.players[i]
 		if not p.visible or p.dismissed or p.keeper or p.team!=team or i==owner: continue
@@ -138,14 +146,16 @@ func update(delta: float) -> void:
 			var candidate: Vector3=target+offset
 			candidate.x=clampf(candidate.x,-(P.HALF_WIDTH-3),(P.HALF_WIDTH-3))
 			candidate.z=forward*minf(clampf(candidate.z*forward,-43,46),maxf(0,line))
-			var clearance := 8.0
-			var lane := 5.0
-			for q in game.players:
-				if not q.visible or q.team==team: continue
-				clearance=minf(clearance,game.flat_distance(q.position,candidate))
-				var near := Geometry3D.get_closest_point_to_segment(q.position*Vector3(1,0,1),ball*Vector3(1,0,1),candidate)
-				lane=minf(lane,game.flat_distance(near,q.position))
-			var value: float=clearance+lane*lerpf(.35,.9,awareness)-offset.length()*0.5
+			var clearance_squared := 64.0
+			var lane_squared := 25.0
+			var endpoint := Vector2(candidate.x,candidate.z)
+			var segment := endpoint-ball_plane
+			var length_squared := segment.length_squared()
+			for opponent in opponents:
+				clearance_squared=minf(clearance_squared,opponent.distance_squared_to(endpoint))
+				var along := clampf((opponent-ball_plane).dot(segment)/length_squared,0,1) if length_squared>0 else 0.0
+				lane_squared=minf(lane_squared,opponent.distance_squared_to(ball_plane+segment*along))
+			var value: float=sqrt(clearance_squared)+sqrt(lane_squared)*lerpf(.35,.9,awareness)-offset.length()*0.5
 			if value>best_value: best_value=value; best=candidate
 		targets[i]=best
 		roles[i]=role

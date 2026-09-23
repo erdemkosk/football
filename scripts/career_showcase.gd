@@ -15,6 +15,7 @@ func configure(data: Dictionary) -> void:
 	if actor!=null: actor.free()
 	actor=Footballer.new(); actor.number=data.get("appearance_number",data.shirt); actor.keeper=data.keeper
 	scene.add_child(actor); actor.apply_identity(data); actor.apply_kit(data.kit)
+	actor.physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_OFF
 	actor.collision_layer=0; actor.collision_mask=0; actor.marker.hide(); actor.call_label.hide()
 	actor.position=Vector3(-1.35,0,0); actor.rotation.y=.15; actor.animate(0)
 

@@ -18,6 +18,7 @@ func prepare() -> void:
 		if game.ball.held_by!=null or game.ball.pending_reset: continue
 		if not p.visible or p.keeper or p.action_timer>0 or p.kick_timer>0 or game.aerial_shot_active(i) or game.dribbler>=0: continue
 		if game.is_user_player(i) and game.movement_input().length()>.2: continue
+		if game.is_user_player(i) and not assigned(i) and game.team_control.predicted_receiver!=i: continue
 		var offset: Vector3=(game.ball.position-p.position)*Vector3(1,0,1)
 		var waiting: bool=assigned(i)
 		if offset.length()<.2 or offset.length()>(22.0 if waiting else 5.0): continue
@@ -108,6 +109,11 @@ func receive(index: int,extended: bool) -> bool:
 	spill=spill or (extended and speed>20+technique*4) or (reach>.90 and speed>13+technique*6)
 	spill=spill or (p.contest_weight>.65 and difficulty>.72 and speed>13)
 	p.begin_receive(style,ball.position,relative,reach)
+	p.ball_actions.receive_error=difficulty if not spill else maxf(.65,difficulty)
+	p.ball_actions.receive_reason="ARKADA KALAN TOP" if behind else ("UZANARAK KONTROL" if reach>.6 else ("SERT GELEN TOP" if speed>20 else ("BASKI ALTINDA" if pressure(index)>.55 else "")))
+	if spill:
+		p.ball_actions.receive_feedback_time=1.2
+		if p.ball_actions.receive_reason=="": p.ball_actions.receive_reason="DENGE KAYBI"
 	p.ball_actions.control_grace=0.04 if style=="foot" else 0.22
 	p.ball_actions.contact_cooldown=0.32 if spill else 0.25
 	p.ball_actions.settle_time=0 if spill else (.5 if style=="foot" else .8)

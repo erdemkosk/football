@@ -39,6 +39,7 @@ func _ready() -> void:
 	player=preload("res://scripts/footballer.gd").new()
 	player.number=10
 	world.add_child(player)
+	player.physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_OFF
 	player.collision_layer=0; player.collision_mask=0
 	player.marker.visible=false
 	var camera := Camera3D.new()

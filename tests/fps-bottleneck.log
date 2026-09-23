@@ -1,0 +1,6 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce RTX 3070
+
+full fps=19.544688531456 p95=101.898 physics=10.3721428571429 render=4.95544899726401 gpu=5.64687753696831 draws=1360.63265306122
+no-match-physics fps=108.249230471799 p95=12.002 physics=2.72265682656828 render=4.01239483558824 gpu=2.91119558168953 draws=1247.79704797048
+no-main-process fps=294.519381932894 p95=3.98 physics=0.15686160108548 render=0.92653188582515 gpu=2.97282496689133 draws=824.0

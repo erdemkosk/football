@@ -110,19 +110,26 @@ func apply_pose(p,amount: float,stride: float) -> void:
 		var knee: Node3D=p.left_knee if i==0 else p.right_knee
 		var sign_leg := -1.0 if i==0 else 1.0
 		var phase := -stride*sign_leg
-		leg.rotation.x=lerpf(0.1-reverse_stride*sign_leg*0.78*amount,0.13+phase*0.12*amount,lateral)
-		leg.rotation.z=lerpf(sign_leg*0.035*p.gait_width,sign_leg*0.18*p.gait_width+stride*direction*0.20*amount,lateral)
+		var leg_rotation:=leg.rotation
+		leg_rotation.x=lerpf(0.1-reverse_stride*sign_leg*0.78*amount,0.13+phase*0.12*amount,lateral)
+		leg_rotation.z=lerpf(sign_leg*0.035*p.gait_width,sign_leg*0.18*p.gait_width+stride*direction*0.20*amount,lateral)
 		var lift := lerpf(maxf(0,-phase),maxf(0,phase),backward)
-		knee.rotation.x=-0.19-lift*lerpf(1.08,0.68,lateral)*amount-lateral*0.1-backward*0.06
+		var knee_rotation:=knee.rotation
+		knee_rotation.x=-0.19-lift*lerpf(1.08,0.68,lateral)*amount-lateral*0.1-backward*0.06
 		if braking>0.01:
-			leg.rotation.x=lerpf(leg.rotation.x,0.44 if i==plant_leg else -0.12,braking*0.78)
-			knee.rotation.x=lerpf(knee.rotation.x,-0.58 if i==plant_leg else -0.42,braking*0.85)
-		knee.rotation.x-=cut*0.16
+			leg_rotation.x=lerpf(leg_rotation.x,0.44 if i==plant_leg else -0.12,braking*0.78)
+			knee_rotation.x=lerpf(knee_rotation.x,-0.58 if i==plant_leg else -0.42,braking*0.85)
+		knee_rotation.x-=cut*0.16
+		leg.rotation=leg_rotation; knee.rotation=knee_rotation
 	# Bounded pelvis shift transfers weight onto the outside support leg.
 	var support_side := -1.0 if plant_leg==0 else 1.0
 	p.rig.position.x=sin(p.motion_clock*2.0+p.number*0.8)*0.013*(1-amount)+support_side*cut*0.055
 	p.rig.rotation.z=lerp_angle(p.rig.rotation.z,-side*0.08-cut_side*cut*0.12,maxf(lateral,cut)*0.55)
 	p.rig.rotation.x=lerp_angle(p.rig.rotation.x,0.09,braking*0.65)
+	# The free leg takes a short catch step while the supporting knee loads.
+	if braking>.25 and plant_leg>=0:
+		var free_leg: Node3D=p.right_leg if plant_leg==0 else p.left_leg
+		free_leg.rotation.x+=sin(clampf(plant_age/PLANT_TIME,0,1)*PI)*braking*.16
 	p.spine.rotation.x=lerpf(p.spine.rotation.x,-0.22,backward*0.45+braking*0.35)
 	p.spine.rotation.z=lerpf(p.spine.rotation.z,cut_side*cut*0.12,lateral*0.25+cut*0.6)
 	var balance := maxf(lateral*0.65,maxf(braking,cut))

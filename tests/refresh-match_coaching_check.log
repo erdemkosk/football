@@ -1,0 +1,34 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Trigger deadzone does not open the tactical drawer
+PASS: RT opens live tactics without pausing or tackling
+PASS: RT + right selects the attacking plan including press and line
+PASS: The touchline coach visibly gestures after an attacking instruction
+PASS: The defensive instruction produces a distinct holding-back gesture
+PASS: RT + up restores balance without leaving shot aim held
+PASS: Face buttons in the drawer cannot leak into a shot or pass
+PASS: Releasing RT before the D-pad still consumes the matching button release
+PASS: A second controller cannot issue touchline commands
+PASS: The most tired player receives a forward-for-forward recommendation
+PASS: Accepting a change returns control to the match instead of the HUD
+PASS: Accepting while playing queues a change without swapping identity or stamina
+PASS: RT + A acceptance never plays a pass
+PASS: RT + B dismisses the next suggestion without sliding
+PASS: Dismissed recommendations do not immediately reappear
+PASS: The next stoppage begins both teams' changes even when the user already queued one
+PASS: The outgoing player runs toward the touchline without losing stamina
+PASS: Pending changes reserve all three places for team 0
+PASS: Pending changes reserve all three places for team 1
+PASS: Both teams can start their three valid changes at the same stoppage
+PASS: Changes running toward the bench also count toward team 0 limit
+PASS: Changes running toward the bench also count toward team 1 limit
+PASS: Arriving at the touchline waits for the incoming player's handshake
+PASS: A completed handoff counts once while the incoming player returns to position
+PASS: A new match resets both teams' substitution allowances
+PASS: Dismissed players are excluded and the replacement matches the defender's position
+PASS: The same normalized R2 command supports PlayStation prompts
+PASS: Disconnect clears the tactical input and safely pauses
+PASS: Accepting at an existing stoppage lets the substitution enter before the restart kick
+PASS: RT cannot overlay the paused squad screen
+PASS: An old custom shot-on-RT layout keeps shooting available after reserving RT for tactics
+MATCH COACHING CHECK: 31 checks, 0 failures

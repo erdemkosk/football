@@ -64,9 +64,11 @@ func plan(owner: int,support) -> void:
 		"wide_outlet":Vector3(-open_side*25*P.WIDTH_RATIO*width,0,ball.z+forward*3)
 	}
 	var reserved: Array[Vector3]=[]
+	var offside_limit: float=maxf(0,game.rules.offside_line(team)-.9)
 	for index in support.targets:
 		if support.roles[index] in ["one_two","give_go","overlap","box"]: reserved.append(support.targets[index])
 	for role in ROLES:
+		var space_scores: Dictionary={}
 		var best := -INF
 		var chosen := -1
 		var destination := Vector3.ZERO
@@ -78,19 +80,22 @@ func plan(owner: int,support) -> void:
 			for offset in [Vector3.ZERO,Vector3(-3,0,0),Vector3(3,0,0),Vector3(0,0,-forward*3)]:
 				var at: Vector3=anchors[role]+offset
 				at.x=clampf(at.x,-(P.HALF_WIDTH-3),(P.HALF_WIDTH-3))
-				at.z=forward*minf(clampf(at.z*forward,-42,44),maxf(0,game.rules.offside_line(team)-.9))
+				at.z=forward*minf(clampf(at.z*forward,-42,44),offside_limit)
 				var overlaps := false
 				for occupied in reserved:
 					if game.flat_distance(at,occupied)<4: overlaps=true; break
 				if overlaps: continue
 				var travel: float=game.flat_distance(p.position,at)
 				if travel>24: continue
-				var lane := 5.0
-				for opponent in game.players:
-					if not opponent.visible or opponent.dismissed or opponent.team==team: continue
-					var near := Geometry3D.get_closest_point_to_segment(opponent.position*Vector3(1,0,1),ball,at)
-					lane=minf(lane,game.flat_distance(near,opponent.position))
-				var score: float=minf(8,game.ai_attack.clearance(at,team))*1.1+lane*1.5-travel*.42-offset.length()*.25
+				# Lane safety belongs to the destination, not the candidate runner.
+				if not space_scores.has(at):
+					var lane := 5.0
+					for opponent in game.players:
+						if not opponent.visible or opponent.dismissed or opponent.team==team: continue
+						var near := Geometry3D.get_closest_point_to_segment(opponent.position*Vector3(1,0,1),ball,at)
+						lane=minf(lane,game.flat_distance(near,opponent.position))
+					space_scores[at]=minf(8,game.ai_attack.clearance(at,team))*1.1+lane*1.5
+				var score: float=space_scores[at]-travel*.42-offset.length()*.25
 				var group: int=game.management.slot_role(i)
 				if role=="short_outlet": score+=3 if group==2 else 0
 				elif role=="channel_run": score+=(3 if group==3 else 0)-(1-p.energy)*7

@@ -1,0 +1,18 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+OpenGL API 3.3.0 NVIDIA 610.88 - Compatibility - Using Device: NVIDIA - NVIDIA GeForce RTX 3070
+
+PASS: Slow grounded delivery selects a sole trap
+PASS: Firm delivery selects an inside-foot cushion
+PASS: High delivery retains chest control
+PASS: Changing controlled player starts the selection pulse
+PASS: Selecting the same player does not restart the pulse
+PASS: Sustained attack creates bounded camera lead
+PASS: A deflection cannot abruptly reverse camera lead
+PASS: New match clears camera anticipation
+PASS: A saved goal-bound shot qualifies as on target
+PASS: A wide shot stopped by the keeper is not on target
+PASS: Parry followed by goal cannot count the same shot twice
+PASS: A gathered cross does not become an on-target shot
+PASS: Rematch starts directly with clean score and shot statistics
+PASS: Rematch preserves the selected clubs
+MATCH FEEL CHECK: 14 checks, 0 failures

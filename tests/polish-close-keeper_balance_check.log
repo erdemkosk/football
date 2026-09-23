@@ -1,0 +1,20 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+KEEPER SHOT MATRIX: {"central":{"goals":0,"saves":18,"shots":18},"close":{"goals":12,"saves":6,"shots":18},"hard_corner":{"goals":18,"saves":0,"shots":18},"placed":{"goals":13,"saves":5,"shots":18}}
+PASS: Routine shots at the keeper remain reliably stoppable
+PASS: Hard corner finishes can beat the keeper's physical reach
+PASS: Close-range finishes can beat the keeper's reaction
+PASS: A newly struck ball first causes a human reaction delay
+PASS: Repeated frames cannot reroll the same shot into a guaranteed save or error
+PASS: A new attacking touch requires a fresh read instead of inheriting an old instant reaction
+PASS: Opponent goalkeeper reactions scale with Easy, Normal and Hard
+PASS: Equal-quality goalkeepers use the same baseline balance on both teams
+PASS: Fatigue, rain and a screened view make reading the shot harder
+PASS: Reaction and error sampling do not depend on the frame rate
+PASS: Faster shots are harder to judge without changing the contact radius
+PASS: A diving glove saves real contact but cannot grab a ball sixty centimetres away
+PASS: A fallen keeper cannot make an invisible standing save
+PASS: A pressured wet-glove error palms a hard shot into a reachable rebound
+PASS: The loose rebound travels as a live physical ball
+PASS: A whistle clears old shot reactions before the next phase
+KEEPER BALANCE CHECK: 18 checks, 2 failures

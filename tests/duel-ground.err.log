@@ -1,0 +1,5 @@
+SCRIPT ERROR: Invalid access to property or key 'contacts' on a base object of type 'Dictionary'.
+   at: run (res://tests/ground_skills_check.gd:53)
+   GDScript backtrace (most recent call first):
+       [0] run (res://tests/ground_skills_check.gd:53)
+       [1] tick (res://tests/ground_skills_check.gd:26)

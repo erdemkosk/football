@@ -20,10 +20,11 @@ func queue(index: int,velocity: Vector3,curve: float,kind: String) -> bool:
 	if not p.visible or p.dismissed or p.action_timer>0 or game.ball.held_by!=null: return false
 	var controlled_ball: bool=kind=="shot" and game.dribbler==index and game.flat_distance(p.position,game.ball.position)<1.3 and game.ball.position.y<.6
 	var power := clampf((velocity.length()-12)/20,.15,1)
-	var style := "chip" if velocity.y>5.2 else ("inside" if kind!="shot" and velocity.length()<16 else "laces")
+	var style := "chip" if velocity.y>5.2 else ("inside" if absf(curve)>.1 or (kind!="shot" and velocity.length()<16) else "laces")
 	p.begin_kick(power,.46 if kind=="shot" else .32,style,game.ball.position,velocity,game.first_touch.pressure(index))
 	game.skills.active.erase(index); p.skill_move.clear()
 	var windup: float=lerpf(.065,.045,clampf((float(p.attributes.control)-50)/45,0,1))
+	windup+=power*.012+absf(p.ball_actions.kick_turn)*.009
 	p.ball_actions.start_contact(p,game.ball.position,windup)
 	pending={"index":index,"velocity":velocity,"curve":curve,"kind":kind,"age":0.0,"windup":windup,"last_touch":game.last_kicker}
 	p.facing=(velocity*Vector3(1,0,1)).normalized()

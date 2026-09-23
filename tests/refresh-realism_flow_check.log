@@ -1,0 +1,21 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: A late goal while still behind switches to the hurry-to-kickoff sequence
+PASS: The urgent sequence preserves the live ball and avoids a goal replay delay
+PASS: The scorer physically picks up, carries and puts down the same goal ball
+PASS: The trailing scorer returns directly to the opponent's centre kickoff
+PASS: The ball reaches centre through the real carry sequence
+PASS: The scorer brakes at centre before lowering the ball
+PASS: The urgent return contains no player or ball teleport
+PASS: The stopped-clock return does not spend the scorer's stamina
+PASS: The same physical urgent return works for the away team at the opposite goal
+PASS: A late winner produces the extended team and bench celebration
+PASS: The larger celebration is immediately skipped into centre-kickoff preparation
+PASS: An early goal keeps the ordinary celebration
+PASS: The incoming substitute walks from the bench and greets the outgoing player
+PASS: The two greeting hands approach each other instead of gesturing across an empty gap
+PASS: The substitution receives a brief camera insert and does not leave a duplicate reserve on the bench
+PASS: One completed handoff transfers the incoming identity and attributes exactly once
+PASS: Substitution running and camera coverage do not drain stamina or advance the stopped clock
+PASS: A real aerial landing activates brief knee and body absorption
+REALISM FLOW CHECK: 19 checks, 1 failures

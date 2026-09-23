@@ -28,6 +28,7 @@ var preparing := false
 var preparation_offset := Vector3.ZERO
 var pose_feet: Array[Vector3] = []
 var pose_velocity: Array[Vector3] = []
+var gait:=preload("res://scripts/carry_gait.gd").new()
 
 func release_collision() -> void:
 	preparing=false
@@ -41,6 +42,7 @@ func reset() -> void:
 	age=DURATION; cooldown=0; freshness=0; gait_weight=0; hit=false; contacts=0
 	previous_direction=Vector3.FORWARD
 	pose_feet.clear(); pose_velocity.clear()
+	gait.reset()
 
 func control_collision(p,ball) -> void:
 	if contact_ball==ball and contact_body==p: return
@@ -136,7 +138,7 @@ func carry(game,index: int,_delta: float) -> void:
 	var guided: bool=acquired and offset.length()<(1.45 if settling else 1.30) and incoming.length()<15.5 and absf(ball.position.x)<P.HALF_WIDTH+.2 and absf(ball.position.z)<50.2
 	if guided:
 		var technique: float=clampf((float(p.attributes.control)-45)/50,0,1)
-		var reach: float=(.82 if p.active_sprint else .51)+(.035 if moving else 0.0)*sin(p.run_phase*2)
+		var reach: float=(.72 if p.active_sprint else .51)+(.025 if moving else 0.0)*sin(p.run_phase*2)
 		var right := aim.cross(Vector3.UP)
 		var goal: Vector3=aim*reach+right*clampf(offset.dot(right),-.13,.13)
 		if p.protecting: goal=aim*.48+right*clampf(offset.dot(right),-.16,.16)
@@ -231,7 +233,7 @@ func apply(p) -> void:
 	# Guide the toe out of the live running step and back into that same stride.
 	# Freezing the starting hip/knee for every touch made the leg hesitate, then
 	# snap to the next running pose. The support leg keeps its ordinary footfall.
-	p.rig.position.y-=(.025 if style=="push" else .085)*weight
+	p.rig.position.y-=(.025 if style=="push" else .085)*weight*(1-gait.weight)
 	var toe: Vector3=knee.to_global(BOOT).lerp(point,weight)
 	toe.y=maxf(p.position.y+p.boot_ground_height(),toe.y)
 	p.locomotion.solve_leg(leg,knee,p.rig.to_local(toe)-leg.position,1)
@@ -250,7 +252,7 @@ func finish_pose(p,delta: float) -> void:
 	var points: Array[Vector3]=[p.rig.to_local(p.left_knee.to_global(BOOT)),p.rig.to_local(p.right_knee.to_global(BOOT))]
 	if pose_feet.size()!=2:
 		pose_feet=points.duplicate(); pose_velocity.assign([Vector3.ZERO,Vector3.ZERO])
-	var frequency := 60.0
+	var frequency := 50.0
 	var decay := exp(-frequency*delta)
 	for i in range(2):
 		var error: Vector3=pose_feet[i]-points[i]
