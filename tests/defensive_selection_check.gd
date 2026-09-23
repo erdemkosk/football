@@ -135,7 +135,7 @@ func run() -> void:
 	for mode in ["player_lock","training","restart"]:
 		defence()
 		if mode=="player_lock": game.player_lock=true
-		elif mode=="training": game.training=true
+		elif mode=="training": game.training=true; game.training_drills.mode="cross"
 		else: game.state="restart"
 		advance(.3)
 		check(game.controlled==9,"Defensive automation respects "+mode)

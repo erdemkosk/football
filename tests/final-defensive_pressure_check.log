@@ -1,0 +1,29 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: A nearby defender stays goal-side instead of switching to his own attacking direction
+PASS: Being in foot reach of an opponent's ball never authorizes a possession skill or shot
+PASS: The defender matches a sprinting attacker rather than slowing down within three metres
+PASS: A goal-side defender takes over from the closer but beaten marker
+PASS: The beaten marker recovers behind the new presser to cover the actual running lane
+PASS: A fleeing ball outside the contact window prompts recovery, not a futile poke
+PASS: An incoming exposed ball permits a timely shared standing tackle
+PASS: Winning possession releases the previous defensive assignment immediately
+PASS: Higher difficulty anticipates visible running more accurately
+PASS: Changing human input alone does not reveal the next cut to the defence
+DUEL level=1 side=0.0 { "won": true, "foul": false, "pressure": 0.125, "attempts": 1, "sprints": 0 }
+DUEL level=1 side=0.2 { "won": true, "foul": false, "pressure": 0.125, "attempts": 1, "sprints": 0 }
+DUEL level=1 side=-0.24 { "won": true, "foul": false, "pressure": 0.125, "attempts": 1, "sprints": 0 }
+PASS: Straight and shallow diagonal sprints face clean defensive resistance at level 1
+DUEL level=2 side=0.0 { "won": true, "foul": false, "pressure": 0.10833333333333, "attempts": 1, "sprints": 0 }
+DUEL level=2 side=0.2 { "won": true, "foul": false, "pressure": 0.10833333333333, "attempts": 1, "sprints": 0 }
+DUEL level=2 side=-0.24 { "won": true, "foul": false, "pressure": 0.08333333333333, "attempts": 1, "sprints": 0 }
+PASS: Straight and shallow diagonal sprints face clean defensive resistance at level 2
+PASS: Defensive pressure does not substitute fouls for clean challenges
+PASS: Defensive interception also works after the teams change ends
+WIDE { "won": false, "foul": false, "pressure": 1.75, "attempts": 0, "sprints": 87 }
+PASS: Attacking open space outside the defender's reach remains possible
+CUT { "won": false, "foul": false, "pressure": 0.0, "attempts": 0, "sprints": 57 }
+PASS: A real change of direction can still beat a committed hard defender
+TIRED { "won": false, "foul": false, "pressure": 0.78333333333333, "attempts": 0, "sprints": 0 }
+PASS: An exhausted defender cannot gain a hidden recovery speed boost
+DEFENSIVE PRESSURE CHECK: 17 checks, 0 failures

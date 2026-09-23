@@ -22,6 +22,7 @@ var spray_data: Array[Dictionary] = []
 var ball_last := Vector3.ZERO
 var rng := RandomNumberGenerator.new()
 var sound: AudioStreamPlayer
+var presence: Node3D
 
 func _ready() -> void:
 	rng.seed=8201
@@ -59,6 +60,8 @@ func _ready() -> void:
 	sound.volume_db=-80
 	sound.play()
 	apply_look()
+	presence=preload("res://scripts/pitch_presence.gd").new()
+	presence.game=game; add_child(presence)
 
 func instances(mesh: Mesh,material: Material,count: int) -> MultiMeshInstance3D:
 	var node := MultiMeshInstance3D.new()
@@ -95,9 +98,14 @@ func reset_match() -> void:
 	for i in range(SPRAY_LIMIT):
 		spray_data[i].life=0
 		spray.multimesh.set_instance_transform(i,Transform3D(Basis.IDENTITY.scaled(Vector3.ONE*0.001),Vector3(0,-2,0)))
+	if is_instance_valid(game) and is_instance_valid(game.stadium) and is_instance_valid(game.stadium.pitch_burst):
+		game.stadium.pitch_burst.reset()
 	select(preset,true)
 
 func mud_at(point: Vector3) -> float:
+	# All patches are multiplied by zero below this wetness; skip the six
+	# distance/smoothstep evaluations without changing the surface response.
+	if wetness<=.25: return 0.0
 	if absf(point.x)>P.HALF_WIDTH or absf(point.z)>50: return 0.0
 	var patch := 0.0
 	for area in PATCHES:
@@ -111,6 +119,10 @@ func grip_at(point: Vector3) -> float:
 func ball_drag(point: Vector3) -> float:
 	# Wet intact grass skids; churned earth absorbs motion.
 	return 2.0-wetness*0.38+mud_at(point)*3.6
+
+func ball_resistance(point: Vector3) -> Vector2:
+	var mud := mud_at(point)
+	return Vector2(2.0-wetness*.38+mud*3.6,.12+mud*.22)
 
 func ball_rolling_damping(point: Vector3) -> float:
 	return 0.12+mud_at(point)*0.22
@@ -146,6 +158,8 @@ func update(delta: float) -> void:
 			drop.life=0
 			spray.multimesh.set_instance_transform(i,Transform3D(Basis.IDENTITY.scaled(Vector3.ONE*0.001),Vector3(0,-2,0)))
 		else: spray.multimesh.set_instance_transform(i,Transform3D(Basis.IDENTITY,drop.position))
+	if is_instance_valid(game.stadium) and is_instance_valid(game.stadium.pitch_burst):
+		game.stadium.pitch_burst.update(delta)
 
 func apply_look() -> void:
 	if not is_instance_valid(rain_mesh): return
@@ -217,4 +231,22 @@ func splash(at: Vector3,velocity: Vector3,count: int,mud: float) -> void:
 		drop.velocity=-velocity*0.1+Vector3(rng.randf_range(-0.9,0.9),rng.randf_range(0.6,1.7),rng.randf_range(-0.9,0.9))
 		drop.life=0.6
 		spray.multimesh.set_instance_color(spray_cursor,Color("718b8d").lerp(Color("635035"),mud))
+		spray_cursor=(spray_cursor+1)%SPRAY_LIMIT
+
+func kick_turf(player,at: Vector3,velocity: Vector3) -> void:
+	# A header or high volley must never produce a dust cloud at ground level.
+	if at.y>.65 or player.position.y>.15: return
+	var mud := mud_at(at)
+	var power := clampf(velocity.length()/28.0,0,1)
+	var point: Vector3=player.ball_actions.support_anchor
+	if point==Vector3.ZERO: point=player.position
+	stamp(point,velocity.normalized(),Vector2(.24,.35+power*.16),Color(.12,.095,.04,.20+wetness*.25))
+	var count := int(5+power*5)
+	for i in range(count):
+		var drop: Dictionary=spray_data[spray_cursor]
+		drop.position=Vector3(at.x,.06,at.z)
+		drop.velocity=-velocity*lerpf(.025,.09,power)+Vector3(rng.randf_range(-.7,.7),rng.randf_range(.7,1.8),rng.randf_range(-.7,.7))
+		drop.life=.38+wetness*.2
+		var color := Color("847747") if wetness<.25 else Color("75918a").lerp(Color("60462e"),mud)
+		spray.multimesh.set_instance_color(spray_cursor,color)
 		spray_cursor=(spray_cursor+1)%SPRAY_LIMIT

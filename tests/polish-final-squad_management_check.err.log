@@ -1,0 +1,152 @@
+ERROR: Failed to open log file for writing: user://logs/godot.log
+   at: rotate_file (core/io/logger.cpp:169)
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+ERROR: FAIL: Selecting a starter keeps focus on the pitch
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] run (res://tests/squad_management_check.gd:55)
+       [2] click (res://tests/squad_management_check.gd:31)
+       [3] settle (res://tests/squad_management_check.gd:13)
+ERROR: FAIL: Selecting a reserve opens comparison without changing the starter
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] run (res://tests/squad_management_check.gd:57)
+       [2] click (res://tests/squad_management_check.gd:31)
+       [3] settle (res://tests/squad_management_check.gd:13)
+ERROR: FAIL: Mouse confirmation exchanges starter and reserve without spending a match substitution
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] run (res://tests/squad_management_check.gd:59)
+       [2] click (res://tests/squad_management_check.gd:31)
+       [3] settle (res://tests/squad_management_check.gd:13)
+ERROR: FAIL: Controller A selects the first player without forcing a substitution
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] run (res://tests/squad_management_check.gd:63)
+       [2] settle (res://tests/squad_management_check.gd:13)
+ERROR: FAIL: Controller A completes the selected lineup change
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] run (res://tests/squad_management_check.gd:70)
+       [2] settle (res://tests/squad_management_check.gd:13)
+ERROR: FAIL: Dragging a reserve onto a starter completes exactly one swap
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] run (res://tests/squad_management_check.gd:73)
+       [2] drag (res://tests/squad_management_check.gd:43)
+       [3] settle (res://tests/squad_management_check.gd:13)
+ERROR: FAIL: Mouse movement starts a native squad drag
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] drag (res://tests/squad_management_check.gd:41)
+ERROR: FAIL: Dragging a starter onto a reserve also completes exactly one swap
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] run (res://tests/squad_management_check.gd:76)
+       [2] drag (res://tests/squad_management_check.gd:43)
+       [3] settle (res://tests/squad_management_check.gd:13)
+ERROR: FAIL: Mouse movement starts a native squad drag
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] drag (res://tests/squad_management_check.gd:41)
+ERROR: FAIL: Dragging between two pitch cards exchanges positions exactly once
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] run (res://tests/squad_management_check.gd:80)
+       [2] drag (res://tests/squad_management_check.gd:43)
+       [3] settle (res://tests/squad_management_check.gd:13)
+ERROR: FAIL: Mouse can select and highlight a reserve first
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] run (res://tests/squad_management_check.gd:83)
+       [2] click (res://tests/squad_management_check.gd:31)
+       [3] settle (res://tests/squad_management_check.gd:13)
+ERROR: FAIL: Mouse bench-first selection applies the intended pair
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] run (res://tests/squad_management_check.gd:85)
+       [2] click (res://tests/squad_management_check.gd:31)
+       [3] settle (res://tests/squad_management_check.gd:13)
+ERROR: FAIL: Invalid goalkeeper drag leaves the lineup unchanged
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] run (res://tests/squad_management_check.gd:89)
+       [2] drag (res://tests/squad_management_check.gd:43)
+       [3] settle (res://tests/squad_management_check.gd:13)
+ERROR: FAIL: Live substitution waits for a stoppage and does not teleport the player
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] run (res://tests/squad_management_check.gd:112)
+       [2] click (res://tests/squad_management_check.gd:31)
+       [3] settle (res://tests/squad_management_check.gd:13)
+ERROR: FAIL: Outgoing and incoming players are marked and individual cancellation is available
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] run (res://tests/squad_management_check.gd:113)
+       [2] click (res://tests/squad_management_check.gd:31)
+       [3] settle (res://tests/squad_management_check.gd:13)
+ERROR: FAIL: A reserved substitute cannot be assigned to another player
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] run (res://tests/squad_management_check.gd:116)
+       [2] click (res://tests/squad_management_check.gd:31)
+       [3] settle (res://tests/squad_management_check.gd:13)
+ERROR: FAIL: Another eligible replacement can be queued independently
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] run (res://tests/squad_management_check.gd:119)
+       [2] click (res://tests/squad_management_check.gd:31)
+       [3] settle (res://tests/squad_management_check.gd:13)
+ERROR: FAIL: Undo removes only the last queued replacement
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] run (res://tests/squad_management_check.gd:121)
+       [2] settle (res://tests/squad_management_check.gd:13)
+ERROR: FAIL: A dismissed player cannot be replaced
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] run (res://tests/squad_management_check.gd:125)
+       [2] click (res://tests/squad_management_check.gd:31)
+       [3] settle (res://tests/squad_management_check.gd:13)
+ERROR: FAIL: A previously used substitute cannot re-enter
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] run (res://tests/squad_management_check.gd:127)
+       [2] click (res://tests/squad_management_check.gd:31)
+       [3] settle (res://tests/squad_management_check.gd:13)
+ERROR: FAIL: The three-substitution limit is enforced through the new UI
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] run (res://tests/squad_management_check.gd:129)
+       [2] click (res://tests/squad_management_check.gd:31)
+       [3] settle (res://tests/squad_management_check.gd:13)
+ERROR: FAIL: Controller B resumes play with the requested substitution still queued
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/squad_management_check.gd:10)
+       [1] run (res://tests/squad_management_check.gd:134)
+       [2] settle (res://tests/squad_management_check.gd:13)
+WARNING: 24 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

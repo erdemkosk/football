@@ -25,13 +25,15 @@ func passing_flow(rain: bool,half: int) -> void:
 	game.half=half
 	var forward: float=game.attack_sign(1)
 	player(0,Vector3(0,0,forward*49)); player(2,Vector3(-27,0,forward*48))
-	player(18,Vector3(18,0,0)); player(4,Vector3(-3,0,-forward*11))
+	player(18,Vector3(16,0,0)); player(4,Vector3(-3,0,-forward*11))
 	for i in [18,4]: game.players[i].collision_layer=2
 	game.players[20].facing=Vector3(0,0,forward)
 	game.ball.place(game.players[20].position+Vector3(0,.23,forward*.6))
 	await physics_frame; await physics_frame
 	game.previous_ball=game.ball.position
-	game.ai_attack.skill_in[20]=20; game.ai_attack.skill_in[18]=20
+	# Use an actual give-and-go inside its passing cone. An ordinary pass into
+	# an empty wing should not require an unsolicited backwards return.
+	game.ai_attack.skill_in[20]=0; game.ai_attack.skill_in[18]=20; game.ai_attack.team_skill_in[1]=20
 	var received := false
 	var return_received := false
 	var contacts: int=game.kick_contact.contacts
@@ -42,7 +44,7 @@ func passing_flow(rain: bool,half: int) -> void:
 		if received and game.dribbler==20 and game.last_kicker==20: return_received=true
 	print("PASS FLOW rain=",rain," half=",half," passes=",game.passes[1]," contacts=",game.kick_contact.contacts-contacts," misses=",game.kick_contact.misses-misses," received=",received," returned=",return_received)
 	check(received,"Moving AI receiver controls the real pass, rain=%s half=%d" % [rain,half])
-	check(return_received and game.passes[1]>=2,"A received pass continues into a second physical pass, rain=%s half=%d" % [rain,half])
+	check(return_received and game.passes[1]>=2 and game.ai_attack.uses.get("one_two",0)>0,"A planned give-and-go continues into a controlled physical return, rain=%s half=%d" % [rain,half])
 	check(game.kick_contact.misses==misses,"AI follows through without an uncontested missed swing, rain=%s half=%d" % [rain,half])
 
 func exhibition(difficulty: int,seed_value: int) -> void:

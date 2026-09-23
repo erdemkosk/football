@@ -13,8 +13,8 @@ func surface(s,rect: Rect2,accent: Color=LIME) -> void:
 	s.draw_line(rect.position+Vector2(20,0),rect.position+Vector2(74,0),accent,3,true)
 
 func background(s) -> void:
-	s.draw_rect(Rect2(0,0,1440,900),Color("091321"))
-	fade(s,Rect2(0,0,1440,820),Color("152939"),Color("080f1c"))
+	s.draw_rect(s.game.ui.bounds(),Color("091321"))
+	fade(s,s.game.ui.bounds(),Color("152939"),Color("080f1c"))
 	for i in range(9):
 		s.draw_line(Vector2(720+i*106,0),Vector2(100+i*106,900),Color(.5,.7,.8,.025),26,true)
 	s.draw_arc(Vector2(1160,485),460,-2.4,1.6,90,Color(.5,.8,.8,.045),2,true)

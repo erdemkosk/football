@@ -1,0 +1,85 @@
+ERROR: Failed to open log file for writing: user://logs/godot.log
+   at: rotate_file (core/io/logger.cpp:169)
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+SCRIPT ERROR: Parse Error: Too few arguments for "batch()" call. Expected at least 2 but received 1.
+   at: GDScript::reload (res://scripts/sideline_props.gd:28)
+   GDScript backtrace (most recent call first):
+       [0] run (res://tests/net_replay_check.gd:4)
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+   at: GDScript::reload (res://scripts/sidelines.gd:0)
+   GDScript backtrace (most recent call first):
+       [0] run (res://tests/net_replay_check.gd:4)
+SCRIPT ERROR: Parse Error: Cannot find member "REFLECTED_SOURCE_DISABLED" in base "Environment".
+   at: GDScript::reload (res://scripts/stadium_lighting.gd:61)
+   GDScript backtrace (most recent call first):
+       [0] run (res://tests/net_replay_check.gd:4)
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+   at: GDScript::reload (res://scripts/stadium.gd:0)
+   GDScript backtrace (most recent call first):
+       [0] run (res://tests/net_replay_check.gd:4)
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+   at: GDScript::reload (res://scripts/game.gd:0)
+   GDScript backtrace (most recent call first):
+       [0] run (res://tests/net_replay_check.gd:4)
+ERROR: Failed to load script "res://scripts/game.gd" with error "Compilation failed".
+   at: load (modules/gdscript/gdscript_resource_format.cpp:46)
+   GDScript backtrace (most recent call first):
+       [0] run (res://tests/net_replay_check.gd:4)
+SCRIPT ERROR: Invalid call. Nonexistent function 'new' in base 'GDScript'.
+   at: _ready (res://scripts/sidelines.gd:55)
+   GDScript backtrace (most recent call first):
+       [0] _ready (res://scripts/sidelines.gd:55)
+       [1] details (res://scripts/stadium.gd:223)
+       [2] _ready (res://scripts/stadium.gd:35)
+       [3] _ready (res://scripts/game.gd:208)
+       [4] run (res://tests/net_replay_check.gd:4)
+SCRIPT ERROR: Invalid call. Nonexistent function 'new' in base 'GDScript'.
+   at: _ready (res://scripts/stadium.gd:39)
+   GDScript backtrace (most recent call first):
+       [0] _ready (res://scripts/stadium.gd:39)
+       [1] _ready (res://scripts/game.gd:208)
+       [2] run (res://tests/net_replay_check.gd:4)
+SCRIPT ERROR: Invalid call. Nonexistent function 'apply_weather' in base 'Nil'.
+   at: apply_look (res://scripts/weather.gd:170)
+   GDScript backtrace (most recent call first):
+       [0] apply_look (res://scripts/weather.gd:170)
+       [1] _ready (res://scripts/weather.gd:62)
+       [2] _ready (res://scripts/game.gd:219)
+       [3] run (res://tests/net_replay_check.gd:4)
+SCRIPT ERROR: Invalid call. Nonexistent function 'apply_weather' in base 'Nil'.
+   at: apply_look (res://scripts/weather.gd:170)
+   GDScript backtrace (most recent call first):
+       [0] apply_look (res://scripts/weather.gd:170)
+       [1] select (res://scripts/weather.gd:89)
+       [2] reset_match (res://scripts/weather.gd:103)
+       [3] start_match (res://scripts/game.gd:313)
+       [4] _ready (res://scripts/game.gd:268)
+       [5] run (res://tests/net_replay_check.gd:4)
+SCRIPT ERROR: Invalid call. Nonexistent function 'apply_weather' in base 'Nil'.
+   at: apply_look (res://scripts/weather.gd:170)
+   GDScript backtrace (most recent call first):
+       [0] apply_look (res://scripts/weather.gd:170)
+       [1] update (res://scripts/weather.gd:133)
+       [2] simulate_match (res://scripts/game.gd:758)
+       [3] update (res://scripts/menu_match.gd:12)
+       [4] _physics_process (res://scripts/game.gd:741)
+SCRIPT ERROR: Invalid call. Nonexistent function 'apply_weather' in base 'Nil'.
+   at: apply_look (res://scripts/weather.gd:170)
+   GDScript backtrace (most recent call first):
+       [0] apply_look (res://scripts/weather.gd:170)
+       [1] update (res://scripts/weather.gd:133)
+       [2] simulate_match (res://scripts/game.gd:758)
+       [3] update (res://scripts/menu_match.gd:12)
+       [4] _physics_process (res://scripts/game.gd:741)
+SCRIPT ERROR: Invalid call. Nonexistent function 'apply_weather' in base 'Nil'.
+   at: apply_look (res://scripts/weather.gd:170)
+   GDScript backtrace (most recent call first):
+       [0] apply_look (res://scripts/weather.gd:170)
+       [1] select (res://scripts/weather.gd:89)
+       [2] reset_match (res://scripts/weather.gd:103)
+       [3] start_match (res://scripts/game.gd:313)
+       [4] run (res://tests/net_replay_check.gd:6)
+       [5] frames (res://tests/net_check.gd:10)
+WARNING: 8 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

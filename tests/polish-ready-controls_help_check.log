@@ -1,0 +1,23 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: The stadium match keeps playing behind the menu guide
+PASS: Keyboard help distinguishes controller combinations and renders their button icons
+PASS: Keyboard help reflects the current through-ball binding
+PASS: Xbox Y opens the controller reference from the menu
+PASS: All requested attacking combinations are easy to find
+PASS: Controller help follows remapped gameplay buttons
+PASS: A disabled physical LB combo does not advertise a working gesture
+PASS: RB switches to Defence and keeps visible focus
+PASS: Defensive X, B and held Y actions are documented separately; RT is reserved for tactics
+PASS: LB returns to Attack
+PASS: D-pad and A activate tabs through real UI focus
+PASS: B closes only the guide without starting a match
+PASS: Opening help during play pauses physics and cancels the prepared pass
+PASS: Gameplay keys cannot shoot, pass or advance the clock through the guide
+PASS: Closing help resumes play without an accidental kick
+PASS: Start then Y opens help from the pause menu
+PASS: Closing a guide opened from pause keeps the match paused
+PASS: A second B resumes normal play
+PASS: Nested settings and their focus survive opening the guide
+PASS: Team selection is preserved when the reference is closed
+CONTROLS HELP CHECK: 24 checks, 4 failures

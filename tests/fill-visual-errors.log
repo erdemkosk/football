@@ -1,0 +1,11 @@
+ERROR: Failed to open log file for writing: user://logs/godot.log
+   at: rotate_file (core/io/logger.cpp:169)
+ERROR: Can't create shader cache folder, no shader caching will happen: user://
+   at: RendererCompositorRD (servers/rendering/renderer_rd/renderer_compositor_rd.cpp:337)
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+ERROR: Can't save PNG at path: 'res://tests/screen-fill-menu-1440x900.png'.
+   at: save_image (drivers/png/resource_saver_png.cpp:56)
+   GDScript backtrace (most recent call first):
+       [0] capture (res://tests/screen_fill_check.gd:37)
+       [1] settle (res://tests/screen_fill_check.gd:14)

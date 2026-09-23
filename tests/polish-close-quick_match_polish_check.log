@@ -1,0 +1,20 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Selection opens on the active team's clear confirmation button
+PASS: Opponent and continue are gated until the required selection
+PASS: A on weather changes weather and preserves focus without selecting a team
+PASS: Footer navigation moves focus instead of cycling a team
+PASS: Difficulty has its own A action
+PASS: A on a kit changes only the kit
+PASS: League selection is accessible with the controller
+PASS: Team carousel changes only the active side and retains confirmation focus
+PASS: Confirming home moves directly to the opponent without a long wait
+PASS: Both selections put focus on squad and tactics
+PASS: Prematch tactics opens focused on Maça Başla, with no player swap armed
+PASS: The primary button names the next action clearly
+PASS: Up from Maça Başla reaches squad editing without changing players
+PASS: Returning from settings restores Maça Başla focus
+PASS: A single A press starts the match from the default tactics focus
+PASS: The menu confirmation release does not become an in-game pass
+PASS: Live squad management still opens on the controlled player
+QUICK MATCH POLISH: 17 checks, 0 failures

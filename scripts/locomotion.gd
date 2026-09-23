@@ -2,7 +2,6 @@ extends RefCounted
 ## Visual locomotion follows the physics body. It never delays an input, writes
 ## velocity or locks facing; shots, tackles and goalkeeper actions have priority.
 const BOOT := Vector3(0,-0.42,-0.05)
-const SOLE := 0.102
 const PLANT_TIME := 0.18
 const RELEASE_TIME := 0.12
 var side := 0.0
@@ -97,7 +96,7 @@ func plant(p,leg: int) -> void:
 	last_hip=hip.quaternion
 	last_knee=knee.quaternion
 	anchor=feet[leg] if feet.size()==2 else knee.to_global(BOOT)
-	anchor.y=p.global_position.y+SOLE
+	anchor.y=p.global_position.y+p.boot_ground_height()
 
 func apply_pose(p,amount: float,stride: float) -> void:
 	if not available(p): return
@@ -136,10 +135,11 @@ func finish_pose(p) -> void:
 	if not available(p): return
 	# Ground after shielding/jockeying bends the knees, too.
 	var height := minf(p.left_knee.to_global(BOOT).y,p.right_knee.to_global(BOOT).y)
-	p.rig.position.y-=height-p.global_position.y-SOLE
+	p.rig.position.y-=height-p.global_position.y-p.boot_ground_height()
 	plant_weight=0
 	if plant_leg>=0 and plant_age<PLANT_TIME and p.is_on_floor():
-		plant_weight=smoothstep(0,0.025,plant_age)
+		# Shorter legs need a gentler load-in for the same world-space running speed.
+		plant_weight=smoothstep(0,0.035,plant_age)
 		var leg: Node3D=p.left_leg if plant_leg==0 else p.right_leg
 		var knee: Node3D=p.left_knee if plant_leg==0 else p.right_knee
 		var target: Vector3=p.rig.to_local(anchor)-leg.position
@@ -150,7 +150,7 @@ func finish_pose(p) -> void:
 			target=p.rig.to_local(anchor)-leg.position
 		# Begin recovery before the hip runs out of reach. Blend from the actual
 		# last pose to the live stride, even if the physics body turns immediately.
-		if (plant_age>0.03 and target.length()>0.745) or plant_age>0.085 or absf(anchor.y-p.global_position.y-SOLE)>0.15:
+		if (plant_age>0.03 and target.length()>0.72) or plant_age>0.085 or absf(anchor.y-p.global_position.y-p.boot_ground_height())>0.15:
 			plant_age=PLANT_TIME
 			plant_weight=0
 			release_age=0
@@ -161,7 +161,7 @@ func finish_pose(p) -> void:
 			# Blend the contact point, not the hip and knee independently. Joint
 			# interpolation can sweep the toe through the turf during release.
 			var contact: Vector3=knee.to_global(BOOT).lerp(anchor,plant_weight)
-			contact.y=maxf(contact.y,p.global_position.y+SOLE)
+			contact.y=maxf(contact.y,p.global_position.y+p.boot_ground_height())
 			solve_leg(leg,knee,p.rig.to_local(contact)-leg.position,1.0)
 	if plant_leg>=0:
 		var leg: Node3D=p.left_leg if plant_leg==0 else p.right_leg
@@ -178,8 +178,8 @@ func finish_pose(p) -> void:
 		var leg: Node3D=p.left_leg if i==0 else p.right_leg
 		var knee: Node3D=p.left_knee if i==0 else p.right_knee
 		var point: Vector3=knee.to_global(BOOT)
-		if point.y<p.global_position.y+SOLE-.002:
-			point.y=p.global_position.y+SOLE
+		if point.y<p.global_position.y+p.boot_ground_height()-.002:
+			point.y=p.global_position.y+p.boot_ground_height()
 			solve_leg(leg,knee,p.rig.to_local(point)-leg.position,1)
 	if plant_leg>=0:
 		last_hip=(p.left_leg if plant_leg==0 else p.right_leg).quaternion

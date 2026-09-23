@@ -24,7 +24,7 @@ func run() -> void:
   check(game.shot_direction.dot(Vector3.RIGHT)>.999,"The slower aim still reaches a deliberate sideways target: "+family)
   var shown: Vector3=game.shot_direction
   button(JOY_BUTTON_X,false)
-  check(not game.kick_contact.pending.is_empty() and game.kick_contact.pending.velocity.normalized().dot(shown)>.96,"Shot release queues the displayed heading for physical boot contact: "+family)
+  check(game.ball.pending_kick and game.ball.kick_velocity.normalized().dot(shown)>.96,"Shot release immediately launches the displayed heading: "+family)
  # Moving sensitivity must not amplify small aiming corrections.
  game.controller.sensitivity=.6
  var low := shot_turn(.5)

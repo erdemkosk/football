@@ -1,0 +1,20 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Sprinting consumes stamina while enabling higher speed
+PASS: A sustained sprint ends in exhaustion and walking speed
+PASS: Holding W cannot repeatedly reactivate sprint while recovering
+PASS: Releasing W after sufficient recovery re-arms sprint
+PASS: A fresh W press can sprint after recovery
+PASS: Releasing W alone does not bypass the minimum stamina threshold
+PASS: Normal running also gradually consumes stamina
+PASS: Continuous normal running eventually forces a slower pace
+PASS: Standing still recovers faster than walking
+PASS: Holding W without movement does not drain stamina
+PASS: Stamina consumption is consistent across update rates
+PASS: AI players use the same exhaustion rules
+PASS: Goal kickoffs do not refill stamina
+PASS: A new match restores stamina and clears exhaustion
+PASS: A new practice attempt restores training stamina
+PASS: Exhaustion actually limits physical player velocity
+PASS: Paused matches do not drain or recover stamina
+STAMINA CHECK: 0 failures

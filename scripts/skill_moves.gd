@@ -5,11 +5,11 @@ var active: Dictionary = {}
 
 func cancel(index: int) -> void:
 	game.players[index].skill_move.clear()
+	game.players[index].dribble_motion.release_collision()
 	active.erase(index)
 
 func reset() -> void:
-	for i in active: game.players[i].skill_move.clear()
-	active.clear()
+	for i in active.keys(): cancel(i)
 
 func start(index: int,kind: String,side: float=1) -> bool:
 	var p=game.players[index]
@@ -24,8 +24,9 @@ func start(index: int,kind: String,side: float=1) -> bool:
 	p.skill_cooldown=duration+.40; p.energy-=.035 if kind=="roll" else (.07 if kind=="rainbow" else .055)
 	p.recovery_delay=maxf(p.recovery_delay,duration+.35)
 	p.receive_timer=0; p.kick_timer=0; p.feint_time=0
-	game.dribbler=index; game.last_kicker=index; game.last_touch=p.team
-	if game.is_user_player(index): game.announce(NAMES[kind])
+	game.dribbler=index; game.carrier=index; game.last_kicker=index; game.last_touch=p.team
+	p.dribble_motion.control_collision(p,game.ball)
+	if game.is_user_player(index): game.hint(NAMES[kind])
 	return true
 
 func update(delta: float) -> void:
@@ -35,14 +36,25 @@ func update(delta: float) -> void:
 		var s: Dictionary=active[i]
 		s.age+=delta
 		var reach := 2.6 if s.kind=="rainbow" or s.kind=="flick" else 1.8
-		if s.age>=s.duration or not p.visible or p.dismissed or p.action_timer>0 or game.ball.held_by!=null or game.flat_distance(p.position,game.ball.position)>reach or (game.last_kicker!=i and game.last_touch!=p.team):
-			p.skill_move.clear(); active.erase(i); continue
+		var lost: bool=(game.dribbler>=0 and game.dribbler!=i) or (game.carrier>=0 and game.carrier!=i)
+		if lost or not p.visible or p.dismissed or p.action_timer>0 or game.ball.held_by!=null or game.flat_distance(p.position,game.ball.position)>reach or (game.last_kicker!=i and game.last_touch!=p.team):
+			cancel(i); continue
+		if s.age>=s.duration:
+			var ground_move: bool=not s.lifted
+			cancel(i)
+			# The last skill touch hands a low ball directly to normal control;
+			# a leftover grace timer must not leave it rolling free for .12 s.
+			if ground_move and game.ball.position.y<.6 and game.flat_distance(p.position,game.ball.position)<1.3:
+				p.ball_actions.control_grace=0
+				p.dribble_motion.contacts+=1
+				p.dribble_motion.previous_direction=p.facing
+			continue
 		var t: float=s.age/s.duration
 		var forward: Vector3=s.direction
 		var right := forward.cross(Vector3.UP)*float(s.side)
-		var offset := forward*.65
+		var offset := forward*.52
 		match s.kind:
-			"roll": offset+=right*lerpf(-.18,.66,smoothstep(0,1,t))
+			"roll": offset+=right*lerpf(-.18,.62,smoothstep(0,1,t))
 			"roulette": offset=forward.rotated(Vector3.UP,-float(s.side)*TAU*smoothstep(0,1,t))*.56
 			"elastico": offset+=right*(sin(t*PI)*.6 if t<.48 else lerpf(.55,-.72,smoothstep(.48,1,t)))
 			"scoop": offset=forward.rotated(Vector3.UP,-float(s.side)*PI*.44*smoothstep(0,1,t))*.83
@@ -54,7 +66,7 @@ func update(delta: float) -> void:
 		velocity.y=game.ball.linear_velocity.y
 		var impulse: float=game.ball.mass*55*delta
 		if s.kind=="scoop" and not s.lifted and t>.3:
-			velocity.y=2.2; impulse=game.ball.mass*4.8; s.lifted=true
+			velocity.y=2.6; impulse=game.ball.mass*4.8; s.lifted=true
 		elif s.kind=="rainbow" and t<.5:
 			velocity.y=lerpf(5.4,1.8,t/.5); impulse=maxf(impulse,game.ball.mass*7.2); s.lifted=true
 		elif s.kind=="flick" and t<.42:
@@ -66,8 +78,29 @@ func update(delta: float) -> void:
 			if game.is_user_player(i) and game.movement_input().length()<.1: game.last_direction=p.facing
 		game.ball.touch(velocity,impulse)
 		p.ball_actions.control_grace=.12
-		p.desired*=.72 if s.kind=="roulette" or s.kind=="rainbow" else .88
+		# The planted foot and body follow the ball's exit. This is ordinary
+		# movement through the shared acceleration/collision solver, not a dash.
+		var exit := exit_direction(s.kind,forward,float(s.side))
+		var blend := smoothstep(.12,.65,t)
+		if s.kind in ["roll","roulette","elastico","scoop"]:
+			var step := forward*.20+right*.12
+			if s.kind=="roulette": step=right*.42+forward*.12
+			if s.kind=="elastico": blend=smoothstep(.38,.82,t); step=forward*.32+right*.22
+			var technique: float=clampf((float(p.attributes.control)-50)/45,0,1)
+			var pace: float=lerpf(.68,.88,technique)*lerpf(.8,1.0,p.energy)
+			p.desired=p.desired*.25+step.lerp(exit*pace,blend)*.75
+			p.protecting=false
+		else: p.desired*=.72 if s.kind=="rainbow" else .88
 		p.sprinting=false
+
+static func exit_direction(kind: String,forward: Vector3,side: float) -> Vector3:
+	var right := forward.cross(Vector3.UP)*side
+	match kind:
+		"roll": return (forward*.45+right*.9).normalized()
+		"roulette": return (forward*.8+right*.65).normalized()
+		"elastico": return (forward*.65-right*.9).normalized()
+		"scoop": return forward.rotated(Vector3.UP,-side*PI*.44)
+	return forward
 
 static func pose(p) -> void:
 	if p.skill_move.is_empty() or p.action_timer>0: return

@@ -1,6 +1,6 @@
 extends RefCounted
-## Recognize gestures before any kick, so a double tap never redirects a flying ball.
-const DOUBLE_TAP_TIME := 0.23
+## Crosses share the pass/shot contract: hold to aim, release to commit once.
+const CROSS_CHARGE_TIME := .95
 var game
 var consumed: Dictionary = {}
 var switch_pending := false
@@ -9,12 +9,15 @@ var cross_player := -1
 var cross_age := 0.0
 var cross_direction := Vector3.FORWARD
 var cross_guard := 0.0
+var cross_power := 0.0
+var cross_driven := false
 var loft_started := false
 
 func cancel_cross() -> void:
 	if cross_player>=0: game.players[cross_player].shot_preparation=0
 	cross_player=-1
 	cross_age=0
+	cross_power=0
 
 func cancel() -> void:
 	cancel_cross()
@@ -29,6 +32,7 @@ func handle(event: InputEventJoypadButton) -> bool:
 	if consumed.has(button):
 		if not event.pressed:
 			consumed.erase(button)
+			if game.controller.bindings.get(button)==KEY_A and cross_player>=0: commit_cross(cross_driven)
 			if button==JOY_BUTTON_Y and loft_started:
 				loft_started=false
 				if game.pass_lob: game.release_pass()
@@ -60,24 +64,30 @@ func handle(event: InputEventJoypadButton) -> bool:
 		consumed[button]=true
 		start_loft()
 		return true
-	if button!=JOY_BUTTON_B or game.controller.bindings.get(button)!=KEY_A: return false
+	if game.controller.bindings.get(button)!=KEY_A: return false
 	if cross_guard>0:
 		consumed[button]=true
 		return true
 	if cross_player>=0:
 		consumed[button]=true
-		commit_cross(true)
 		return true
 	if not game.has_ball_control(game.controlled): return false
 	consumed[button]=true
 	if game.kick_lock>0 and game.last_kicker>=0: return true
+	begin_cross()
+	return true
+
+func begin_cross() -> void:
+	if not game.has_ball_control(game.controlled) or cross_player>=0 or cross_guard>0: return
 	game.cancel_pass()
 	game.charging=false; game.charge=0
-	cross_player=game.controlled
-	cross_age=0
-	var movement: Vector3=game.movement_input()
-	cross_direction=movement.normalized() if movement.length()>0.1 else game.last_direction
-	return true
+	cross_player=game.controlled; cross_age=0; cross_power=0
+	var movement: Vector3=game.aiming_input()
+	cross_direction=movement.normalized() if movement.length()>.1 else game.last_direction
+	cross_driven=game.controller.action_held(KEY_W) or Input.is_physical_key_pressed(game.match_menu.key_for(KEY_W))
+
+func release_cross() -> void:
+	if cross_player>=0: commit_cross(cross_driven)
 
 func one_two() -> void:
 	switch_pending=false
@@ -113,18 +123,23 @@ func update(delta: float) -> void:
 	cross_guard=maxf(0,cross_guard-delta)
 	if cross_player<0: return
 	if not valid_cross():
-		cross_guard=maxf(0,DOUBLE_TAP_TIME-cross_age)
+		cross_guard=.18
 		cancel_cross()
 		return
 	cross_age+=delta
-	if cross_age>=DOUBLE_TAP_TIME: commit_cross(false)
+	cross_power=minf(1,cross_age/CROSS_CHARGE_TIME)
+	var movement: Vector3=game.aiming_input()
+	if movement.length()>.01:
+		var turn := cross_direction.signed_angle_to(movement.normalized(),Vector3.UP)
+		var response: float=game.controller.aim_response(movement.length()) if game.controller.using_gamepad else 1.0
+		cross_direction=cross_direction.rotated(Vector3.UP,clampf(turn,-game.PASS_TURN_RATE*response*delta,game.PASS_TURN_RATE*response*delta)).normalized()
 
 func commit_cross(driven: bool) -> void:
 	var valid := valid_cross()
 	var heading := cross_direction
+	var power := cross_power
 	cancel_cross()
 	if not valid: return
 	game.last_direction=heading
-	if driven: game.driven_cross()
-	else: game.pass_ball(true)
+	game.execute_player_pass(game.cross_plan(heading,driven,power))
 	cross_guard=0.18

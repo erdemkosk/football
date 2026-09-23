@@ -161,7 +161,7 @@ func run() -> void:
 		for j in range(old.size()):
 			largest=maxf(largest,old[j].angle_to(p.kick_joints[j].quaternion))
 			old[j]=p.kick_joints[j].quaternion
-	check(largest<0.55 and p.velocity.z< -5.8 and p.receive_timer==0 and p.kick_timer==0,"Running control-to-pass-to-run blends continuously without delaying movement (%.3f rad)" % largest)
+	check(largest<0.55 and p.velocity.z< -5.8*p.MOVEMENT_PACE and p.receive_timer==0 and p.kick_timer==0,"Running control-to-pass-to-run blends continuously without delaying movement (%.3f rad)" % largest)
 	for direction in [Vector3.FORWARD,Vector3.BACK,Vector3.RIGHT,Vector3.LEFT]:
 		await reset()
 		p.receive_impact(direction,0.95)
@@ -184,9 +184,27 @@ func run() -> void:
 	await physics_frame; await physics_frame
 	game.previous_ball=Vector3(0,3,-49.8)
 	game.check_boundaries()
-	await tick(83)
+	check(p.reaction.kind=="miss" and p.reaction.weight==0,"A missed shot waits before the disappointment pose")
+	await tick(210)
 	check(p.reaction.kind=="miss" and p.reaction.weight>0.9,"A missed shot triggers the shooter's short disappointment reaction")
 	await capture("miss")
+	await reset()
+	p.kick_timer=0; p.action_timer=0; p.shot_preparation=0; p.desired=Vector3.ZERO
+	p.reaction.live=false
+	p.reaction.begin("miss",Vector3.ZERO)
+	p.reaction.update(p,0.25)
+	for frame in range(12): p.animate(0.016)
+	check(p.reaction.kind=="miss" and p.left_arm.rotation.z<-0.7 and p.right_arm.rotation.z>0.7 and p.head_joint.rotation.x<-0.12,"A miss puts hands on hips and drops the head")
+	p.reaction.begin("appeal",Vector3(4,0,8))
+	p.reaction.live=false
+	p.reaction.update(p,0.25)
+	for frame in range(12): p.animate(0.016)
+	check(p.reaction.kind=="appeal" and p.left_arm.rotation.z<-1.5 and p.right_arm.rotation.z>1.5,"An appeal opens both arms wide enough to read from midfield")
+	p.reaction.begin("captain",p.position)
+	p.reaction.live=false
+	p.reaction.update(p,0.25)
+	for frame in range(12): p.animate(0.016)
+	check(p.reaction.kind=="captain" and p.left_arm.rotation.x>0.7 and p.right_arm.rotation.x>0.7,"The captain gathers teammates with both arms out")
 	await reset()
 	game.strike(9,Vector3(0,0,-10))
 	p.kick_timer=0; game.kick_lock=0

@@ -1,0 +1,33 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Club 0: stable, natural proportions across starters and reserves
+PASS: Club 1: stable, natural proportions across starters and reserves
+PASS: Club 2: stable, natural proportions across starters and reserves
+PASS: Club 3: stable, natural proportions across starters and reserves
+PASS: Club 4: stable, natural proportions across starters and reserves
+PASS: Club 5: stable, natural proportions across starters and reserves
+PASS: Club 6: stable, natural proportions across starters and reserves
+PASS: Club 7: stable, natural proportions across starters and reserves
+PASS: The roster has substantial natural height and build variety
+PASS: Crest, trim and number use a compact mipmapped cloth texture
+PASS: Front and back UVs read left-to-right from outside the shirt
+PASS: The printed shirt follows the torso through one mesh surface
+PASS: The printed shirt is a spine-driven cloth shader, not a rigid standard material
+PASS: Jersey vertices receive the current spine bend
+PASS: No detached chest boxes or floating number labels remain
+PASS: Diving preserves body proportions instead of turning width into extra reach
+PASS: Repeated shirt refreshes reuse the cached texture
+PASS: Changing strip changes print without changing the player's body
+PASS: Alternate shirts retain the club's crest colours
+PASS: A prematch substitution is accepted
+PASS: The substitute brings his measurements and number, preserving the AI slot
+PASS: Collision height follows the roster height in metres
+PASS: Undoing the swap restores the same body
+PASS: The outgoing player's build is retained until the touchline greeting finishes
+PASS: Live substitution switches build only when the replacement enters
+PASS: The incoming shirt starts clean, accumulating only its own entry-time dirt
+PASS: New match/reset restores the selected lineup's physiques
+PASS: Mud shades the existing cloth without allocating another texture
+PASS: The team preview wears the actual starter's identity and build
+PASS: Tactics and reserve comparison expose actual height and weight
+KIT / PHYSIQUE CHECK: 30 checks, 0 failures; 120 body profiles, 168–198 cm

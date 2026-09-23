@@ -20,11 +20,13 @@ func _ready() -> void:
 	strong=frontend.bold
 	for state in ["normal","hover","pressed","focus","disabled"]: add_theme_stylebox_override(state,StyleBoxEmpty.new())
 	mouse_default_cursor_shape=Control.CURSOR_POINTING_HAND
-	mouse_entered.connect(func(): frontend.preview_player(kind,index))
+	mouse_entered.connect(func():
+		if not frontend.game.controller.using_gamepad and frontend.swap_stage!="confirm": frontend.preview_player(kind,index))
 	mouse_exited.connect(func(): drop_hot=false)
 	focus_entered.connect(func(): frontend.preview_player(kind,index))
-	pressed.connect(func(): frontend.select_slot(index) if kind=="slot" else frontend.select_reserve(index))
-	tooltip_text="%s · %s\n%s" % [data.name,data.role,"Oyuncuyu seç, ardından yedeği seç. Sürükleyerek de değiştirebilirsin." if kind=="slot" else "Seçili oyuncuyla değiştir veya saha üzerine sürükle."]
+	focus_exited.connect(queue_redraw)
+	pressed.connect(func(): frontend.activate_card(kind,index))
+	tooltip_text="%s · %s\nSahadan ya da yedekten başla, ikinci oyuncuyu seç ve onayla. Sürükleyerek de değiştirebilirsin." % [data.name,data.role]
 
 func _process(delta: float) -> void:
 	if not is_visible_in_tree(): return
@@ -82,7 +84,7 @@ func _draw() -> void:
 	if highlighted: background=Color("f3dfaa")
 	if not eligible: background=Color("cad3cb")
 	var edge := Color("edd087") if highlighted else Color("a7bcb0")
-	if has_focus(): edge=Color("f7e4a9")
+	if has_focus(): edge=Color("66efff"); background=Color("daf7f6")
 	panel(Rect2(Vector2(0,4),size),Color(0,0,0,.18))
 	panel(Rect2(Vector2.ZERO,size),background,edge,3 if highlighted or has_focus() else 1)
 	var ink := Color("16352f") if eligible else Color("64776e")
@@ -105,14 +107,15 @@ func _draw() -> void:
 		draw_line(Vector2(10,size.y-4),Vector2(size.x-10,size.y-4),Color("c3cdbf"),2,true)
 		draw_line(Vector2(10,size.y-4),Vector2(10+(size.x-20)*maxf(.01,energy),size.y-4),tint,2,true)
 		if active:
-			draw_circle(Vector2(size.x-12,36),4,Color("397355"))
+			panel(Rect2(size.x-42,4,37,15),Color("294c3e"))
+			label_at("SEÇİLİ",Vector2(size.x-39,15),8,Color("f3dfaa"),true)
 	else:
 		portrait(Rect2(5,3,57,57))
 		label_at(data.name,Vector2(66,24),13 if str(data.name).length()<10 else 11,ink,true,size.x-70)
 		label_at(data.position_label,Vector2(67,41),9,muted,true)
 		label_at("#%02d" % data.shirt,Vector2(67,55),10,muted)
-		label_at(str(data.get("ovr","")),Vector2(size.x-36,28),21,Color("2d6b4a"),true)
-		label_at(status if status!="" else ("HAZIR" if eligible else data.get("unavailable","SEÇİLEMİYOR")),Vector2(12,71),9,muted,true)
+		label_at(str(data.get("ovr","")),Vector2(size.x-31,56),17,Color("2d6b4a"),true)
+		label_at("SEÇİLİ" if active else (status if status!="" else ("HAZIR" if eligible else data.get("unavailable","SEÇİLEMİYOR"))),Vector2(12,71),9,muted,true)
 		label_at("%d%%" % roundi(energy*100),Vector2(size.x-40,71),10,tint,true)
 		draw_line(Vector2(12,82),Vector2(size.x-12,82),Color("c3cdbf"),3,true)
 		draw_line(Vector2(12,82),Vector2(12+(size.x-24)*maxf(.01,energy),82),tint,3,true)

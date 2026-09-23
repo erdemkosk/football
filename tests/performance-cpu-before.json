@@ -1,0 +1,42 @@
+[
+	{
+		"calls": 120,
+		"system": "support",
+		"us_per_call": 1340.16666666667
+	},
+	{
+		"calls": 120,
+		"system": "defensive-plan",
+		"us_per_call": 150.483333333333
+	},
+	{
+		"calls": 40,
+		"system": "attack-decision",
+		"us_per_call": 9742.375
+	},
+	{
+		"calls": 120,
+		"system": "all-ai",
+		"us_per_call": 2888.775
+	},
+	{
+		"calls": 120,
+		"system": "animate-22",
+		"us_per_call": 2237.675
+	},
+	{
+		"calls": 120,
+		"system": "crowd",
+		"us_per_call": 12.45
+	},
+	{
+		"calls": 120,
+		"system": "sidelines",
+		"us_per_call": 775.075
+	},
+	{
+		"calls": 120,
+		"system": "weather",
+		"us_per_call": 77.2833333333333
+	}
+]

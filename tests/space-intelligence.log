@@ -1,0 +1,54 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Observed left-wing attacks shift defensive cover, difficulty 0
+PASS: Adaptation strength follows difficulty 0
+PASS: Pausing cannot secretly advance opponent analysis
+PASS: Repeated direct passes drop the defensive line, difficulty 0
+PASS: Opponent observations reverse with second-half attack direction
+PASS: Observed left-wing attacks shift defensive cover, difficulty 1
+PASS: Adaptation strength follows difficulty 1
+PASS: Pausing cannot secretly advance opponent analysis
+PASS: Repeated direct passes drop the defensive line, difficulty 1
+PASS: Opponent observations reverse with second-half attack direction
+PASS: Observed left-wing attacks shift defensive cover, difficulty 2
+PASS: Adaptation strength follows difficulty 2
+PASS: Pausing cannot secretly advance opponent analysis
+PASS: Repeated direct passes drop the defensive line, difficulty 2
+PASS: Opponent observations reverse with second-half attack direction
+PASS: Old tendencies decay so changing wings can beat the previous adjustment
+PASS: A new match forgets the previous opponent scouting
+PASS: A losing hard opponent changes to 4-3-3 late
+PASS: Leading late restores a compact shape
+PASS: A sent-off defender makes the coach protect the remaining shape
+PASS: Sustained pressure on build-up can produce a three-defender outlet shape
+PASS: Difficulty does not secretly change the same footballer's running speed
+PASS: High pressing has an enforced recovery interval
+PASS: An exhausted opponent abandons unsustainable high pressing
+PASS: Attacks retain central defenders behind the ball against a counterattack
+PASS: A defender avoids tackling through the attacker from behind in the penalty area
+PASS: Penalty-area caution still allows a clean ball-first standing tackle
+PASS: A booked defender avoids the extra risk of sliding
+PASS: The box defender contains and blocks instead of blindly charging
+PASS: A defender recovers goal-side of a visible run behind the line
+PASS: An open teammate near goal is preferred over a difficult-angle shot
+PASS: A blocked shooting lane causes the attacker to seek another solution
+PASS: An obstructed ground through-pass can go over the defender
+PASS: Space outside the box permits a power shot with its longer preparation
+PASS: A technical finisher on the appropriate side can choose the outside of the boot
+PASS: A technical player can use the same ball-roll action as the user
+PASS: The carrier picks space around the defender instead of running straight into him
+PASS: Pass interception starts a real foot movement without remote ball contact
+PASS: The coach can replace a booked defender before a second yellow
+PASS: Opponent substitution enters the real outgoing-player sequence
+PASS: The coach spaces substitutions rather than consuming all three at one whistle
+PASS: Chasing a goal can refresh the striker before complete exhaustion
+PASS: Opponent respects the same three-substitution limit
+PASS: An expelled player cannot be replaced by the AI
+PASS: Opponent keeper uses the shared animated distribution
+PASS: Opponent keeper distribution never cancels the user's shot input
+PASS: Keeper release really leaves the hand and counts a physical pass
+PASS: A keeper with no safe short outlet can select a physical punt
+PASS: Close-range AI low shot uses its own physical finishing queue
+PASS: AI low finishing releases only after actual boot contact
+PASS: A pause cancels unfinished AI wind-ups
+OPPONENT INTELLIGENCE CHECK: 52 checks, 1 failures

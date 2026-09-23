@@ -188,7 +188,7 @@ func run() -> void:
 	check(game.pass_preview.receiver==-1 and game.pass_preview.velocity.z<0,"Assistance never redirects a forward pass behind the user")
 
 	setup()
-	game.match_menu.config_path="/tmp/football-team-controls.cfg"
+	game.match_menu.config_path="res://tests/flow-team-controls.cfg"
 	var old := ConfigFile.new()
 	var legacy: Dictionary=game.controller.bindings.duplicate(); legacy[JOY_BUTTON_Y]=KEY_Z
 	old.set_value("pad","bindings",legacy); old.save(game.match_menu.config_path)
@@ -232,4 +232,5 @@ func run() -> void:
 		if game.last_kicker==17 and game.last_touch==1: intercepted=true; break
 	check(intercepted,"A defender physically intercepts an assisted pass through a blocked lane, with control or a first-touch deflection")
 	print("TEAM CONTROL CHECK: %d failures" % failures)
+	DirAccess.remove_absolute(game.match_menu.config_path)
 	game.free(); await process_frame; quit(0 if failures==0 else 1)

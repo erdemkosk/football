@@ -1,0 +1,24 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ROLL distance dry=2.551 wet=2.671 mud=1.415
+PASS: A physical ball skids farther on wet intact grass
+PASS: Mud slows the same physical pass more than dry grass
+BOUNCE dry=1.021 mud=0.375
+PASS: A dropped ball rebounds lower on the soft wet goalmouth
+PASS: A high wet ball rebounds inside the stadium without gaining energy or escaping
+PASS: Actual player acceleration loses traction in mud
+PASS: Actual grounded footsteps leave persistent marks
+PASS: Marks remain after twelve seconds without allocating extra nodes
+PASS: Stopping rain does not instantly dry the pitch or erase footprints
+PASS: Pause freezes weather, mark aging and rain audio
+PASS: Replay keeps rain falling and sounding while play is frozen
+PASS: A physical slide carves a continuous muddy track
+PASS: Player acceleration uses the same localized mud map as the ball
+PASS: Trace storage stays bounded during a long wet match
+PASS: A new match clears the old pitch marks
+PASS: A new match preserves the selected weather
+PASS: H cycles weather during play while retaining the wet surface
+PASS: Dry grass still records worn footprints
+PASS: Kits pick up dirt from play instead of staying match-fresh
+PASS: M also silences the separate rain ambience
+WEATHER CHECK: 0 failures

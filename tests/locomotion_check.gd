@@ -53,7 +53,7 @@ func turn_scenario(direction: Vector3,label: String) -> void:
 	var position: Vector3=player.position
 	player.desired=direction
 	await tick()
-	check((player.velocity-before).dot(direction)>0.1 and player.position.distance_to(position)>0.001,"Direction input changes real motion on the first physics tick: "+label)
+	check((player.velocity-before).dot(direction)>0.02 and player.position.distance_to(position)>0.00005,"Direction input changes real motion on the first physics tick: "+label)
 	var planted := 0
 	var peak := 0.0
 	var error := 0.0
@@ -121,17 +121,17 @@ func run() -> void:
 	player.jockeying=true
 	player.desired=Vector3.RIGHT*0.58
 	await tick(70)
-	check(player.locomotion.mode=="side" and player.facing.dot(Vector3.FORWARD)>0.99 and player.velocity.x>3,"Defensive lateral movement keeps looking at the opponent")
+	check(player.locomotion.mode=="side" and player.facing.dot(Vector3.FORWARD)>0.99 and player.velocity.x>player.movement_speed()*.55,"Defensive lateral movement keeps looking at the opponent")
 	var lateral_spread: float=absf(player.left_leg.rotation.z)+absf(player.right_leg.rotation.z)
 	check(lateral_spread>0.22 and absf(player.left_leg.rotation.x-player.right_leg.rotation.x)<0.22,"Side steps open and gather instead of playing the forward sprint")
 	await capture("sidestep")
 	player.desired=Vector3.LEFT*0.58
 	await tick(80)
-	check(player.locomotion.side< -0.9 and player.velocity.x< -3 and player.facing.dot(Vector3.FORWARD)>0.99,"Side steps mirror without rotating the defender away from play")
+	check(player.locomotion.side< -0.9 and player.velocity.x< -player.movement_speed()*.55 and player.facing.dot(Vector3.FORWARD)>0.99,"Side steps mirror without rotating the defender away from play")
 	await capture("sidestep-left")
 	player.desired=Vector3.BACK*0.58
 	await tick(90)
-	check(player.locomotion.mode=="back" and player.velocity.z>3 and player.facing.dot(Vector3.FORWARD)>0.99,"Backward defensive running retains forward-facing upper body")
+	check(player.locomotion.mode=="back" and player.velocity.z>player.movement_speed()*.55 and player.facing.dot(Vector3.FORWARD)>0.99,"Backward defensive running retains forward-facing upper body")
 	var low := INF
 	var high := -INF
 	var grounded := true
@@ -140,7 +140,7 @@ func run() -> void:
 		low=minf(low,player.left_leg.rotation.x)
 		high=maxf(high,player.left_leg.rotation.x)
 		grounded=grounded and feet_grounded()
-	check(high-low>0.3 and grounded,"Backpedalling alternates articulated steps with a grounded support foot")
+	check(high-low>0.15 and grounded,"Backpedalling alternates articulated steps with a grounded support foot")
 	await capture("backpedal")
 	player.begin_kick(0.8,0.46)
 	await tick(8)

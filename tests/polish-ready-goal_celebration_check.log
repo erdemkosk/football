@@ -1,0 +1,41 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Goal preserves the moving physical ball
+PASS: Every outfield teammate joins the scorer
+PASS: Scoring supporters receive a sustained goal celebration
+GOAL 0 0.0s state=goal phase=
+PASS: Pause freezes player and supporter celebrations
+GOAL 0 15.0s state=restart phase=relay_prepare
+GOAL 0 30.0s state=restart phase=arrange
+PASS: Teammates physically gather and jumping is specific to the fist celebration
+PASS: Celebration remains visible before the walk back to kickoff
+PASS: Players and ball remain continuous through celebration and return
+PASS: The conceding team receives a protected centre kickoff
+PASS: A player retrieves the same ball and places it at centre
+PASS: Celebration and preparation do not advance the match clock or recount the goal
+PASS: Both teams return to their halves and opponents stay outside the centre circle
+PASS: A real kickoff pass releases play for the conceding team
+PASS: Goal preserves the moving physical ball
+PASS: Every outfield teammate joins the scorer
+PASS: Scoring supporters receive a sustained goal celebration
+GOAL 1 0.0s state=goal phase=
+PASS: Pause freezes player and supporter celebrations
+GOAL 1 15.0s state=restart phase=relay_prepare
+GOAL 1 30.0s state=restart phase=arrange
+PASS: Teammates physically gather and jumping is specific to the fist celebration
+PASS: Celebration remains visible before the walk back to kickoff
+PASS: Players and ball remain continuous through celebration and return
+PASS: The conceding team receives a protected centre kickoff
+PASS: A player retrieves the same ball and places it at centre
+PASS: Celebration and preparation do not advance the match clock or recount the goal
+PASS: Both teams return to their halves and opponents stay outside the centre circle
+PASS: Home kickoff waits for player input
+PASS: A real kickoff pass releases play for the conceding team
+PASS: A fresh goal is waiting on the celebration
+PASS: Space skips the celebration and opens the conceding kickoff
+PASS: Skip places the same ball at centre without a walk-back
+PASS: Skip puts both teams into a legal kickoff shape
+PASS: Practice skip returns directly to shooting
+PASS: Practice returns directly to shooting without a kickoff sequence
+PASS: A new match clears every celebration pose
+GOAL CELEBRATION CHECK: 0 failures

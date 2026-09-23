@@ -1,0 +1,45 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: New matches start with whole-team control
+PASS: A passes physically and leaves the passer selected
+PASS: Outgoing pass selects the teammate who can receive its physical trajectory
+PASS: A teammate near the aimed landing can still run to contest the pass
+PASS: Stick immediately steers the incoming receiver
+PASS: Crosses keep the passer selected instead of locking a named recipient
+PASS: A backpass follows the aimed heading without taking control away from the passer
+PASS: The keeper becomes controllable once the ball is at his feet
+PASS: A controlled goalkeeper can acquire the ball at his feet
+PASS: The goalkeeper controls the grounded ball with an animated foot contact
+PASS: A moving teammate gaining possession becomes controlled
+PASS: The new cursor takes the stick before AI can play the ball
+PASS: Losing possession selects the substantially better placed defender
+PASS: Similar nearby defenders do not cause cursor hopping
+PASS: Actual possession overrides the earlier LB choice immediately
+PASS: Possession control resumes after the manual selection grace period
+PASS: A dismissed player cannot retain control
+PASS: Optional single-player mode still preserves the selected player
+PASS: Off-ball Xbox X begins a standing foot challenge, never a slide
+PASS: Holding X cannot repeatedly restart a challenge
+PASS: A clean standing challenge physically pokes the ball away
+PASS: Gaining the ball during an X challenge does not shoot on release
+PASS: X challenges an opponent's possession even when the ball is within shooting reach
+PASS: Xbox X still charges and shoots in possession
+PASS: Off-ball B keeps its separate slide action
+PASS: Y prepares a through ball without triggering a feint
+PASS: A short Y pass goes into forward space along the aimed heading
+PASS: Releasing A cannot accidentally release a held Y pass
+PASS: Holding Y sends the ball farther into the runner's path
+PASS: Y release uses the visible physical trajectory and leaves the passer selected
+PASS: Changing the runner's direction after the kick cannot steer the ball in flight
+PASS: Through balls follow the reversed attack direction in the second half
+PASS: An offside runner is not targeted by through-ball assistance
+PASS: Off-ball Y asks a teammate for a through ball without kicking remotely
+PASS: A teammate can answer the through-ball request
+PASS: A teammate well off the aimed line does not steal the pass in either assistance mode
+PASS: Semi assistance only nudges a near-line teammate and never snaps onto a wide runner
+PASS: Assistance never redirects a forward pass behind the user
+PASS: Existing saved Y-feint bindings migrate to through ball
+PASS: New assistance settings and custom through-ball bindings survive reload
+PASS: The intended runner physically reaches and controls a through ball into space
+PASS: A defender physically intercepts an assisted pass through a blocked lane, with control or a first-touch deflection
+TEAM CONTROL CHECK: 0 failures

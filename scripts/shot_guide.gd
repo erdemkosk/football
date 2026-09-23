@@ -2,7 +2,8 @@ extends RefCounted
 const P = preload("res://scripts/pitch_dimensions.gd")
 ## Aim estimate only: the launched rigid body remains responsible for collisions.
 const Motion = preload("res://scripts/ball_motion.gd")
-const RADIUS := 0.22
+const RADIUS := preload("res://scripts/ball_dimensions.gd").RADIUS
+const GROUND_HEIGHT := preload("res://scripts/ball_dimensions.gd").GROUND_HEIGHT
 var cached: Dictionary = {}
 var updated_at := -1000
 var last_origin := Vector3.INF
@@ -31,17 +32,26 @@ static func predict(origin: Vector3,velocity: Vector3,spin: float,goal_z: float,
 	var drag := Motion.air_drag(surface)
 	var crossed := false
 	var bounced := false
+	var previous_vertical := 0.0
 	var has_destination := destination.is_finite()
 	var heading := ((destination-origin)*Vector3(1,0,1)).normalized() if has_destination else Vector3.ZERO
 	var reach := Vector2(destination.x-origin.x,destination.z-origin.z).length() if has_destination else INF
 	for frame in range(ceili(duration/dt)):
 		var previous := position
 		var resistance := Motion.profile(surface,position)
-		var rolling := position.y<RADIUS+0.08 and absf(velocity.y)<1.2
+		# Match ball.gd's settled ground travel so weak shots do not preview
+		# airborne curl that the launched ball will never receive.
+		var rolling := position.y<RADIUS+0.10 and (absf(velocity.y)<1.2 or (absf(velocity.y)<2.4 and previous_vertical>-3.0))
+		previous_vertical=velocity.y
 		if rolling:
+			if landing and frame>2:
+				position.y=GROUND_HEIGHT
+				bounced=true
+				break
 			var speed := Vector2(velocity.x,velocity.z).length()
 			var horizontal := Vector2(velocity.x,velocity.z).normalized()*Motion.rolling_speed(speed,dt,resistance)
 			velocity.x=horizontal.x; velocity.z=horizontal.y
+			velocity.y=0; position.y=GROUND_HEIGHT; previous_vertical=0
 		else:
 			velocity=Motion.apply_spin(Motion.air_velocity(velocity,dt,drag),spin,dt)
 		spin=Motion.decay_spin(spin,dt,not rolling,resistance.x)
@@ -68,4 +78,4 @@ static func predict(origin: Vector3,velocity: Vector3,spin: float,goal_z: float,
 		if frame%4==3: points.append(position)
 		if position.distance_to(origin)>75 or absf(position.x)>P.HALF_WIDTH+2 or absf(position.z)>52 or velocity.length()<0.5: break
 	if points[-1].distance_to(position)>0.001: points.append(position)
-	return {"points":points,"target":position,"goal_plane":crossed,"on_target":crossed and absf(position.x)<3.44 and position.y<2.22,"bounced":bounced}
+	return {"points":points,"target":position,"goal_plane":crossed,"on_target":crossed and absf(position.x)<3.66-RADIUS and position.y<2.44-RADIUS,"bounced":bounced}

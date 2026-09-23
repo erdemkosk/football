@@ -1,0 +1,95 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Main menu starts on Quick Match
+PASS: Stick drift cannot change the menu selection
+PASS: Left analog moves one row immediately
+PASS: Held stick waits before repeating
+PASS: Held analog repeats at a controlled rate
+PASS: Centering the stick stops repetition
+PASS: A second controller cannot navigate or activate menus
+PASS: A opens the focused Settings item
+PASS: D-pad enters the settings controls
+PASS: Left changes the focused audio slider
+PASS: Holding the analog adjusts sliders progressively
+PASS: A opens the focused dropdown without changing its value
+PASS: D-pad and A confirm the dropdown choice
+PASS: B cancels only the dropdown and leaves Settings open
+PASS: Left/right allow changing choices in either direction
+PASS: Analog and A work inside the dropdown
+PASS: RB changes settings section
+PASS: Controller reaches button remapping
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5780/@ScrollContainer@5787/@VBoxContainer@5788/@HBoxContainer@5882/@Button@5885
+PASS: A starts Xbox button capture
+PASS: A can be rebound and a held duplicate cannot reopen capture
+PASS: Remapping restores the same button focus
+PASS: View cancels Xbox capture without closing Settings
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5780/@ScrollContainer@5787/@VBoxContainer@5788/@HBoxContainer@5935/@Button@5937
+PASS: B cancels keyboard capture from the controller
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5780/@ScrollContainer@5787/@VBoxContainer@5788/@HBoxContainer@5971/@Button@5974
+PASS: Long binding list follows controller focus when scrolling
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5780/@ScrollContainer@5787/@VBoxContainer@5788/@HBoxContainer@6042/@OptionButton@6054
+PASS: Controller changes gameplay preferences
+PASS: B saves and restores the main-menu selection
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5609/@Button@5819
+PASS: Controller opens the training selector on the existing free practice mode
+PASS: Controller starts training without passing
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5609/@Button@6084
+PASS: Pause menu can return to the main menu
+PASS: A duplicate press cannot skip team selection
+PASS: The active team's carousel changes one team and retains focus
+PASS: A confirms the current team
+PASS: Selection advances after the presentation
+PASS: The active team's carousel changes one team and retains focus
+PASS: A confirms the current team
+PASS: Selection advances after the presentation
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5776/@Control@5778/@Button@6456
+PASS: Match preferences retain focus after rebuilding
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5776/@Control@5778/@Button@6580
+PASS: Match preferences retain focus after rebuilding
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5776/@Control@5778/@Button@6705
+PASS: Match preferences retain focus after rebuilding
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5776/@Control@5778/@Button@6827
+PASS: A continues into pre-match tactics
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5776/@Control@5778/@Button@6829
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5776/@Control@5778/@Button@6830
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5776/@Control@5778/@Button@6831
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5776/@Control@5778/@Button@6832
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5776/@Control@5778/@Button@6833
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5776/@Control@5778/@Button@6834
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5776/@Control@5778/@Button@6835
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5776/@Control@5778/@Button@6836
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5776/@Control@5778/@Button@6837
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5776/@Control@5778/@Button@6838
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5776/@Control@5778/@Button@6839
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5776/@Control@5778/@Button@6838
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5776/@Control@5778/@Button@6843
+PASS: Controller previews the reserve before committing
+PASS: Controller changes the starting lineup
+PASS: RB opens the tactical plan
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5776/@Control@5778/@Button@6891
+PASS: Controller selects 4-3-3
+PASS: Nested Settings restore the exact tactical focus and paused state
+PASS: LB returns to lineup management
+PASS: B goes back one pre-match screen
+PASS: B first releases the away-team selection
+PASS: B then releases the home-team selection
+PASS: B returns from team selection
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5609/@Button@6086
+PASS: Held analog cannot run away through a new screen
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5776/@Control@5778/@Button@7330
+PASS: Entire pre-match sequence works with the controller
+PASS: Ceremony skip reaches kickoff without a held duplicate leaking into a pass
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5609/@Button@7334
+PASS: Closing pause Settings keeps the match paused
+PASS: B resumes safely from pause
+PASS: Controller starts the second half
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5609/@Button@7445
+PASS: Controller can leave the results screen
+PASS: Disconnect leaves pre-match selections intact
+PASS: Reconnected controller navigates immediately
+PASS: Controller reaches /root/StartingElevenFC/@CanvasLayer@5608/@Control@5609/@Button@7448
+PASS: Keyboard Enter activates the focused main-menu item
+PASS: Mouse still activates the same main-menu buttons
+PASS: Menu A stays fixed after remapping gameplay A
+PASS: Menu B stays fixed and cannot trigger a gameplay action
+MENU CONTROLLER CHECK: 92 checks, 0 failures

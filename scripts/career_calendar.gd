@@ -37,7 +37,7 @@ func finish() -> void:
 func _draw() -> void:
 	if not visible: return
 	var art=screen.art
-	draw_rect(Rect2(0,0,1440,900),Color(.025,.05,.08,.94))
+	draw_rect(game.ui.bounds(),Color(.025,.05,.08,.94))
 	art.fade(self,Rect2(185,165,1070,590),Color("183a44"),Color("10202f"))
 	box(Rect2(190,170,1060,580),Color(.035,.08,.12,.65),18,Color("4a6970"))
 	var progress:=clampf(age/travel,0,1)

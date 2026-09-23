@@ -1,0 +1,121 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Keyboard starts roulette
+PASS: Skill spends stamina without teleporting the ball
+PASS: Skill ends and returns normal dribbling
+PASS: Skill balance stays anatomically bounded throughout the animation
+PASS: Keyboard starts ball roll
+PASS: Skill spends stamina without teleporting the ball
+PASS: Skill ends and returns normal dribbling
+PASS: Skill balance stays anatomically bounded throughout the animation
+PASS: Keyboard starts elastico
+PASS: Skill spends stamina without teleporting the ball
+PASS: Skill ends and returns normal dribbling
+PASS: Skill balance stays anatomically bounded throughout the animation
+PASS: Keyboard starts scoop
+PASS: Skill spends stamina without teleporting the ball
+PASS: Skill ends and returns normal dribbling
+PASS: Skill balance stays anatomically bounded throughout the animation
+PASS: Scoop physically lifts the ball
+PASS: Skill types produce distinct physical ball paths
+PASS: Keyboard starts a rainbow
+PASS: rainbow spends stamina without teleporting the ball
+PASS: rainbow ends and returns normal dribbling
+PASS: Keyboard starts a heel
+PASS: heel spends stamina without teleporting the ball
+PASS: heel ends and returns normal dribbling
+PASS: Keyboard starts a flick
+PASS: flick spends stamina without teleporting the ball
+PASS: flick ends and returns normal dribbling
+PASS: Rainbow lifts the ball over the player
+PASS: Flick up pops the ball for a follow-up
+PASS: Rainbow climbs higher than a heel flick
+PASS: LT + right-stick back starts a rainbow
+PASS: LT + right-stick forward starts a heel flick
+PASS: LT + right-stick lateral starts a flick up
+PASS: Right-stick lateral gesture performs a ball roll
+PASS: Opposite right-stick gestures perform an elastico on PlayStation
+PASS: Right stick retains aiming during shot preparation
+PASS: Directional selection favors the aimed teammate over the nearest teammate
+PASS: A defensive right-stick flick selects that teammate
+PASS: Second-man pressure selects a teammate rather than taking over the user
+PASS: Second-man pressure consumes stamina and preserves user control
+PASS: Releasing the pressure command releases the teammate
+PASS: A legal side-on shoulder creates bounded physical displacement
+PASS: Both players react to the shoulder challenge
+PASS: Timed interception cushions a real incoming low pass
+PASS: Dummy opens a brief leave-the-pass window
+PASS: Dummy lets the original pass run through without touching or redirecting it
+PASS: Dummy restores normal ball collisions and reception
+PASS: Canceling a dummy also clears the pose and collision exception immediately
+PASS: Driven pass has its own fast, low preview
+PASS: Driven pass release exactly uses the displayed route
+PASS: Driven pass has its own fast, low preview
+PASS: Driven pass release exactly uses the displayed route
+PASS: Keyboard selects low shot
+PASS: Charged special shot releases immediately: low
+SPECIAL low shots=1 output=(0.0, 0.381633, -25.27323) spin=0.0
+PASS: Special shot makes one physical contact and one shot
+PASS: Low driven shot stays low
+PASS: Keyboard selects power shot
+PASS: Charged special shot releases immediately: power
+SPECIAL power shots=1 output=(0.0, 1.887, -41.3819) spin=0.0
+PASS: Special shot makes one physical contact and one shot
+PASS: Power shot delivers its higher speed at release
+PASS: Keyboard selects outside shot
+PASS: Charged special shot releases immediately: outside
+SPECIAL outside shots=1 output=(0.0, 1.486667, -21.28399) spin=3.0706666494906
+PASS: Special shot makes one physical contact and one shot
+PASS: Outside-foot shot applies its own physical curve
+PASS: Keyboard selects timed shot
+PASS: Timed shot keeps its deliberate second-press window
+PASS: Second press in the green window rewards timing
+SPECIAL timed shots=1 output=(0.0, 2.101667, -23.30695) spin=0.0
+PASS: Special shot makes one physical contact and one shot
+PASS: An early second press reduces quality rather than guaranteeing a better shot
+PASS: A dispossessed power shot misses without a remote strike
+PASS: Xbox Controller selects low using the documented chord
+PASS: Xbox Controller chord makes one shot without accidental player switching
+PASS: Xbox Controller selects power using the documented chord
+PASS: Xbox Controller chord makes one shot without accidental player switching
+PASS: Xbox Controller selects outside using the documented chord
+PASS: Xbox Controller chord makes one shot without accidental player switching
+PASS: Xbox Controller selects timed using the documented chord
+PASS: Xbox Controller chord makes one shot without accidental player switching
+PASS: Xbox Controller supports a charged driven pass
+PASS: Xbox Controller driven pass releases normally
+PASS: Xbox Controller LT + shot requests a pass interception
+PASS: Xbox Controller interception uses real foot contact
+PASS: DualSense selects low using the documented chord
+PASS: DualSense chord makes one shot without accidental player switching
+PASS: DualSense selects power using the documented chord
+PASS: DualSense chord makes one shot without accidental player switching
+PASS: DualSense selects outside using the documented chord
+PASS: DualSense chord makes one shot without accidental player switching
+PASS: DualSense selects timed using the documented chord
+PASS: DualSense chord makes one shot without accidental player switching
+PASS: DualSense supports a charged driven pass
+PASS: DualSense driven pass releases normally
+PASS: DualSense LT + shot requests a pass interception
+PASS: DualSense interception uses real foot contact
+PASS: Keeper command queues roll rather than choosing a teammate
+KEEPER roll passes=1 output=(0.0, -0.65, -10.53846) position=(-0.026336, 0.200305, -39.91423)
+PASS: Keeper roll completes exactly one physical distribution
+PASS: Keeper command queues throw rather than choosing a teammate
+KEEPER throw passes=1 output=(0.0, 3.564103, -17.82051) position=(0.336534, 0.863673, -44.97767)
+PASS: Keeper throw completes exactly one physical distribution
+PASS: Long throw has an aerial hand-release trajectory
+PASS: Keeper command queues punt rather than choosing a teammate
+KEEPER punt passes=1 output=(0.0, 7.473, -24.46794) position=(-0.047254, 2.828685, -46.96961)
+PASS: Keeper punt completes exactly one physical distribution
+PASS: Punt uses foot contact and counts as distribution, not a shot
+PASS: Keeper drop releases the real held ball without relocating it
+PASS: Dropped ball falls to the turf
+PASS: The in-game command list has dedicated skills, finishing, passing and keeper pages
+PASS: Command page 1 contains usable action descriptions
+PASS: Command page 4 contains usable action descriptions
+PASS: Command page 5 contains usable action descriptions
+PASS: Command page 6 contains usable action descriptions
+PASS: Command page 7 contains usable action descriptions
+PASS: Pausing clears held advanced actions
+ADVANCED PLAY CHECK: 111 checks, 0 failures

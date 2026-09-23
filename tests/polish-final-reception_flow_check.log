@@ -1,0 +1,89 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Delivery starts: team 0 pass
+RECEPTION team=0 kind=pass moving=false half=1 touch=true settled=0.65 first=0.85833333333333 shots=0 nearest=0.16136367619038 final=(0.028872, 0.155, -9.189556) receiver=(-0.00866, 0.000113, -8.558471)
+PASS: Intended receiver meets the real pass, team 0 moving=false half=1
+PASS: Reception continues into a controlled carry or aerial finish: pass team 0
+PASS: Delivery starts: team 0 lob
+RECEPTION team=0 kind=lob moving=false half=1 touch=true settled=0.65 first=1.15833333333333 shots=0 nearest=0.48878133296967 final=(0.000163, 0.155, -10.54861) receiver=(-0.002509, 0.000227, -9.967593)
+PASS: Intended receiver meets the real lob, team 0 moving=false half=1
+PASS: Reception continues into a controlled carry or aerial finish: lob team 0
+PASS: Delivery starts: team 0 cross
+RECEPTION team=0 kind=cross moving=false half=1 touch=true settled=0.0 first=1.425 shots=1 nearest=1.5462052822113 final=(1.99682, 1.988782, -39.74483) receiver=(1.833952, 0.452805, -39.81554)
+PASS: Intended receiver meets the real cross, team 0 moving=false half=1
+PASS: The cross meets the head on its first flight, before a body ricochet
+PASS: Reception continues into a controlled carry or aerial finish: cross team 0
+PASS: Header follow-through restores normal player collision
+PASS: Delivery starts: team 0 driven_cross
+RECEPTION team=0 kind=driven_cross moving=false half=1 touch=true settled=0.65 first=0.86666666666667 shots=0 nearest=0.52546060085297 final=(7.131945, 0.155, -42.2013) receiver=(6.516328, 0.000107, -41.83063)
+PASS: Intended receiver meets the real driven_cross, team 0 moving=false half=1
+PASS: Reception continues into a controlled carry or aerial finish: driven_cross team 0
+PASS: Delivery starts: team 0 cross
+RECEPTION team=0 kind=cross moving=true half=2 touch=true settled=0.0 first=1.45 shots=1 nearest=1.58419561386108 final=(2.027195, 2.013251, 41.46306) receiver=(1.824622, 0.448442, 41.60452)
+PASS: Intended receiver meets the real cross, team 0 moving=true half=2
+PASS: The cross meets the head on its first flight, before a body ricochet
+PASS: Reception continues into a controlled carry or aerial finish: cross team 0
+PASS: Header follow-through restores normal player collision
+PASS: Delivery starts: team 0 cross
+RECEPTION team=0 kind=cross moving=true half=1 touch=true settled=0.0 first=1.45 shots=1 nearest=1.55852460861206 final=(2.021157, 2.010782, -41.46504) receiver=(1.825046, 0.470879, -41.60374)
+PASS: Intended receiver meets the real cross, team 0 moving=true half=1
+PASS: The cross meets the head on its first flight, before a body ricochet
+PASS: Reception continues into a controlled carry or aerial finish: cross team 0
+PASS: Header follow-through restores normal player collision
+PASS: Delivery starts: team 0 lob
+RECEPTION team=0 kind=lob moving=true half=2 touch=true settled=0.65 first=1.325 shots=0 nearest=0.48688921332359 final=(0.04181, 0.155, 15.22471) receiver=(-0.001363, 0.00014, 14.64715)
+PASS: Intended receiver meets the real lob, team 0 moving=true half=2
+PASS: Reception continues into a controlled carry or aerial finish: lob team 0
+PASS: Team 0 cushions an intended firm cutback without a capsule rebound
+PASS: Delivery starts: team 1 pass
+RECEPTION team=1 kind=pass moving=false half=1 touch=true settled=0.65 first=0.85833333333333 shots=0 nearest=0.16134355962276 final=(0.028576, 0.155, 9.211544) receiver=(-0.009194, 0.000107, 8.562622)
+PASS: Intended receiver meets the real pass, team 1 moving=false half=1
+PASS: Reception continues into a controlled carry or aerial finish: pass team 1
+PASS: Delivery starts: team 1 lob
+RECEPTION team=1 kind=lob moving=false half=1 touch=true settled=0.65 first=1.13333333333333 shots=0 nearest=0.54922771453857 final=(0.046155, 0.155, 10.13918) receiver=(-0.00246, 0.000134, 9.470228)
+PASS: Intended receiver meets the real lob, team 1 moving=false half=1
+PASS: Reception continues into a controlled carry or aerial finish: lob team 1
+PASS: Delivery starts: team 1 cross
+RECEPTION team=1 kind=cross moving=false half=1 touch=true settled=0.0 first=1.41666666666667 shots=1 nearest=1.66621816158295 final=(2.137712, 2.158339, 39.70874) receiver=(1.909061, 0.509034, 39.77035)
+PASS: Intended receiver meets the real cross, team 1 moving=false half=1
+PASS: The cross meets the head on its first flight, before a body ricochet
+PASS: Reception continues into a controlled carry or aerial finish: cross team 1
+PASS: Header follow-through restores normal player collision
+PASS: Delivery starts: team 1 driven_cross
+RECEPTION team=1 kind=driven_cross moving=false half=1 touch=true settled=0.65 first=0.89166666666667 shots=0 nearest=0.52264666557312 final=(6.450755, 0.155, 40.8625) receiver=(5.908907, 0.000134, 40.66162)
+PASS: Intended receiver meets the real driven_cross, team 1 moving=false half=1
+PASS: Reception continues into a controlled carry or aerial finish: driven_cross team 1
+PASS: Delivery starts: team 1 cross
+RECEPTION team=1 kind=cross moving=true half=2 touch=true settled=0.0 first=1.45 shots=1 nearest=1.68172359466553 final=(2.027225, 2.137873, -41.46306) receiver=(1.864516, 0.470159, -41.60606)
+PASS: Intended receiver meets the real cross, team 1 moving=true half=2
+PASS: The cross meets the head on its first flight, before a body ricochet
+PASS: Reception continues into a controlled carry or aerial finish: cross team 1
+PASS: Header follow-through restores normal player collision
+PASS: Delivery starts: team 1 cross
+RECEPTION team=1 kind=cross moving=true half=1 touch=true settled=0.0 first=1.45 shots=1 nearest=1.65608143806458 final=(2.021228, 2.13454, 41.46506) receiver=(1.879008, 0.489868, 41.5971)
+PASS: Intended receiver meets the real cross, team 1 moving=true half=1
+PASS: The cross meets the head on its first flight, before a body ricochet
+PASS: Reception continues into a controlled carry or aerial finish: cross team 1
+PASS: Header follow-through restores normal player collision
+PASS: Delivery starts: team 1 lob
+RECEPTION team=1 kind=lob moving=true half=2 touch=true settled=0.65 first=1.3 shots=0 nearest=0.55028367042542 final=(0.000081, 0.155, -15.04871) receiver=(-0.001376, 0.000144, -14.37111)
+PASS: Intended receiver meets the real lob, team 1 moving=true half=2
+PASS: Reception continues into a controlled carry or aerial finish: lob team 1
+PASS: Team 1 cushions an intended firm cutback without a capsule rebound
+PASS: Delivery starts: team 0 cross
+RECEPTION team=0 kind=cross moving=false half=1 touch=true settled=0.65 first=1.51666666666667 shots=0 nearest=0.5560114979744 final=(0.210661, 0.155, -40.20047) receiver=(-0.30691, 0.000839, -40.33277)
+PASS: Intended receiver meets the real cross, team 0 moving=false half=1
+PASS: Reception continues into a controlled carry or aerial finish: cross team 0
+PASS: Assisted reception leaves possession and the decision to shoot with the user
+PASS: Delivery starts: team 0 lob
+RECEPTION team=0 kind=lob moving=true half=2 touch=true settled=0.65 first=1.325 shots=0 nearest=0.55408185720444 final=(-0.000001, 0.155, 11.05088) receiver=(-0.000049, 0.000207, 11.5829)
+PASS: Intended receiver meets the real lob, team 0 moving=true half=2
+PASS: Reception continues into a controlled carry or aerial finish: lob team 0
+PASS: Assisted reception leaves possession and the decision to shoot with the user
+PASS: A nearer teammate leaves the receiving lane to the intended player
+PASS: A receiver watches the delivery while moving to meet it
+PASS: Reception assistance clears at a stoppage
+PASS: A 166 cm taker raises the real ball and completes throw-in preparation
+PASS: A 180 cm taker raises the real ball and completes throw-in preparation
+PASS: A 199 cm taker raises the real ball and completes throw-in preparation
+RECEPTION FLOW CHECK: 70 checks, 0 failures

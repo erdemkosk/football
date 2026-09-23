@@ -32,7 +32,8 @@ func plan(index: int,aim: Vector3) -> Dictionary:
 	var spin: float=ball.spin
 	var bounced: bool=ball.ground_bounce_age<.28
 	var drag := Motion.air_drag(game.weather)
-	var speed: float=minf(6.0,p.movement_speed())*(1-game.weather.mud_at(p.position)*.16)
+	var burst: float=1.50 if p.energy>.18 and not p.exhausted and not p.active_sprint else 1.0
+	var speed: float=minf(6.0,p.movement_speed()*burst)*(1-game.weather.mud_at(p.position)*.16)
 	var head_height: float=game.heading.head_point(p).y-p.position.y
 	var direction := (aim*Vector3(1,0,1)).normalized()
 	if direction.length()<.1: direction=p.facing
@@ -75,10 +76,17 @@ func can_request(index: int) -> bool:
 
 func arm(index: int,aim: Vector3,power: float) -> bool:
 	var approach := plan(index,aim)
+	var nearby: Dictionary=game.volleys.window(index)
+	if not nearby.is_empty():
+		var target: Vector3=nearby.point-aim*.48
+		target.y=game.players[index].position.y
+		approach={"time":nearby.time,"point":nearby.point,"target":target,"kind":nearby.kind}
 	if active(index) or approach.is_empty(): return false
 	pending={"index":index,"age":0.0,"aim":aim,"power":power,"released":false,"origin":game.players[index].position,"plan":approach,"lost":0.0,"motion":""}
 	game.players[index].receive_timer=0
 	game.players[index].shot_preparation=0
+	if not nearby.is_empty() and game.volleys.arm(index,aim,power):
+		pending.motion=nearby.kind; pending.contact_at=nearby.time
 	return true
 
 func release(index: int,aim: Vector3,power: float) -> void:
@@ -131,6 +139,8 @@ func steer(p,target: Vector3,time: float,aim: Vector3) -> void:
 	# A short arrival slows the run before the actual contact animation.
 	var speed: float=maxf(1,p.movement_speed())
 	var desired_velocity: Vector3=offset/maxf(.10,time)
+	p.sprinting=desired_velocity.length()>speed+.3 and offset.length()>.8 and p.energy>.18 and not p.exhausted
+	if p.sprinting and not p.active_sprint: speed*=1.50
 	p.desired=desired_velocity.limit_length(6.0)/speed
-	p.sprinting=false; p.protecting=false; p.jockeying=false
+	p.protecting=false; p.jockeying=false
 	p.facing=aim; p.aerial_preparing=true

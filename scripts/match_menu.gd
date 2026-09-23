@@ -18,6 +18,16 @@ var return_focus: Control
 var save_button: Button
 var fields: Array[Array] = []
 var binding_header: Label
+var display := preload("res://scripts/display_settings.gd").new()
+var display_mode_field: OptionButton
+var resolution_field: OptionButton
+var display_description: Label
+var last_home := ""
+var last_away := ""
+var last_home_league := 0
+var last_away_league := 0
+var last_career_club := "c00"
+var last_career_division := 0
 
 func _ready() -> void:
 	setup_style()
@@ -51,6 +61,8 @@ func _ready() -> void:
 	status.add_theme_font_size_override("font_size",14)
 	add_child(status)
 	save_button=make_button(self,Rect2(1060,817,326,62),"KAYDET & DÖN  →",close_menu,true)
+	add_child(display)
+	display.changed.connect(refresh_display)
 	load_settings()
 	game.controller.prompts_changed.connect(refresh_prompts)
 
@@ -139,6 +151,7 @@ func option(title: String,values: Array,current: int,changed: Callable) -> Optio
 	text.custom_minimum_size.x=300
 	row.add_child(text)
 	var field := OptionButton.new()
+	field.set_meta("setting",title)
 	field.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	for value in values: field.add_item(str(value))
 	field.select(current)
@@ -160,6 +173,7 @@ func slider(title: String,value: float,low: float,high: float,changed: Callable)
 	row.add_child(text)
 	row.custom_minimum_size.y=57
 	var field := HSlider.new()
+	field.set_meta("setting",title)
 	field.size_flags_vertical=Control.SIZE_SHRINK_CENTER
 	field.custom_minimum_size.y=26
 	field.min_value=low; field.max_value=high; field.step=0.01; field.value=value
@@ -175,6 +189,7 @@ func slider(title: String,value: float,low: float,high: float,changed: Callable)
 func show_page(index: int) -> void:
 	page=clampi(index,0,3)
 	capture_action=-1
+	display_mode_field=null; resolution_field=null; display_description=null
 	fields.clear()
 	style_nav()
 	for child in content.get_children(): content.remove_child(child); child.queue_free()
@@ -195,7 +210,7 @@ func show_page(index: int) -> void:
 			pad_hint([[game.controller.label_for(KEY_S),"Pas"],[game.controller.label_for(KEY_Y),"Ara pas / kaleciyi çıkar"]])
 			pad_hint([[game.controller.label_for(KEY_W),"Hızlı koş"],[game.controller.label_for(KEY_Q),"Oyuncu seç"],["LB + X","Aşırtma"]])
 			pad_hint([[game.controller.label_for(KEY_W)+" × 2","Topu ileri açıp hızlan"]])
-			pad_hint([["B × 2","Yerden sert orta"],["LB + Y","Havadan uzun pas"]])
+			pad_hint([["RB + B","Yerden sert orta"],["LB + Y","Havadan uzun pas"]])
 			pad_hint([["LB + A","Verkaç"],[game.controller.label_for(KEY_E),"Top koruma / falso"]])
 			pad_hint([["RT + D-PAD","Oyun planı"],[game.controller.label_for(KEY_V),"Topu aç"]])
 			pad_hint([["START","Mola"],["VIEW","Kadro & taktik"]])
@@ -227,7 +242,14 @@ func show_page(index: int) -> void:
 			fields.append([reset])
 			reset.pressed.connect(func(): keys.clear(); game.controller.reset_bindings(); show_page(2); fields.back()[0].grab_focus())
 		3:
-			option("Ekran modu",["Pencere","Tam ekran"],int(DisplayServer.window_get_mode()==DisplayServer.WINDOW_MODE_FULLSCREEN),func(v): DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if v==1 else DisplayServer.WINDOW_MODE_WINDOWED))
+			display_mode_field=option("Ekran modu",["Pencere","Tam ekran"],int(display.fullscreen),func(v): display.set_fullscreen(v==1))
+			resolution_field=option("Çözünürlük",display.resolution_labels(),display.available_resolutions().find(display.resolution),func(v): display.select_resolution(display.available_resolutions()[v]))
+			display_description=Label.new()
+			display_description.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+			display_description.add_theme_color_override("font_color",MUTE)
+			display_description.add_theme_font_size_override("font_size",14)
+			content.add_child(display_description)
+			refresh_display()
 			option("FPS göstergesi",["Kapalı","Açık"],int(game.performance_hud.visible),func(v): game.performance_hud.visible=v==1)
 			option("Gol tekrarları",["Kapalı","Açık"],int(game.replay.enabled),func(v): game.replay.enabled=v==1)
 			option("Rakip zorluğu",["Kolay","Normal","Zor"],game.management.difficulty,func(v): game.management.difficulty=v)
@@ -239,13 +261,24 @@ func show_page(index: int) -> void:
 			reset_camera.text="KAMERA AYARLARINI SIFIRLA"
 			reset_camera.custom_minimum_size.y=44
 			content.add_child(reset_camera); fields.append([reset_camera])
-			reset_camera.pressed.connect(func(): game.match_camera.defaults(); show_page(3); fields[5][0].grab_focus())
+			reset_camera.pressed.connect(func(): game.match_camera.defaults(); show_page(3); fields[6][0].grab_focus())
 			label("Uzaklık azalınca oyuncular büyür; yükseklik arttıkça sahayı daha tepeden görürsün. Maçta fare tekerleği uzaklığı, C kamera türünü değiştirir. Ayarlar sonraki maçlarda da korunur.")
 			label("Pas yardımı nişanı hafifçe düzeltir, oyuncu seçmez. Yönü sen verirsin; top boşluğa da gidebilir ve rakipler de müdahale eder.")
 			pad_hint([["A","Gol tekrarını geç (klavye: Space / Enter)"]])
 	wire_navigation()
 	navigation[page].grab_focus()
 	queue_redraw()
+
+func refresh_display() -> void:
+	if not is_instance_valid(resolution_field): return
+	display_mode_field.select(int(display.fullscreen))
+	resolution_field.clear()
+	for value in display.resolution_labels(): resolution_field.add_item(value)
+	resolution_field.select(maxi(0,display.available_resolutions().find(display.resolution)))
+	if is_instance_valid(display_description):
+		var details := "Algılanan ekran: "+display.size_label(display.native_size)+" · Etkin görüntü: "+display.size_label(display.render_size())
+		var help := "Otomatik, ekranına uyum sağlar. Tam ekranda çözünürlük oyun görüntüsünü değiştirir; menüler net kalır." if display.fullscreen else "Otomatik, pencereyi ekranına sığdırır. F11 ile tam ekrana geçebilirsin."
+		display_description.text=details+"\n"+help
 
 func wire_navigation() -> void:
 	for i in range(navigation.size()):
@@ -337,8 +370,36 @@ func handle(event: InputEvent) -> void:
 	if (event is InputEventKey and event.pressed and event.keycode in [KEY_ESCAPE,KEY_P]) or (event is InputEventJoypadButton and event.pressed and event.button_index in [JOY_BUTTON_BACK,JOY_BUTTON_START,JOY_BUTTON_B]):
 		close_menu(); get_viewport().set_input_as_handled()
 
+func persist_session() -> void:
+	if DisplayServer.get_name()=="headless" or "--disable-render-loop" in OS.get_cmdline_args(): return
+	save_settings()
+
+func remember_clubs() -> void:
+	if not game.clubs.career_clubs.is_empty(): return
+	last_home=game.clubs.club_id(0)
+	last_away=game.clubs.club_id(1)
+	last_home_league=game.clubs.league[0]
+	last_away_league=game.clubs.league[1]
+
+func restore_clubs() -> void:
+	if DisplayServer.get_name()=="headless" or "--disable-render-loop" in OS.get_cmdline_args(): return
+	if not game.clubs.career_clubs.is_empty(): return
+	if last_home=="" and last_away=="": return
+	game.clubs.ensure_world()
+	if last_home!="":
+		game.clubs.set_league(0,last_home_league)
+		var ids: Array=game.clubs.league_ids(game.clubs.league[0])
+		var index: int=ids.find(last_home)
+		if index>=0: game.clubs.choose(0,index)
+	if last_away!="":
+		game.clubs.set_league(1,last_away_league)
+		var ids: Array=game.clubs.league_ids(game.clubs.league[1])
+		var index: int=ids.find(last_away)
+		if index>=0: game.clubs.choose(1,index)
+
 func save_settings() -> void:
 	var cfg := ConfigFile.new()
+	remember_clubs()
 	for name in ["formation","mentality","pressing","line_height","difficulty"]: cfg.set_value("tactics",name,game.management.get(name))
 	for name in ["stadium_volume","cheer_volume","drum_volume"]: cfg.set_value("audio",name,game.audio.get(name))
 	for name in ["sensitivity","deadzone","vibration","bindings"]: cfg.set_value("pad",name,game.controller.get(name))
@@ -346,22 +407,32 @@ func save_settings() -> void:
 	cfg.set_value("input","keys",keys)
 	cfg.set_value("match","replay",game.replay.enabled)
 	cfg.set_value("match","pass_assistance",game.pass_assistance)
-	cfg.set_value("display","fullscreen",DisplayServer.window_get_mode()==DisplayServer.WINDOW_MODE_FULLSCREEN)
+	display.save_config(cfg)
 	cfg.set_value("display","fps",game.performance_hud.visible)
 	cfg.set_value("camera","profile",game.match_camera.preferred)
 	cfg.set_value("camera","distance",game.match_camera.distance)
 	cfg.set_value("camera","height",game.match_camera.height)
+	cfg.set_value("clubs","home",last_home)
+	cfg.set_value("clubs","away",last_away)
+	cfg.set_value("clubs","home_league",last_home_league)
+	cfg.set_value("clubs","away_league",last_away_league)
+	cfg.set_value("career","club",last_career_club)
+	cfg.set_value("career","division",last_career_division)
 	cfg.set_value("audio","muted",game.audio.muted)
 	var error := cfg.save(config_path)
 	if error!=OK: game.announce("Ayarlar bu oturumda uygulandı; diske kaydedilemedi.")
 
 func load_settings() -> void:
 	var cfg := ConfigFile.new()
-	if cfg.load(config_path)!=OK:
+	var loaded := cfg.load(config_path)
+	if loaded!=OK:
 		# Keep the player's controls/audio preferences when the game is renamed.
-		if config_path!="user://match_settings.cfg" or FileAccess.file_exists(config_path): return
-		var previous := OS.get_data_dir().path_join("Godot/app_userdata/TOUCHLINE/match_settings.cfg")
-		if cfg.load(previous)!=OK: return
+		if config_path=="user://match_settings.cfg" and not FileAccess.file_exists(config_path):
+			var previous := OS.get_data_dir().path_join("Godot/app_userdata/TOUCHLINE/match_settings.cfg")
+			loaded=cfg.load(previous)
+		if loaded!=OK:
+			display.load_config(ConfigFile.new())
+			return
 	for name in ["formation","mentality","pressing","line_height","difficulty"]: game.management.set(name,clampi(int(cfg.get_value("tactics",name,game.management.get(name))),0,2))
 	for name in ["stadium_volume","cheer_volume","drum_volume"]: game.audio.set(name,clampf(float(cfg.get_value("audio",name,1.0)),0,1))
 	game.controller.sensitivity=clampf(float(cfg.get_value("pad","sensitivity",1.0)),0.6,1.8)
@@ -398,7 +469,14 @@ func load_settings() -> void:
 	game.match_camera.preference(str(cfg.get_value("camera","profile",game.match_camera.DEFAULT)),game.state in ["playing","restart","set_piece"])
 	game.match_camera.set_distance(float(cfg.get_value("camera","distance",1.0)))
 	game.match_camera.set_height(float(cfg.get_value("camera","height",1.0)))
+	last_home=str(cfg.get_value("clubs","home",""))
+	last_away=str(cfg.get_value("clubs","away",""))
+	last_home_league=int(cfg.get_value("clubs","home_league",0))
+	last_away_league=int(cfg.get_value("clubs","away_league",0))
+	last_career_club=str(cfg.get_value("career","club","c00"))
+	last_career_division=int(cfg.get_value("career","division",0))
+	restore_clubs()
 	game.performance_hud.visible=bool(cfg.get_value("display","fps",false))
 	if bool(cfg.get_value("audio","muted",false))!=game.audio.muted: game.audio.toggle()
-	if DisplayServer.get_name()!="headless": DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN if bool(cfg.get_value("display","fullscreen",false)) else DisplayServer.WINDOW_MODE_WINDOWED)
+	display.load_config(cfg)
 	game.management.apply_formation()

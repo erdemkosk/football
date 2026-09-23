@@ -21,6 +21,7 @@ func reset() -> void:
 		p.jockeying=false
 		p.feint_time=0
 		p.skill_cooldown=0
+		p.defensive_turn_load=0
 
 func shield_direction(index: int) -> Vector3:
 	var p=game.players[index]
@@ -47,7 +48,9 @@ func steal_margin(owner: int) -> float:
 	return OPEN_STEAL_MARGIN if ball_opened(owner) else STEAL_MARGIN
 
 func poke_reach(owner: int) -> float:
-	return OPEN_POKE_REACH if ball_opened(owner) else POKE_REACH
+	# The tackle reach follows the resized body, just like the visible leg.
+	# Sprinting exposes the ball; it must not grant a two-metre invisible boot.
+	return (OPEN_POKE_REACH if ball_opened(owner) else POKE_REACH)*preload("res://scripts/footballer.gd").WORLD_SCALE
 
 func poke_ball_radius(owner: int) -> float:
 	return OPEN_POKE_BALL if ball_opened(owner) else POKE_BALL
@@ -121,7 +124,8 @@ func resolve(delta: float) -> void:
 				victim=j
 				body_distance=a.distance_to(body)
 				body_offset=offset
-		var reaches_ball: bool=Geometry3D.get_closest_point_to_segment(ball,a,end).distance_to(ball)<poke_ball_radius(owner) and game.ball.position.y<0.75
+		var boot: Vector3=(p.left_knee if p.tackle_foot==0 else p.right_knee).to_global(p.ball_actions.BOOT)
+		var reaches_ball: bool=Geometry3D.get_closest_point_to_segment(ball,a,end).distance_to(ball)<poke_ball_radius(owner) and boot.distance_to(game.ball.position)<.48 and game.ball.position.y<0.75
 		if reaches_ball and (victim<0 or a.distance_to(ball)<body_distance+poke_body_slack(owner)) and ball_exposed(i,owner):
 			game.strike(i,p.facing*4.8+Vector3.UP*0.15,0,false,"ball_tackle")
 		elif victim>=0 and body_distance<1.05:

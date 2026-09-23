@@ -1,0 +1,36 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Direction input changes real motion on the first physics tick: right-cut
+SNAP right-cut frame=7 joint=3 age=0.067 weight=1.000
+TURN right-cut: peak=1.000 planted=7 foot_error=0.001 pelvis=0.055 joint_step=0.563
+PASS: Support boot holds its world contact while the body changes direction: right-cut
+PASS: Weight shifts onto the support leg without accumulating sideways drift: right-cut
+PASS: Turning boots stay above the turf: right-cut
+PASS: A completed cut returns to a normal run in the requested direction: right-cut
+PASS: Direction input changes real motion on the first physics tick: left-cut
+TURN left-cut: peak=1.000 planted=4 foot_error=0.001 pelvis=0.051 joint_step=0.253
+PASS: Support boot holds its world contact while the body changes direction: left-cut
+PASS: Weight shifts onto the support leg without accumulating sideways drift: left-cut
+PASS: Turning boots stay above the turf: left-cut
+PASS: Plant and release avoid an abrupt leg-joint snap: left-cut
+PASS: A completed cut returns to a normal run in the requested direction: left-cut
+PASS: Direction input changes real motion on the first physics tick: reverse
+TURN reverse: peak=1.000 planted=4 foot_error=0.001 pelvis=0.055 joint_step=0.249
+PASS: Support boot holds its world contact while the body changes direction: reverse
+PASS: Weight shifts onto the support leg without accumulating sideways drift: reverse
+PASS: Turning boots stay above the turf: reverse
+PASS: Plant and release avoid an abrupt leg-joint snap: reverse
+PASS: A completed cut returns to a normal run in the requested direction: reverse
+PASS: Release shows a braking stance while preserving existing physical coasting
+PASS: Braking absorbs weight through bent knees
+PASS: Standing after a stop clears braking and weight shift
+PASS: Defensive lateral movement keeps looking at the opponent
+PASS: Side steps open and gather instead of playing the forward sprint
+PASS: Side steps mirror without rotating the defender away from play
+PASS: Backward defensive running retains forward-facing upper body
+PASS: Backpedalling alternates articulated steps with a grounded support foot
+PASS: A shot immediately overrides the directional gait and foot lock
+PASS: A tackle interrupts locomotion and drives the body in the impact direction
+PASS: Practice reset clears old contacts and movement blends
+PASS: Pause freezes the new gait with the physics body
+LOCOMOTION CHECK: 30 checks, 1 failures

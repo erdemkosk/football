@@ -14,6 +14,10 @@ func active(index: int) -> bool:
 	return requests.has(index)
 
 func cancel(index: int) -> void:
+	if active(index) and requests[index].launched:
+		var p=game.players[index]
+		if p.pose=="volley" and not p.volley_motion.hit:
+			p.action_timer=0; p.aerial_preparing=false
 	if active(index) and requests[index].user and game.controlled==index:
 		game.charging=false; game.charge=0
 	requests.erase(index)
@@ -89,7 +93,11 @@ func prepare(delta: float) -> void:
 			if p.action_timer<=0: cancel(index); continue
 			var remaining: float=p.volley_motion.contact_time-(p.volley_motion.duration-p.action_timer)
 			if remaining>0:
-				p.volley_motion.target=game.ball.position+game.ball.linear_velocity*remaining+Vector3.DOWN*4.905*remaining*remaining
+				p.volley_motion.target=contact_prediction(remaining)
+				var travel: Vector3=p.velocity*Vector3(1,0,1)*remaining
+				var target: Vector3=p.rig.to_local(p.volley_motion.target-travel)
+				if (target-Vector3(0,.85,0)).length()>1.18:
+					cancel(index); continue
 			p.volley_motion.aim=request.aim
 			continue
 		var plan := window(index)
@@ -97,6 +105,21 @@ func prepare(delta: float) -> void:
 		p.volley_motion.begin(p,plan,request.aim)
 		request.kind=plan.kind; request.launched=true
 		request.ball=game.ball.position; request.boot=p.volley_motion.boot(p)
+
+func contact_prediction(time: float) -> Vector3:
+	var point: Vector3=game.ball.position
+	var velocity: Vector3=game.ball.linear_velocity
+	var drag := Motion.air_drag(game.weather)
+	while time>0:
+		var step := minf(time,STEP)
+		velocity=Motion.air_velocity(velocity,step,drag)
+		velocity.y-=Motion.GRAVITY*step
+		point+=velocity*step
+		if point.y<game.ball.RADIUS:
+			point.y=game.ball.RADIUS
+			velocity.y=absf(velocity.y)*game.weather.ball_bounce(point)
+		time-=step
+	return point
 
 func launch_velocity(index: int,aim: Vector3,power: float,quality: float=1.0) -> Vector3:
 	var p=game.players[index]
@@ -138,6 +161,9 @@ func resolve() -> void:
 	p.volley_motion.kind=request.kind
 	var quality := clampf(1-closest/REACH*0.22-game.first_touch.pressure(best)*0.16-(1-p.energy)*0.12-p.contest_weight*0.12,0.35,1)
 	var velocity := launch_velocity(best,request.aim,request.power,quality)
+	# A successful contact keeps its short follow-through; a failed approach
+	# above releases the locomotion immediately instead of playing an air kick.
+	p.volley_motion.hit=true
 	cancel(best)
 	if request.user:
 		game.charging=false; game.charge=0; game.shot_chip=false; game.shot_finesse=false
@@ -145,4 +171,4 @@ func resolve() -> void:
 		p.volley_motion.hit=true
 		p.volley_motion.target=game.ball.position
 		game.shots[p.team]+=1
-		game.announce("YARIM VOLE" if request.kind=="half_volley" else "VOLE")
+		game.hint("YARIM VOLE" if request.kind=="half_volley" else "VOLE")

@@ -15,7 +15,7 @@ func moving_shot(style: String,sprint: bool,aim: Vector3=Vector3.ZERO) -> Dictio
 	await tick(24)
 	if aim.length()>0: game.shot_direction=aim
 	key(KEY_D,false)
-	var queued: bool=game.finishing.active(9)
+	var queued: bool=game.finishing.active(9) if style=="timed" else game.ball.pending_kick and game.shots[0]==1
 	var max_gap:=0.0
 	var contact_gap:=INF
 	var elapsed:=0.0

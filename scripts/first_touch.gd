@@ -2,6 +2,34 @@ extends RefCounted
 const P = preload("res://scripts/pitch_dimensions.gd")
 var game
 
+func expected(index: int) -> bool:
+	var team: int=game.players[index].team
+	return game.ai_receivers[team]==index and game.ai_pass_time[team]>0 and game.last_touch==team and game.last_kicker!=index
+
+func assigned(index: int) -> bool:
+	return expected(index) or game.incoming_receiver==index
+
+func prepare() -> void:
+	# Assigned receivers open toward the ball like a broadcast receive, not a
+	# wait-and-hope stance. Manual steering still owns facing.
+	for i in range(game.players.size()):
+		var p=game.players[i]
+		p.receiving_facing=Vector3.ZERO
+		if game.ball.held_by!=null or game.ball.pending_reset: continue
+		if not p.visible or p.keeper or p.action_timer>0 or p.kick_timer>0 or game.aerial_shot_active(i) or game.dribbler>=0: continue
+		if game.is_user_player(i) and game.movement_input().length()>.2: continue
+		var offset: Vector3=(game.ball.position-p.position)*Vector3(1,0,1)
+		var waiting: bool=assigned(i)
+		if offset.length()<.2 or offset.length()>(22.0 if waiting else 5.0): continue
+		var relative: Vector3=(game.ball.linear_velocity-p.velocity)*Vector3(1,0,1)
+		var time := clampf(-offset.dot(relative)/maxf(.01,relative.length_squared()),0,.65)
+		if waiting or (time>0 and (offset+relative*time).length()<.8):
+			p.receiving_facing=offset.normalized()
+			if waiting and pressure(i)>0.52 and offset.length()<12.0 and not game.is_user_player(i):
+				p.protecting=true
+				var cover: Vector3=game.duels.shield_direction(i)
+				if cover.length()>0.1: p.receiving_facing=cover.lerp(p.receiving_facing,0.55).normalized()
+
 func pressure(index: int) -> float:
 	var p=game.players[index]
 	var nearest := 3.0
@@ -75,7 +103,8 @@ func receive(index: int,extended: bool) -> bool:
 	var behind: bool=distance>.55 and offset.normalized().dot(facing)<-.55
 	# Fatigue, technique and nearby pressure vary touch length, not whether a
 	# routine pass is controllable. A spill needs difficult speed or geometry.
-	var spill := speed>27+technique*3 or (behind and speed>7+technique*4)
+	var prepared := expected(index)
+	var spill := speed>(32+technique*3 if prepared else 27+technique*3) or (behind and speed>(18+technique*4 if prepared else 7+technique*4))
 	spill=spill or (extended and speed>20+technique*4) or (reach>.90 and speed>13+technique*6)
 	spill=spill or (p.contest_weight>.65 and difficulty>.72 and speed>13)
 	p.begin_receive(style,ball.position,relative,reach)

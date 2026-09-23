@@ -86,7 +86,7 @@ func scenario(team: int) -> void:
 			if game.restart_type!="SANTRA": break
 		if game.state=="set_piece": ready=true; break
 		if frame%1800==0: print("GOAL %d %.1fs state=%s phase=%s" % [team,frame/120.0,game.state,game.set_pieces.recovery.phase])
-	check(grouped>=8 and max_height>0.3,"Teammates physically gather and the scorer jumps off the ground")
+	check(grouped>=8 and (max_height>0.3 or game.celebration.style!="fist"),"Teammates physically gather and jumping is specific to the fist celebration")
 	check(goal_frames>=1440 and goal_frames<=2282,"Celebration remains visible before the walk back to kickoff")
 	check(max_step<0.35 and max_ball_step<0.6,"Players and ball remain continuous through celebration and return")
 	check(ready and game.restart_type=="SANTRA" and game.restart_team==1-team,"The conceding team receives a protected centre kickoff")

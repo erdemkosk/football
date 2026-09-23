@@ -13,6 +13,9 @@ var urgent := false
 var late_winner := false
 var collection := "approach"
 var collection_age := 0.0
+const STYLES := ["fist","badge","crowd","heart","wings"]
+var sequence := 0
+var style := "fist"
 
 func clear() -> void:
 	age=0
@@ -35,6 +38,8 @@ func begin(team: int) -> void:
 				var distance: float=game.flat_distance(p.position,game.ball.position)
 				if distance<nearest: nearest=distance; scorer=i
 	if scorer<0: return
+	style=STYLES[posmod(game.players[scorer].shirt_number+sequence,STYLES.size())]
+	sequence+=1
 	urgent=game.match_time>game.LENGTH*.68 and game.score[team]<game.score[1-team]
 	late_winner=game.match_time>game.LENGTH*.85 and game.score[team]==game.score[1-team]+1
 	var side := -1.0 if game.players[scorer].position.x<0 else 1.0
@@ -68,7 +73,7 @@ func begin(team: int) -> void:
 			targets[i]=game.players[i].home
 			game.players[i].celebration=""
 		game.stadium.sidelines.instruct(team,"attack")
-		game.announce("TOPU AL · SANTRAYA DÖN")
+		game.hint("TOPU AL · SANTRAYA DÖN")
 	game.match_camera.cinematic()
 
 func update(delta: float) -> void:
@@ -85,12 +90,15 @@ func update(delta: float) -> void:
 		p.desired=offset.normalized()*minf(0.95,offset.length()*1.2)
 		if i in group:
 			var close: bool=game.flat_distance(p.position,targets[i])<0.8
-			p.celebration="embrace" if close and i!=scorer else "cheer"
+			if i==scorer: p.celebration=style if close or age>2.5 else "wings"
+			elif close:
+				p.celebration=["embrace","applaud","fist","crowd"][posmod(group.find(i),4)]
+			else: p.celebration="cheer" if i%3==0 else "applaud"
 			if close:
 				arrived+=1
-				if age>float(next_jump[i]) and p.is_on_floor() and p.action_timer<=0:
+				if next_jump[i]>=0 and age>float(next_jump[i]) and p.is_on_floor() and p.action_timer<=0 and ((i==scorer and style=="fist") or (late_winner and group.find(i)<3)):
 					p.velocity.y=(4.8 if i==scorer else 3.8)+(0.35 if late_winner else 0.0)
-					next_jump[i]=age+1.2+(i%3)*0.15
+					next_jump[i]=-1.0
 		# Distinct gathering slots and lateral yielding keep the group moving.
 		if offset.length()>0.6:
 			for j in targets:
@@ -167,9 +175,9 @@ func update_urgent(delta: float) -> void:
 	elif collection=="place":
 		destination=p.position
 		p.set_piece_pose="pickup"; p.handling_blend=smoothstep(0,.45,collection_age)
-		ball.hold_target=Vector3(0,.23,0)
+		ball.hold_target=Vector3(0,ball.GROUND_HEIGHT,0)
 		if collection_age>.6:
-			ball.place(Vector3(0,.23,0))
+			ball.place(Vector3(0,ball.GROUND_HEIGHT,0))
 			clear(); game.begin_restart("SANTRA",1-game.goal_team,Vector3.ZERO)
 			return
 	if ball.held_by==p and collection!="place": ball.hold_target=p.hand_center()

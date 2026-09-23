@@ -19,8 +19,10 @@ var shot_curve := 0.0
 var curl_axis := 0.0
 var receiver := -1
 var target := Vector3.ZERO
+var ai_choice: Dictionary = {}
 
 func clear() -> void:
+	ai_choice.clear()
 	recovery.reset()
 	if is_instance_valid(game.ball): game.ball.release_hold()
 	for p in game.players:
@@ -299,7 +301,7 @@ func snap_ready() -> void:
 			p.rig.rotation.y=atan2(-p.facing.x,-p.facing.z)
 		p.animate(1)
 	game.ball.release_hold()
-	game.ball.place(game.restart_point+Vector3(0,0.23,0))
+	game.ball.place(game.restart_point+Vector3(0,game.ball.GROUND_HEIGHT,0))
 	recovery.phase="arrange"
 	recovery.age=1
 	recovery.rest_age=1
@@ -318,9 +320,9 @@ func ready() -> void:
 	game.ball.active=true
 	game.referees.whistle()
 	if game.restart_type=="SANTRA":
-		game.announce("SANTRA · "+((("A" if game.controller.using_gamepad else "S")+" İLE PAS VEREREK BAŞLA") if game.restart_team==0 else "RAKİP OYUNU BAŞLATIYOR"))
+		game.hint("SANTRA · "+((("A" if game.controller.using_gamepad else "S")+" İLE PAS VEREREK BAŞLA") if game.restart_team==0 else "RAKİP OYUNU BAŞLATIYOR"))
 	else:
-		game.announce("DÜDÜK · "+("YÖNÜ SEÇ, VURUŞU YAP" if game.restart_team==0 else "RAKİP DURAN TOPU KULLANIYOR"))
+		game.hint("DÜDÜK · "+("YÖNÜ SEÇ, VURUŞU YAP" if game.restart_team==0 else "RAKİP DURAN TOPU KULLANIYOR"))
 	preview()
 
 func update(delta: float) -> void:
@@ -332,15 +334,7 @@ func update(delta: float) -> void:
 		if runup<=0: launch()
 		return
 	if game.restart_team==1 or game.menu_match.running:
-		if ready_age>1.15:
-			button=KEY_D if game.restart_type=="PENALTI" or (game.restart_type=="SERBEST VURUŞ" and absf(game.restart_point.z)>22) else (KEY_A if game.restart_type=="KORNER" else KEY_S)
-			power=0.60 if button==KEY_D else 0.45
-			if button==KEY_D and game.restart_type=="SERBEST VURUŞ": power=0.18
-			if button==KEY_D:
-				var goal := Vector3(game.rng.randf_range(-2.6,2.6),0,game.attack_sign(game.restart_team)*50)
-				direction=(goal-game.restart_point).normalized()
-			preview()
-			commit()
+		if ready_age>1.15 and plan_ai(): commit()
 		return
 	var aim: Vector3=aim_input()
 	var rate := AIM_HOLD_RATE if button!=0 or game.restart_type=="PENALTI" else AIM_RATE
@@ -357,6 +351,31 @@ func update(delta: float) -> void:
 	game.players[taker].wrapping=1.0 if kind() in ["shot","cross"] and absf(pending_curve)>0.35 else 0.0
 	game.last_direction=direction
 	preview(delta)
+
+func plan_ai() -> bool:
+	ai_choice.clear()
+	var point: Vector3=game.restart_point
+	var forward: float=game.attack_sign(game.restart_team)
+	var goal := Vector3(0,0,forward*50)
+	# Signed attacking depth matters: a free kick in our own half is not a shot.
+	var shooting: bool=game.restart_type=="PENALTI" or (game.restart_type=="SERBEST VURUŞ" and point.z*forward>22 and game.flat_distance(point,goal)<29 and absf(point.x)<18)
+	if shooting:
+		button=KEY_D; power=.60 if game.restart_type=="PENALTI" else .18
+		goal.x=game.rng.randf_range(-2.6,2.6)
+		direction=((goal-point)*Vector3(1,0,1)).normalized()
+		preview(); ai_choice={"kind":"shot"}
+		return true
+	var origin: Vector3=game.ball.position if game.restart_type=="TAÇ" else point+Vector3.UP*game.ball.GROUND_HEIGHT
+	ai_choice=game.ai_attack.delivery.outlets(taker,origin,game.restart_type,.25)
+	if ai_choice.is_empty():
+		if ready_age<3.0: return false
+		# Evaluate fallback throws at their real landing point, within arm range.
+		ai_choice=game.ai_attack.delivery.clearance(taker,origin,25.0 if game.restart_type=="TAÇ" else 0.0)
+	var route: Dictionary=ai_choice.route
+	button=KEY_A if route.lob else KEY_S; power=.45
+	direction=((route.target-origin)*Vector3(1,0,1)).normalized()
+	pending_velocity=route.velocity; pending_curve=0; target=route.target; receiver=ai_choice.receiver
+	return true
 
 func kind() -> String:
 	if game.restart_type=="TAÇ": return "throw"
@@ -432,27 +451,30 @@ func preview(delta: float=0.0) -> void:
 		target=point+direction*25
 		receiver=-1
 	else:
-		var route = Passing.manual_plan(point+Vector3.UP*0.23,direction,strength,game.restart_team,taker,game.players,game.weather)
+		var route = Passing.manual_plan(point+Vector3.UP*game.ball.GROUND_HEIGHT,direction,strength,game.restart_team,taker,game.players,game.weather)
 		receiver=-1
 		target=route.target
 		pending_velocity=route.velocity
 		if kind() in ["cross","throw"]:
 			target=point+direction*lerpf(10,32,strength)
 			var flight := lerpf(0.85,2.2,strength)
-			var start_y: float = game.ball.position.y if game.restart_type=="TAÇ" else 0.23
-			pending_velocity=Passing.Motion.lob_velocity(Vector3(point.x,start_y,point.z),Vector3(target.x,0.23,target.z),flight,game.weather)
+			var start_y: float = game.ball.position.y if game.restart_type=="TAÇ" else game.ball.GROUND_HEIGHT
+			pending_velocity=Passing.Motion.lob_velocity(Vector3(point.x,start_y,point.z),Vector3(target.x,game.ball.GROUND_HEIGHT,target.z),flight,game.weather)
 		if game.restart_type=="TAÇ":
 			# A legal throw must enter the field; forward/backward aiming is bounded.
 			pending_velocity.x=-signf(point.x)*maxf(3,absf(pending_velocity.x))
 
 func commit() -> void:
-	preview()
+	if ai_choice.is_empty(): preview()
 	runup=0.25
 	if game.restart_type!="TAÇ":
 		targets[taker]=game.restart_point-direction*0.48
 		game.players[taker].shot_preparation=0.5+power*0.5
 
 func launch() -> void:
+	if ai_choice.has("route") and ai_choice.kind!="clearance" and not game.ai_attack.delivery.safe(taker,ai_choice.route,ai_choice.receiver):
+		runup=-1; ai_choice.clear()
+		return
 	var restart: String=game.restart_type
 	var action: String=kind()
 	var team: int=game.restart_team
@@ -460,7 +482,7 @@ func launch() -> void:
 	game.ball.release_hold()
 	game.ball.active=true
 	game.boundary_grace=0.04
-	game.previous_ball=game.restart_point+Vector3.UP*0.23
+	game.previous_ball=game.restart_point+Vector3.UP*game.ball.GROUND_HEIGHT
 	game.rules.restart_taken(restart,team,taker)
 	game.referees.ball_in_play(restart,taker)
 	game.replay.origin()
@@ -469,10 +491,10 @@ func launch() -> void:
 	else: game.passes[team]+=1
 	var heading: Vector3=(pending_velocity*Vector3(1,0,1)).normalized()
 	var reach: float=Vector2(target.x-game.restart_point.x,target.z-game.restart_point.z).length()
-	var hint: int=Passing.hint_along(game.restart_point,heading,reach,team,taker,game.players,14,8)
+	var hint: int=ai_choice.get("receiver",Passing.hint_along(game.restart_point,heading,reach,team,taker,game.players,14,8))
 	if hint>=0:
 		game.ai_receivers[team]=hint
-		game.ai_pass_time[team]=2.5
+		game.ai_pass_time[team]=float(ai_choice.route.flight)+2.0 if ai_choice.has("route") else 2.5
 	for i in wall:
 		game.players[i].wall_hold=0.85
 		game.players[i].wall_jump_delay=0.12+(i%3)*0.025 if action=="shot" else -1.0
@@ -483,3 +505,4 @@ func launch() -> void:
 	runup=-1
 	button=0
 	power=0
+	ai_choice.clear()

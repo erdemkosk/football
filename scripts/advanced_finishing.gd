@@ -35,7 +35,7 @@ func velocity(index: int,aim: Vector3,power: float,kind: String,quality: float=1
 	var lift := lerpf(1.6,5.1,power)
 	match kind:
 		"low": speed=lerpf(23,33,power); lift=lerpf(.32,.75,power)
-		"power": speed=lerpf(38,52,power); lift=lerpf(1.5,4.2,power)
+		"power": speed=lerpf(33,45,power); lift=lerpf(1.5,4.2,power)
 		"outside": speed=lerpf(19,30,power); lift=lerpf(1.2,3.2,power)
 		"punt": speed=lerpf(24,36,power); lift=lerpf(7,10,power)
 	var direction := aim
@@ -45,6 +45,27 @@ func velocity(index: int,aim: Vector3,power: float,kind: String,quality: float=1
 func curve(index: int,kind: String) -> float:
 	return (-1.0 if game.players[index].ball_actions.foot==0 else 1.0)*3.4 if kind=="outside" else 0.0
 
+func release_charged(index: int,aim: Vector3,power: float) -> bool:
+	if not pending.is_empty() or not game.can_release_ground_shot(index) or style not in ["low","power","outside"]: return false
+	var kind := style
+	var p=game.players[index]
+	p.ball_actions.foot=p.ball_actions.choose_foot(p,game.ball.position)
+	var contact := .39 if kind=="power" else .22
+	if not game.commit_strike(index,velocity(index,aim,power,kind),curve(index,kind),false,"finish"): return false
+	p.volley_motion.begin(p,{"point":game.ball.position,"time":contact,"kind":kind},aim)
+	p.volley_motion.contact_time=contact
+	p.volley_motion.duration=contact+(.42 if kind=="power" else .33)
+	p.pose="finish"
+	p.action_timer=p.volley_motion.duration
+	p.volley_motion.hit=true
+	p.volley_motion.apply(p)
+	p.recovery_delay=maxf(p.recovery_delay,contact+(.58 if kind=="power" else .5))
+	game.skills.active.erase(index); p.skill_move.clear()
+	game.shots[p.team]+=1
+	game.hint(LABELS[kind])
+	style=""; timed_armed=false
+	return true
+
 func queue(index: int,aim: Vector3,power: float,kind: String="") -> bool:
 	if not pending.is_empty(): return false
 	if kind=="": kind=style
@@ -53,9 +74,11 @@ func queue(index: int,aim: Vector3,power: float,kind: String="") -> bool:
 	var controlled_ball: bool=game.dribbler==index and game.flat_distance(p.position,game.ball.position)<1.3 and game.ball.position.y<.6
 	var contact := .39 if kind=="power" else .22
 	p.volley_motion.begin(p,{"point":game.ball.position,"time":contact,"kind":kind},aim)
-	p.volley_motion.contact_time=contact; p.volley_motion.duration=contact+.33
-	p.pose="finish"; p.action_timer=contact+.33
-	p.recovery_delay=maxf(p.recovery_delay,contact+.5)
+	p.volley_motion.contact_time=contact
+	p.volley_motion.duration=contact+(.42 if kind=="power" else .33)
+	p.pose="finish"
+	p.action_timer=p.volley_motion.duration
+	p.recovery_delay=maxf(p.recovery_delay,contact+(.58 if kind=="power" else .5))
 	pending={"index":index,"aim":aim,"power":power,"kind":kind,"age":0.0,"contact":contact,"quality":1.0,"tapped":false,"ball":game.ball.position,"boot":p.volley_motion.boot(p),"last_touch":game.last_kicker}
 	if controlled_ball: p.dribble_motion.begin_preparation(p,game.ball)
 	style=""; timed_armed=false
@@ -87,20 +110,25 @@ func resolve() -> void:
 	var shot := pending.duplicate()
 	clear_pending()
 	var output := velocity(shot.index,shot.aim,shot.power,shot.kind,shot.quality)
+	if shot.kind=="punt" and shot.has("ai_delivery"):
+		var route: Dictionary=shot.ai_delivery.route
+		output=game.Passing.Motion.lob_velocity(game.ball.position,route.target,route.flight,game.weather)
 	if game.strike(shot.index,output,curve(shot.index,shot.kind),false,"punt" if shot.kind=="punt" else "finish"):
 		p.volley_motion.hit=true; p.volley_motion.target=game.ball.position
-		if shot.kind=="punt": game.passes[p.team]+=1
+		if shot.kind=="punt":
+			game.passes[p.team]+=1
+			if shot.has("ai_delivery"):
+				game.ai_receivers[p.team]=shot.ai_delivery.receiver
+				game.ai_pass_time[p.team]=float(shot.ai_delivery.route.flight)+2.5
+				game.ai_attack.record("keeper_punt")
 		else: game.shots[p.team]+=1
-		game.announce(LABELS.get(shot.kind,"AYAKTAN AÇIŞ")+(" · "+result if shot.tapped else ""))
+		game.hint(LABELS.get(shot.kind,"AYAKTAN AÇIŞ")+(" · "+result if shot.tapped else ""))
 
 func draw(hud) -> void:
-	if pending.is_empty() and result_time<=0 and not timed_armed: return
+	if pending.is_empty(): return
 	var at: Vector2=game.screen_position(game.players[game.controlled].position)+Vector2(-36,25)
 	if not pending.is_empty():
 		var progress: float=clampf(pending.age/pending.contact,0,1)
 		hud.panel(Rect2(at,Vector2(72,7)),Color("173139"),3)
 		hud.panel(Rect2(at+Vector2(72*(1-.075/pending.contact),0),Vector2(72*.07/pending.contact,7)),Color("7cdd96"),2)
 		hud.draw_line(at+Vector2(72*progress,-3),at+Vector2(72*progress,10),hud.PAPER,2)
-		hud.center("İKİNCİ ŞUT: ZAMANLA",at+Vector2(36,25),10,hud.GOLD)
-	elif result_time>0: hud.center(result,at+Vector2(36,23),11,Color("7cdd96") if result.begins_with("MÜKEMMEL") else Color("eea275"))
-	elif timed_armed: hud.center("SONRAKİ ŞUT: ZAMANLAMALI",at+Vector2(36,23),10,hud.GOLD)

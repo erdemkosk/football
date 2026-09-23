@@ -2,6 +2,7 @@ extends RefCounted
 const P = preload("res://scripts/pitch_dimensions.gd")
 ## Roster slots remain stable for physics and AI; shirt identity is independent.
 var game
+var identity := preload("res://scripts/team_identity.gd").new()
 const MAX_SUBS := 3
 var formation := 0
 var opponent_formation := 0
@@ -29,11 +30,14 @@ const SHAPES := [
 	[Vector2(0,46),Vector2(-16,31),Vector2(0,33),Vector2(16,31),Vector2(-26,9),Vector2(-12,13),Vector2(0,20),Vector2(12,13),Vector2(26,9),Vector2(-7,-7),Vector2(7,-7)]]
 
 func setup() -> void:
+	identity.game=game
+	var plan: Dictionary=game.clubs.tactical_plan(0)
+	for key in identity.SETTINGS: set(key,bool(plan[key]) if key=="anchor" else int(plan[key]))
 	for p in game.players: originals.append(p.identity())
 	reset()
 
 func reset() -> void:
-	opponent_formation=int(game.clubs.career_clubs[1].plan.formation) if not game.clubs.career_clubs.is_empty() else 0
+	opponent_formation=int(game.clubs.tactical_plan(1).formation)
 	bench=[[],[]]
 	used=[0,0]
 	pending.clear()
@@ -48,15 +52,18 @@ func reset() -> void:
 		if not reserve_originals[side].is_empty(): bench[side]=reserve_originals[side].duplicate(true)
 	for i in range(originals.size()):
 		var p=game.players[i]
+		p.number=i%11+1
 		p.apply_identity(originals[i])
+		p.apply_kit(game.clubs.kit(p.team))
 	apply_formation()
+	refresh_captains(true)
 
 func apply_formation() -> void:
 	for p in game.players:
 		var shape: Array=SHAPES[formation if p.team==0 else opponent_formation]
 		var pos: Vector2=shape[p.number-1]
 		p.home=Vector3(pos.x*P.WIDTH_RATIO,0,pos.y)*(-game.attack_sign(p.team))
-		p.home.x*=([.78,1.0,1.14][width] if p.team==0 else 1.0)
+		p.home.x*=[.78,1.0,1.14][detail(p.team,"width")]
 
 func committed(team: int) -> int:
 	var count: int=used[team]
@@ -99,11 +106,51 @@ static func natural_role(shirt: int,keeper: bool) -> int:
 func slot_role(index: int) -> int:
 	var p=game.players[index]
 	if p.keeper: return 0
-	var slot := index%11
+	var slot: int=p.number-1
 	var shape: int=formation if p.team==0 else opponent_formation
 	if slot<=(3 if shape==2 else 4): return 1
 	if slot>=(8 if shape==1 else 9): return 3
 	return 2
+
+func actor_at_slot(slot: int,team: int=0) -> int:
+	for i in range(team*11,team*11+11):
+		if game.players[i].number==slot+1: return i
+	return -1
+
+func wide_defender(index: int) -> bool:
+	var p=game.players[index]
+	var shape: int=formation if p.team==0 else opponent_formation
+	return p.number in ([5,9] if shape==2 else [2,5])
+
+func position_swap_reason(a: int,b: int) -> String:
+	if a<0 or b<0 or a>=game.players.size() or b>=game.players.size() or a==b: return "İki farklı oyuncu seç."
+	var first=game.players[a]
+	var second=game.players[b]
+	if first.team!=second.team: return "Aynı takımdan iki oyuncu seç."
+	if first.keeper!=second.keeper: return "Kaleci yalnızca kaleciyle değiştirilebilir."
+	if first.dismissed or second.dismissed: return "İhraç edilen oyuncunun yeri değiştirilemez."
+	if transit.has(a) or transit.has(b): return "Devam eden oyuncu değişikliğini bekle."
+	return ""
+
+func swap_positions(a: int,b: int) -> bool:
+	if position_swap_reason(a,b)!="": return false
+	# Change tactical assignments, keeping actors and all ball/event references intact.
+	var number: int=game.players[a].number
+	game.players[a].number=game.players[b].number
+	game.players[b].number=number
+	apply_formation()
+	refresh_captains()
+	return true
+
+func refresh_captains(new_match: bool=false) -> void:
+	for team in range(2):
+		var selected=-1
+		for i in range(team*11,team*11+11):
+			var p=game.players[i]
+			if p.dismissed and not new_match: continue
+			if selected<0 or p.captain: selected=i
+			if p.captain: break
+		for i in range(team*11,team*11+11): game.players[i].set_captain(i==selected)
 
 func suggestion(team: int,threshold: float=0.40,excluded: Array=[]) -> Dictionary:
 	if committed(team)>=MAX_SUBS or game.training: return {}
@@ -147,6 +194,7 @@ func prepare_substitutions() -> void:
 			if game.players[index].team==p.team and transit[index].phase=="out": reserved+=1
 		if reserved>=MAX_SUBS: continue
 		transit[item.slot]={"reserve":item.reserve,"phase":"out","target":p.position,"old":p.display_name}
+		game.broadcast.substitution(p.identity(),bench[p.team][item.reserve],p.team)
 		game.stadium.sidelines.start_entry(item.slot,item.reserve,Vector3(P.HALF_WIDTH+.8,0,(-3 if p.team==0 else 3)+(item.slot%11)*1.2))
 	pending.clear()
 
@@ -188,6 +236,7 @@ func update_substitutions(delta: float) -> bool:
 				game.career.remember_player(p)
 				p.apply_identity(b)
 				p.apply_kit(game.clubs.kit(p.team))
+				refresh_captains()
 				p.reset_stamina()
 				game.career.enter_player(p)
 				p.yellow_cards=0
@@ -195,6 +244,13 @@ func update_substitutions(delta: float) -> bool:
 				p.action_timer=0
 				p.pose="run"
 				p.celebration=""
+				p.kick_timer=0; p.receive_timer=0; p.shot_preparation=0; p.shot_ready_blend=0
+				p.set_piece_pose=""; p.discipline_pose=""; p.saluting=false
+				p.skill_move.clear(); p.feint_time=0; p.dummy_time=0
+				p.dribble_motion.reset(); p.locomotion.reset(); p.reaction.reset()
+				# Keep the last greeting pose as the visual blend's origin while the
+				# replacement's own running cycle begins on the next physics tick.
+				p.body_language.reset(p)
 				game.stadium.sidelines.finish_entry(index)
 				item.phase="in"
 				game.announce("DEĞİŞİKLİK · "+item.old+" → "+p.display_name)
@@ -208,11 +264,16 @@ func update_substitutions(delta: float) -> bool:
 		p.stamina_free_movement=false
 	return true
 
-func reaction(team: int) -> float:
-	return [0.9,0.55,0.30][difficulty] if team==1 else 0.55
+func reaction(team: int,index: int=-1,defense: bool=false) -> float:
+	var ability: float=identity.quality(index,defense) if index>=0 else identity.team_quality(team,defense)
+	return ([1.7,1.05,0.58][difficulty] if team==1 else 1.05)*lerpf(1.30,.72,ability)
 
-func pass_error(team: int) -> float:
-	return [0.065,0.025,0.008][difficulty] if team==1 else 0.015
+func pass_error(team: int,index: int=-1,shot: bool=false) -> float:
+	var base: float=[0.065,0.025,0.008][difficulty] if team==1 else 0.015
+	if index<0: return base
+	var p=game.players[index]
+	var ability: float=p.attributes.get("finishing" if shot else "passing",p.attributes.control)
+	return base*lerpf(1.8,.55,clampf((ability-48)/46,0,1))*(1+(1-p.energy)*.3)
 
 func adjust_target(index: int,target: Vector3) -> Vector3:
 	var p=game.players[index]
@@ -228,7 +289,7 @@ func adjust_target(index: int,target: Vector3) -> Vector3:
 				p.sprinting=pressing==2 and p.energy>0.35
 	elif game.carrier>=0 and game.players[game.carrier].team==0:
 		var gap: float=game.flat_distance(p.position,game.ball.position)
-		if gap<[5.0,9.0,13.0][difficulty]: target=target.lerp(game.ball.position,[0.2,0.5,0.75][difficulty])
+		if gap<[4.0,6.5,10.0][difficulty]: target=target.lerp(game.ball.position,[0.12,0.28,0.48][difficulty])
 	elif p.team==1 and game.carrier>=0 and game.players[game.carrier].team==1:
 		# Late chasing teams commit runners; a leading team keeps more cover.
 		target.z+=forward*(game.team_tactics.plan_for(1)-1)*(4 if slot_role(index)==1 else 6)
@@ -238,8 +299,7 @@ func adjust_target(index: int,target: Vector3) -> Vector3:
 
 func detail(team: int,key: String) -> int:
 	if team==0: return int(get(key))
-	if not game.clubs.career_clubs.is_empty(): return int(game.clubs.career_clubs[1].plan.get(key,1))
-	return 1
+	return identity.setting(game.clubs.data(team),key)
 
 func update_clock(delta: float) -> void:
 	if game.career.cups.extra_active(): return

@@ -89,7 +89,7 @@ func center(value: String,at: Vector2,size: int=16,color: Color=PAPER,strong: bo
 	draw_string(f,at-Vector2(width/2,0),value,HORIZONTAL_ALIGNMENT_LEFT,-1,size,color)
 
 func backdrop(title: String,subtitle: String,step: String) -> void:
-	draw_rect(Rect2(0,0,1440,900),Color(0.025,0.065,0.08,1.0))
+	draw_rect(get("game").ui.bounds(),Color(0.025,0.065,0.08,1.0))
 	for i in range(24):
 		draw_line(Vector2(770+i*38,0),Vector2(340+i*38,900),Color(0.16,0.3,0.32,0.08),1)
 	draw_texture_rect(Brand.CREST,Rect2(48,25,60,60),false)

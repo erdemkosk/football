@@ -32,7 +32,7 @@ func start_dummy(index: int) -> bool:
 	if incoming.length()<2 or game.flat_distance(p.position,game.ball.position)>9 or game.ball.position.y>.95: return false
 	dummy[index]=.68; p.skill_cooldown=.9; p.dummy_time=.68
 	game.ball.add_collision_exception_with(p)
-	game.announce("BIRAK GEÇ")
+	game.hint("BIRAK GEÇ")
 	return true
 
 func skill_gesture(direction: Vector3) -> void:
@@ -91,7 +91,7 @@ func set_shot_style(low: bool,power: bool,outside: bool) -> void:
 	if game.finishing.style==next: return
 	if next=="" and game.finishing.style=="power": return
 	game.finishing.style=next
-	if game.finishing.style!="": game.announce(game.finishing.LABELS[game.finishing.style])
+	if game.finishing.style!="": game.hint(game.finishing.LABELS[game.finishing.style])
 
 func refresh_shot_style() -> void:
 	var pad=game.controller
@@ -140,11 +140,11 @@ func handle(event: InputEvent) -> bool:
 		return false
 	if not (event is InputEventJoypadButton or event is InputEventJoypadMotion): return false
 	var pad=game.controller
-	if pad.device<0: pad.adopt_device(event.device)
+	if pad.device!=event.device: pad.claim_device(event.device,true)
 	if event.device!=pad.device: return false
 	if event is InputEventJoypadMotion:
 		if event.axis not in [JOY_AXIS_RIGHT_X,JOY_AXIS_RIGHT_Y]: return false
-		if game.charging or game.pass_charging or game.aerial_shot_active(index) or game.finishing.active(index): return false
+		if game.charging or game.pass_charging or game.controller.combos.cross_player>=0 or game.aerial_shot_active(index) or game.finishing.active(index): return false
 		if event.axis==JOY_AXIS_RIGHT_X: stick.x=event.axis_value
 		else: stick.y=event.axis_value
 		if stick.length()<.3: stick_ready=true
@@ -198,7 +198,7 @@ func draw(hud) -> void:
 		var p=game.players[next]
 		var point: Vector3=p.position+Vector3.UP*2.75
 		var at: Vector2=game.screen_position(point)
-		if not game.camera.is_position_behind(point) and Rect2(12,85,1416,705).has_point(at):
+		if not game.camera.is_position_behind(point) and game.ui.bounds().grow(-36).has_point(at):
 			# A hollow arrow previews the same candidate used by LB/L1/Q.
 			hud.draw_polyline(PackedVector2Array([at+Vector2(-5,-4),at+Vector2(5,-4),at+Vector2(0,3),at+Vector2(-5,-4)]),Color("9fcbe2",.8),1.5,true)
 			if game.controller.using_gamepad:

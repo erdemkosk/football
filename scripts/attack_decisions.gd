@@ -12,7 +12,7 @@ func select(index: int,options: Array[Dictionary]) -> Dictionary:
 	for option in options:
 		if option.is_empty(): continue
 		var entry := option.duplicate()
-		entry.value=value(index,option)
+		entry.value=value(index,option)+game.management.identity.decision_bias(index,option)
 		scored.append(entry)
 	scored.sort_custom(func(a,b): return a.value>b.value)
 	rankings[index]=scored
@@ -27,8 +27,8 @@ func value(index: int,choice: Dictionary) -> float:
 	var kind: String=choice.kind
 	var mentality: int=game.team_tactics.plan_for(p.team)
 	var danger: Dictionary=brain.pressure_read(index)
-	if kind in ["carry","push","feint","roll","roulette","elastico","scoop"]:
-		var at: Vector3=brain.carry_target(index)
+	if kind in ["carry","push","feint","roll","roulette","elastico","scoop","rainbow","heel","flick"]:
+		var at: Vector3=choice.get("exit",brain.carry_target(index))
 		var room: float=minf(8,brain.clearance(at,p.team))
 		var score: float=20+room*1.3+(at.z-p.position.z)*forward*.6-maxf(0,3-pressure)*8
 		if kind=="push": score+=5+(float(p.attributes.pace)-72)*.10
@@ -47,10 +47,13 @@ func value(index: int,choice: Dictionary) -> float:
 		if kind=="chip": score+=8
 		return score
 	var route: Dictionary=choice.route
-	var risk: float=game.Passing.risk(game.ball.position,route,p.team,game.players)
+	var risk := 0.0
 	if kind=="clearance": return 12+maxf(0,3.5-pressure)*10+(8 if p.position.z*forward< -33 else 0)
 	var receiver: int=choice.receiver
 	if receiver<0: return -INF
+	var read: Dictionary=brain.delivery.assess(index,route,receiver,game.ball.position,.065)
+	if not read.reachable or read.risk>=.72 or read.margin<=-.12: return -INF
+	risk=read.lane_risk # Reuse lane scoring without changing interception safety.
 	var q=game.players[receiver]
 	var destination: Vector3=route.target
 	var progress: float=(destination.z-game.ball.position.z)*forward
@@ -78,7 +81,7 @@ func value(index: int,choice: Dictionary) -> float:
 	# A safe layoff can be valuable because it opens a second pass. Evaluate
 	# that next lane from predicted positions, without requiring its execution.
 	if brain.level(p.team)>0 and not route.get("cross",false):
-		score+=continuation(index,receiver,destination,float(route.flight))*(.65 if brain.level(p.team)==1 else 1.0)
+		score+=continuation(index,receiver,destination,float(route.flight))*(.65 if brain.level(p.team)==1 else 1.0)*lerpf(.45,1.25,game.management.identity.quality(index))
 	return score
 
 func receiving_space(index: int,point: Vector3,flight: float) -> float:

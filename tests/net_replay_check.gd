@@ -27,18 +27,30 @@ func run() -> void:
 		if game.state=="replay": break
 	check(seen_goal and live_peak>0.4 and game.stadium.nets[0].impact_count>0,"A real scored goal hits and stretches the live net before replay freezes the ball")
 	check(game.state=="replay" and game.score==[1,0],"The delayed replay still starts once and preserves the score")
+	check(game.broadcast.graphic=="goal","Replay opens with a one-second goal lower-third")
 	if game.replay.saved.is_empty(): game.free(); quit(1); return
 	var net=game.stadium.nets[0]
 	var saved: Dictionary=game.replay.saved.net_physics[0].duplicate(true)
 	var replay_peak := 0.0
+	var cuts := {}
+	var seen_perspective := false
+	var empty := 0
 	for frame in range(100):
 		game.replay.update(0.04)
 		if game.state!="replay": break
+		cuts[game.replay.cut]=true
+		if game.camera.projection==Camera3D.PROJECTION_PERSPECTIVE: seen_perspective=true
+		var to_ball: Vector3=game.ball.position-game.camera.position
+		var facing: Vector3=-game.camera.global_transform.basis.z
+		if to_ball.length()>0.5 and facing.dot(to_ball.normalized())<0.2: empty+=1
+		if game.replay.cut>=1 and Vector3(game.ball.position.x,0,game.ball.position.z).distance_to(Vector3(0,0,game.replay.goal_end*50))>20: empty+=1
 		replay_peak=maxf(replay_peak,net.max_deformation())
 		var before: Array=net.capture_pose()
 		net._physics_process(0.1)
 		if frame==30: check(net.capture_pose()==before,"Playback does not simulate a second net collision")
 	check(replay_peak>0.4,"The recorded replay includes the actual net pocket and rebound")
+	check(cuts.size()>=2 and seen_perspective,"Goal replay cuts between at least two broadcast cameras")
+	check(empty==0,"Replay cameras stay on the ball instead of an empty goal")
 	game.replay.finish()
 	check(not net.playback and net.capture_physics()==saved,"Finishing replay restores the live net position and velocity exactly")
 	check(not game.ball.freeze and game.state=="goal","The ball resumes physical motion after replay")

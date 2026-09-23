@@ -1,0 +1,70 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce RTX 3070
+
+PASS: 3D viewport follows the output aspect: 1600x900
+PASS: All menu content fits without clipping: 1600x900
+PASS: Menu content remains centered: 1600x900
+PASS: Text and buttons retain their proportions: 1600x900
+PASS: World labels align with the expanded camera: 1600x900
+PASS: Menu backgrounds cover the whole output: 1600x900
+PASS: Rendered image covers every output pixel: menu-1600x900
+PASS: Output edge contains scene/UI, not a black bar: menu-1600x900 side 0
+PASS: Output edge contains scene/UI, not a black bar: menu-1600x900 side 1599
+PASS: Mouse clicks the centered Settings button: 1600x900
+PASS: Rendered image covers every output pixel: settings-wide
+PASS: Output edge contains scene/UI, not a black bar: settings-wide side 0
+PASS: Output edge contains scene/UI, not a black bar: settings-wide side 1599
+PASS: Click inside the centered help card keeps it open: 1600x900
+PASS: Click outside the help card closes it: 1600x900
+PASS: 3D viewport follows the output aspect: 1720x720
+PASS: All menu content fits without clipping: 1720x720
+PASS: Menu content remains centered: 1720x720
+PASS: Text and buttons retain their proportions: 1720x720
+PASS: World labels align with the expanded camera: 1720x720
+PASS: Menu backgrounds cover the whole output: 1720x720
+PASS: Rendered image covers every output pixel: menu-1720x720
+PASS: Output edge contains scene/UI, not a black bar: menu-1720x720 side 0
+PASS: Output edge contains scene/UI, not a black bar: menu-1720x720 side 1719
+PASS: Mouse clicks the centered Settings button: 1720x720
+PASS: Click inside the centered help card keeps it open: 1720x720
+PASS: Click outside the help card closes it: 1720x720
+PASS: 3D viewport follows the output aspect: 1200x900
+PASS: All menu content fits without clipping: 1200x900
+PASS: Menu content remains centered: 1200x900
+PASS: Text and buttons retain their proportions: 1200x900
+PASS: World labels align with the expanded camera: 1200x900
+PASS: Menu backgrounds cover the whole output: 1200x900
+PASS: Rendered image covers every output pixel: menu-1200x900
+PASS: Output edge contains scene/UI, not a black bar: menu-1200x900 side 0
+PASS: Output edge contains scene/UI, not a black bar: menu-1200x900 side 1199
+PASS: Mouse clicks the centered Settings button: 1200x900
+PASS: Click inside the centered help card keeps it open: 1200x900
+PASS: Click outside the help card closes it: 1200x900
+PASS: 3D viewport follows the output aspect: 1440x900
+PASS: All menu content fits without clipping: 1440x900
+PASS: Menu content remains centered: 1440x900
+PASS: Text and buttons retain their proportions: 1440x900
+PASS: World labels align with the expanded camera: 1440x900
+PASS: Menu backgrounds cover the whole output: 1440x900
+PASS: Rendered image covers every output pixel: menu-1440x900
+PASS: Output edge contains scene/UI, not a black bar: menu-1440x900 side 0
+PASS: Output edge contains scene/UI, not a black bar: menu-1440x900 side 1439
+PASS: Mouse clicks the centered Settings button: 1440x900
+PASS: Click inside the centered help card keeps it open: 1440x900
+PASS: Click outside the help card closes it: 1440x900
+PASS: 3D viewport follows the output aspect: native-fullscreen
+PASS: All menu content fits without clipping: native-fullscreen
+PASS: Menu content remains centered: native-fullscreen
+PASS: Text and buttons retain their proportions: native-fullscreen
+PASS: World labels align with the expanded camera: native-fullscreen
+PASS: Menu backgrounds cover the whole output: native-fullscreen
+PASS: Rendered image covers every output pixel: fullscreen
+PASS: Output edge contains scene/UI, not a black bar: fullscreen side 0
+PASS: Output edge contains scene/UI, not a black bar: fullscreen side 2559
+PASS: Rendered image covers every output pixel: teams
+PASS: Output edge contains scene/UI, not a black bar: teams side 0
+PASS: Output edge contains scene/UI, not a black bar: teams side 2559
+PASS: Rendered image covers every output pixel: match
+PASS: Output edge contains scene/UI, not a black bar: match side 0
+PASS: Output edge contains scene/UI, not a black bar: match side 2559
+SCREEN FILL CHECK: 66 checks, 0 failures

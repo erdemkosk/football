@@ -4,16 +4,54 @@ const P = preload("res://scripts/pitch_dimensions.gd")
 var game
 var think_in: Dictionary = {}
 var skill_in: Dictionary = {}
+var team_skill_in := [0.0,0.0]
+var flourish_in := [0.0,0.0]
 var uses: Dictionary = {}
 var last_decision := ""
 var finishing := preload("res://scripts/advanced_finishing.gd").new()
 var decisions := preload("res://scripts/attack_decisions.gd").new()
+var delivery := preload("res://scripts/ai_delivery.gd").new()
 var carry_cache: Dictionary = {}
 var carry_age := 0.0
+var positioning: Dictionary = {}
 
 func reset() -> void:
+	delivery.game=game
 	think_in.clear(); skill_in.clear(); uses.clear(); last_decision=""
+	team_skill_in=[0.0,0.0]; flourish_in=[0.0,0.0]
 	finishing.reset(); decisions.reset(); carry_cache.clear(); carry_age=0
+	positioning.clear()
+
+func race_sprint(index: int,target: Vector3) -> bool:
+	var p=game.players[index]
+	if p.exhausted or p.energy<.18: return false
+	var gap: Vector3=(target-p.position)*Vector3(1,0,1)
+	if gap.length()<3.0: return false
+	var ball_velocity: Vector3=game.ball.kick_velocity if game.ball.pending_kick else game.ball.linear_velocity
+	var escaping: bool=ball_velocity.dot(gap.normalized())>3.0
+	var contested := false
+	for q in game.players:
+		if q.team==p.team or not q.visible or q.dismissed or q.keeper: continue
+		if game.flat_distance(q.position,target)<gap.length()+3 and q.velocity.length()>3.2:
+			contested=true; break
+	return gap.length()>7 or escaping or contested
+
+func positional_movement(index: int,target: Vector3,delta: float) -> Vector3:
+	var p=game.players[index]
+	if not positioning.has(index):
+		positioning[index]={"target":target,"age":0.0,"moving":game.flat_distance(p.position,target)>1.25}
+	var state: Dictionary=positioning[index]
+	state.age-=delta
+	# Off-ball shape changes have individual observation times and a settled
+	# stance. A tiny ball movement no longer sets all 20 bodies walking/turning.
+	if state.age<=0 or game.flat_distance(state.target,target)>5:
+		state.target=target
+		state.age=.17+fmod(index*.137,.26)
+	var offset: Vector3=(state.target-p.position)*Vector3(1,0,1)
+	if state.moving and offset.length()<.32: state.moving=false
+	elif not state.moving and offset.length()>1.25: state.moving=true
+	if not state.moving: return Vector3.ZERO
+	return offset.normalized()*clampf(offset.length()/1.6,0,1)
 
 func update(delta: float) -> void:
 	finishing.game=game
@@ -22,6 +60,9 @@ func update(delta: float) -> void:
 	if carry_age<=0: carry_cache.clear(); carry_age=.22
 	for i in think_in: think_in[i]=maxf(0,think_in[i]-delta)
 	for i in skill_in: skill_in[i]=maxf(0,skill_in[i]-delta)
+	for team in range(2):
+		team_skill_in[team]=maxf(0,team_skill_in[team]-delta)
+		flourish_in[team]=maxf(0,flourish_in[team]-delta)
 
 func record(kind: String) -> void:
 	last_decision=kind
@@ -43,7 +84,7 @@ func level(team: int) -> int:
 func pressure_read(index: int) -> Dictionary:
 	var p=game.players[index]
 	var result := {"gap":20.0,"closing":0.0,"time":10.0,"urgency":0.0,"opponent":-1}
-	var horizon: float=[.28,.52,.72][level(p.team)]
+	var horizon: float=[.28,.52,.72][level(p.team)]*lerpf(.72,1.18,game.management.identity.quality(index))
 	for j in range(game.players.size()):
 		var q=game.players[j]
 		if not q.visible or q.dismissed or q.team==p.team: continue
@@ -114,7 +155,7 @@ func receiving_target(index: int) -> Vector3:
 	var p=game.players[index]
 	var ball=game.ball
 	var velocity: Vector3=ball.kick_velocity if ball.pending_kick else ball.linear_velocity
-	if ball.position.y>1.05 or velocity.y>2:
+	if ball.position.y>.6 or velocity.y>2:
 		return aerial_target(index,ball.position+velocity*.25)
 	var motion: Vector3=velocity*Vector3(1,0,1)
 	var speed := motion.length()
@@ -179,7 +220,7 @@ func square_choice(index: int) -> Dictionary:
 
 func defend(index: int) -> bool:
 	var p=game.players[index]
-	if p.team!=1 or p.keeper or p.dismissed or p.action_timer>0 or p.tackle_cooldown>0 or p.ai_think<game.management.reaction(p.team) or game.ball.held_by!=null or game.ball.pending_kick or game.foul_cooldown>0: return false
+	if p.keeper or p.dismissed or p.action_timer>0 or p.tackle_cooldown>0 or p.ai_think<game.management.reaction(p.team,index,true) or game.ball.held_by!=null or game.ball.pending_kick or game.foul_cooldown>0: return false
 	var gap: float=game.flat_distance(p.position,game.ball.position)
 	var speed: float=game.ball.linear_velocity.length()
 	if level(p.team)>0 and game.last_touch!=p.team and game.dribbler<0 and gap<2.7 and speed>6 and game.ball.position.y<.7:
@@ -198,35 +239,31 @@ func defend(index: int) -> bool:
 func distribute(index: int) -> bool:
 	var p=game.players[index]
 	if not game.autonomous_kicks(p.team) or game.ball.held_by!=p: return false
-	var best := -INF
-	var receiver := -1
-	var delivery: Dictionary={}
-	var kind := "roll"
-	for j in range(game.players.size()):
-		if j==index or not onside(j,p.team): continue
-		var q=game.players[j]
-		var distance: float=game.flat_distance(p.position,q.position)
-		if distance<7 or distance>34 or clearance(q.position,p.team)<2.5: continue
-		var route: Dictionary=game.Passing.plan(game.ball.position,q.position,q.velocity,false,game.weather)
-		var action := "roll"
-		if distance>17 or (p.team==1 and game.opponent_coach.escape_press):
-			route=game.Passing.plan(game.ball.position,q.position,q.velocity,true,game.weather); action="throw"
-		var risk: float=game.Passing.risk(game.ball.position,route,p.team,game.players)
-		if risk>.32: continue
-		var value: float=clearance(q.position,p.team)*.5-risk*8+(q.position.z-p.position.z)*game.attack_sign(p.team)*.13
-		if value>best: best=value; receiver=j; delivery=route; kind=action
-	if receiver>=0:
-		var aim: Vector3=((delivery.target-p.position)*Vector3(1,0,1)).normalized()
-		if game.keeper_distribution.queue(index,kind,aim,.55,delivery.velocity):
-			game.ai_receivers[p.team]=receiver; game.ai_pass_time[p.team]=float(delivery.flight)+2.5
-			record("keeper_"+kind); return true
-	var aim := Vector3(.4 if p.position.x<=0 else -.4,0,game.attack_sign(p.team)).normalized()
-	if game.keeper_distribution.queue(index,"punt",aim,.62): record("keeper_punt"); return true
+	var choice := delivery.outlets(index,game.ball.position,"keeper",.34)
+	if choice.is_empty():
+		# Wait briefly for a short outlet before choosing a measured long ball.
+		if game.goalkeeping.hold_age<3.0: return false
+		choice=delivery.clearance(index)
+		choice.kind="punt"
+	var aim: Vector3=((choice.route.target-p.position)*Vector3(1,0,1)).normalized()
+	if game.keeper_distribution.queue(index,choice.kind,aim,.55,choice.route.velocity):
+		game.keeper_distribution.pending.ai_choice=choice
+		return true
 	return false
 
 func pass_choice(kind: String,route: Dictionary,receiver: int,one_two: bool=false) -> Dictionary:
 	route.receiver=receiver
 	return {"kind":kind,"route":route,"receiver":receiver,"one_two":one_two}
+
+func keeper_foot_pass(index: int) -> bool:
+	if not game.autonomous_kicks(game.players[index].team) or not game.can_touch(index,1.15): return false
+	var choice := delivery.outlets(index,game.ball.position,"feet",.065)
+	if choice.is_empty(): choice=delivery.clearance(index)
+	choice=pass_choice(choice.kind,choice.route,choice.receiver)
+	if not game.strike(index,choice.route.velocity): return false
+	if not game.kick_contact.pending.is_empty() and game.kick_contact.pending.index==index: game.kick_contact.pending.ai_choice=choice
+	else: kick_completed(index,choice)
+	return true
 
 func cross_choice(index: int) -> Dictionary:
 	var p=game.players[index]
@@ -308,6 +345,39 @@ func decide(index: int) -> Dictionary:
 	decisions.game=game
 	return decisions.select(index,options(index))
 
+func skill_choice(index: int,read: Dictionary) -> Dictionary:
+	var p=game.players[index]
+	if team_skill_in[p.team]>0 or read.gap<1.25 or read.gap>3.5 or p.position.z*game.attack_sign(p.team)<-20: return {}
+	var nearby := 0
+	for q in game.players:
+		if q.visible and not q.dismissed and q.team!=p.team and game.flat_distance(q.position,p.position)<3.6: nearby+=1
+	# A skill solves a one-on-one, not a swarm. Keep passing/carrying options
+	# available and inspect the actual exit of each move relative to the body.
+	if nearby!=1: return {}
+	var kinds: Array[String]=["roll"]
+	if level(p.team)==2 and p.attributes.control>=83:
+		if read.gap<2.15 and read.closing>1: kinds.append("roulette")
+		if p.velocity.length()>3.8: kinds.append("elastico")
+		if absf(p.position.x)>24: kinds.append("scoop")
+		if p.attributes.control>=90 and read.gap>2 and read.closing>3.5 and flourish_in[p.team]<=0: kinds.append("rainbow")
+	var best := -INF
+	var result: Dictionary={}
+	for kind in kinds:
+		for side in [-1.0,1.0]:
+			var aim: Vector3=game.skills.exit_direction(kind,p.facing,side)
+			var near: Vector3=p.position+aim*1.1
+			var exit: Vector3=p.position+aim*2.5
+			if absf(exit.x)>P.HALF_WIDTH-1.5 or absf(exit.z)>48: continue
+			var near_room := future_clearance(near,p.team,.22)
+			var exit_room := future_clearance(exit,p.team,.5)
+			if near_room<1.05 or exit_room<1.8: continue
+			var value: float=minf(5,exit_room)+minf(3,near_room)*.6+aim.z*game.attack_sign(p.team)*.35
+			if kind=="rainbow": value-=1.5
+			if value>best:
+				best=value; result={"kind":kind,"side":side,"exit":exit}
+	if not result.is_empty() and (level(p.team)==0 or p.attributes.control<80): result.kind="feint"
+	return result
+
 func options(index: int) -> Array[Dictionary]:
 	var p=game.players[index]
 	var risk_bias: float=game.team_tactics.plan_for(p.team)-1
@@ -318,7 +388,16 @@ func options(index: int) -> Array[Dictionary]:
 	var result: Array[Dictionary]=[{"kind":"carry"}]
 	var return_to: int=game.support.return_option(index)
 	if return_to>=0:
-		result.append(pass_choice("return_pass",game.Passing.plan(game.ball.position,game.players[return_to].position,game.players[return_to].velocity,false,game.weather),return_to))
+		var runner=game.players[return_to]
+		var route: Dictionary=game.Passing.plan(game.ball.position,runner.position,runner.velocity,false,game.weather)
+		var run: Dictionary=game.support.runs[return_to]
+		if run.get("explicit",false):
+			# The runner will brake at the end of the agreed give-and-go. Do not
+			# lead a return pass past that point as though the sprint continued.
+			var remaining: Vector3=(run.target-runner.position)*Vector3(1,0,1)
+			if (route.target-runner.position).dot(remaining)>remaining.length_squared():
+				route=game.Passing.plan(game.ball.position,run.target,Vector3.ZERO,false,game.weather)
+		result.append(pass_choice("return_pass",route,return_to))
 	for choice in [square_choice(index),shot_choice(index),cross_choice(index)]:
 		if not choice.is_empty(): result.append(choice)
 	# Collect feasible routes before comparing them. Candidate order must not
@@ -354,22 +433,13 @@ func options(index: int) -> Array[Dictionary]:
 		if not wall.is_empty() and game.Passing.risk(game.ball.position,wall,p.team,game.players)<.4:
 			result.append(pass_choice("one_two",wall,wall.receiver,true))
 	if game.dribbler==index and skill_in.get(index,0.0)<=0 and p.skill_cooldown<=0 and p.energy>.25:
-		if pressure>1.2 and pressure<2.4 and position.z*forward> -20:
-			var side := Vector3(2.5 if position.x<0 else -2.5,0,forward*2)
-			if clearance(position+side,p.team)>2:
-				if level(p.team)>0 and p.attributes.control>=80:
-					var kind := "roll"
-					if level(p.team)==2 and p.attributes.control>=84 and pressure<1.5: kind="rainbow"
-					elif level(p.team)==2 and pressure<1.7: kind="roulette"
-					elif level(p.team)==2 and p.velocity.length()>4: kind="elastico"
-					elif absf(position.x)>24: kind="scoop"
-					result.append({"kind":kind,"side":signf(side.x)*forward})
-				else: result.append({"kind":"feint"})
+		var skill := skill_choice(index,read)
+		if not skill.is_empty(): result.append(skill)
 		if pressure>7 and position.z*forward<28 and clearance(position+Vector3(0,0,forward*7),p.team)>5:
 			result.append({"kind":"push"})
 	if position.z*forward< -28 and pressure<3.2:
-		var target := Vector3((25 if position.x>=0 else -25)*P.WIDTH_RATIO,0,position.z+forward*32)
-		result.append(pass_choice("clearance",game.Passing.plan(game.ball.position,target,Vector3.ZERO,true,game.weather),-1))
+		var outlet := delivery.clearance(index)
+		result.append(pass_choice("clearance",outlet.route,outlet.receiver))
 	return result
 
 func act(index: int) -> bool:
@@ -379,27 +449,34 @@ func act(index: int) -> bool:
 	# Finish the touch already in progress before choosing another action.
 	if p.ball_actions.contact_pending or p.ball_actions.control_grace>0 or p.receive_timer>0 and game.dribbler!=index: return false
 	var urgent: bool=read.closing>2 and read.urgency>.4
-	var reaction: float=game.management.reaction(p.team)*(.7 if urgent else 1.0)
-	if urgent and think_in.get(index,0.0)>.12: think_in[index]=.12
+	var reaction: float=game.management.reaction(p.team,index)*(.7 if urgent else 1.0)
+	var return_to: int=game.support.return_option(index)
+	# An agreed give-and-go is read during the incoming pass. First-touch and
+	# contact guards still apply; avoid waiting until the runner has stopped.
+	if return_to>=0 and game.support.runs[return_to].get("explicit",false): reaction=minf(reaction,.30)
+	if urgent and think_in.get(index,0.0)>.24: think_in[index]=.24
 	if not game.autonomous_kicks(p.team) or game.state!="playing" or p.action_timer>0 or game.skills.active.has(index) or not game.can_touch(index,1.15) or game.ball.pending_kick or game.kick_lock>0 or p.touch_cooldown>0 or p.ai_think<reaction or think_in.get(index,0.0)>0: return false
-	think_in[index]=.12 if urgent else [.52,.30,.18][level(p.team)]*[1.45,1.0,.72][game.management.detail(p.team,"tempo")]
+	think_in[index]=.24 if urgent else [1.0,.58,.36][level(p.team)]*[1.45,1.0,.72][game.management.detail(p.team,"tempo")]*lerpf(1.30,.72,game.management.identity.quality(index))
 	var choice := decide(index)
 	if choice.is_empty(): return false
 	var kind: String=choice.kind
 	if choice.get("advanced",false):
 		finishing.game=game
-		var error: float=game.management.pass_error(p.team)
+		var error: float=game.management.pass_error(p.team,index,true)
 		var aim: Vector3=choice.aim.rotated(Vector3.UP,game.rng.randf_range(-error,error))
 		if finishing.queue(index,aim,choice.power,kind): record(kind); return true
 		return false
 	if kind in ["roll","roulette","elastico","scoop","rainbow","heel","flick"]:
 		if game.skills.start(index,kind,choice.side):
-			skill_in[index]=[5.0,4.0,3.2][level(p.team)]; record(kind); return true
+			skill_in[index]=[8.0,7.0,6.0][level(p.team)]; team_skill_in[p.team]=3.6
+			if kind=="rainbow": flourish_in[p.team]=24.0
+			record(kind); return true
 		return false
 	if kind in ["feint","push"]:
 		p.facing=Vector3(clampf(-p.position.x*.015,-.3,.3),0,game.attack_sign(p.team)).normalized()
 		if kind=="feint":
 			game.duels.feint(index)
+			team_skill_in[p.team]=2.5
 			record(kind)
 		else:
 			game.duels.push_ahead(index)
@@ -408,7 +485,7 @@ func act(index: int) -> bool:
 		skill_in[index]=3.8
 		return true
 	var velocity: Vector3=choice.velocity if choice.has("velocity") else choice.route.velocity
-	var error: float=game.management.pass_error(p.team)
+	var error: float=game.management.pass_error(p.team,index,choice.has("velocity"))
 	velocity=velocity.rotated(Vector3.UP,game.rng.randf_range(-error,error))
 	if not game.strike(index,velocity,choice.get("curve",0.0),false,"shot" if choice.has("velocity") else ("cross" if kind=="cross" else "kick")): return false
 	if not game.kick_contact.pending.is_empty() and game.kick_contact.pending.index==index:
@@ -442,8 +519,11 @@ func kick_completed(index: int,choice: Dictionary) -> void:
 
 func try_header(index: int) -> bool:
 	var p=game.players[index]
-	if not game.autonomous_kicks(p.team) or p.ai_think<game.management.reaction(p.team) or not game.heading.can_request(index): return false
+	if not game.autonomous_kicks(p.team) or p.ai_think<game.management.reaction(p.team,index) or not game.heading.can_request(index): return false
 	var forward: float=game.attack_sign(p.team)
+	# A routine lofted pass is brought down. Heading it straight back to the
+	# passer caused unopposed midfield deliveries to become endless loose balls.
+	if game.first_touch.expected(index) and p.position.z*forward<27: return false
 	var intent := "shot"
 	var receiver := -1
 	var aim := Vector3(-p.position.x*.08,0,forward).normalized()
@@ -469,7 +549,7 @@ func try_header(index: int) -> bool:
 
 func try_volley(index: int) -> bool:
 	var p=game.players[index]
-	if not game.autonomous_kicks(p.team) or game.aerial_shot_active(index) or p.ai_think<game.management.reaction(p.team): return false
+	if not game.autonomous_kicks(p.team) or game.aerial_shot_active(index) or p.ai_think<game.management.reaction(p.team,index): return false
 	var forward: float=game.attack_sign(p.team)
 	if p.position.z*forward<26 or absf(p.position.x)>17 or not game.volleys.can_request(index): return false
 	var aim: Vector3=(Vector3(game.rng.randf_range(-2.2,2.2),0,forward*50)-p.position).normalized()
@@ -479,16 +559,27 @@ func try_volley(index: int) -> bool:
 	return false
 
 func aerial_target(index: int,fallback: Vector3) -> Vector3:
-	if game.ball.position.y<1.15 or game.ball.held_by!=null: return fallback
+	if game.ball.held_by!=null: return fallback
 	var p=game.players[index]
 	var velocity: Vector3=game.ball.kick_velocity if game.ball.pending_kick else game.ball.linear_velocity
+	if game.ball.position.y<.6 and velocity.y<2: return fallback
 	var head: float=game.heading.head_point(p).y
-	var result := fallback
-	for sample in range(1,25):
-		var time := sample*.08
-		var point: Vector3=game.ball.position+velocity*time+Vector3.DOWN*4.905*time*time
-		if point.y<head-.2: break
+	var attacking: bool=p.position.z*game.attack_sign(p.team)>27 and game.autonomous_kicks(p.team)
+	var height: float=head+.30 if attacking else p.position.y+p.body_scale.y*1.25
+	var pace: float=minf(6.2,p.movement_speed())*(1-game.weather.mud_at(p.position)*.16)
+	var points=game.Passing.Motion.sample_flight(game.ball.position,velocity,game.ball.spin,3.0,75,game.weather)
+	var result: Vector3=points[points.size()-1]
+	for sample in range(1,points.size()):
+		var point: Vector3=points[sample]
+		var time := sample*.04
+		if points[sample-1].y>height and point.y<=height:
+			var fraction: float=inverse_lerp(points[sample-1].y,point.y,height)
+			point=points[sample-1].lerp(point,fraction)
+			time=(sample-1+fraction)*.04
 		result=point
-		if point.y<head+1.3 and game.flat_distance(p.position,point)<time*(7.5 if p.energy>.3 else 5.4)+.5: break
+		# Meet the descending ball at an attainable height, not at the first
+		# point underneath a high cross. Use the ball's actual drag and spin.
+		if point.y>height+.001 or point.y>points[sample-1].y: continue
+		if game.flat_distance(p.position,point)<=maxf(0,pace*(time-.10))+.45 or point.y<=game.ball.RADIUS: break
 	result.x=clampf(result.x,-(P.HALF_WIDTH-2),(P.HALF_WIDTH-2)); result.y=0; result.z=clampf(result.z,-48,48)
 	return result

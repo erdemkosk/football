@@ -79,7 +79,7 @@ func build_studio(data: Dictionary) -> void:
 	model.head_joint.rotation.y=-model.rig.rotation.y*0.6
 	var camera := Camera3D.new()
 	camera.projection=Camera3D.PROJECTION_ORTHOGONAL
-	camera.size=1.50
+	camera.size=1.50*model.WORLD_SCALE
 	world.add_child(camera)
 	var center: float=model.head_joint.global_position.y+.04
 	camera.position=Vector3(0,center,-5)

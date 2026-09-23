@@ -42,6 +42,7 @@ func before_touch(index: int,deliberate: bool=true) -> bool:
 		game.begin_restart("ENDİREKT VURUŞ",1-game.players[index].team,game.players[index].position)
 		game.referees.offside(game.players[index].team,game.players[index].position)
 		game.announce("OFSAYT · "+game.players[index].display_name)
+		game.reactions.appeal(index,game.players[index].position)
 		return false
 	if restart_taker==index and touch_age>0.45:
 		game.begin_restart("ENDİREKT VURUŞ",1-game.players[index].team,game.ball.position)
@@ -131,6 +132,7 @@ func foul(offender: int,victim: int,reckless: bool=false,severe: bool=false) -> 
 	game.begin_restart("PENALTI" if penalty else "SERBEST VURUŞ",p.team,Vector3(0,0,goal_side*39) if penalty else point)
 	if booking: game.referees.show_card(offender_player.position,card_red,severe)
 	game.stadium.react("foul",offender_player.team,point)
+	game.reactions.dispute(victim,offender)
 	var remaining := 0
 	for teammate in game.players:
 		if teammate.team==offender_player.team and not teammate.dismissed: remaining+=1
@@ -150,6 +152,7 @@ func book(offender: int,direct: bool=false,victim: int=-1) -> void:
 	if card_red:
 		game.send_off.begin(offender,victim)
 		p.dismissed=true
+		game.management.refresh_captains()
 		game.career.remember_player(p)
 		p.visible=false
 		p.collision_layer=0

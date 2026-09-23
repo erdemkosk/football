@@ -8,7 +8,10 @@ func _ready() -> void:
 	for state in ["normal","hover","pressed","focus"]: add_theme_stylebox_override(state,StyleBoxEmpty.new())
 	for state in ["font_color","font_hover_color","font_pressed_color","font_focus_color"]: add_theme_color_override(state,Color.TRANSPARENT)
 	mouse_entered.connect(queue_redraw); mouse_exited.connect(queue_redraw)
-	focus_entered.connect(queue_redraw); focus_exited.connect(queue_redraw)
+	focus_entered.connect(func():
+		if screen!=null: screen.tactics.inspect(screen,identity)
+		queue_redraw())
+	focus_exited.connect(queue_redraw)
 	screen.portraits.portrait_ready.connect(_portrait_ready)
 
 func _portrait_ready(_key: String) -> void:

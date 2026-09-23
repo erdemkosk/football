@@ -1,0 +1,32 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+RUN gap range=0.52258491516113..0.77694225311279 contacts=9 free=231
+PASS: Running uses separate boot impulses with smooth close-control guidance between them
+PASS: The ball rolls ahead and is recovered without a fixed foot offset
+PASS: Every dribble impulse has an actual animated boot contact
+TURN max=0.56093937158585 styles={ "push": true, "inside": true, "sole": true } owner=9
+PASS: Right-angle cuts and full reversals keep the ball recoverable
+PASS: Sharp turns use contextual sole and side-of-foot animations
+SPRINT max=0.88573455810547 contacts=9
+PASS: Sprinting exposes the ball a little farther without losing it
+RECOVER max=0.87534713745117 last=0.54842376708984 owner=9
+PASS: Releasing sprint returns to controlled touches
+PASS: A sole contact settles the ball when the runner stops
+PASS: A sprint reversal keeps the ball controlled at stride phase 80
+PASS: A sprint reversal keeps the ball controlled at stride phase 130
+PASS: A sprint reversal keeps the ball controlled at stride phase 190
+PASS: A sprint reversal keeps the ball controlled at stride phase 260
+WET 1 max=0.77714443206787 owner=9
+PASS: Wet-ground dribbling and mirrored turns remain controllable: 1
+WET 2 max=0.77730941772461 owner=9
+PASS: Wet-ground dribbling and mirrored turns remain controllable: 2
+PASS: Discrete foot contacts work at 60 physics ticks
+PASS: Discrete foot contacts work at 30 physics ticks
+PASS: Animated feet replace the carrier capsule only during grounded control
+PASS: A controlled shot keeps its close-control contact until the boot releases it
+PASS: A released shot restores ordinary collisions and is never pulled back by dribble assistance
+PASS: A lost ball removes the carrier exception and stays free
+PASS: Pause clears pending touches and the carrier collision exception
+PASS: A physical knockdown interrupts control and restores collision
+PASS: An opponent uses the same physical footwork and control limits
+DRIBBLE CONTROL CHECK: 23 checks, 0 failures

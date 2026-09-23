@@ -1,0 +1,15 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Xbox X undoes a mouse substitution and restores both squad identities
+PASS: D-pad previews the next reserve in the comparison panel
+PASS: Controller reserve selection waits for confirmation
+PASS: Mouse movement starts a native squad drag
+PASS: Mouse movement starts a native squad drag
+PASS: Unrelated or incomplete drag payloads are ignored
+PASS: All eleven shirt cards remain inside the pitch without overlap, formation=0
+PASS: All eleven shirt cards remain inside the pitch without overlap, formation=1
+PASS: All eleven shirt cards remain inside the pitch without overlap, formation=2
+PASS: In-match management freezes play and displays real energy and cards
+PASS: Clicking cancel removes the selected pending replacement
+PASS: Menu selections never trigger a gameplay kick
+SQUAD MANAGEMENT CHECK: 34 checks, 22 failures

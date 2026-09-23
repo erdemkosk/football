@@ -247,7 +247,7 @@ func step(delta: float) -> void:
 		p.handling_blend=smoothstep(0,0.48,age)
 		p.facing=setup.direction
 		destination=delivery
-		var mark: Vector3=game.restart_point+Vector3(0,0.23,0)
+		var mark: Vector3=game.restart_point+Vector3(0,game.ball.GROUND_HEIGHT,0)
 		if age>0.5 and (ball.position.distance_to(mark)<0.28 or age>0.85):
 			ball.place(mark)
 			enter("stand")
@@ -269,7 +269,9 @@ func step(delta: float) -> void:
 	elif phase=="arrange":
 		destination=setup.targets[setup.taker]
 		p.facing=setup.direction
-		if ball.position.y<0.235 and Vector2(ball.linear_velocity.x,ball.linear_velocity.z).length()<0.1 and absf(ball.linear_velocity.y)<0.35:
+		# The contact solver can rest slightly above the nominal sphere radius.
+		# Require a settled ball without rejecting that collision margin.
+		if ball.position.y<ball.RADIUS+.05 and Vector2(ball.linear_velocity.x,ball.linear_velocity.z).length()<0.1 and absf(ball.linear_velocity.y)<0.35:
 			rest_age+=delta
 		else: rest_age=0
 		if game.restart_type!="TAÇ" and game.flat_distance(ball.position,game.restart_point)>0.3 and age>0.6:
@@ -284,7 +286,7 @@ func step(delta: float) -> void:
 		var facing: Vector3=setup.direction if phase not in ["pickup","lift"] else (pickup_point-p.position)*Vector3(1,0,1)
 		if facing.length()>0.01: p.facing=facing.normalized()
 	if ball.held_by==p:
-		ball.hold_target=game.restart_point+Vector3(0,0.23,0) if phase=="place" else p.hand_center()
+		ball.hold_target=game.restart_point+Vector3(0,game.ball.GROUND_HEIGHT,0) if phase=="place" else p.hand_center()
 
 func around_goal(from: Vector3,to: Vector3) -> Vector3:
 	for side in [-1.0,1.0]:
@@ -316,7 +318,10 @@ func can_ready() -> bool:
 	var p=game.players[setup.taker]
 	if game.flat_distance(p.position,setup.targets[setup.taker])>0.16: return false
 	if game.restart_type=="TAÇ":
-		if ball.held_by!=p or ball.position.y<1.7: return false
+		# The raised hand height varies with the real player build. A fixed
+		# 1.70 m gate leaves shorter takers waiting forever after the scale fix.
+		if ball.held_by!=p or p.set_piece_pose!="throw" or p.handling_blend<.9: return false
+		if ball.position.distance_to(p.hand_center())>.25: return false
 	else:
 		if ball.held_by!=null or rest_age<0.25: return false
 		if game.flat_distance(ball.position,game.restart_point)>0.3: return false

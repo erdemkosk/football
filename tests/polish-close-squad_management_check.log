@@ -1,0 +1,37 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Selecting a starter keeps focus on the pitch
+PASS: Selecting a reserve opens comparison without changing the starter
+PASS: Mouse confirmation exchanges starter and reserve without spending a match substitution
+PASS: Xbox X undoes a mouse substitution and restores both squad identities
+PASS: Controller A selects the first player without forcing a substitution
+PASS: D-pad previews the next reserve in the comparison panel
+PASS: Controller reserve selection waits for confirmation
+PASS: Controller A completes the selected lineup change
+PASS: Mouse movement starts a native squad drag
+PASS: Dragging a reserve onto a starter completes exactly one swap
+PASS: Mouse movement starts a native squad drag
+PASS: Dragging a starter onto a reserve also completes exactly one swap
+PASS: Mouse movement starts a native squad drag
+PASS: Dragging between two pitch cards exchanges positions exactly once
+PASS: Mouse can select and highlight a reserve first
+PASS: Mouse bench-first selection applies the intended pair
+PASS: Mouse movement starts a native squad drag
+PASS: Invalid goalkeeper drag leaves the lineup unchanged
+PASS: Unrelated or incomplete drag payloads are ignored
+PASS: All eleven shirt cards remain inside the pitch without overlap, formation=0
+PASS: All eleven shirt cards remain inside the pitch without overlap, formation=1
+PASS: All eleven shirt cards remain inside the pitch without overlap, formation=2
+PASS: In-match management freezes play and displays real energy and cards
+PASS: Live substitution waits for a stoppage and does not teleport the player
+PASS: Outgoing and incoming players are marked and individual cancellation is available
+PASS: A reserved substitute cannot be assigned to another player
+PASS: Another eligible replacement can be queued independently
+PASS: Undo removes only the last queued replacement
+PASS: Clicking cancel removes the selected pending replacement
+PASS: A dismissed player cannot be replaced
+PASS: A previously used substitute cannot re-enter
+PASS: The three-substitution limit is enforced through the new UI
+PASS: Controller B resumes play with the requested substitution still queued
+PASS: Menu selections never trigger a gameplay kick
+SQUAD MANAGEMENT CHECK: 34 checks, 0 failures

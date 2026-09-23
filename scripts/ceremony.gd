@@ -69,7 +69,7 @@ func begin() -> void:
 	camera_at=Vector3(36+P.SIDE_SHIFT,1.2,0)
 	camera_eye=Vector3(20+P.SIDE_SHIFT,8,14)
 	camera_size=24
-	game.stadium.crowd.react("entrance",0,Vector3(32+P.SIDE_SHIFT,0,0))
+	game.stadium.react("entrance",0,Vector3(32+P.SIDE_SHIFT,0,0))
 
 func move_actor(p,destination: Vector3,delta: float,speed: float) -> bool:
 	var offset: Vector3=(destination-p.position)*Vector3(1,0,1)
@@ -96,27 +96,27 @@ func update(delta: float) -> void:
 			var p=game.players[i]
 			var lane := -1.05 if p.team==0 else 1.05
 			var destination: Vector3=Vector3(27+P.SIDE_SHIFT,0,lane) if stages[i]==0 else lineup[i]
-			if move_actor(p,destination,delta,0.43):
+			if move_actor(p,destination,delta,0.86):
 				if stages[i]==0: stages[i]=1
 				else: p.facing=Vector3.RIGHT
 			if stages[i]==0 or game.flat_distance(p.position,lineup[i])>0.18: ready=false
 		for i in range(3):
-			if move_actor(officials[i],Vector3(25+P.SIDE_SHIFT,0,[0,-1.05,1.05][i]),delta,0.43): officials[i].facing=Vector3.RIGHT
+			if move_actor(officials[i],Vector3(25+P.SIDE_SHIFT,0,[0,-1.05,1.05][i]),delta,0.86): officials[i].facing=Vector3.RIGHT
 		if ready:
 			phase="presentation"
 			age=0
-			game.stadium.crowd.react("entrance",0,Vector3(25+P.SIDE_SHIFT,0,0))
+			game.stadium.react("entrance",0,Vector3(25+P.SIDE_SHIFT,0,0))
 	elif phase=="presentation":
 		for p in game.players:
 			p.desired=Vector3.ZERO
 			p.facing=Vector3.RIGHT
-			p.saluting=age>0.6+p.number*0.06 and age<4.8
+			p.saluting=age>0.3+p.number*0.03 and age<2.4
 			p.step(delta)
 		for ref in officials:
 			ref.desired=Vector3.ZERO
 			ref.facing=Vector3.RIGHT
 			ref.step(delta)
-		if age>=6:
+		if age>=3:
 			phase="formation"
 			age=0
 			game.ball.visible=true
@@ -124,12 +124,13 @@ func update(delta: float) -> void:
 	elif phase=="formation":
 		var ready := true
 		for i in range(22):
-			if not move_actor(game.players[i],kickoff[i],delta,0.82): ready=false
-		for i in range(3): move_actor(officials[i],game.referees.kickoff_target(i),delta,0.95)
+			if not move_actor(game.players[i],kickoff[i],delta,1.0): ready=false
+		for i in range(3): move_actor(officials[i],game.referees.kickoff_target(i),delta,1.0)
 		if ready: finish(false)
 
 func finish(skipped: bool) -> void:
 	if phase=="": return
+	game.audio.release_walkout()
 	clear()
 	if skipped: game.reset_positions(0)
 	for p in game.players:
@@ -166,20 +167,20 @@ func update_camera(delta: float) -> void:
 	var eye := Vector3(17+P.SIDE_SHIFT,8,15)
 	var size := 29.0
 	if phase=="walkout":
-		var t := smoothstep(2,14,age)
+		var t := smoothstep(1,7,age)
 		target=Vector3(36+P.SIDE_SHIFT,1.2,0).lerp(Vector3(28+P.SIDE_SHIFT,1,0),t)
 		eye=Vector3(20+P.SIDE_SHIFT,8,14).lerp(Vector3(38+P.SIDE_SHIFT,13,23),t)
 		size=lerpf(24,43,t)
 	elif phase=="presentation":
 		target=Vector3(25+P.SIDE_SHIFT,1,0)
 		# Stay in front of the stand and tunnel roof for an unobstructed lineup.
-		eye=Vector3(32+P.SIDE_SHIFT,10,2-age*0.3)
+		eye=Vector3(32+P.SIDE_SHIFT,10,2-age*0.6)
 		size=22
 	elif phase=="formation":
 		target=Vector3.ZERO
 		eye=Vector3(0,70,37)
 		size=65
-	var blend := 1-exp(-delta*1.8)
+	var blend := 1-exp(-delta*3.6)
 	camera_at=camera_at.lerp(target,blend)
 	camera_eye=camera_eye.lerp(eye,blend)
 	camera_size=lerpf(camera_size,size,blend)

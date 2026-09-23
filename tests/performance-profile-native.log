@@ -1,0 +1,19 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce RTX 3070
+
+preparation: 704.705298013245 us (906 samples)
+ai: 1061.23509933775 us (906 samples)
+contact-preparation: 74.8653421633554 us (906 samples)
+body-language: 77.416114790287 us (906 samples)
+players-step: 3017.23730684327 us (906 samples)
+resolve: 17.0551876379691 us (906 samples)
+contacts: 93.9933774834437 us (906 samples)
+replay-boundaries: 4.86313465783664 us (906 samples)
+player timers-weather: 7.73818181818182 us
+player steering: 4.4157196969697 us
+player body-physics: 35.7100378787879 us
+player facing-locomotion: 10.7327272727273 us
+player body-language: 3.2417803030303 us
+player ball-actions: 3.76712121212121 us
+player animation: 59.5412121212121 us
+player footprints: 4.64234848484849 us

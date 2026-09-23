@@ -1,0 +1,71 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Fullscreen automatic uses detected native resolution (1366, 768)
+PASS: Auto and native are offered on (1366, 768)
+PASS: Fullscreen resolutions preserve aspect and do not drift on repeated application
+PASS: Changing aspect normalizes once without losing pixels on reload
+PASS: Automatic window fits the usable desktop with borders and taskbar
+PASS: Window choices cannot exceed the current monitor
+PASS: Oversized window preference falls back to automatic
+PASS: Fullscreen automatic uses detected native resolution (1920, 1080)
+PASS: Auto and native are offered on (1920, 1080)
+PASS: Fullscreen resolutions preserve aspect and do not drift on repeated application
+PASS: Changing aspect normalizes once without losing pixels on reload
+PASS: Automatic window fits the usable desktop with borders and taskbar
+PASS: Window choices cannot exceed the current monitor
+PASS: Oversized window preference falls back to automatic
+PASS: Fullscreen automatic uses detected native resolution (2304, 1440)
+PASS: Auto and native are offered on (2304, 1440)
+PASS: Fullscreen resolutions preserve aspect and do not drift on repeated application
+PASS: Changing aspect normalizes once without losing pixels on reload
+PASS: Automatic window fits the usable desktop with borders and taskbar
+PASS: Window choices cannot exceed the current monitor
+PASS: Oversized window preference falls back to automatic
+PASS: Fullscreen automatic uses detected native resolution (2560, 1440)
+PASS: Auto and native are offered on (2560, 1440)
+PASS: Fullscreen resolutions preserve aspect and do not drift on repeated application
+PASS: Changing aspect normalizes once without losing pixels on reload
+PASS: Automatic window fits the usable desktop with borders and taskbar
+PASS: Window choices cannot exceed the current monitor
+PASS: Oversized window preference falls back to automatic
+PASS: Fullscreen automatic uses detected native resolution (3440, 1440)
+PASS: Auto and native are offered on (3440, 1440)
+PASS: Fullscreen resolutions preserve aspect and do not drift on repeated application
+PASS: Changing aspect normalizes once without losing pixels on reload
+PASS: Automatic window fits the usable desktop with borders and taskbar
+PASS: Window choices cannot exceed the current monitor
+PASS: Oversized window preference falls back to automatic
+PASS: Fullscreen automatic uses detected native resolution (3840, 2160)
+PASS: Auto and native are offered on (3840, 2160)
+PASS: Fullscreen resolutions preserve aspect and do not drift on repeated application
+PASS: Changing aspect normalizes once without losing pixels on reload
+PASS: Automatic window fits the usable desktop with borders and taskbar
+PASS: Window choices cannot exceed the current monitor
+PASS: Oversized window preference falls back to automatic
+PASS: Fullscreen automatic uses detected native resolution (1280, 800)
+PASS: Auto and native are offered on (1280, 800)
+PASS: Fullscreen resolutions preserve aspect and do not drift on repeated application
+PASS: Changing aspect normalizes once without losing pixels on reload
+PASS: Automatic window fits the usable desktop with borders and taskbar
+PASS: Window choices cannot exceed the current monitor
+PASS: Oversized window preference falls back to automatic
+PASS: First launch without a resolution preference defaults to automatic
+PASS: Resolution is immediately visible below screen mode
+PASS: The menu shows automatic and the detected display size
+PASS: Controller changes resolution without losing focus
+PASS: Resolution changes preserve the menu layout and paused match
+PASS: Controller opens the resolution list
+PASS: Choosing from the popup applies resolution and returns focus to the same setting
+PASS: Manual resolution and window mode are saved together
+PASS: Manual output preference survives a settings reload
+PASS: F11 switches mode inside Settings without closing or losing focus
+PASS: Automatic fullscreen renders at native quality
+PASS: Lower fullscreen resolution changes 3D rendering while keeping the monitor filled
+PASS: Fullscreen keeps UI coordinates and reports the effective rendered dimensions
+PASS: Automatic is saved as a preference, not an obsolete detected monitor size
+PASS: Old settings containing only fullscreen migrate to automatic resolution
+PASS: Invalid or unsupported saved resolution falls back safely: (-1, 720)
+PASS: Invalid or unsupported saved resolution falls back safely: (99000, 99000)
+PASS: Invalid or unsupported saved resolution falls back safely: broken
+PASS: Invalid or unsupported saved resolution falls back safely: (0, 720)
+DISPLAY SETTINGS CHECK: 68 checks, 0 failures

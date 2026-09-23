@@ -1,0 +1,48 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Full left-stick shot aim turns 6–8 degrees in 100 ms: xbox
+PASS: Half-stick movement allows a sub-1.2-degree shot correction: xbox
+PASS: Centering the stick stops aiming immediately: xbox
+PASS: Stick drift inside the deadzone cannot move aim: xbox
+PASS: The slower aim still reaches a deliberate sideways target: xbox
+PASS: Shot release immediately launches the displayed heading: xbox
+PASS: Full left-stick shot aim turns 6–8 degrees in 100 ms: playstation
+PASS: Half-stick movement allows a sub-1.2-degree shot correction: playstation
+PASS: Centering the stick stops aiming immediately: playstation
+PASS: Stick drift inside the deadzone cannot move aim: playstation
+PASS: The slower aim still reaches a deliberate sideways target: playstation
+PASS: Shot release immediately launches the displayed heading: playstation
+PASS: Running sensitivity remains effective without accelerating the aiming cursor
+PASS: Aiming speed agrees at 30, 60 and 120 updates per second
+PASS: Uncharged left-stick running keeps its full movement response
+PASS: Charged pass direction moves 5–7 degrees per 100 ms, mode [false, false]
+PASS: Centering the stick holds pass heading while power continues charging
+PASS: A pass still commits exactly the previewed launch velocity
+PASS: Charged pass direction moves 5–7 degrees per 100 ms, mode [true, false]
+PASS: Centering the stick holds pass heading while power continues charging
+PASS: A pass still commits exactly the previewed launch velocity
+PASS: Charged pass direction moves 5–7 degrees per 100 ms, mode [false, true]
+PASS: Centering the stick holds pass heading while power continues charging
+PASS: A pass still commits exactly the previewed launch velocity
+PASS: Precise left-stick restart aim: SERBEST VURUŞ, charging=false
+PASS: Restart aim stays fixed when the stick is released
+PASS: Precise left-stick restart aim: SERBEST VURUŞ, charging=true
+PASS: Restart aim stays fixed when the stick is released
+PASS: Precise left-stick restart aim: KORNER, charging=false
+PASS: Restart aim stays fixed when the stick is released
+PASS: Precise left-stick restart aim: KORNER, charging=true
+PASS: Restart aim stays fixed when the stick is released
+PASS: Precise left-stick restart aim: PENALTI, charging=false
+PASS: Restart aim stays fixed when the stick is released
+PASS: Precise left-stick restart aim: PENALTI, charging=true
+PASS: Restart aim stays fixed when the stick is released
+PASS: Precise left-stick restart aim: TAÇ, charging=false
+PASS: Restart aim stays fixed when the stick is released
+PASS: Precise left-stick restart aim: TAÇ, charging=true
+PASS: Restart aim stays fixed when the stick is released
+PASS: Shootout crosshair makes a controlled full-stick correction
+PASS: Shootout aim also stops immediately at neutral
+PASS: Goalkeeper dive direction still receives the full analog input
+PASS: Keyboard shot corrections retain their established two-degree tap
+PASS: Independent D-pad aiming retains its existing response
+AIM PRECISION CHECK: 45 checks, 0 failures

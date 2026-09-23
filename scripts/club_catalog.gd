@@ -5,6 +5,7 @@ var game
 var selected := [0,1]
 var league := [0,0]
 var alternate := [false,false]
+var contrast_override: Dictionary = {}
 var career_clubs: Array=[]
 var career_rosters: Array=[]
 var exhibition: Dictionary={}
@@ -60,25 +61,65 @@ func data(side: int) -> Dictionary:
 	return CLUBS[selected[side]%CLUBS.size()]
 
 func kit(side: int) -> Dictionary:
+	var colors := strip(side)
+	var keepers := keeper_palette()
+	colors.keeper_color=keepers[side]
+	return colors
+
+func strip(side: int) -> Dictionary:
 	var club := data(side)
 	var fallback: int=catalog_index(side)
 	var away: String=str(club.get("alt",club.primary))
-	return {"primary":Color(away if alternate[side] else club.primary),"accent":Color(club.get("alt_trim",club.accent) if alternate[side] else club.accent),"shorts":Color(away if alternate[side] else club.shorts),"pattern":int(club.get("pattern",0)),"club_id":club.get("badge_id",fallback if fallback>=0 else selected[side]),"badge_primary":Color(club.primary),"badge_accent":Color(club.accent)}
+	var colors := {"primary":Color(away if alternate[side] else club.primary),"accent":Color(club.get("alt_trim",club.accent) if alternate[side] else club.accent),"shorts":Color(away if alternate[side] else club.shorts),"pattern":int(club.get("pattern",0)),"club_id":club.get("badge_id",fallback if fallback>=0 else selected[side]),"badge_primary":Color(club.primary),"badge_accent":Color(club.accent)}
+	if contrast_override.has(side):
+		colors.primary=contrast_override[side]
+		colors.shorts=colors.primary
+		colors.accent=Color("172328") if colors.primary.get_luminance()>.45 else Color("f5f3e8")
+	return colors
 
 func clear_career() -> void:
 	career_clubs.clear(); career_rosters.clear()
 	lineups=[range(11),range(11)]
 	reserves=[range(11,18),range(11,18)]
 
-func contrast_kits() -> void:
-	var a := Color(data(0).primary)
-	var b := Color(data(1).primary)
-	if Vector3(a.r-b.r,a.g-b.g,a.b-b.b).length()<0.4: alternate[1]=true
+static func separation(a: Color,b: Color) -> float:
+	return absf(a.get_luminance()-b.get_luminance())*.70+Vector3(a.r-b.r,a.g-b.g,a.b-b.b).length()*.30/sqrt(3.0)
+
+func contrast_kits(preferred: int=0) -> void:
+	contrast_override.clear()
+	var other := 1-preferred
+	var a: Color=strip(preferred).primary
+	var current := separation(a,strip(other).primary)
+	if current>=.26: return
+	alternate[other]=not alternate[other]
+	if separation(a,strip(other).primary)<current: alternate[other]=not alternate[other]
+	if separation(a,strip(other).primary)<.26:
+		var light := Color("f3f1df"); var dark := Color("152337")
+		contrast_override[other]=light if separation(a,light)>separation(a,dark) else dark
+
+func keeper_palette() -> Array[Color]:
+	var against: Array[Color]=[strip(0).primary,strip(1).primary]
+	var result: Array[Color]=[]
+	for side in range(2):
+		var best := Color("e5c747"); var score := -1.0
+		for candidate in [Color("e5c747"),Color("6cd3e7"),Color("be72d2"),Color("f09747"),Color("58bc7a"),Color("26313b")]:
+			var minimum := 1.0
+			for color in against: minimum=minf(minimum,Vector3(candidate.r-color.r,candidate.g-color.g,candidate.b-color.b).length())
+			if minimum>score: score=minimum; best=candidate
+		result.append(best); against.append(best)
+	return result
 
 func reset_side(side: int) -> void:
 	lineups[side]=range(11)
 	reserves[side]=range(11,18)
 	alternate[side]=false
+	if side==0:
+		var plan := tactical_plan(side)
+		for key in plan:
+			if key in game.management.identity.SETTINGS: game.management.set(key,bool(plan[key]) if key=="anchor" else int(plan[key]))
+
+func tactical_plan(side: int) -> Dictionary:
+	return preload("res://scripts/team_identity.gd").plan(data(side))
 
 func choose(side: int,id: int) -> void:
 	clear_career()
@@ -108,8 +149,9 @@ func member(side: int,id: int) -> Dictionary:
 	if cat>=0:
 		var names: PackedStringArray=CLUBS[cat].squad.split(",")
 		var result := {"name":names[id],"shirt":id+1,"keeper":id in [0,11],"used":false,"appearance_id":cat*24+id}
+		result.role=game.management.natural_role(result.shirt,result.keeper)
 		result.merge(Physique.profile(cat,id,result.keeper))
-		result.attributes=preload("res://scripts/player_attributes.gd").profile(cat,id,result.keeper)
+		result.attributes=preload("res://scripts/player_attributes.gd").club_profile(cat,id,result.keeper)
 		return result
 	var club := data(side)
 	var roster: Array=club.get("roster",[])
@@ -118,6 +160,7 @@ func member(side: int,id: int) -> Dictionary:
 		if not player.has("used"): player.used=false
 		return player
 	var fallback := {"name":"OYUNCU","shirt":id+1,"keeper":id==0,"used":false,"appearance_id":id}
+	fallback.role=game.management.natural_role(fallback.shirt,fallback.keeper)
 	fallback.merge(Physique.profile(side,id,fallback.keeper))
 	fallback.attributes=preload("res://scripts/player_attributes.gd").profile(side,id,fallback.keeper)
 	return fallback
@@ -131,17 +174,32 @@ func swap_starter(slot: int,reserve: int) -> bool:
 	apply()
 	return true
 
-func apply() -> void:
+func swap_positions(a: int,b: int) -> bool:
+	if a<0 or b<0 or a>=11 or b>=11 or a==b: return false
+	var first: int=lineups[0][a]
+	var second: int=lineups[0][b]
+	if member(0,first).keeper!=member(0,second).keeper: return false
+	lineups[0][a]=second
+	lineups[0][b]=first
+	apply()
+	return true
+
+func apply(preferred: int=0) -> void:
+	# Resolve clashes for career and quick-match entry as well as the kit picker.
+	contrast_kits(preferred)
 	game.management.originals.clear()
 	game.management.reserve_originals=[[],[]]
 	for side in range(2):
 		for slot in range(11):
 			var identity := member(side,lineups[side][slot])
 			game.management.originals.append(identity)
-			var p=game.players[side*11+slot]
-			p.apply_kit(kit(side))
 		for id in reserves[side]: game.management.reserve_originals[side].append(member(side,id))
 	game.management.reset()
+	game.stadium.crowd.set_clubs(kit(0),kit(1))
+	game.referees.refresh_kits()
+	for banner in game.stadium.supporter_banners:
+		var club := data(1 if banner.away else 0)
+		banner.label.text=str(club.short)+(" · DEPLASMAN" if banner.away else " · "+str(club.get("year","")))
 	if game.stadium.sidelines.team_labels.size()==2:
 		for side in range(2): game.stadium.sidelines.team_labels[side].text=data(side).name+" · YEDEK KULÜBESİ"
 	for actor in game.stadium.sidelines.actors:

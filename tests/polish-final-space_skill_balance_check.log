@@ -1,0 +1,44 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Human possession alone does not turn a balanced club into relentless high pressure
+PASS: A deep-block club retains its own defensive identity
+PASS: A losing opponent still presses aggressively late in the match
+PASS: Team 0 faces one primary challenger while the other defenders cover from depth
+PASS: Team 1 faces one primary challenger while the other defenders cover from depth
+PASS: A high-pressure touchline trap still recruits a second challenger
+PASS: Double pressure comes in bounded bursts with recovery, not a permanent pile-up
+PASS: A close defender jockeys against a controlled slow dribble even in a high press
+PASS: Opponent skills inspect the free exit rather than always turning toward the same pitch side
+PASS: An isolated technical opponent can execute the same physical skill as the user
+PASS: Shared team and player recovery prevent skill spam
+PASS: A second skill is not requested on the next AI decision
+PASS: Surrounded AI recycles to the free teammate instead of forcing a trick through two players
+PASS: Losing possession cancels the skill and restores the old carrier's body collision
+PASS: Restart/reset removes skill collision exemptions
+PASS: AI valuation safely handles rainbow
+PASS: AI valuation safely handles heel
+PASS: AI valuation safely handles flick
+PASS: Shared skill starts for team 0: roll at 3.40m
+SKILL DUEL ["roll", 3.4, 1.0, false, 0] { "escaped": false, "tick": 114, "foul": false, "load": 0.42542360275984, "physical": true }
+PASS: Only the carrier's coarse capsule is exempt; every opponent remains a physical obstacle
+PASS: Shared skill starts for team 0: elastico at 3.40m
+SKILL DUEL ["elastico", 3.4, 1.0, false, 0] { "escaped": false, "tick": 112, "foul": false, "load": 0.99359680584499, "physical": true }
+PASS: Only the carrier's coarse capsule is exempt; every opponent remains a physical obstacle
+PASS: Shared skill starts for team 0: roulette at 3.40m
+SKILL DUEL ["roulette", 3.4, 1.0, false, 0] { "escaped": false, "tick": 93, "foul": false, "load": 0.41211724366461, "physical": true }
+PASS: Only the carrier's coarse capsule is exempt; every opponent remains a physical obstacle
+PASS: Shared skill starts for team 0: roll at 2.70m
+SKILL DUEL ["roll", 2.7, 1.0, false, 0] { "escaped": false, "tick": 67, "foul": false, "load": 0.70558756675039, "physical": true }
+PASS: Only the carrier's coarse capsule is exempt; every opponent remains a physical obstacle
+PASS: Shared skill starts for team 0: roll at 1.05m
+SKILL DUEL ["roll", 1.05, 1.0, false, 0] { "escaped": false, "tick": 14, "foul": false, "load": 0.0, "physical": true }
+PASS: Only the carrier's coarse capsule is exempt; every opponent remains a physical obstacle
+PASS: An occupied exit or late input cannot guarantee a successful skill
+PASS: Shared skill starts for team 0: roll at 3.40m
+SKILL DUEL ["roll", 3.4, 1.0, true, 0] { "escaped": false, "tick": 31, "foul": false, "load": 0.82380467312677, "physical": true }
+PASS: Only the carrier's coarse capsule is exempt; every opponent remains a physical obstacle
+PASS: An occupied exit or late input cannot guarantee a successful skill
+PASS: Shared skill starts for team 1: roll at 3.40m
+SKILL DUEL ["roll", 3.4, -1.0, false, 1] { "escaped": false, "tick": 106, "foul": false, "load": 0.49782837427088, "physical": true }
+PASS: Only the carrier's coarse capsule is exempt; every opponent remains a physical obstacle
+SPACE AND SKILL BALANCE CHECK: 38 checks, 4 failures

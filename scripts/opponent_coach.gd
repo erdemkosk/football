@@ -29,6 +29,8 @@ func reset() -> void:
 	direct_play=0; build_pressure=0; possession_team=-1; transition=0
 	press_load=0; press_rest=0; mentality=1; pressing=1; line_height=1
 	wing_bias=0; protect_depth=false; escape_press=false; reason="balance"; next_sub=0
+	var plan: Dictionary=game.clubs.tactical_plan(1)
+	mentality=int(plan.mentality); pressing=int(plan.pressing); line_height=int(plan.line_height)
 
 func observe_kick(index: int,velocity: Vector3,kind: String) -> void:
 	if game.training or game.players[index].team!=0 or kind in ["shot","header","volley","half_volley","finish","ball_tackle"]: return
@@ -70,17 +72,13 @@ func update(delta: float) -> void:
 		if press_load>[4.5,6.0,7.5][level()]: press_rest=4.0; press_load=0
 	else: press_load=maxf(0,press_load-delta*.6)
 	if review_in<=0:
-		review_in=[14.0,9.0,5.5][level()]
+		review_in=[14.0,9.0,5.5][level()]*lerpf(1.22,.78,game.management.identity.team_quality(1))
 		review()
 
 func review() -> void:
 	var old := reason
-	var base: int=[1,2,0,1,1,2,0,1][game.clubs.selected[1]]
-	if not game.clubs.career_clubs.is_empty(): base=game.clubs.career_clubs[1].plan.mentality
-	mentality=base; pressing=base; line_height=base
-	if not game.clubs.career_clubs.is_empty():
-		pressing=int(game.clubs.career_clubs[1].plan.pressing)
-		line_height=int(game.clubs.career_clubs[1].plan.line_height)
+	var plan: Dictionary=game.clubs.tactical_plan(1)
+	mentality=int(plan.mentality); pressing=int(plan.pressing); line_height=int(plan.line_height)
 	var ready: bool=samples>[12.0,7.0,4.0][level()]
 	wing_bias=0; protect_depth=false; escape_press=false; reason="balance"
 	if ready:
@@ -102,11 +100,14 @@ func review() -> void:
 		mentality=2; pressing=2; line_height=1 if protect_depth else 2; reason="chase"
 	elif late and margin>0:
 		mentality=0; pressing=0; line_height=0; reason="protect"
-	elif level()>0 and samples>5 and energy()>.5:
-		pressing=2 if direct_play<2.5 else 1
+	elif protect_depth:
+		pressing=mini(pressing,1)
+	# Team identity sets sustained pressure. A few seconds of human possession
+	# must not turn every balanced or deep-block club into an all-out press.
 	if energy()<.32: pressing=0
-	var shape: int=int(game.clubs.career_clubs[1].plan.formation) if not game.clubs.career_clubs.is_empty() else 0
+	var shape: int=int(plan.formation)
 	if reason=="chase" and level()>0: shape=1
+	elif reason=="protect": shape=0
 	elif escape_press and level()==2 and not protect_depth and available==10: shape=2
 	if game.management.opponent_formation!=shape:
 		game.management.opponent_formation=shape

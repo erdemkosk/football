@@ -24,17 +24,41 @@ func begin(value: String) -> void:
 func placing() -> bool:
 	return mode=="free_kick" and phase=="place"
 
+func team_play() -> bool:
+	return not game.training or mode=="free"
+
 func title() -> String:
 	return TITLES[MODES.find(mode)]
+
+func station_for(p) -> Vector3:
+	if not game.training or mode!="free" or p.team!=0: return p.home
+	if p.keeper: return Vector3(0,0,47.5)
+	return Vector3(p.home.x,0,clampf(p.home.z-28.0,-42.0,38.0))
 
 func setup() -> void:
 	attempt+=1; age=0; held_age=0; finish_wait=-1; wall.clear()
 	phase="free" if mode=="free" else "waiting"
+	if mode=="free":
+		for i in range(game.players.size()):
+			var p=game.players[i]
+			p.visible=p.team==0 or p.keeper
+			p.collision_layer=2 if p.visible else 0
+			if not p.visible: continue
+			p.velocity=Vector3.ZERO
+			p.desired=Vector3.ZERO
+			if p.team==0:
+				p.position=station_for(p)
+				p.facing=Vector3.FORWARD
+				p.rig.rotation=Vector3.ZERO
+		var user=game.players[9]
+		user.position=Vector3(0,0,-25)
+		user.facing=Vector3.FORWARD
+		user.rig.rotation=Vector3.ZERO
+		return
 	for i in range(game.players.size()):
 		var p=game.players[i]
 		p.visible=i in [9,11] or (mode=="cross" and i==feeder) or (mode=="free_kick" and i in [12,13,14,15])
 		p.collision_layer=2 if p.visible else 0
-	if mode=="free": return
 	if mode=="cross":
 		station=Vector3((23 if attempt%2==1 else -23)*P.WIDTH_RATIO,0,-39)
 		game.players[9].position=Vector3(0,0,-40)
@@ -42,16 +66,16 @@ func setup() -> void:
 		partner.position=station
 		partner.facing=(game.players[9].position-station).normalized()
 		partner.rig.rotation.y=atan2(-partner.facing.x,-partner.facing.z)
-		game.ball.place(station+partner.facing*.74+Vector3.UP*.23)
-		game.previous_ball=station+partner.facing*.74+Vector3.UP*.23
-		game.announce("ORTA ÇALIŞMASI · CEZA SAHASINDA YERİNİ AL")
+		game.ball.place(station+partner.facing*.74+Vector3.UP*game.ball.GROUND_HEIGHT)
+		game.previous_ball=station+partner.facing*.74+Vector3.UP*game.ball.GROUND_HEIGHT
+		game.hint("ORTA ÇALIŞMASI · CEZA SAHASINDA YERİNİ AL")
 	else:
 		for i in range(game.players.size()):
 			game.players[i].visible=false
 			game.players[i].collision_layer=0
 		phase="place"
 		show_place()
-		game.announce("YÖN TUŞLARIYLA NOKTAYI SEÇ  ·  A İLE VUR")
+		game.hint("YÖN TUŞLARIYLA NOKTAYI SEÇ  ·  A İLE VUR")
 	game.match_camera.snap=true
 
 func manages(index: int) -> bool:
@@ -72,7 +96,7 @@ func request_cross() -> bool:
 	if phase=="waiting":
 		age=maxf(age,1.5)
 		game.players[9].call_timer=.7
-	else: game.announce("ORTA YOLDA · ŞUT TUŞUYLA KAFA VURUŞU")
+	else: game.hint("ORTA YOLDA · ŞUT TUŞUYLA KAFA VURUŞU")
 	return true
 
 func deliver_cross() -> bool:
@@ -89,7 +113,7 @@ func deliver_cross() -> bool:
 	# the rising ball and away from the cross's actual meeting point.
 	game.ai_receivers[0]=-1; game.ai_pass_time[0]=0
 	phase="live"; age=0
-	game.announce("ORTA GELİYOR · ŞUT TUŞUYLA KAFA VURUŞU")
+	game.hint("ORTA GELİYOR · ŞUT TUŞUYLA KAFA VURUŞU")
 	return true
 
 func handle(event: InputEvent) -> bool:
@@ -112,7 +136,7 @@ func show_place() -> void:
 	game.restart_type="SERBEST VURUŞ"
 	game.restart_team=0
 	game.state="restart"
-	game.ball.place(place_point+Vector3.UP*0.23)
+	game.ball.place(place_point+Vector3.UP*game.ball.GROUND_HEIGHT)
 	game.previous_ball=game.ball.position
 	game.camera_focus=place_point
 

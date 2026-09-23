@@ -1,0 +1,24 @@
+ERROR: Failed to open log file for writing: user://logs/godot.log
+   at: rotate_file (core/io/logger.cpp:169)
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+ERROR: FAIL: Corner organizes the box and keeps defenders clear of the corner arc
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/set_piece_check.gd:9)
+       [1] run (res://tests/set_piece_check.gd:121)
+       [2] setup (res://tests/set_piece_check.gd:25)
+       [3] frames (res://tests/set_piece_check.gd:11)
+ERROR: FAIL: Thrower stands on the touchline with the ball held overhead
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/set_piece_check.gd:9)
+       [1] run (res://tests/set_piece_check.gd:128)
+       [2] setup (res://tests/set_piece_check.gd:25)
+       [3] frames (res://tests/set_piece_check.gd:11)
+ERROR: FAIL: S delivers a real overhead throw into the field
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/set_piece_check.gd:9)
+       [1] run (res://tests/set_piece_check.gd:138)
+       [2] frames (res://tests/set_piece_check.gd:11)

@@ -23,6 +23,8 @@ var using_gamepad := false:
 var held: Dictionary = {}
 var menus = preload("res://scripts/menu_navigation.gd").new()
 var combos = preload("res://scripts/attacking_combos.gd").new()
+var seen_pads: Array[int] = []
+var input_seen := false
 
 func _ready() -> void:
 	menus.game=game
@@ -34,9 +36,10 @@ func _ready() -> void:
 			if event is InputEventJoypadButton or event is InputEventJoypadMotion:
 				InputMap.action_erase_event(action,event)
 	Input.joy_connection_changed.connect(connection_changed)
-	var connected := Input.get_connected_joypads()
-	if not connected.is_empty():
-		adopt_device(connected[0])
+	seen_pads.assign(Input.get_connected_joypads())
+	if not seen_pads.is_empty():
+		adopt_device(seen_pads[0])
+		input_seen=false
 		stick=Vector2(Input.get_joy_axis(device,JOY_AXIS_LEFT_X),Input.get_joy_axis(device,JOY_AXIS_LEFT_Y))
 
 static func detect_family(controller_name: String,info: Dictionary={},guid: String="") -> String:
@@ -72,6 +75,20 @@ func icon_for(action: int) -> Texture2D:
 
 func _process(delta: float) -> void:
 	menus.update(delta)
+	watch_hotplug()
+
+func watch_hotplug() -> void:
+	var pads: Array=Input.get_connected_joypads()
+	for id in pads:
+		if int(id) not in seen_pads:
+			seen_pads.append(int(id))
+			connection_changed(int(id),true)
+	var gone: Array[int]=[]
+	for id in seen_pads:
+		if id not in pads: gone.append(id)
+	for id in gone:
+		seen_pads.erase(id)
+		connection_changed(id,false)
 
 func movement() -> Vector3:
 	var magnitude := stick.length()
@@ -115,8 +132,9 @@ func separate_aim() -> Vector3:
 	return Vector3(direction.x,0,direction.y)
 
 func translate(event: InputEvent) -> InputEventKey:
-	if device<0: adopt_device(event.device)
+	if device!=event.device: claim_device(event.device,true)
 	if event.device!=device: return null
+	input_seen=true
 	if event is InputEventJoypadMotion:
 		if event.axis in [JOY_AXIS_TRIGGER_LEFT,JOY_AXIS_TRIGGER_RIGHT]:
 			var trigger := InputEventJoypadButton.new()
@@ -172,15 +190,52 @@ func translate(event: InputEvent) -> InputEventKey:
 	mapped.pressed=event.pressed
 	return mapped
 
+func has_live_pad() -> bool:
+	if device<0 or not input_seen: return false
+	var pads: Array=Input.get_connected_joypads()
+	if pads.is_empty(): return true
+	return device in pads
+
+func claim_device(id: int,from_input: bool=false) -> void:
+	if device==id:
+		if from_input: input_seen=true
+		return
+	if has_live_pad(): return
+	var fresh := device<0 or not input_seen
+	adopt_device(id)
+	input_seen=from_input
+	stick=Vector2.ZERO
+	if id not in seen_pads: seen_pads.append(id)
+	if fresh and game!=null:
+		game.announce(family_label()+" KONTROLCÜ BAĞLANDI")
+		ready_pad_ui()
+
+func ready_pad_ui() -> void:
+	if game==null: return
+	menus.sync()
+	if is_instance_valid(game.frontend) and game.frontend.visible:
+		var owner: Control=game.get_viewport().gui_get_focus_owner()
+		if owner==null or not game.frontend.controls.is_ancestor_of(owner):
+			if game.frontend.stage=="tactics": game.frontend.focus_tactics(str(game.frontend.pane_focus[game.frontend.pane]))
+			else: game.frontend.focus_pick()
+	elif is_instance_valid(game.career_screen) and game.career_screen.visible:
+		var owner: Control=game.get_viewport().gui_get_focus_owner()
+		if owner==null or not game.career_screen.controls.is_ancestor_of(owner):
+			if game.career_screen.page=="tactics":
+				game.career_screen.tactics.grab_card(game.career_screen,game.career_screen.tactics.default_id(game.career_screen))
+			else:
+				for child in game.career_screen.controls.get_children():
+					if child is BaseButton and not child.disabled:
+						child.grab_focus()
+						break
+
 func connection_changed(id: int,connected: bool) -> void:
 	if connected:
-		if device<0:
-			adopt_device(id)
-			stick=Vector2.ZERO
-			game.announce(family_label()+" KONTROLCÜ BAĞLANDI")
+		claim_device(id)
 		return
 	if id!=device: return
 	device=-1
+	input_seen=false
 	stick=Vector2.ZERO
 	clear_shot_aim()
 	held.clear()
@@ -206,9 +261,10 @@ func connection_changed(id: int,connected: bool) -> void:
 func action_held(action: int) -> bool:
 	return action in held.values()
 
-func rumble(strength: float,shot: bool=false) -> void:
+func rumble(strength: float,shot: bool=false,hold: float=-1.0) -> void:
 	if not vibration or device not in Input.get_connected_joypads(): return
-	Input.start_joy_vibration(device,clampf(strength*0.55,0,1),clampf(strength*(0.85 if shot else 1.0),0,1),0.16 if shot else 0.25)
+	var time := hold if hold>0.0 else (0.16 if shot else 0.25)
+	Input.start_joy_vibration(device,clampf(strength*0.55,0,1),clampf(strength*(0.85 if shot else 1.0),0,1),time)
 
 func net_rumble(strength: float,own_goal: bool) -> void:
 	if not vibration or device not in Input.get_connected_joypads(): return

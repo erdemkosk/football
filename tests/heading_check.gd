@@ -51,8 +51,12 @@ func tick(count: int=1,boundaries: bool=false) -> void:
 	for i in range(count):
 		game.kick_lock=maxf(0,game.kick_lock-DT)
 		game.update_control(DT)
+		game.kick_contact.prepare(DT)
 		game.heading.prepare(DT)
 		p.step(DT)
+		if not game.kick_contact.pending.is_empty() and game.kick_contact.pending.index!=9:
+			game.players[game.kick_contact.pending.index].step(DT)
+		game.kick_contact.resolve()
 		peak=maxf(peak,p.position.y)
 		var before: Vector3=game.ball.position
 		var old_shots: int=game.shots[0]
@@ -118,8 +122,10 @@ func run() -> void:
 	game.ball.place(winger.position+Vector3(0.6,0.23,0))
 	await physics_frame; await physics_frame
 	game.controller.adopt_device(0,"Xbox Controller")
-	button(true,JOY_BUTTON_B); button(false,JOY_BUTTON_B)
+	button(true,JOY_BUTTON_B); game.controller.combos.update(.57); button(false,JOY_BUTTON_B)
 	game.controller.combos.update(0.24)
+	# Crosses now leave the foot after the short physical contact approach.
+	await tick(12)
 	check(game.passes[0]==1 and game.ball.kick_velocity.y>3,"Xbox B produces the game's normal cross trajectory")
 	game.team_control.select(9,true); game.last_direction=Vector3.FORWARD
 	var requested := false
@@ -152,7 +158,7 @@ func run() -> void:
 	await physics_frame; await physics_frame
 	key(true); key(false); await tick(10)
 	var sole: float=minf(p.left_knee.to_global(Vector3(0,-0.42,-0.05)).y,p.right_knee.to_global(Vector3(0,-0.42,-0.05)).y)
-	check(contacts==1 and p.position.y<0.05 and absf(sole-0.102)<0.03,"A head-height ball can be headed while the support foot stays on the turf")
+	check(contacts==1 and p.position.y<0.05 and absf(sole-p.boot_ground_height())<0.03,"A head-height ball can be headed while the support foot stays on the turf")
 	await reset()
 	key(true); await tick(6); key(false)
 	game.ball.place(Vector3(8,3,-42),Vector3(5,0,0))

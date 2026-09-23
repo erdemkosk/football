@@ -93,6 +93,8 @@ func select_device(pad: bool) -> void:
 	queue_redraw()
 
 func handle(event: InputEvent) -> void:
+	if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_LEFT and not CARD.has_point(game.ui.from_viewport(event.position)):
+		close_panel(); get_viewport().set_input_as_handled(); return
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode in [KEY_F1,KEY_ESCAPE]:
 			close_panel(); get_viewport().set_input_as_handled()
@@ -101,10 +103,6 @@ func handle(event: InputEvent) -> void:
 		elif event.button_index in [JOY_BUTTON_LEFT_SHOULDER,JOY_BUTTON_RIGHT_SHOULDER]:
 			select_page(page+(-1 if event.button_index==JOY_BUTTON_LEFT_SHOULDER else 1))
 			tabs[page].grab_focus()
-
-func _gui_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_LEFT and not CARD.has_point(event.position):
-		close_panel(); accept_event()
 
 func binding(action: int) -> String:
 	return game.controller.label_for(action) if use_pad else OS.get_keycode_string(game.match_menu.key_for(action))
@@ -138,7 +136,7 @@ func rows() -> Array:
 	if page==5:
 		return [
 			advanced_entry("Alçak sert şut","Hazırla ve bırak; güçlü, düşük yükselişli vuruş.","RB + "+binding(KEY_D),"CTRL + "+binding(KEY_D)),
-			advanced_entry("Power shot","Daha uzun hazırlık, daha sert vuruş. Hazırlıkta top kapılabilir.","LB + RT + "+binding(KEY_D),"SHIFT + "+binding(KEY_D)),
+			advanced_entry("Power shot","Basılı tutarak gücü ayarla; bırakınca hemen sert vurur.","LB + RT + "+binding(KEY_D),"SHIFT + "+binding(KEY_D)),
 			advanced_entry("Dış ayak","Ayağın dışıyla ters yönde kavis. Yön ve güç sende kalır.","LB + LT + "+binding(KEY_D),"ALT + "+binding(KEY_D)),
 			advanced_entry("Zamanlamalı şutu seç","Sonraki normal şut için zamanlamayı aç / kapat.","L3","5"),
 			entry("Timed finishing","Özel şutu bırak; çubuk yeşile gelince şuta tekrar bas. Erken basmak zayıflatır.",binding(KEY_D)+" → "+binding(KEY_D)),
@@ -167,8 +165,8 @@ func rows() -> Array:
 				entry("Ara pas","Yönünü seç; basılı tutup bırak. Top koşu yoluna gider.",binding(KEY_Y)),
 				combo("Aşırtma şut","Şutu kalecinin üzerinden yumuşak bir kavisle gönder.","LB + X",lb),
 				combo("Havadan uzun pas","Sol omuz tuşunu tut; pas tuşuyla gücü ayarla, bırakarak gönder.","LB + Y",lb),
-				entry("Orta","Kanattan ceza sahasına havadan gönder.",binding(KEY_A)),
-				combo("Yerden sert orta","Orta tuşuna hızlıca iki kez bas. Top yerden sert gider.","B × 2",game.controller.bindings.get(JOY_BUTTON_B)==KEY_A),
+				entry("Orta","Basılı tut: yön ve güç ayarla. Bırak: ortayı gönder.",binding(KEY_A)),
+				entry("Yerden sert orta","Hızlı koş tuşunu tutarken ortayı hazırla; orta tuşunu bırakarak gönder.",binding(KEY_W)+" + "+binding(KEY_A)),
 				entry("Şut","Sol analogla nişan; koşudan bağımsız yön: D-pad / sağ analog." if use_pad else "Basılı tut → bırak. Yönle küçük nişan düzeltmeleri yap.",binding(KEY_D)),
 				entry("Vole / kafa","Top gelirken şuta erken basabilirsin. Oyuncu yerleşir; uygun ayak/kafa vuruşunu seçer. Yön ver → bırak.",binding(KEY_D)),
 				entry("Falsolu şut","Şutu hazırlarken top koruma tuşunu da basılı tut.",binding(KEY_E)+" + "+binding(KEY_D)),
@@ -207,7 +205,7 @@ func rows() -> Array:
 		entry("Ses aç / kapat","Tüm oyun seslerini aç veya sessize al.","AYARLARDAN" if use_pad else "M")]
 
 func _draw() -> void:
-	draw_rect(Rect2(0,0,1440,900),Color(0.015,0.035,0.045,0.55))
+	draw_rect(game.ui.bounds(),Color(0.015,0.035,0.045,0.55))
 	box(Rect2(398,96,1010,744),Color(0,0,0,0.25),14)
 	box(CARD,Color("10282f"),12,Color("365359"))
 	box(Rect2(422,110,4,32),GOLD,2)

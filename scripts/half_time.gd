@@ -67,4 +67,4 @@ func finish() -> void:
 		p.ai_think=0
 	game.last_direction=Vector3(0,0,game.attack_sign(0))
 	game.begin_restart("SANTRA",1,Vector3.ZERO)
-	game.announce("İKİNCİ YARI · HÜCUM YÖNÜ ↓ · RAKİP SANTRASI")
+	game.hint("İKİNCİ YARI · HÜCUM YÖNÜ ↓ · RAKİP SANTRASI")

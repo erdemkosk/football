@@ -45,7 +45,7 @@ static func badge(id: int,primary: Color,accent: Color) -> Texture2D:
 		badges[key]=raster('<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 100 100">'+crest_body(id,primary,accent)+'</svg>')
 	return badges[key]
 
-static func shirt(colors: Dictionary,number: int,is_keeper: bool) -> Texture2D:
+static func shirt(colors: Dictionary,number: int,is_keeper: bool,player_name: String="") -> Texture2D:
 	var primary: Color=colors.primary
 	var accent: Color=colors.accent
 	var id: int=colors.get("club_id",0)
@@ -53,9 +53,11 @@ static func shirt(colors: Dictionary,number: int,is_keeper: bool) -> Texture2D:
 	var badge_accent: Color=colors.get("badge_accent",accent)
 	var pattern: int=colors.get("pattern",0)
 	var key := "%d/%s/%s/%d/%d/%s/%s/%s" % [id,primary.to_html(),accent.to_html(),pattern,number,is_keeper,badge_primary.to_html(),badge_accent.to_html()]
+	key+="/"+player_name
 	if shirts.has(key): return shirts[key]
 	var a := "#"+primary.to_html(false)
 	var b := "#"+accent.to_html(false)
+	var ink := "#172328" if primary.get_luminance()>.45 else "#f5f3e8"
 	var svg := '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="192" viewBox="0 0 1024 384"><rect width="1024" height="384" fill="%s"/>' % a
 	# Tonal side panels and fine seams stay quiet from the match camera.
 	svg+='<path d="M0 0H54V384H0ZM458 0H566V384H458ZM970 0H1024V384H970Z" fill="%s" opacity=".13"/>' % b
@@ -77,8 +79,9 @@ static func shirt(colors: Dictionary,number: int,is_keeper: bool) -> Texture2D:
 	var start := 768.0-(value.length()*48.0-8)*scale_x/2
 	# A quiet back panel keeps numbers legible on every strip.
 	svg+='<rect x="638" y="78" width="260" height="246" rx="12" fill="%s" opacity=".94"/>' % a
+	svg+=name_print(player_name,ink)
 	for i in range(value.length()):
-		svg+='<path transform="translate(%s 101) scale(%s 3.15)" d="%s" fill="none" stroke="%s" stroke-width="8" stroke-linejoin="round"/>' % [start+i*48*scale_x,scale_x,DIGITS[int(value[i])],b]
+		svg+='<path transform="translate(%s 101) scale(%s 3.15)" d="%s" fill="none" stroke="%s" stroke-width="8" stroke-linejoin="round"/>' % [start+i*48*scale_x,scale_x,DIGITS[int(value[i])],ink]
 	svg+='</svg>'
 	# Bound memory even when teams/kits are cycled repeatedly in the menu.
 	if shirts.size()>=96: shirts.erase(shirts.keys()[0])
@@ -93,19 +96,19 @@ static func torso_mesh() -> ArrayMesh:
 	var indices := PackedInt32Array()
 	const SEGMENTS := 32
 	# Sloped shoulders join the collar instead of ending in a flat cylinder lid.
-	var radii := [0.12,0.30,0.255]
-	var levels := [0.275,0.21,-0.275]
-	var v_coords := [0.0,0.118,1.0]
-	for row in range(3):
+	var radii := [0.12,0.32,0.285,0.225]
+	var levels := [0.275,0.21,0.06,-0.275]
+	var v_coords := [0.0,0.118,0.39,1.0]
+	for row in range(4):
 		for i in range(SEGMENTS+1):
 			var u := float(i)/SEGMENTS
 			# UVs read left-to-right from outside the shirt, including its back.
 			var angle := -(u-0.25)*TAU
 			var radial := Vector3(sin(angle),0,-cos(angle))
-			vertices.append(radial*radii[row]+Vector3(0,levels[row],0))
-			normals.append((radial+Vector3(0,[2.77,0.50,-0.093][row],0)).normalized())
+			vertices.append(radial*radii[row]*Vector3(1,1,.78)+Vector3(0,levels[row],0))
+			normals.append((radial*Vector3(1,1,1.0/.78)+Vector3(0,[2.77,.38,.20,-.18][row],0)).normalized())
 			uv.append(Vector2(u,v_coords[row]))
-	for row in range(2):
+	for row in range(3):
 		for i in range(SEGMENTS):
 			var a := row*(SEGMENTS+1)+i
 			indices.append_array(PackedInt32Array([a,a+1,a+SEGMENTS+1,a+1,a+SEGMENTS+2,a+SEGMENTS+1]))
@@ -115,7 +118,7 @@ static func torso_mesh() -> ArrayMesh:
 		var y := 0.275 if row==0 else -0.275
 		for i in range(SEGMENTS+1):
 			var angle := i*TAU/SEGMENTS
-			vertices.append(Vector3(sin(angle)*(0.12 if row==0 else 0.255),y,-cos(angle)*(0.12 if row==0 else 0.255)))
+			vertices.append(Vector3(sin(angle)*(0.12 if row==0 else 0.225),y,-cos(angle)*(0.12 if row==0 else 0.225)*.78))
 			normals.append(Vector3.UP if row==0 else Vector3.DOWN); uv.append(Vector2(.56,.9))
 		vertices.append(Vector3(0,y,0)); normals.append(Vector3.UP if row==0 else Vector3.DOWN); uv.append(Vector2(.56,.9))
 		for i in range(SEGMENTS):
@@ -124,3 +127,36 @@ static func torso_mesh() -> ArrayMesh:
 	arrays[Mesh.ARRAY_VERTEX]=vertices; arrays[Mesh.ARRAY_NORMAL]=normals; arrays[Mesh.ARRAY_TEX_UV]=uv; arrays[Mesh.ARRAY_INDEX]=indices
 	torso=ArrayMesh.new(); torso.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
 	return torso
+
+# Compact athletic lettering baked into the same UV atlas, including Turkish
+# names. Vector cells survive mipmapping without a separate floating Label3D.
+const LETTERS := {
+	"A":[14,17,17,31,17,17,17],"B":[30,17,17,30,17,17,30],"C":[15,16,16,16,16,16,15],
+	"D":[30,17,17,17,17,17,30],"E":[31,16,16,30,16,16,31],"F":[31,16,16,30,16,16,16],
+	"G":[15,16,16,23,17,17,15],"H":[17,17,17,31,17,17,17],"I":[31,4,4,4,4,4,31],
+	"J":[7,2,2,2,18,18,12],"K":[17,18,20,24,20,18,17],"L":[16,16,16,16,16,16,31],
+	"M":[17,27,21,21,17,17,17],"N":[17,25,25,21,19,19,17],"O":[14,17,17,17,17,17,14],
+	"P":[30,17,17,30,16,16,16],"Q":[14,17,17,17,21,18,13],"R":[30,17,17,30,20,18,17],
+	"S":[15,16,16,14,1,1,30],"T":[31,4,4,4,4,4,4],"U":[17,17,17,17,17,17,14],
+	"V":[17,17,17,17,17,10,4],"W":[17,17,17,21,21,27,17],"X":[17,17,10,4,10,17,17],
+	"Y":[17,17,10,4,4,4,4],"Z":[31,1,2,4,8,16,31],"-":[0,0,0,31,0,0,0]}
+
+static func name_print(value: String,ink: String) -> String:
+	value=value.to_upper().substr(0,18)
+	if value.is_empty(): return ""
+	var unit := minf(5.3,260.0/(value.length()*6-1))
+	var start := 768.0-(value.length()*6-1)*unit*.5
+	var svg := '<g fill="%s">' % ink
+	var accents := {"İ":"I","Ö":"O","Ü":"U","Ç":"C","Ş":"S","Ğ":"G","É":"E","Á":"A"}
+	for i in range(value.length()):
+		var letter := value[i]
+		var rows: Array=LETTERS.get(accents.get(letter,letter),[0,0,0,0,0,0,0])
+		for y in range(7):
+			for x in range(5):
+				if rows[y] & (1<<(4-x)):
+					svg+='<rect x="%.2f" y="%.2f" width="%.2f" height="%.2f"/>' % [start+(i*6+x)*unit,32+y*unit,unit,unit]
+		if letter in ["İ","Ö","Ü","Ğ","É","Á"]:
+			svg+='<rect x="%.2f" y="20" width="%.2f" height="5"/>' % [start+(i*6+1)*unit,unit*3]
+		elif letter in ["Ç","Ş"]:
+			svg+='<rect x="%.2f" y="72" width="%.2f" height="5"/>' % [start+(i*6+2)*unit,unit]
+	return svg+'</g>'

@@ -1,0 +1,63 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Prematch tactics opens on match start, with no substitution armed
+PASS: Every lineup control is reachable in formation 0
+PASS: Right follows the same pitch row and updates player details
+PASS: Right follows the same pitch row and updates player details
+PASS: Right follows the same pitch row and updates player details
+PASS: Right follows the same pitch row and updates player details
+PASS: Right follows the same pitch row and updates player details
+PASS: Right follows the same pitch row and updates player details
+PASS: Right follows the same pitch row and updates player details
+PASS: Directional browsing never changes the lineup
+PASS: Every lineup control is reachable in formation 1
+PASS: Right follows the same pitch row and updates player details
+PASS: Right follows the same pitch row and updates player details
+PASS: Right follows the same pitch row and updates player details
+PASS: Right follows the same pitch row and updates player details
+PASS: Right follows the same pitch row and updates player details
+PASS: Right follows the same pitch row and updates player details
+PASS: Right follows the same pitch row and updates player details
+PASS: Directional browsing never changes the lineup
+PASS: Every lineup control is reachable in formation 2
+PASS: Right follows the same pitch row and updates player details
+PASS: Right follows the same pitch row and updates player details
+PASS: Right follows the same pitch row and updates player details
+PASS: Right follows the same pitch row and updates player details
+PASS: Right follows the same pitch row and updates player details
+PASS: Right follows the same pitch row and updates player details
+PASS: Right follows the same pitch row and updates player details
+PASS: Directional browsing never changes the lineup
+PASS: Analog drift cannot move focus
+PASS: One analog deflection moves one player
+PASS: Small diagonal wobble does not switch navigation axes
+PASS: Held analog waits before repeating
+PASS: A selects a starter without forcing the bench
+PASS: Direction presses reach another starter while preserving the first selection
+PASS: The full bench remains reachable after selecting a starter
+PASS: A on a reserve opens confirmation without making a change
+PASS: Start cannot skip an unconfirmed change
+PASS: B leaves confirmation and returns to the same reserve
+PASS: B cancels the outgoing selection before closing the screen
+PASS: Explicit confirmation applies exactly one swap and restores starter focus
+PASS: Undo restores the original lineup
+PASS: RB enters the active formation option
+PASS: Right previews another formation without applying it
+PASS: A applies a formation and preserves the exact focus
+PASS: Plan navigation keeps rows and columns without changing tactics
+PASS: LB restores the last starter focus
+PASS: RB restores the last plan option
+PASS: Activating the lineup tab also restores content focus
+PASS: Activating the plan tab retains the last option rather than the tab itself
+PASS: Settings restore the tactical focus and preparation state
+PASS: A held stick cannot run across the squad after selecting a starter
+PASS: Keyboard arrows use the same safe focus graph
+PASS: Keyboard Enter selects the first player
+PASS: Keyboard Escape cancels the selection first
+PASS: In-match confirmation does not queue a substitution early
+PASS: Confirm queues one substitution for the next stoppage
+PASS: A pending replacement exposes its cancel action
+PASS: The pending replacement can be cancelled explicitly
+PASS: No eligible replacement leaves focus on the starter with a reason
+PASS: Tactics inputs never leak into football actions
+TACTICS NAVIGATION CHECK: 60 checks, 0 failures

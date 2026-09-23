@@ -51,6 +51,15 @@ func resolve() -> void:
 	last_gap=boot.to_global(p.ball_actions.BOOT).distance_to(game.ball.position)
 	if pending.age>=pending.windup and last_gap<=RADIUS and not game.ball.pending_kick:
 		var request := pending.duplicate()
+		if request.has("ai_choice") and request.ai_choice.has("route") and request.ai_choice.kind!="clearance":
+			if not game.ai_attack.delivery.safe(request.index,request.ai_choice.route,request.ai_choice.receiver):
+				# The lane closed during the approach. Keep the reachable ball and
+				# reconsider instead of knowingly completing a pass to the opponent.
+				p.ball_actions.finish_contact(p); p.kick_timer=0
+				reset()
+				game.dribbler=request.index; game.carrier=request.index
+				game.ai_attack.think_in[request.index]=.18
+				return
 		p.ball_actions.finish_contact(p)
 		p.dribble_motion.release_collision()
 		pending.clear()

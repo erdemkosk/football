@@ -88,7 +88,7 @@ func intercept(index: int) -> bool:
 	if p.action_timer>0 or p.tackle_cooldown>0 or game.dribbler==index or p.keeper: return false
 	var aim: Vector3=((game.ball.position-p.position)*Vector3(1,0,1)).normalized()
 	var point: Vector3=game.ball.position+game.ball.linear_velocity*.14
-	point=p.position+(point-p.position).limit_length(1.0); point.y=clampf(point.y,.22,.65)
+	point=p.position+(point-p.position).limit_length(1.0); point.y=clampf(point.y,game.ball.RADIUS,.65)
 	p.volley_motion.begin(p,{"point":point,"time":.14,"kind":"intercept"},aim)
 	p.pose="intercept"; p.tackle_cooldown=.65
 	intercepts[index]={"ball":game.ball.position,"boot":p.volley_motion.boot(p)}
@@ -113,4 +113,4 @@ func resolve() -> void:
 		game.last_touch=p.team; game.last_kicker=i; game.dribbler=-1
 		game.team_control.touched(i)
 		p.touch_cooldown=.18; p.volley_motion.hit=true
-		game.announce("PAS ARASI")
+		game.hint("PAS ARASI")

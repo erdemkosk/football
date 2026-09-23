@@ -1,0 +1,115 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+OpenGL API 3.3.0 NVIDIA 610.88 - Compatibility - Using Device: NVIDIA - NVIDIA GeForce RTX 3070
+
+PASS: Visual and physical ball share the same diameter
+PASS: Smaller ball rests on the turf without sinking or hovering
+PASS: A ground penetration recovers through turf contact without losing horizontal travel
+PASS: A settled small ball counts as placed despite the physics contact margin
+PASS: Shot and landing previews share physical ball dimensions
+PASS: Normal pace reduced for player 9
+PASS: Physical sprint is controlled for player 9: 9.15 m/s
+PASS: Fatigued movement uses the same pace scale
+PASS: Normal pace reduced for player 20
+PASS: Physical sprint is controlled for player 20: 9.15 m/s
+PASS: Fatigued movement uses the same pace scale
+PASS: Normal pace reduced for player 0
+PASS: Physical sprint is controlled for player 0: 9.15 m/s
+PASS: Fatigued movement uses the same pace scale
+PASS: Normal pace reduced for player 11
+PASS: Physical sprint is controlled for player 11: 9.15 m/s
+PASS: Fatigued movement uses the same pace scale
+PASS: Controlled charge: normal pad=false sprint=false
+PASS: Release strikes in the input frame: normal pad=false sprint=false
+PASS: Charge ends with an active follow-through: normal
+PASS: Immediate shot preserves preview direction: normal
+PASS: Release changes velocity without teleporting the ball
+PASS: Physical ball leaves the boot after release: normal
+PASS: Duplicate release cannot create another shot
+PASS: Controlled charge: normal pad=true sprint=true
+PASS: Release strikes in the input frame: normal pad=true sprint=true
+PASS: Charge ends with an active follow-through: normal
+PASS: Immediate shot preserves preview direction: normal
+PASS: Release changes velocity without teleporting the ball
+PASS: Physical ball leaves the boot after release: normal
+PASS: Duplicate release cannot create another shot
+PASS: Controlled charge: chip pad=false sprint=false
+PASS: Release strikes in the input frame: chip pad=false sprint=false
+PASS: Charge ends with an active follow-through: chip
+PASS: Immediate shot preserves preview direction: chip
+PASS: Release changes velocity without teleporting the ball
+PASS: Physical ball leaves the boot after release: chip
+PASS: Duplicate release cannot create another shot
+PASS: Controlled charge: chip pad=true sprint=true
+PASS: Release strikes in the input frame: chip pad=true sprint=true
+PASS: Charge ends with an active follow-through: chip
+PASS: Immediate shot preserves preview direction: chip
+PASS: Release changes velocity without teleporting the ball
+PASS: Physical ball leaves the boot after release: chip
+PASS: Duplicate release cannot create another shot
+PASS: Controlled charge: finesse pad=false sprint=false
+PASS: Release strikes in the input frame: finesse pad=false sprint=false
+PASS: Charge ends with an active follow-through: finesse
+PASS: Immediate shot preserves preview direction: finesse
+PASS: Release changes velocity without teleporting the ball
+PASS: Physical ball leaves the boot after release: finesse
+PASS: Duplicate release cannot create another shot
+PASS: Controlled charge: finesse pad=true sprint=true
+PASS: Release strikes in the input frame: finesse pad=true sprint=true
+PASS: Charge ends with an active follow-through: finesse
+PASS: Immediate shot preserves preview direction: finesse
+PASS: Release changes velocity without teleporting the ball
+PASS: Physical ball leaves the boot after release: finesse
+PASS: Duplicate release cannot create another shot
+PASS: Controlled charge: low pad=false sprint=false
+PASS: Release strikes in the input frame: low pad=false sprint=false
+PASS: Charge ends with an active follow-through: low
+PASS: Immediate shot preserves preview direction: low
+PASS: Release changes velocity without teleporting the ball
+PASS: Physical ball leaves the boot after release: low
+PASS: Duplicate release cannot create another shot
+PASS: Controlled charge: low pad=true sprint=true
+PASS: Release strikes in the input frame: low pad=true sprint=true
+PASS: Charge ends with an active follow-through: low
+PASS: Immediate shot preserves preview direction: low
+PASS: Release changes velocity without teleporting the ball
+PASS: Physical ball leaves the boot after release: low
+PASS: Duplicate release cannot create another shot
+PASS: Controlled charge: power pad=false sprint=false
+PASS: Release strikes in the input frame: power pad=false sprint=false
+PASS: Charge ends with an active follow-through: power
+PASS: Immediate shot preserves preview direction: power
+PASS: Release changes velocity without teleporting the ball
+PASS: Physical ball leaves the boot after release: power
+PASS: Duplicate release cannot create another shot
+PASS: Controlled charge: power pad=true sprint=true
+PASS: Release strikes in the input frame: power pad=true sprint=true
+PASS: Charge ends with an active follow-through: power
+PASS: Immediate shot preserves preview direction: power
+PASS: Release changes velocity without teleporting the ball
+PASS: Physical ball leaves the boot after release: power
+PASS: Duplicate release cannot create another shot
+PASS: Controlled charge: outside pad=false sprint=false
+PASS: Release strikes in the input frame: outside pad=false sprint=false
+PASS: Charge ends with an active follow-through: outside
+PASS: Immediate shot preserves preview direction: outside
+PASS: Release changes velocity without teleporting the ball
+PASS: Physical ball leaves the boot after release: outside
+PASS: Duplicate release cannot create another shot
+PASS: Controlled charge: outside pad=true sprint=true
+PASS: Release strikes in the input frame: outside pad=true sprint=true
+PASS: Charge ends with an active follow-through: outside
+PASS: Immediate shot preserves preview direction: outside
+PASS: Release changes velocity without teleporting the ball
+PASS: Physical ball leaves the boot after release: outside
+PASS: Duplicate release cannot create another shot
+PASS: Cannot release an invalid shot: opponent
+PASS: Cannot release an invalid shot: impact
+PASS: Cannot release an invalid shot: distant
+PASS: Cannot release an invalid shot: paused
+PASS: Explicit timed finishing still allows the second input
+PASS: Deliberate timed shot still finishes successfully
+PASS: A partially crossing ball is not a goal, side -1
+PASS: A whole-ball near-post crossing scores with the new radius, side -1
+PASS: A partially crossing ball is not a goal, side 1
+PASS: A whole-ball near-post crossing scores with the new radius, side 1
+BALL PACE RELEASE CHECK: 111 checks, 0 failures

@@ -1,0 +1,75 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+SCENARIO [(-6.0, 4.2, -1.4), (11.0, 0.3, 0.0)] PLAN { "time": 0.63333333333333, "point": (0.989692, 2.33163, -41.4), "target": (0.989692, 0.0, -41.3), "kind": "header" }
+PASS: Offset cross starts outside the old precise contact window
+PASS: Early shot input buffers a reachable offset cross
+PASS: Assisted finish changes ball velocity only at physical contact
+PASS: Assistance still requires a real animated body/ball contact
+RESULT contacts=1 kind=header move=1.60666310787201 peak=0.75059223175049 p=(0.908424, 0.000172, -41.32519) ball=(1.351499, 1.707807, -48.28431)
+PASS: Early release produces one contextual finish after the approach
+PASS: Approach uses a short physical run without player teleportation
+PASS: The assisted shot ends cleanly
+SCENARIO [(-6.0, 3.4, -1.6), (11.0, 0.5, 0.0)] PLAN { "time": 0.55, "point": (0.089624, 2.110693, -41.6), "target": (0.089624, 0.0, -41.5), "kind": "header" }
+PASS: Offset cross starts outside the old precise contact window
+PASS: Early shot input buffers a reachable offset cross
+PASS: Assisted finish changes ball velocity only at physical contact
+PASS: Assistance still requires a real animated body/ball contact
+RESULT contacts=1 kind=header move=1.56533265113831 peak=0.43999260663986 p=(0.188482, 0.000143, -41.55394) ball=(0.812514, 1.305082, -49.09928)
+PASS: Early release produces one contextual finish after the approach
+PASS: Approach uses a short physical run without player teleportation
+PASS: The assisted shot ends cleanly
+SCENARIO [(-6.0, 2.3, -1.7), (11.0, 0.0, 0.0)] PLAN { "time": 0.53333333333333, "point": (-0.090974, 0.824521, -41.7), "target": (-0.090974, 0.0, -41.22), "kind": "volley" }
+PASS: Offset cross starts outside the old precise contact window
+PASS: Early shot input buffers a reachable offset cross
+PASS: Assisted finish changes ball velocity only at physical contact
+PASS: Assistance still requires a real animated body/ball contact
+RESULT contacts=1 kind=volley move=1.16185641288757 peak=0.00084026268451 p=(-0.048882, 0.00084, -41.16083) ball=(0.729732, 0.155, -52.44798)
+PASS: Early release produces one contextual finish after the approach
+PASS: Approach uses a short physical run without player teleportation
+PASS: The assisted shot ends cleanly
+SCENARIO [(-6.0, 1.5, -1.6), (11.0, 0.0, 0.0)] PLAN { "time": 0.58333333333333, "point": (0.449711, 0.30836, -41.6), "target": (0.449711, 0.0, -41.12), "kind": "half_volley" }
+PASS: Offset cross starts outside the old precise contact window
+PASS: Early shot input buffers a reachable offset cross
+PASS: Assisted finish changes ball velocity only at physical contact
+PASS: Assistance still requires a real animated body/ball contact
+RESULT contacts=1 kind=half_volley move=1.14538753032684 peak=0.00084031210281 p=(0.382696, 0.000191, -41.07956) ball=(1.451599, 0.155, -52.61696)
+PASS: Early release produces one contextual finish after the approach
+PASS: Approach uses a short physical run without player teleportation
+PASS: The assisted shot ends cleanly
+PASS: Xbox Controller treats an early aerial shot as a finish, not a tackle
+PASS: Assisted finish changes ball velocity only at physical contact
+PASS: Assistance still requires a real animated body/ball contact
+PASS: Xbox Controller completes the approach and real contact
+PASS: DualSense treats an early aerial shot as a finish, not a tackle
+PASS: Assisted finish changes ball velocity only at physical contact
+PASS: Assistance still requires a real animated body/ball contact
+PASS: DualSense completes the approach and real contact
+PASS: A pass command cancels the assisted shot
+PASS: Automatic selection preserves a requested aerial finish
+PASS: Explicit player selection cancels the previous intent
+PASS: Pause clears pending approach assistance
+PASS: A deflected cross cancels without chasing or striking from a distance
+PASS: A distant unreachable cross does not pull the player away
+PASS: An unreachable high ball cannot cause an impossible jump
+PASS: Ordinary ground shots retain immediate release behavior
+PASS: Held shot transfers from approach to the contact animation
+PASS: Assisted finish changes ball velocity only at physical contact
+PASS: Assistance still requires a real animated body/ball contact
+PASS: Release during the approach-to-volley transition preserves the shot
+PASS: Assisted finish changes ball velocity only at physical contact
+PASS: Assistance still requires a real animated body/ball contact
+HOP contacts=1 kind=header peak=0.15339440107346
+PASS: Assisted finish changes ball velocity only at physical contact
+PASS: Assistance still requires a real animated body/ball contact
+PASS: Approach and swept contact work at 60 physics ticks
+PASS: Assisted finish changes ball velocity only at physical contact
+PASS: Assistance still requires a real animated body/ball contact
+PASS: Approach and swept contact work at 30 physics ticks
+PASS: Assisted finish changes ball velocity only at physical contact
+PASS: Assistance still requires a real animated body/ball contact
+PASS: Weather-aware approach reaches the ball on wet ground 1
+PASS: Assisted finish changes ball velocity only at physical contact
+PASS: Assistance still requires a real animated body/ball contact
+PASS: Weather-aware approach reaches the ball on wet ground 2
+PASS: Assistance cannot move through a blocking body or hit a distant ball
+AERIAL ASSIST CHECK: 64 checks, 1 failures

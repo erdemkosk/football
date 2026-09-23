@@ -49,6 +49,12 @@ func run() -> void:
 	var positions: PackedVector3Array=geometry[Mesh.ARRAY_VERTEX]
 	check(positions[7].x>positions[9].x and positions[23].x<positions[25].x,"Front and back UVs read left-to-right from outside the shirt")
 	check(p.jersey_body.get_parent()==p.spine and p.jersey_body.mesh.get_surface_count()==1,"The printed shirt follows the torso through one mesh surface")
+	check(p.kit_materials.printed is ShaderMaterial and p.kit_materials.printed.has_method("set_bend"),"The printed shirt is a spine-driven cloth shader, not a rigid standard material")
+	p.spine.rotation.x=-0.48
+	p.update_cloth()
+	check(p.kit_materials.printed.get_shader_parameter("bend").x<-0.4,"Jersey vertices receive the current spine bend")
+	p.spine.rotation=Vector3.ZERO
+	p.update_cloth()
 	var standalone_prints := false
 	for child in p.spine.get_children():
 		if child is Label3D or (child is MeshInstance3D and child.mesh is BoxMesh): standalone_prints=true
@@ -68,13 +74,13 @@ func run() -> void:
 	var incoming: Dictionary=game.management.bench[0][2].duplicate()
 	check(game.clubs.swap_starter(9,2),"A prematch substitution is accepted")
 	check(p.height_cm==incoming.height_cm and p.weight_kg==incoming.weight_kg and p.shirt_number==incoming.shirt and p.number==10,"The substitute brings his measurements and number, preserving the AI slot")
-	check(is_equal_approx(p.body_collision.shape.height,1.72*(p.body_scale.y/1.20)),"Collision height follows the individual build")
+	check(is_equal_approx(p.body_collision.shape.height,1.72*p.height_cm/180.0),"Collision height follows the roster height in metres")
 	game.clubs.swap_starter(9,2)
 	check(p.identity()==identity and p.body_scale==scale_before,"Undoing the swap restores the same body")
 	game.state="playing"; game.match_time=0
 	p.kit_soil=.7
 	game.management.queue_sub(9,2); game.management.prepare_substitutions()
-	p.position=Vector3(32.8,0,-3+9*1.2)
+	p.position=Vector3(preload("res://scripts/pitch_dimensions.gd").HALF_WIDTH+.8,0,-3+9*1.2)
 	game.management.update_substitutions(0)
 	check(p.identity()==identity,"The outgoing player's build is retained until the touchline greeting finishes")
 	if game.stadium.sidelines.entries.has(9):
@@ -129,6 +135,7 @@ func run() -> void:
 	await capture("lineup-back")
 	for actor in show:
 		actor.rig.rotation.y=.7; actor.spine.rotation.x=-.48
+		actor.update_cloth()
 	await capture("cloth-bend")
 	if visual:
 		var gallery := CanvasLayer.new(); root.add_child(gallery)

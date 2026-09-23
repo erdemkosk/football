@@ -1,0 +1,21 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: A separate test career is created
+PASS: Tactics opens with a starter card focused
+PASS: The detail strip follows the focused starter
+PASS: Direction changes the focused player instead of staying on the default card
+PASS: Player details follow the pad direction
+PASS: A arms the focused player without jumping to the first card
+PASS: Direction still moves after the first selection
+PASS: B cancels the first selection without leaving tactics
+PASS: Career accepts a bench-first substitution
+PASS: Career swaps two starters before a match
+PASS: Career undo restores the original starting eleven
+PASS: Detailed live career tactics swaps tactical assignments
+PASS: Live career position swap preserves condition, cards and substitution allowance
+PASS: Career cards appear at the new tactical positions
+PASS: Bench-first live substitution targets the correct actor after a position swap
+PASS: Career cancellation still finds the repositioned player
+PASS: Detailed tactics can swap both players back
+PASS: Closing detailed tactics resumes live play
+CAREER TACTICS SWAPS CHECK: 18 checks, 0 failures

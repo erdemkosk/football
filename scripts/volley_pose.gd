@@ -18,7 +18,7 @@ func begin(p,plan: Dictionary,direction: Vector3) -> void:
 	foot=p.ball_actions.choose_foot(p,target)
 	p.ball_actions.foot=foot
 	aim=(direction*Vector3(1,0,1)).normalized()
-	contact_time=clampf(plan.time,0.10,0.26); duration=contact_time+0.36
+	contact_time=clampf(plan.time,0.10,0.42); duration=contact_time+(0.42 if kind=="power" else 0.36)
 	start.clear()
 	for joint in p.kick_joints: start.append(joint.quaternion)
 	p.pose="volley"; p.action_timer=duration
@@ -35,9 +35,10 @@ func apply(p) -> void:
 	var entry := smoothstep(0,0.065,age)
 	var swing := smoothstep(0,contact_time*0.85,age)
 	if kind=="power": swing=smoothstep(contact_time*.44,contact_time*.96,age)
-	var recover := smoothstep(contact_time+0.08,duration,age)
+	var recover := smoothstep(contact_time+(0.16 if kind=="power" else 0.08),duration,age)
 	var side := -1.0 if foot==0 else 1.0
 	var high := smoothstep(0.5,1.5,target.y-p.position.y)
+	var drop := 0.07*swing*(1.0-recover)*entry if kind=="power" else 0.0
 	# Counterbalance with the torso and arms; the support boot stays on the turf.
 	var poses: Array[Vector3]=[
 		Vector3(0.12,0,-0.04),Vector3(0.12,0,0.04),Vector3(-0.22,0,0),Vector3(-0.22,0,0),
@@ -47,10 +48,10 @@ func apply(p) -> void:
 	for i in range(p.kick_joints.size()):
 		var joint: Node3D=p.kick_joints[i]
 		joint.quaternion=start[i].slerp(Quaternion.from_euler(poses[i]).slerp(joint.quaternion,recover),entry)
-	p.rig.rotation.x=lerpf(p.rig.rotation.x,0,entry*(1-recover))
+	p.rig.rotation.x=lerpf(p.rig.rotation.x,0.22*drop/maxf(0.001,0.07),entry*(1-recover))
 	p.rig.rotation.z=lerpf(p.rig.rotation.z,0,entry*(1-recover))
 	var support=p.right_knee if foot==0 else p.left_knee
-	if p.is_on_floor(): p.rig.position.y-=support.to_global(BOOT).y-p.global_position.y-0.102
+	if p.is_on_floor(): p.rig.position.y-=support.to_global(BOOT).y-p.global_position.y-p.boot_ground_height()+drop
 	var point := target-aim*0.10
 	if hit: point+=aim*smoothstep(contact_time,contact_time+0.14,age)*0.26+Vector3.UP*0.08
 	var leg=p.left_leg if foot==0 else p.right_leg

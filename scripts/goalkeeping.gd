@@ -60,7 +60,7 @@ func shot_read(index: int,delta: float) -> Dictionary:
 	if read.age>=read.next_read:
 		var arrival: float=maxf(0,(p.position.z-ball.z)/velocity.z)
 		read.x=ball.x+velocity.x*arrival+read.error
-		read.height=maxf(0.22,ball.y+velocity.y*arrival-4.905*arrival*arrival+read.height_error)
+		read.height=maxf(game.ball.RADIUS,ball.y+velocity.y*arrival-4.905*arrival*arrival+read.height_error)
 		read.next_read=read.age+0.12
 	return read
 
@@ -96,7 +96,7 @@ func start_rush() -> void:
 	returning=false
 	game.clear_pass_request()
 	game.charging=false; game.charge=0
-	game.announce("KALECİ ÇIKIYOR · TUŞU BASILI TUT")
+	game.hint("KALECİ ÇIKIYOR · TUŞU BASILI TUT")
 
 func stop_rush() -> void:
 	if rush_requested: returning=true
@@ -162,6 +162,7 @@ func update(index: int,delta: float) -> Vector3:
 			target.z=-forward*clampf(absf(target.z),38,49)
 			target.x=clampf(target.x,-14,14)
 			modes[index]="rush"
+			p.sprinting=distance>2.2 and p.energy>.18 and not p.exhausted
 	# Read a cross's descending arc; jump only when the body can reach it.
 	if read.is_empty() and in_box and ball.y>0.9 and absf(bv.x)>3.5 and p.action_timer<=0:
 		for step in range(2,11):
@@ -188,7 +189,7 @@ func update(index: int,delta: float) -> Vector3:
 			target.x=clampf(predicted,-4.3,4.3)
 			var reach: float=predicted-p.position.x
 			if absf(reach)<1.15 and time<.30 and time>.04 and height<1.65:
-				var style := "foot" if height<.55 else "spread"
+				var style := "smother" if height<.65 and bv.length()<14 and time>.14 else ("foot" if height<.55 else ("catch" if height<1.65 and bv.length()<21 else "spread"))
 				p.keeper_motion.start(p,style,Vector3(predicted,height,p.position.z))
 			if absf(reach)>1.05 and absf(reach)<3.9 and time<0.52 and height<2.65:
 				p.start_dive(reach,height,time)
@@ -214,11 +215,14 @@ func update(index: int,delta: float) -> Vector3:
 		if rebound and p.keeper_motion.rebound_ready(p) and p.pose!="keeper_rebound":
 			p.keeper_motion.start(p,"rebound",ball,true)
 		elif not rebound: p.keeper_motion.start(p,"smother",ball)
+	elif in_box and game.last_touch!=p.team and ball.y>=.65 and ball.y<1.95 and bv.length()<19 and game.flat_distance(p.position,ball)<1.65 and not reacting:
+		p.keeper_motion.start(p,"catch",ball+bv*.10)
 	if in_box and p.can_save(ball) and p.touch_cooldown<=0 and game.kick_lock<=0 and (not reacting or bv.length()<8):
 		var opponent: bool=game.last_touch!=p.team or rebound
 		var glove_distance: float=minf(p.left_hand.global_position.distance_to(ball),p.right_hand.global_position.distance_to(ball))
 		var spill := handling_error(index,read)
-		if opponent and in_box and bv.length()<11.5 and glove_distance<0.65 and not spill:
+		var catch_speed: float=18.5*p.Attributes.multiplier(p.attributes.get("handling",72),.15) if p.keeper_motion.kind=="catch" else 11.5
+		if opponent and in_box and bv.length()<catch_speed and glove_distance<0.65 and not spill:
 			if not game.rules.before_touch(index,false): return target
 			game.saves[p.team]+=1
 			game.stadium.react("save",p.team,ball)
@@ -234,16 +238,16 @@ func update(index: int,delta: float) -> Vector3:
 			hold_age=0
 			if index==0: stop_rush()
 			p.set_piece_pose="" if p.pose.begins_with("keeper_") and p.action_timer>0 else "carry"
-			game.announce("KALECİ TOPU KONTROL ETTİ")
+			game.hint("KALECİ TOPU KONTROL ETTİ")
 		elif opponent:
 			if not game.strike(index,loose_parry(index) if spill else safe_parry(index),0,true): return target
 			game.saves[p.team]+=1
 			game.stadium.react("save",p.team,ball)
 			game.reactions.saved(index)
 			p.keeper_motion.saved(p)
-			game.announce("KALECİDEN SEKTİ · TOP OYUNDA" if spill else "KALECİ TOPU YANA ÇELDİ")
+			game.hint("KALECİDEN SEKTİ · TOP OYUNDA" if spill else "KALECİ TOPU YANA ÇELDİ")
 		elif bv.length()<9:
-			if game.autonomous_kicks(p.team): game.strike(index,Vector3(7 if ball.x>=0 else -7,6.5,forward*22))
-			elif not game.player_lock and not game.training:
+			if game.autonomous_kicks(p.team): game.ai_attack.keeper_foot_pass(index)
+			elif not game.player_lock and game.training_drills.team_play():
 				game.team_control.select(index)
 	return target

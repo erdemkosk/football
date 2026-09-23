@@ -2,6 +2,7 @@ extends Node3D
 const P = preload("res://scripts/pitch_dimensions.gd")
 signal atmosphere_event(kind: String,team: int,location: Vector3)
 const G = preload("res://scripts/geometry.gd")
+const LED = preload("res://scripts/led_boards.gd")
 const Crowd = preload("res://scripts/crowd.gd")
 var crowd := Crowd.new()
 const Sidelines = preload("res://scripts/sidelines.gd")
@@ -20,8 +21,11 @@ var grass := ShaderMaterial.new()
 var env := Environment.new()
 var sun := DirectionalLight3D.new()
 const MatchLighting = preload("res://scripts/stadium_lighting.gd")
+const PitchBurst = preload("res://scripts/pitch_burst.gd")
 var light_rig: Node3D
+var pitch_burst: Node3D
 var static_batch_stats: Dictionary = {}
+var supporter_banners: Array[Dictionary] = []
 
 func _ready() -> void:
 	rng.seed = 913
@@ -35,6 +39,8 @@ func _ready() -> void:
 	light_rig=MatchLighting.new()
 	add_child(light_rig)
 	light_rig.build(self)
+	pitch_burst=PitchBurst.new()
+	add_child(pitch_burst)
 
 func lighting() -> void:
 	var environment = WorldEnvironment.new()
@@ -56,6 +62,7 @@ func lighting() -> void:
 	sun.directional_shadow_max_distance = 150
 	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
 	sun.shadow_bias = 0.025
+	sun.shadow_normal_bias = .35
 	add_child(sun)
 
 func pitch() -> void:
@@ -69,7 +76,7 @@ func pitch() -> void:
 	for area in [Vector3(P.WIDTH+14,0.12,115),Vector3(P.WIDTH,0.1,P.LENGTH)]:
 		var turf_mesh=G.block(self,area,Vector3(0,-0.12 if area.x>P.WIDTH else -0.05,0),grass)
 		turf_mesh.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	var turf = G.collision_box(self,Vector3(150,1,180),Vector3(0,-0.5,0),0.05)
+	var turf = G.collision_box(self,P.TURF_COLLISION_SIZE,Vector3(0,-0.5,0),0.05)
 	turf.physics_material_override.friction = 0.65
 	outline(-P.HALF_WIDTH,-P.HALF_LENGTH,P.HALF_WIDTH,P.HALF_LENGTH)
 	line(Vector2(-P.HALF_WIDTH,0),Vector2(P.HALF_WIDTH,0))
@@ -115,6 +122,10 @@ func goal_frame(side: int) -> void:
 		G.rod(self,Vector3(x,2.44,z),Vector3(x,1.9,z+side*2.4),0.04,steel)
 		G.rod(self,Vector3(x,0.05,z+side*2.4),Vector3(x,1.9,z+side*2.4),0.04,steel)
 		G.rod(self,Vector3(x,0.05,z),Vector3(x,0.05,z+side*2.4),0.04,white)
+		# Rear pegs and tension cords anchor the net to the goalmouth.
+		for depth in [.6,1.2,1.8,2.4]:
+			G.cylinder(self,.065,.028,Vector3(x,.022,z+side*depth),steel)
+		G.rod(self,Vector3(x,1.9,z+side*2.4),Vector3(x,.06,z+side*2.4),.012,white)
 	G.rod(self,Vector3(-3.66,2.44,z),Vector3(3.66,2.44,z),0.065,white)
 	G.collision_box(self,Vector3(7.5,0.13,0.13),Vector3(0,2.44,z),0.65)
 	var net = GoalNet.new()
@@ -184,7 +195,8 @@ func stands() -> void:
 			banner.position = Vector3((-33+section*33)*P.WIDTH_RATIO,1.12,side*57.55)
 			if side>0: banner.rotation.y = PI
 			G.block(banner,Vector3(12,0.95,0.035),Vector3.ZERO,front)
-			board_label(banner,["KIYI 1967","HEP BİRLİKTE","BİZİM ŞEHRİMİZ"][section],Vector3(0,0,0.025),Color("bcbda4"),0.015)
+			var title := board_label(banner,["KIYI 1967","HEP BİRLİKTE","BİZİM ŞEHRİMİZ"][section],Vector3(0,0,0.025),Color("bcbda4"),0.015)
+			supporter_banners.append({"label":title,"away":banner.position.x>38 and banner.position.z>25,"section":section})
 
 func details() -> void:
 	var navy = G.material(Color("133540"))
@@ -195,16 +207,16 @@ func details() -> void:
 			var board = Node3D.new()
 			add_child(board)
 			board.position = Vector3(side*(P.HALF_WIDTH+3.6),0.65,-49.5+i*9)
-			board.rotation.y = side*PI*0.5
+			board.rotation.y = -side*PI*0.5
 			G.block(board,Vector3(8.65,1.2,0.12),Vector3.ZERO,navy if i%2==0 else gold)
-			board_label(board,["STARTING ELEVEN FC", "THE BEAUTIFUL GAME", "KIYI  •  1967", "PLAY WITH HEART"][i%4],Vector3(0,0,0.07),Color("e9e2cd") if i%2==0 else Color("153e40"),0.012)
+			LED.face(board,Vector2(8.58,1.12),i)
 		for i in range(8):
 			var board = Node3D.new()
 			add_child(board)
 			board.position = Vector3((-30.8+i*8.8)*P.WIDTH_RATIO,0.65,side*55.8)
 			if side>0: board.rotation.y = PI
 			G.block(board,Vector3(8.4*P.WIDTH_RATIO,1.2,0.12),Vector3.ZERO,navy)
-			board_label(board,"KIYI ARENA" if i%2 else "SEFC",Vector3(0,0,0.07),Color("e9e2cd"),0.016)
+			LED.face(board,Vector2(8.4*P.WIDTH_RATIO-.08,1.12),i)
 	# Clear technical areas give both teams a view of the pitch.
 	for z in [-12,12]: outline(P.HALF_WIDTH+.4,z-5.2,P.HALF_WIDTH+3,z+5.2)
 	sidelines = Sidelines.new()
@@ -222,7 +234,7 @@ func boundary_walls() -> void:
 		sideline.collision_layer=8
 		endline.collision_layer=8
 
-func board_label(parent: Node3D,text: String,p: Vector3,color: Color,pixel: float) -> void:
+func board_label(parent: Node3D,text: String,p: Vector3,color: Color,pixel: float) -> Label3D:
 	var label = Label3D.new()
 	label.text = text
 	label.font_size = 64
@@ -232,8 +244,10 @@ func board_label(parent: Node3D,text: String,p: Vector3,color: Color,pixel: floa
 	label.no_depth_test = false
 	parent.add_child(label)
 	label.position = p
+	return label
 
 func react(kind: String,team: int,location: Vector3) -> void:
 	crowd.react(kind,team,location)
 	sidelines.react(kind,team,location)
+	if kind=="goal" and is_instance_valid(pitch_burst): pitch_burst.begin(team,location)
 	atmosphere_event.emit(kind,team,location)

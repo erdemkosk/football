@@ -5,6 +5,8 @@ var phase := "playing"
 var running := false
 
 func update(delta: float) -> void:
+	var keep_toast: String = game.toast
+	var keep_timer: float = game.toast_timer
 	running=true
 	game.state=phase
 	game.simulate_match(delta)
@@ -17,5 +19,6 @@ func update(delta: float) -> void:
 	for p in game.players:
 		p.chosen=false
 		p.marker.visible=false
-	game.toast=""
-	game.toast_timer=0
+	if game.toast!=keep_toast:
+		game.toast=keep_toast
+		game.toast_timer=keep_timer

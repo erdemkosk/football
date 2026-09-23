@@ -18,7 +18,7 @@ func tap(code: int) -> void:
 		event.button_index=code; event.pressed=pressed; event.device=0
 		Input.parse_input_event(event); Input.flush_buffered_events()
 func click(at: Vector2) -> void:
-	at=root.get_final_transform()*at
+	at=root.get_final_transform()*game.ui.transform*at
 	for pressed in [true,false]:
 		var event := InputEventMouseButton.new()
 		event.button_index=MOUSE_BUTTON_LEFT; event.pressed=pressed
@@ -37,9 +37,10 @@ func run() -> void:
 	game.match_menu.config_path="/tmp/football-controls-help-settings.cfg"
 	game.controller.device=0; game.controller.reset_bindings(); game.match_menu.keys.clear()
 	game.update_camera(0); game.hud.sync_navigation()
+	for frame in range(4): await process_frame
 	var guide=game.controls_help
 	await capture("menu")
-	click(Vector2(200,844))
+	click(game.hud.nav_buttons[3].get_global_rect().get_center())
 	check(guide.visible and game.state=="menu" and not game.ball.freeze,"Main menu button opens the guide without stopping the exhibition")
 	var clock_before: float=game.match_time
 	for frame in range(120): game._physics_process(1.0/120); await physics_frame
@@ -56,7 +57,7 @@ func run() -> void:
 	key(KEY_ESCAPE); key(KEY_ESCAPE,false)
 	tap(JOY_BUTTON_Y)
 	check(guide.visible and guide.use_pad,"Xbox Y opens the controller reference from the menu")
-	check(guide.rows()[2].keys=="LB + X" and guide.rows()[3].keys=="LB + Y" and guide.rows()[5].keys=="B × 2","All requested attacking combinations are easy to find")
+	check(guide.rows()[2].keys=="LB + X" and guide.rows()[3].keys=="LB + Y" and guide.rows()[5].keys=="RB + B","All requested attacking combinations are easy to find")
 	game.controller.rebind(KEY_Y,JOY_BUTTON_A)
 	check(guide.rows()[1].keys=="A" and guide.rows()[0].keys=="Y","Controller help follows remapped gameplay buttons")
 	game.controller.rebind(KEY_Q,JOY_BUTTON_RIGHT_SHOULDER)

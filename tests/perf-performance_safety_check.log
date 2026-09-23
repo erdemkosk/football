@@ -1,0 +1,20 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: 147 dry/wet/mud travel-time cases preserve the original physical solver
+PASS: Direct tactical reads preserve every club style and saved career override
+PASS: Reused lane scoring stays separate from time-based interception safety
+PASS: Combined resistance reads preserve actual weather and goalmouth mud
+PASS: Support plan includes an available teammate
+PASS: Unchanged spatial planning is reused between physics ticks
+PASS: A defender stepping up clamps cached support to the current offside line immediately
+PASS: A change of ball carrier rebuilds support on the same physics tick
+PASS: A departing player leaves the support plan immediately
+PASS: A returning player joins the support plan immediately
+PASS: A sent-off player cannot retain a cached role
+PASS: An explicit one-two updates support immediately
+PASS: An explicit run expires at physics rate between planning samples
+PASS: A changed tactical instruction invalidates support immediately
+PASS: Pausing clears support without accumulating a stale planning time
+PASS: Dirt continues accumulating at physics rate while uploaded colour stays within 0.05 percent
+PASS: An explicit kit reset updates materials immediately
+PERFORMANCE SAFETY: 17 checks, 0 failures

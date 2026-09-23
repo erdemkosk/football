@@ -31,7 +31,7 @@ func eligible(index: int) -> bool:
 	return index>=0 and index<game.players.size() and game.players[index].team==0 and game.players[index].visible and not game.players[index].dismissed
 
 func automatic() -> bool:
-	return not game.training and not game.player_lock and not game.menu_match.running and game.state=="playing"
+	return game.training_drills.team_play() and not game.player_lock and not game.menu_match.running and game.state=="playing"
 
 func touched(index: int) -> void:
 	if game.state!="playing" or index<0 or index>=game.players.size(): return
@@ -131,7 +131,7 @@ func switch_choice(exclude_current: bool=true) -> int:
 	return best
 
 func next_switch() -> int:
-	if game.state!="playing" or game.training or game.menu_match.running or eligible(game.dribbler) or game.ball.held_by!=null: return -1
+	if game.state!="playing" or not game.training_drills.team_play() or game.menu_match.running or eligible(game.dribbler) or game.ball.held_by!=null: return -1
 	return switch_choice()
 
 func select_defender(delta: float) -> void:
@@ -228,7 +228,7 @@ func predict_receiver(velocity: Vector3) -> Dictionary:
 	var drag := Motion.air_drag(game.weather)
 	const STEP := .08
 	for sample in range(1,51):
-		var airborne := point.y>.30 or absf(velocity.y)>1.2
+		var airborne: bool=point.y>game.ball.RADIUS+.08 or absf(velocity.y)>1.2
 		if airborne:
 			velocity=Motion.apply_spin(Motion.air_velocity(velocity,STEP,drag),spin,STEP)
 			velocity.y-=Motion.GRAVITY*STEP
@@ -238,14 +238,14 @@ func predict_receiver(velocity: Vector3) -> Dictionary:
 			velocity=flat.normalized()*Motion.rolling_speed(flat.length(),STEP,resistance)
 		spin=Motion.decay_spin(spin,STEP,airborne)
 		point+=velocity*STEP
-		if point.y<.22: point.y=.22; velocity.y=0
+		if point.y<game.ball.RADIUS: point.y=game.ball.RADIUS; velocity.y=0
 		if absf(point.x)>P.HALF_WIDTH or absf(point.z)>50: break
 		if point.y>2.05 or (point.y>.65 and velocity.y>2.5): continue
 		var time := sample*STEP
 		for i in costs:
 			var p=game.players[i]
 			var gap: float=game.flat_distance(p.position,point)
-			var speed: float=maxf(3.4,p.movement_speed())
+			var speed: float=maxf(.1,p.movement_speed())
 			var travel := maxf(0,gap-.85)/speed
 			# Standing players need a short acceleration step before an interception.
 			travel+=.12*(1-clampf(p.velocity.length()/speed,0,1))
@@ -259,18 +259,27 @@ func predict_receiver(velocity: Vector3) -> Dictionary:
 		if costs[i]<best_cost: best=i; best_cost=costs[i]
 	return {"index":best,"point":targets.get(best,game.ball.position),"advantage":float(costs.get(game.controlled,INF))-best_cost}
 
+func awaiting_delivery() -> bool:
+	if game.player_lock or game.dribbler>=0 or game.ball.held_by!=null: return false
+	if game.last_touch!=0: return false
+	if game.incoming_receiver==game.controlled and game.incoming_time>0: return true
+	if game.ai_receivers[0]==game.controlled and game.ai_pass_time[0]>0: return true
+	return predicted_receiver==game.controlled
+
 func reception_direction() -> Vector3:
-	var predicted: bool=predicted_receiver==game.controlled
-	if game.player_lock or game.pass_assistance==0 or (game.ai_receivers[0]!=game.controlled and not predicted) or game.ai_pass_time[0]<=0 or game.last_touch!=0 or game.dribbler>=0: return Vector3.ZERO
+	# FIFA-style: jog to the drop / meeting point. Sprint only changes pace.
+	if not awaiting_delivery(): return Vector3.ZERO
 	var p=game.players[game.controlled]
-	if p.action_timer>0 or game.ball.held_by!=null: return Vector3.ZERO
+	if p.action_timer>0: return Vector3.ZERO
 	var distance: float=game.flat_distance(p.position,game.ball.position)
 	var velocity: Vector3=game.ball.kick_velocity if game.ball.pending_kick else game.ball.linear_velocity
-	var target: Vector3=game.ball.position+velocity*clampf(distance/14,0.08,0.65)
-	if predicted: target=predicted_point
-	# A through-ball recipient keeps the run into space instead of checking back.
+	var target: Vector3=game.ai_attack.receiving_target(game.controlled)
+	if predicted_receiver==game.controlled and game.ai_receivers[0]!=game.controlled and game.incoming_receiver!=game.controlled:
+		target=predicted_point
 	if run_receiver==game.controlled and velocity.dot(run_target-game.ball.position)>0 and distance>1.1:
 		target=run_target
 	target.x=clampf(target.x,-(P.HALF_WIDTH-2),(P.HALF_WIDTH-2)); target.z=clampf(target.z,-48,48)
 	var offset: Vector3=(target-p.position)*Vector3(1,0,1)
-	return offset.normalized()*clampf(offset.length()/1.4,0,1)
+	if offset.length()<0.28: return Vector3.ZERO
+	if offset.length()>1.35: return offset.normalized()
+	return game.ai_attack.receiving_movement(game.controlled,target)

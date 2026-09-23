@@ -57,7 +57,8 @@ func run() -> void:
 	advance(1,Vector3(0,0,-44),Vector3(0,0,-22),true)
 	await capture("crowd-anticipation")
 	game.ball.position=Vector3(0,1,-30)
-	game.strike(9,Vector3(0,3,-30))
+	# The broadcast event belongs to the physical contact, after any windup.
+	game.commit_strike(9,Vector3(0,3,-30),0,false,"shot")
 	check(crowd.event_kind=="shot","An actual shot triggers the crowd reaction")
 	game.goal(0)
 	check(crowd.event_kind=="goal" and crowd.wave_age<0 and crowd.wave_cooldown>0,"A home goal triggers celebration and queues the Mexican wave")

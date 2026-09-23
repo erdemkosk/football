@@ -74,7 +74,7 @@ func run() -> void:
 	check(game.controlled<11 and absf(ball.position.x)<32,"Corner sets a valid restart taker and ball")
 	game.start_match(true)
 	await frames(5)
-	check(game.players.filter(func(p): return p.visible).size()==2,"Training isolates striker and goalkeeper")
+	check(game.players.filter(func(p): return p.visible and p.team==0).size()==11 and game.players[11].visible,"Training fields the full team against a goalkeeper")
 	game.charge=1
 	game.shoot()
 	await frames(5)

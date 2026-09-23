@@ -21,7 +21,7 @@ func start(p,style: String,point: Vector3,second: bool=false) -> bool:
 	if not p.keeper or (not second and (p.action_timer>0 or p.tackle_cooldown>0)): return false
 	if second and not rebound_ready(p): return false
 	kind=style; target=point; secured=false; foot=p.ball_actions.choose_foot(p,point)
-	duration={"foot":.64,"spread":.82,"smother":1.05,"rebound":.85}.get(style,.82)
+	duration={"foot":.64,"spread":.82,"smother":1.05,"rebound":.85,"catch":.68}.get(style,.82)
 	p.pose="keeper_"+style; p.action_timer=duration; p.tackle_cooldown=duration+.12
 	p.kick_timer=0; p.receive_timer=0
 	start_pose.clear()
@@ -51,7 +51,17 @@ func apply(p) -> void:
 	var entry := smoothstep(0,.11,age)
 	var weight := entry*(1-smoothstep(duration*.56,duration,age))
 	var side := -1.0 if foot==0 else 1.0
-	if kind=="foot":
+	if kind=="catch":
+		# Meet chest-height deliveries with two cupped hands, then fold the ball
+		# into the body. Actual glove proximity still decides the catch.
+		p.spine.rotation.x=-.16
+		var local: Vector3=p.spine.to_local(target)
+		var reach := clampf(atan2(local.y-.40,maxf(.12,-local.z)), -.35,.80)
+		p.left_arm.rotation=Vector3(1.20+reach,0,.20)
+		p.right_arm.rotation=Vector3(1.20+reach,0,-.20)
+		p.left_elbow.rotation.x=.35 if not secured else 1.10
+		p.right_elbow.rotation.x=p.left_elbow.rotation.x
+	elif kind=="foot":
 		p.spine.rotation=Vector3(-.18,-side*.22,side*.2)*weight
 		p.left_arm.rotation=Vector3(.35,0,-.95*weight)
 		p.right_arm.rotation=Vector3(.35,0,.95*weight)
@@ -91,5 +101,9 @@ func apply(p) -> void:
 			p.left_elbow.rotation.x=.85; p.right_elbow.rotation.x=.85
 	if start_pose.size()==p.kick_joints.size():
 		for i in range(p.kick_joints.size()): p.kick_joints[i].quaternion=start_pose[i].slerp(p.kick_joints[i].quaternion,entry)
+	if kind=="catch":
+		var point: Vector3=p.spine.to_local(target) if not secured else Vector3(0,.26,-.24)
+		preload("res://scripts/arm_pose.gd").reach(p.left_arm,p.left_elbow,point+Vector3(-.09,0,0),Vector3(-1,-.6,0),weight)
+		preload("res://scripts/arm_pose.gd").reach(p.right_arm,p.right_elbow,point+Vector3(.09,0,0),Vector3(1,-.6,0),weight)
 	var lowest: float=minf(p.left_knee.to_global(p.ball_actions.BOOT).y,p.right_knee.to_global(p.ball_actions.BOOT).y)
-	p.rig.position.y+=maxf(0,p.global_position.y+p.locomotion.SOLE-lowest)
+	p.rig.position.y+=maxf(0,p.global_position.y+p.boot_ground_height()-lowest)

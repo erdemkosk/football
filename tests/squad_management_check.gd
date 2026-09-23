@@ -16,12 +16,12 @@ func tap(code: int) -> void:
 		var e := InputEventJoypadButton.new(); e.device=0; e.button_index=code; e.pressed=down
 		Input.parse_input_event(e); Input.flush_buffered_events()
 func mouse_button(at: Vector2,down: bool) -> void:
-	at=root.get_final_transform()*at
+	at=root.get_final_transform()*game.ui.transform*at
 	var e := InputEventMouseButton.new(); e.position=at; e.global_position=at
 	e.button_index=MOUSE_BUTTON_LEFT; e.pressed=down; e.button_mask=MOUSE_BUTTON_MASK_LEFT if down else 0
 	Input.parse_input_event(e); Input.flush_buffered_events()
 func motion(at: Vector2,from: Vector2,down: bool=false) -> void:
-	var transform := root.get_final_transform()
+	var transform: Transform2D=root.get_final_transform()*game.ui.transform
 	var e := InputEventMouseMotion.new(); e.position=transform*at; e.global_position=e.position
 	e.relative=transform*at-transform*from; e.button_mask=MOUSE_BUTTON_MASK_LEFT if down else 0
 	Input.parse_input_event(e); Input.flush_buffered_events()
@@ -52,15 +52,20 @@ func run() -> void:
 	var original: String=game.players[9].display_name
 	var incoming: String=game.management.bench[0][2].name
 	await click(screen.slot_buttons[9])
-	check(screen.selected_slot==9 and root.gui_get_focus_owner()==screen.reserve_buttons[1],"Selecting a starter focuses the first eligible substitute")
+	check(screen.selected_slot==9 and root.gui_get_focus_owner()==screen.slot_buttons[9],"Selecting a starter keeps focus on the pitch")
 	await click(screen.reserve_buttons[2])
-	check(game.players[9].display_name==incoming and game.management.bench[0][2].name==original and game.management.used[0]==0,"Two real mouse clicks exchange starter and reserve without spending a match substitution")
+	check(game.players[9].display_name==original and screen.swap_stage=="confirm","Selecting a reserve opens comparison without changing the starter")
+	await click(screen.swap_action)
+	check(game.players[9].display_name==incoming and game.management.bench[0][2].name==original and game.management.used[0]==0,"Mouse confirmation exchanges starter and reserve without spending a match substitution")
 	tap(JOY_BUTTON_X); await settle()
 	check(game.players[9].display_name==original and screen.history.is_empty(),"Xbox X undoes a mouse substitution and restores both squad identities")
 	screen.slot_buttons[8].grab_focus(); tap(JOY_BUTTON_A); await settle()
-	check(root.gui_get_focus_owner()==screen.reserve_buttons[1],"Controller A selects the outgoing player and goes directly to an eligible reserve")
+	check(root.gui_get_focus_owner()==screen.slot_buttons[8],"Controller A selects the first player without forcing a substitution")
+	screen.reserve_buttons[1].grab_focus()
 	tap(JOY_BUTTON_DPAD_RIGHT)
 	check(root.gui_get_focus_owner()==screen.reserve_buttons[2] and screen.preview_reserve==2,"D-pad previews the next reserve in the comparison panel")
+	tap(JOY_BUTTON_A); await settle()
+	check(screen.swap_stage=="confirm" and screen.history.is_empty(),"Controller reserve selection waits for confirmation")
 	tap(JOY_BUTTON_A); await settle()
 	check(game.players[8].display_name==incoming and screen.history.size()==1,"Controller A completes the selected lineup change")
 	tap(JOY_BUTTON_X); await settle()
@@ -69,6 +74,15 @@ func run() -> void:
 	tap(JOY_BUTTON_X); await settle()
 	await drag(screen.slot_buttons[9],screen.reserve_buttons[2])
 	check(game.players[9].display_name==incoming and screen.history.size()==1,"Dragging a starter onto a reserve also completes exactly one swap")
+	tap(JOY_BUTTON_X); await settle()
+	var other_starter: String=game.players[6].display_name
+	await drag(screen.slot_buttons[9],screen.slot_buttons[6])
+	check(game.players[9].display_name==other_starter and game.players[6].display_name==original and screen.history.size()==1,"Dragging between two pitch cards exchanges positions exactly once")
+	tap(JOY_BUTTON_X); await settle()
+	await click(screen.reserve_buttons[2])
+	check(screen.swap_source.kind=="bench" and screen.reserve_buttons[2].active,"Mouse can select and highlight a reserve first")
+	await click(screen.slot_buttons[9]); await click(screen.swap_action)
+	check(game.players[9].display_name==incoming and screen.history.size()==1,"Mouse bench-first selection applies the intended pair")
 	tap(JOY_BUTTON_X); await settle()
 	var goalkeeper: String=game.players[0].display_name
 	await drag(screen.reserve_buttons[2],screen.slot_buttons[0])
@@ -84,6 +98,8 @@ func run() -> void:
 		check(clear,"All eleven shirt cards remain inside the pitch without overlap, formation="+str(formation))
 	await capture("352")
 	screen.confirm(); game.ceremony.finish(true); game.set_physics_process(false)
+	# The ceremony now ends at the opening restart; this fixture tests live play.
+	game.state="playing"; game.ball.freeze=false
 	game.players[9].energy=0.22; game.players[9].yellow_cards=1
 	game.players[6].energy=0.48; game.players[8].energy=0.63
 	game.match_time=170; game.score=[1,1]; game.controlled=9
@@ -92,24 +108,28 @@ func run() -> void:
 	await click(screen.slot_buttons[9]); screen.reserve_buttons[2].grab_focus()
 	await capture("comparison")
 	await click(screen.reserve_buttons[2])
+	await click(screen.swap_action)
 	check(game.management.pending.size()==1 and game.players[9].display_name==original and game.management.used[0]==0,"Live substitution waits for a stoppage and does not teleport the player")
 	check(screen.slot_buttons[9].data.status=="ÇIKACAK" and screen.reserve_buttons[2].data.status=="GİRECEK" and not screen.swap_action.disabled,"Outgoing and incoming players are marked and individual cancellation is available")
 	await capture("pending")
 	await click(screen.slot_buttons[8]); await click(screen.reserve_buttons[2])
 	check(game.management.pending.size()==1 and screen.status.contains("başka"),"A reserved substitute cannot be assigned to another player")
 	await click(screen.reserve_buttons[3])
+	await click(screen.swap_action)
 	check(game.management.pending.size()==2,"Another eligible replacement can be queued independently")
 	tap(JOY_BUTTON_X); await settle()
 	check(game.management.pending.size()==1 and game.management.pending[0].slot==9,"Undo removes only the last queued replacement")
 	await click(screen.slot_buttons[9]); await click(screen.swap_action)
 	check(game.management.pending.is_empty() and screen.history.is_empty(),"Clicking cancel removes the selected pending replacement")
-	game.players[9].dismissed=true; screen.build(); await click(screen.reserve_buttons[2])
+	game.players[9].dismissed=true; screen.build(); await click(screen.slot_buttons[9])
 	check(game.management.pending.is_empty() and screen.status.contains("İhraç"),"A dismissed player cannot be replaced")
 	game.players[9].dismissed=false; game.management.bench[0][2].used=true; screen.build(); await click(screen.reserve_buttons[2])
 	check(game.management.pending.is_empty() and screen.status.contains("kullanıldı"),"A previously used substitute cannot re-enter")
 	game.management.bench[0][2].used=false; game.management.used[0]=3; screen.build(); await click(screen.reserve_buttons[2])
 	check(game.management.pending.is_empty() and screen.status.contains("hakkı doldu"),"The three-substitution limit is enforced through the new UI")
 	game.management.used[0]=0; screen.build(); await click(screen.reserve_buttons[2])
+	await click(screen.slot_buttons[9])
+	await click(screen.swap_action)
 	tap(JOY_BUTTON_B); await settle()
 	check(not screen.visible and game.state=="playing" and not game.ball.freeze and game.management.pending.size()==1,"Controller B resumes play with the requested substitution still queued")
 	check(not game.pass_charging and game.ball.pending_kick==false,"Menu selections never trigger a gameplay kick")

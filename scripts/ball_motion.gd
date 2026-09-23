@@ -7,6 +7,7 @@ const MAGNUS := 0.10
 const GRAVITY := 9.81
 
 static func profile(surface,point: Vector3) -> Vector2:
+	if is_instance_valid(surface) and surface.has_method("ball_resistance"): return surface.ball_resistance(point)
 	if is_instance_valid(surface): return Vector2(surface.ball_drag(point),surface.ball_rolling_damping(point))
 	return Vector2(DRY_ROLLING,DRY_DAMPING)
 
@@ -32,9 +33,13 @@ static func distance_at(speed: float,time: float,resistance: Vector2) -> float:
 static func travel_time(speed: float,distance: float,resistance: Vector2) -> float:
 	var low := 0.0
 	var high := stop_time(speed,resistance)
+	var ratio := resistance.x/resistance.y
 	for i in range(13):
 		var middle := (low+high)*0.5
-		if distance_at(speed,middle,resistance)<distance: low=middle
+		# Every midpoint is already before stop_time. Keep the same bisection
+		# while avoiding thirteen redundant logarithms and parameter divisions.
+		var travelled := maxf(0,(speed+ratio)*(1-exp(-resistance.y*middle))/resistance.y-ratio*middle)
+		if travelled<distance: low=middle
 		else: high=middle
 	return (low+high)*0.5
 

@@ -2,7 +2,7 @@ extends RefCounted
 const P = preload("res://scripts/pitch_dimensions.gd")
 ## Read-only help for the ball already in flight, independent of who kicked it.
 const Motion = preload("res://scripts/ball_motion.gd")
-const RADIUS := .22
+const RADIUS := preload("res://scripts/ball_dimensions.gd").RADIUS
 const STEP := 1.0/120.0
 const REFRESH := .08
 var prediction: Dictionary = {}

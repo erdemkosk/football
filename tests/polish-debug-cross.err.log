@@ -1,0 +1,8 @@
+ERROR: Failed to open log file for writing: user://logs/godot.log
+   at: rotate_file (core/io/logger.cpp:169)
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+SCRIPT ERROR: Invalid access to property or key 'preset' on a base object of type 'RefCounted (match_camera.gd)'.
+   at: run (res://tests/match_polish_check.gd:32)
+   GDScript backtrace (most recent call first):
+       [0] run (res://tests/match_polish_check.gd:32)

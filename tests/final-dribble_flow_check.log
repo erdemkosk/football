@@ -1,0 +1,21 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+FLOW { "input": (0.0, 0.0, -1.0), "sprint": false } { "foot_step": 0.03884538635612, "foot_jerk": 0.01076330244541, "pelvis_step": 0.0053625293076, "ball_speed_change": 0.41698932647705, "intervals": [29, 29, 29, 29, 29, 29, 29, 29, 29], "gap": 0.5257740020752, "owner": 9 }
+PASS: A continuous dribble stays controlled
+PASS: The boot follows a continuous stride without jumping between touch poses
+PASS: Touch recovery does not snap the pelvis up and down
+PASS: Straight carries use small rolling impulses without a stop-start ball
+PASS: Ordinary touches finish their stride before another touch starts
+FLOW { "input": (0.0, 0.0, -1.0), "sprint": true } { "foot_step": 0.09176369011402, "foot_jerk": 0.02948415651917, "pelvis_step": 0.00913615524769, "ball_speed_change": 0.66766786575317, "intervals": [27, 28, 28, 30, 32, 28, 27, 28, 30], "gap": 0.8768310546875, "owner": 9 }
+PASS: A continuous dribble stays controlled
+PASS: The boot follows a continuous stride without jumping between touch poses
+PASS: Touch recovery does not snap the pelvis up and down
+PASS: Straight carries use small rolling impulses without a stop-start ball
+PASS: Ordinary touches finish their stride before another touch starts
+FLOW { "input": (0.0, 0.0, -0.35), "sprint": false } { "foot_step": 0.0577375665307, "foot_jerk": 0.01631437242031, "pelvis_step": 0.00424832478166, "ball_speed_change": 0.40205919742584, "intervals": [30, 29, 29, 28, 28, 29, 29, 29, 29], "gap": 0.51164722442627, "owner": 9 }
+PASS: A continuous dribble stays controlled
+PASS: The boot follows a continuous stride without jumping between touch poses
+PASS: Touch recovery does not snap the pelvis up and down
+PASS: Straight carries use small rolling impulses without a stop-start ball
+PASS: Ordinary touches finish their stride before another touch starts
+DRIBBLE FLOW CHECK: 15 checks, 0 failures

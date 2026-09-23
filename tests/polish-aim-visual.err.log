@@ -1,0 +1,1822 @@
+ERROR: Failed to open log file for writing: user://logs/godot.log
+   at: rotate_file (core/io/logger.cpp:169)
+ERROR: Can't create shader cache folder, no shader caching will happen: user://
+   at: RendererCompositorRD (servers/rendering/renderer_rd/renderer_compositor_rd.cpp:337)
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+SCRIPT ERROR: Parse Error: Cannot infer the type of "x" variable because the value doesn't have a set type.
+   at: GDScript::reload (res://scripts/aim_indicator.gd:127)
+   GDScript backtrace (most recent call first):
+       [0] run (res://tests/aim_indicator_preview.gd:28)
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+   at: GDScript::reload (res://scripts/hud.gd:0)
+   GDScript backtrace (most recent call first):
+       [0] run (res://tests/aim_indicator_preview.gd:28)
+SCRIPT ERROR: Compile Error: Failed to compile depended scripts.
+   at: GDScript::reload (res://scripts/game.gd:0)
+   GDScript backtrace (most recent call first):
+       [0] run (res://tests/aim_indicator_preview.gd:28)
+ERROR: Failed to load script "res://scripts/game.gd" with error "Compilation failed".
+   at: load (modules/gdscript/gdscript_resource_format.cpp:46)
+   GDScript backtrace (most recent call first):
+       [0] run (res://tests/aim_indicator_preview.gd:28)
+SCRIPT ERROR: Invalid call. Nonexistent function 'new' in base 'GDScript'.
+   at: @implicit_new (res://scripts/hud.gd:7)
+   GDScript backtrace (most recent call first):
+       [0] @implicit_new (res://scripts/hud.gd:7)
+       [1] _ready (res://scripts/game.gd:235)
+       [2] run (res://tests/aim_indicator_preview.gd:28)
+SCRIPT ERROR: Invalid assignment of property or key 'font_names' with value of type 'PackedStringArray' on a base object of type 'Nil'.
+   at: _ready (res://scripts/hud.gd:54)
+   GDScript backtrace (most recent call first):
+       [0] _ready (res://scripts/hud.gd:54)
+       [1] _ready (res://scripts/game.gd:237)
+       [2] run (res://tests/aim_indicator_preview.gd:28)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] menu (res://scripts/hud.gd:404)
+       [2] _draw (res://scripts/hud.gd:128)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] headline (res://scripts/hud.gd:109)
+       [1] menu (res://scripts/hud.gd:405)
+       [2] _draw (res://scripts/hud.gd:128)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] menu (res://scripts/hud.gd:406)
+       [2] _draw (res://scripts/hud.gd:128)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] menu (res://scripts/hud.gd:408)
+       [2] _draw (res://scripts/hud.gd:128)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] headline (res://scripts/hud.gd:109)
+       [1] menu (res://scripts/hud.gd:409)
+       [2] _draw (res://scripts/hud.gd:128)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] headline (res://scripts/hud.gd:109)
+       [1] menu (res://scripts/hud.gd:410)
+       [2] _draw (res://scripts/hud.gd:128)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] menu (res://scripts/hud.gd:411)
+       [2] _draw (res://scripts/hud.gd:128)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] menu (res://scripts/hud.gd:412)
+       [2] _draw (res://scripts/hud.gd:128)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] button (res://scripts/hud.gd:430)
+       [2] menu (res://scripts/hud.gd:413)
+       [3] _draw (res://scripts/hud.gd:128)
+SCRIPT ERROR: Cannot call method 'get_string_size' on a null value.
+   at: button (res://scripts/hud.gd:434)
+   GDScript backtrace (most recent call first):
+       [0] button (res://scripts/hud.gd:434)
+       [1] menu (res://scripts/hud.gd:413)
+       [2] _draw (res://scripts/hud.gd:128)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] button (res://scripts/hud.gd:430)
+       [2] menu (res://scripts/hud.gd:414)
+       [3] _draw (res://scripts/hud.gd:128)
+SCRIPT ERROR: Cannot call method 'get_string_size' on a null value.
+   at: button (res://scripts/hud.gd:434)
+   GDScript backtrace (most recent call first):
+       [0] button (res://scripts/hud.gd:434)
+       [1] menu (res://scripts/hud.gd:414)
+       [2] _draw (res://scripts/hud.gd:128)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] button (res://scripts/hud.gd:430)
+       [2] menu (res://scripts/hud.gd:415)
+       [3] _draw (res://scripts/hud.gd:128)
+SCRIPT ERROR: Cannot call method 'get_string_size' on a null value.
+   at: button (res://scripts/hud.gd:434)
+   GDScript backtrace (most recent call first):
+       [0] button (res://scripts/hud.gd:434)
+       [1] menu (res://scripts/hud.gd:415)
+       [2] _draw (res://scripts/hud.gd:128)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] button (res://scripts/hud.gd:430)
+       [2] menu (res://scripts/hud.gd:416)
+       [3] _draw (res://scripts/hud.gd:128)
+SCRIPT ERROR: Cannot call method 'get_string_size' on a null value.
+   at: button (res://scripts/hud.gd:434)
+   GDScript backtrace (most recent call first):
+       [0] button (res://scripts/hud.gd:434)
+       [1] menu (res://scripts/hud.gd:416)
+       [2] _draw (res://scripts/hud.gd:128)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] button (res://scripts/hud.gd:430)
+       [2] menu (res://scripts/hud.gd:417)
+       [3] _draw (res://scripts/hud.gd:128)
+SCRIPT ERROR: Cannot call method 'get_string_size' on a null value.
+   at: button (res://scripts/hud.gd:434)
+   GDScript backtrace (most recent call first):
+       [0] button (res://scripts/hud.gd:434)
+       [1] menu (res://scripts/hud.gd:417)
+       [2] _draw (res://scripts/hud.gd:128)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] menu (res://scripts/hud.gd:420)
+       [2] _draw (res://scripts/hud.gd:128)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] scene (res://tests/aim_indicator_preview.gd:6)
+       [2] run (res://tests/aim_indicator_preview.gd:32)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:291)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:292)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:294)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:295)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:296)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:300)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:301)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:306)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:308)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:312)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:353)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:354)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:355)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:361)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:362)
+       [2] _draw (res://scripts/hud.gd:153)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] minimap (res://scripts/hud.gd:394)
+       [2] _draw (res://scripts/hud.gd:154)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] _draw (res://scripts/hud.gd:160)
+SCRIPT ERROR: Invalid call. Nonexistent function 'draw_arrow' in base 'Nil'.
+   at: draw_pass_guide (res://scripts/hud.gd:247)
+   GDScript backtrace (most recent call first):
+       [0] draw_pass_guide (res://scripts/hud.gd:247)
+       [1] _draw (res://scripts/hud.gd:183)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] draw (res://scripts/match_coaching.gd:166)
+       [2] _draw (res://scripts/hud.gd:195)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:291)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:292)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:294)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:295)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:296)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:300)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:301)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:306)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:308)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:312)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:353)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:354)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:355)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:361)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:362)
+       [2] _draw (res://scripts/hud.gd:153)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] minimap (res://scripts/hud.gd:394)
+       [2] _draw (res://scripts/hud.gd:154)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] _draw (res://scripts/hud.gd:160)
+SCRIPT ERROR: Invalid call. Nonexistent function 'draw_arrow' in base 'Nil'.
+   at: draw_pass_guide (res://scripts/hud.gd:247)
+   GDScript backtrace (most recent call first):
+       [0] draw_pass_guide (res://scripts/hud.gd:247)
+       [1] _draw (res://scripts/hud.gd:183)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] draw (res://scripts/match_coaching.gd:166)
+       [2] _draw (res://scripts/hud.gd:195)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:291)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:292)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:294)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:295)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:296)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:300)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:301)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:306)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:308)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:312)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:353)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:354)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:355)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:361)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:362)
+       [2] _draw (res://scripts/hud.gd:153)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] minimap (res://scripts/hud.gd:394)
+       [2] _draw (res://scripts/hud.gd:154)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] _draw (res://scripts/hud.gd:160)
+SCRIPT ERROR: Invalid call. Nonexistent function 'draw_arrow' in base 'Nil'.
+   at: draw_pass_guide (res://scripts/hud.gd:247)
+   GDScript backtrace (most recent call first):
+       [0] draw_pass_guide (res://scripts/hud.gd:247)
+       [1] _draw (res://scripts/hud.gd:183)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] draw (res://scripts/match_coaching.gd:166)
+       [2] _draw (res://scripts/hud.gd:195)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] scene (res://tests/aim_indicator_preview.gd:6)
+       [2] run (res://tests/aim_indicator_preview.gd:35)
+       [3] photo (res://tests/aim_indicator_preview.gd:25)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:291)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:292)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:294)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:295)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:296)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:300)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:301)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:306)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:308)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:312)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:353)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:354)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:355)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:361)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:362)
+       [2] _draw (res://scripts/hud.gd:153)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] minimap (res://scripts/hud.gd:394)
+       [2] _draw (res://scripts/hud.gd:154)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] _draw (res://scripts/hud.gd:160)
+SCRIPT ERROR: Invalid call. Nonexistent function 'draw_arrow' in base 'Nil'.
+   at: draw_pass_guide (res://scripts/hud.gd:247)
+   GDScript backtrace (most recent call first):
+       [0] draw_pass_guide (res://scripts/hud.gd:247)
+       [1] _draw (res://scripts/hud.gd:183)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] draw (res://scripts/match_coaching.gd:166)
+       [2] _draw (res://scripts/hud.gd:195)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] scene (res://tests/aim_indicator_preview.gd:6)
+       [2] run (res://tests/aim_indicator_preview.gd:37)
+       [3] photo (res://tests/aim_indicator_preview.gd:25)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:291)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:292)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:294)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:295)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:296)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:300)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:301)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:306)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:308)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:312)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:353)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:354)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:355)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:361)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:362)
+       [2] _draw (res://scripts/hud.gd:153)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] minimap (res://scripts/hud.gd:394)
+       [2] _draw (res://scripts/hud.gd:154)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] _draw (res://scripts/hud.gd:160)
+SCRIPT ERROR: Invalid call. Nonexistent function 'draw_arrow' in base 'Nil'.
+   at: draw_shot_guide (res://scripts/hud.gd:229)
+   GDScript backtrace (most recent call first):
+       [0] draw_shot_guide (res://scripts/hud.gd:229)
+       [1] _draw (res://scripts/hud.gd:179)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] draw (res://scripts/match_coaching.gd:166)
+       [2] _draw (res://scripts/hud.gd:195)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:291)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:292)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:294)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:295)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:296)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:300)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:301)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:306)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:308)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:312)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:353)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:354)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:355)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:361)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:362)
+       [2] _draw (res://scripts/hud.gd:153)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] minimap (res://scripts/hud.gd:394)
+       [2] _draw (res://scripts/hud.gd:154)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] _draw (res://scripts/hud.gd:160)
+SCRIPT ERROR: Invalid call. Nonexistent function 'draw_arrow' in base 'Nil'.
+   at: draw_shot_guide (res://scripts/hud.gd:229)
+   GDScript backtrace (most recent call first):
+       [0] draw_shot_guide (res://scripts/hud.gd:229)
+       [1] _draw (res://scripts/hud.gd:179)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] draw (res://scripts/match_coaching.gd:166)
+       [2] _draw (res://scripts/hud.gd:195)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:291)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:292)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:294)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:295)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:296)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:300)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:301)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:306)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:308)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:312)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:353)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:354)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:355)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:361)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:362)
+       [2] _draw (res://scripts/hud.gd:153)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] minimap (res://scripts/hud.gd:394)
+       [2] _draw (res://scripts/hud.gd:154)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] _draw (res://scripts/hud.gd:160)
+SCRIPT ERROR: Invalid call. Nonexistent function 'draw_arrow' in base 'Nil'.
+   at: draw_shot_guide (res://scripts/hud.gd:229)
+   GDScript backtrace (most recent call first):
+       [0] draw_shot_guide (res://scripts/hud.gd:229)
+       [1] _draw (res://scripts/hud.gd:179)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] draw (res://scripts/match_coaching.gd:166)
+       [2] _draw (res://scripts/hud.gd:195)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:291)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:292)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:294)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:295)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:296)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:300)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:301)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:306)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:308)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:312)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:353)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:354)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:355)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:361)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:362)
+       [2] _draw (res://scripts/hud.gd:153)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] minimap (res://scripts/hud.gd:394)
+       [2] _draw (res://scripts/hud.gd:154)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] _draw (res://scripts/hud.gd:160)
+SCRIPT ERROR: Invalid call. Nonexistent function 'draw_arrow' in base 'Nil'.
+   at: draw_shot_guide (res://scripts/hud.gd:229)
+   GDScript backtrace (most recent call first):
+       [0] draw_shot_guide (res://scripts/hud.gd:229)
+       [1] _draw (res://scripts/hud.gd:179)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] draw (res://scripts/match_coaching.gd:166)
+       [2] _draw (res://scripts/hud.gd:195)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] scene (res://tests/aim_indicator_preview.gd:6)
+       [2] run (res://tests/aim_indicator_preview.gd:46)
+       [3] photo (res://tests/aim_indicator_preview.gd:25)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:291)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:292)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:294)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:295)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:296)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:300)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:301)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:306)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:308)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:312)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:353)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:354)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:355)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:361)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:362)
+       [2] _draw (res://scripts/hud.gd:153)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] minimap (res://scripts/hud.gd:394)
+       [2] _draw (res://scripts/hud.gd:154)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] _draw (res://scripts/hud.gd:160)
+SCRIPT ERROR: Invalid call. Nonexistent function 'draw_arrow' in base 'Nil'.
+   at: draw_shot_guide (res://scripts/hud.gd:229)
+   GDScript backtrace (most recent call first):
+       [0] draw_shot_guide (res://scripts/hud.gd:229)
+       [1] set_piece_overlay (res://scripts/hud.gd:332)
+       [2] _draw (res://scripts/hud.gd:190)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] draw (res://scripts/match_coaching.gd:166)
+       [2] _draw (res://scripts/hud.gd:195)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:291)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:292)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:294)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:295)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:296)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:300)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:301)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:306)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:308)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:312)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:353)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:354)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:355)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:361)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:362)
+       [2] _draw (res://scripts/hud.gd:153)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] minimap (res://scripts/hud.gd:394)
+       [2] _draw (res://scripts/hud.gd:154)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] _draw (res://scripts/hud.gd:160)
+SCRIPT ERROR: Invalid call. Nonexistent function 'draw_arrow' in base 'Nil'.
+   at: draw_shot_guide (res://scripts/hud.gd:229)
+   GDScript backtrace (most recent call first):
+       [0] draw_shot_guide (res://scripts/hud.gd:229)
+       [1] set_piece_overlay (res://scripts/hud.gd:332)
+       [2] _draw (res://scripts/hud.gd:190)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] draw (res://scripts/match_coaching.gd:166)
+       [2] _draw (res://scripts/hud.gd:195)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:291)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:292)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:294)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:295)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] crest (res://scripts/hud.gd:346)
+       [2] scoreboard (res://scripts/hud.gd:296)
+       [3] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:300)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:301)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:306)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] scoreboard (res://scripts/hud.gd:308)
+       [2] _draw (res://scripts/hud.gd:140)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] scoreboard (res://scripts/hud.gd:312)
+       [2] _draw (res://scripts/hud.gd:140)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:353)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:354)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:355)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:361)
+       [2] _draw (res://scripts/hud.gd:153)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] player_info (res://scripts/hud.gd:362)
+       [2] _draw (res://scripts/hud.gd:153)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] minimap (res://scripts/hud.gd:394)
+       [2] _draw (res://scripts/hud.gd:154)
+SCRIPT ERROR: Invalid call. Nonexistent function 'get_string_size' in base 'Nil'.
+   at: center (res://scripts/hud.gd:105)
+   GDScript backtrace (most recent call first):
+       [0] center (res://scripts/hud.gd:105)
+       [1] _draw (res://scripts/hud.gd:160)
+SCRIPT ERROR: Invalid call. Nonexistent function 'draw_arrow' in base 'Nil'.
+   at: draw_shot_guide (res://scripts/hud.gd:229)
+   GDScript backtrace (most recent call first):
+       [0] draw_shot_guide (res://scripts/hud.gd:229)
+       [1] set_piece_overlay (res://scripts/hud.gd:332)
+       [2] _draw (res://scripts/hud.gd:190)
+ERROR: Required object "rp_font" is null.
+   at: draw_string (scene/main/canvas_item.cpp:1118)
+   GDScript backtrace (most recent call first):
+       [0] text (res://scripts/hud.gd:101)
+       [1] draw (res://scripts/match_coaching.gd:166)
+       [2] _draw (res://scripts/hud.gd:195)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)
+SCRIPT ERROR: Invalid assignment of property or key 'visible' with value of type 'bool' on a base object of type 'Nil'.
+   at: sync_navigation (res://scripts/hud.gd:477)
+   GDScript backtrace (most recent call first):
+       [0] sync_navigation (res://scripts/hud.gd:477)
+       [1] sync (res://scripts/menu_navigation.gd:34)
+       [2] update (res://scripts/menu_navigation.gd:37)
+       [3] _process (res://scripts/gamepad.gd:77)

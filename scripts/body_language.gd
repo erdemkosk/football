@@ -1,7 +1,7 @@
 extends RefCounted
 ## Match-aware, visual-only gestures. No movement, ball or input state is changed.
 const SCAN_TIME := 0.46
-const POINT_TIME := 0.95
+const POINT_TIME := 0.58
 const BALANCE_TIME := 0.58
 var enabled := false
 var ball_target := Vector3.ZERO
@@ -21,6 +21,10 @@ var balance_strength := 0.0
 var balance_direction := Vector3.ZERO
 var contact_cooldown := 0.0
 var contact_count := 0
+var shielding := 0.0
+var shield_target := Vector3.ZERO
+var shield_seen := false
+var shield_left := false
 
 func reset(p) -> void:
 	clear_intent()
@@ -31,6 +35,7 @@ func reset(p) -> void:
 	balance_strength=0
 	contact_cooldown=0
 	contact_count=0
+	shielding=0; shield_seen=false
 	p.head_joint.rotation=Vector3.ZERO
 	for eye in p.eye_joints: eye.rotation=Vector3.ZERO
 
@@ -56,7 +61,18 @@ func observe(game,index: int) -> void:
 	var p=game.players[index]
 	enabled=game.state=="playing" and p.visible
 	ball_target=game.ball.global_position
+	shield_seen=false
 	if not available(p): return
+	if (game.dribbler==index or p.protecting) and not p.keeper:
+		var nearest := 1.55
+		for other in game.players:
+			if not other.visible or other.team==p.team or other.dismissed: continue
+			var gap: Vector3=(other.position-p.position)*Vector3(1,0,1)
+			if gap.length()<nearest and gap.normalized().dot(p.facing)<.35:
+				nearest=gap.length(); shield_seen=true
+				shield_target=other.position+Vector3.UP*1.18
+				var side: float=p.rig.to_local(other.position).x
+				if absf(side)>.15: shield_left=side<0
 	var offset: Vector3=(ball_target-p.global_position)*Vector3(1,0,1)
 	var distance := offset.length()
 	var ball_velocity: Vector3=game.ball.kick_velocity if game.ball.pending_kick else game.ball.linear_velocity
@@ -78,7 +94,7 @@ func observe(game,index: int) -> void:
 		point_cancelled=true
 		return
 	if point_age<POINT_TIME and (point_target-p.position).normalized().dot(p.facing)<-0.35: point_cancelled=true
-	if not free_arms(p) or point_cooldown>0 or point_age<POINT_TIME or balance_age<BALANCE_TIME or distance<5 or distance>30: return
+	if not free_arms(p) or point_cooldown>0 or point_age<POINT_TIME or balance_age<BALANCE_TIME or distance<4 or distance>32: return
 	var target: Vector3=game.support.targets[index]
 	var route: Vector3=(target-p.position)*Vector3(1,0,1)
 	if route.length()<2.5 or route.length()>18 or route.normalized().dot(p.facing)<-0.35: return
@@ -98,16 +114,17 @@ func observe(game,index: int) -> void:
 	point_age=0
 	point_weight=0
 	point_cancelled=false
-	point_cooldown=4.1+fmod(p.number*0.53+p.team*0.7,2.6)
+	point_cooldown=2.15+fmod(p.number*0.53+p.team*0.7,1.8)
 
 func update(p,delta: float) -> void:
+	shielding=move_toward(shielding,1.0 if shield_seen and can_balance(p) and p.receive_timer<=0 else 0.0,delta*6)
 	scan_age=minf(SCAN_TIME,scan_age+delta)
 	point_age=minf(POINT_TIME,point_age+delta)
 	balance_age=minf(BALANCE_TIME,balance_age+delta)
 	scan_cooldown=maxf(0,scan_cooldown-delta)
 	point_cooldown=maxf(0,point_cooldown-delta)
 	contact_cooldown=maxf(0,contact_cooldown-delta)
-	var point_envelope := 0.0 if point_cancelled else smoothstep(0,0.20,point_age)*(1-smoothstep(0.58,POINT_TIME,point_age))
+	var point_envelope := 0.0 if point_cancelled else smoothstep(0,0.12,point_age)*(1-smoothstep(0.34,POINT_TIME,point_age))
 	point_weight=move_toward(point_weight,point_envelope,delta*5.0)
 	if point_cancelled and point_weight<=0: point_age=POINT_TIME
 	if not available(p):
@@ -145,6 +162,17 @@ func collisions(p,travel_velocity: Vector3) -> void:
 
 func apply_pose(p) -> void:
 	if not can_balance(p): return
+	if shielding>0:
+		# A bent forearm feels the opponent behind the shoulder. This is a visual
+		# shielding gesture, never a strike, push impulse or invisible protection.
+		var arm: Node3D=p.left_arm if shield_left else p.right_arm
+		var elbow: Node3D=p.left_elbow if shield_left else p.right_elbow
+		var side := -1.0 if shield_left else 1.0
+		arm.rotation=arm.rotation.lerp(Vector3(-.32,side*.28,side*1.03),shielding)
+		elbow.rotation.x=lerpf(elbow.rotation.x,.92,shielding)
+		p.spine.rotation.y=lerpf(p.spine.rotation.y,-side*.14,shielding*.65)
+		point_cancelled=true
+		return
 	if balance_age<BALANCE_TIME:
 		var hit := smoothstep(0,0.075,balance_age)*(1-smoothstep(0.15,BALANCE_TIME,balance_age))*balance_strength
 		var settle := sin(clampf((balance_age-0.18)/0.4,0,1)*PI)*0.20*balance_strength
@@ -184,6 +212,18 @@ func apply_gaze(p,delta: float) -> void:
 			var glance := smoothstep(0,0.09,scan_age)*(1-smoothstep(0.23,SCAN_TIME,scan_age))
 			yaw=lerpf(yaw,scan_side*1.12,glance)
 			pitch=lerpf(pitch,0.04,glance)
+	if p.reaction.kind!="" and p.reaction.weight>0.12:
+		var hold: float=p.reaction.weight
+		if p.reaction.kind=="miss":
+			yaw=lerpf(yaw,0,hold)
+			pitch=lerpf(pitch,-0.34,hold)
+		elif p.reaction.kind=="captain":
+			yaw=lerpf(yaw,0,hold*0.55)
+			pitch=lerpf(pitch,0.08,hold)
+		elif p.reaction.kind=="appeal":
+			var toward: Vector3=p.spine.to_local(p.reaction.focus)-p.head_joint.position
+			yaw=lerpf(yaw,clampf(atan2(-toward.x,-toward.z),-1.0,1.0),hold)
+			pitch=lerpf(pitch,0.06,hold)
 	p.head_joint.rotation.y=move_toward(p.head_joint.rotation.y,yaw,delta*5.4)
 	p.head_joint.rotation.x=lerpf(p.head_joint.rotation.x,pitch,1-exp(-delta*13))
 	var eye_rotation := Vector3.ZERO

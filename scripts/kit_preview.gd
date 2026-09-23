@@ -43,10 +43,10 @@ func _ready() -> void:
 	player.marker.visible=false
 	var camera := Camera3D.new()
 	camera.projection=Camera3D.PROJECTION_ORTHOGONAL
-	camera.size=2.9
+	camera.size=2.9*player.WORLD_SCALE
 	world.add_child(camera)
-	camera.position=Vector3(0,1.3,-7)
-	camera.look_at(Vector3(0,1.13,0))
+	camera.position=Vector3(0,1.3*player.WORLD_SCALE,-7)
+	camera.look_at(Vector3(0,1.13*player.WORLD_SCALE,0))
 	camera.current=true
 	stand_idle()
 

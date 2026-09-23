@@ -74,7 +74,7 @@ func run() -> void:
 	player.desired=Vector3.FORWARD
 	await simulate(player,18)
 	var launched := Vector2(player.velocity.x,player.velocity.z).length()
-	check(launched>5.2,"A press reaches running speed in a short stride")
+	check(launched>5.2*player.MOVEMENT_PACE,"A press reaches running speed in a short stride")
 	player.desired=Vector3.ZERO
 	await simulate(player,18)
 	var coasting := Vector2(player.velocity.x,player.velocity.z).length()
@@ -88,10 +88,10 @@ func run() -> void:
 	player.sprinting=true
 	await simulate(player,24)
 	var wound := Vector2(player.velocity.x,player.velocity.z).length()
-	check(wound>5.0 and wound<8.2,"Sprint needs a wind-up after the first running stride")
+	check(wound>5.0*player.MOVEMENT_PACE and wound<8.2*player.MOVEMENT_PACE,"Sprint needs a wind-up after the first running stride")
 	await simulate(player,72)
 	var full_sprint := Vector2(player.velocity.x,player.velocity.z).length()
-	check(full_sprint>8.5,"Sustained sprint still reaches top speed")
+	check(full_sprint>8.5*player.MOVEMENT_PACE,"Sustained sprint still reaches top speed")
 	player.sprinting=false
 	await simulate(player,18)
 	check(Vector2(player.velocity.x,player.velocity.z).length()>full_sprint*0.7,"Releasing sprint keeps surplus speed instead of snapping to a jog")

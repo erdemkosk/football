@@ -1,0 +1,50 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Keeper chooses the uncovered outlet in half 1
+PASS: Preparing a distribution does not register a completed pass
+PASS: A closed distribution lane is cancelled while the ball is still safely in the keeper's hands
+PASS: Goal kicks target an actual free teammate in half 1
+PASS: Restart run-up preserves the evaluated route instead of replacing it with fixed power
+PASS: A free kick deep in the own half never becomes an automatic shot
+PASS: A close attacking free kick retains a genuine shot option
+PASS: An indirect free kick always seeks a legal delivery
+PASS: Keeper chooses the uncovered outlet in half 2
+PASS: Preparing a distribution does not register a completed pass
+PASS: A closed distribution lane is cancelled while the ball is still safely in the keeper's hands
+PASS: Goal kicks target an actual free teammate in half 2
+PASS: Restart run-up preserves the evaluated route instead of replacing it with fixed power
+PASS: A free kick deep in the own half never becomes an automatic shot
+PASS: A close attacking free kick retains a genuine shot option
+PASS: An indirect free kick always seeks a legal delivery
+PASS: No safe outlet prompts a brief scan while retaining possession
+PASS: The scan is bounded and a measured long distribution remains available
+PASS: A long clearance switches flank when an opponent occupies the previous landing area
+PASS: An ordinary safe pass enters the shared kick preparation
+PASS: A selected ordinary pass meets the same safety threshold used at contact
+PASS: A field player aborts a newly blocked pass without donating possession
+PASS: A runner approaching the passing lane is considered before releasing the ball
+PASS: A receiver moving into an opponent's control is rejected despite forward progress
+PASS: A tired receiver is evaluated at their real reduced running speed
+PASS: Our keeper's distribution still belongs to the user
+PASS: A keeper receiving a back pass selects an open teammate instead of a fixed clearance
+PASS: AI throw-in identifies a teammate and throws into the pitch
+PASS: A covered throw-in has a bounded fallback evaluated at its actual landing point
+PASS: A corner can use the open short option instead of feeding the marked central attacker
+PASS: Keeper queues a safe real delivery, half=1 rain=false
+KEEPER FLOW half=1 rain=false long=false receiver=15 caught=true stolen=false ball=(7.69991, 0.155, -37.34536) receiver_at=(8.345002, 0.000278, -36.68508)
+PASS: Actual keeper distribution reaches the open teammate instead of the blocked flank
+PASS: Distribution counts only after the actual release
+PASS: Keeper queues a safe real delivery, half=2 rain=false
+KEEPER FLOW half=2 rain=false long=false receiver=15 caught=true stolen=false ball=(6.711783, 0.389259, 38.5355) receiver_at=(7.419052, 0.00084, 37.80582)
+PASS: Actual keeper distribution reaches the open teammate instead of the blocked flank
+PASS: Distribution counts only after the actual release
+PASS: Keeper queues a safe real delivery, half=1 rain=true
+KEEPER FLOW half=1 rain=true long=false receiver=15 caught=true stolen=false ball=(7.689807, 0.155, -34.25273) receiver_at=(8.658192, 0.000134, -34.20546)
+PASS: Actual keeper distribution reaches the open teammate instead of the blocked flank
+PASS: Distribution counts only after the actual release
+PASS: Keeper queues a safe real delivery, half=1 rain=false
+KEEPER FLOW half=1 rain=false long=true receiver=15 caught=true stolen=false ball=(-26.20735, 0.664427, -11.35964) receiver_at=(-27.01389, 0.000092, -10.34317)
+PASS: Actual keeper distribution reaches the open teammate instead of the blocked flank
+PASS: Distribution counts only after the actual release
+PASS: A goal kick completes its real run-up, release and controlled reception
+AI DELIVERY CHECK: 43 checks, 0 failures

@@ -22,9 +22,9 @@ func run() -> void:
 	p.desired=Vector3.FORWARD
 	p.sprinting=true
 	advance(p,0.5)
-	check(p.active_sprint and p.energy<1.0-p.SPRINT_DRAIN*0.25 and p.movement_speed()>8,"Sprinting consumes stamina while enabling higher speed")
+	check(p.active_sprint and p.energy<1.0-p.SPRINT_DRAIN*0.25 and p.movement_speed()>8.5*p.MOVEMENT_PACE,"Sprinting consumes stamina while enabling higher speed")
 	advance(p,(p.energy-p.EXHAUSTION_LIMIT)/p.SPRINT_DRAIN+0.15)
-	check(p.exhausted and not p.active_sprint and p.movement_speed()==3.4,"A sustained sprint ends in exhaustion and walking speed")
+	check(p.exhausted and not p.active_sprint and is_equal_approx(p.movement_speed(),3.4*p.MOVEMENT_PACE),"A sustained sprint ends in exhaustion and walking speed")
 	var never_restarted:=true
 	for i in range(1200):
 		p.update_stamina(1.0/120.0)
@@ -62,7 +62,7 @@ func run() -> void:
 	check(absf(energy30-p.energy)<0.001,"Stamina consumption is consistent across update rates")
 	ai.reset_stamina(); ai.desired=Vector3.FORWARD; ai.sprinting=true
 	advance(ai,(1.0-ai.EXHAUSTION_LIMIT)/ai.SPRINT_DRAIN+0.15)
-	check(ai.exhausted and ai.movement_speed()==3.4,"AI players use the same exhaustion rules")
+	check(ai.exhausted and is_equal_approx(ai.movement_speed(),3.4*ai.MOVEMENT_PACE),"AI players use the same exhaustion rules")
 	p.energy=0.16; p.exhausted=true
 	game.reset_positions(0)
 	check(p.energy==0.16 and p.exhausted,"Goal kickoffs do not refill stamina")

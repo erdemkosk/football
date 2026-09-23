@@ -21,6 +21,7 @@ var hit := false
 var contacts := 0
 var last_gap := INF
 var last_contact := Vector3.ZERO
+var contact_position := Vector3.ZERO
 var contact_ball: RigidBody3D
 var contact_body: CharacterBody3D
 var preparing := false
@@ -55,6 +56,9 @@ func update(p,delta: float) -> void:
 	freshness=maxf(0,freshness-delta)
 	gait_weight=move_toward(gait_weight,1.0 if freshness>0 and available(p) else 0.0,delta*8)
 	if preparing: return
+	# A skill animates its own boot contacts around the legs. Keep only the
+	# carrier's coarse capsule exempt; the opponent can still hit the live ball.
+	if not p.skill_move.is_empty() and p.action_timer<=0: return
 	if not available(p) or (freshness<=0 and p.ball_actions.control_grace<=0):
 		age=DURATION
 		release_collision()
@@ -200,6 +204,7 @@ func carry(game,index: int,_delta: float) -> void:
 	var impulse: float=(.65 if p.active_sprint else .40) if guided and not urgent else (22.0 if style=="sole" else 16.0)
 	ball.touch(output,ball.mass*impulse)
 	hit=true; contacts+=1; last_gap=gap; last_contact=ball.position
+	contact_position=p.position
 	previous_direction=aim
 	# Keep the approach target through contact. Replacing its short prediction
 	# with the ball's old position yanked the toe backwards on the next frame.
@@ -217,14 +222,18 @@ func apply(p) -> void:
 	var side := -1.0 if foot==0 else 1.0
 	var point := target-direction*.17
 	if style=="sole": point=target+Vector3.UP*.18
-	if hit: point+=direction*smoothstep(WINDUP,DURATION,age)*(.18 if style=="sole" else .24)
+	if hit:
+		point+=direction*smoothstep(WINDUP,DURATION,age)*(.18 if style=="sole" else .24)
+		# After a forward push the boot follows through with the moving hip.
+		# A frozen world-space target drags the foot behind a sprinting body.
+		if style=="push": point+=(p.position-contact_position)*Vector3(1,0,1)
 	point.y=maxf(p.position.y+.11,point.y)
 	# Guide the toe out of the live running step and back into that same stride.
 	# Freezing the starting hip/knee for every touch made the leg hesitate, then
 	# snap to the next running pose. The support leg keeps its ordinary footfall.
 	p.rig.position.y-=(.025 if style=="push" else .085)*weight
 	var toe: Vector3=knee.to_global(BOOT).lerp(point,weight)
-	toe.y=maxf(p.position.y+p.locomotion.SOLE,toe.y)
+	toe.y=maxf(p.position.y+p.boot_ground_height(),toe.y)
 	p.locomotion.solve_leg(leg,knee,p.rig.to_local(toe)-leg.position,1)
 	knee.quaternion=knee.quaternion*Quaternion(Vector3.UP,side*(.24 if style=="inside" else (-.18 if style=="outside" else 0))*weight)
 	p.spine.rotation.z=lerpf(p.spine.rotation.z,-side*.12,weight*.65)
@@ -249,7 +258,7 @@ func finish_pose(p,delta: float) -> void:
 		pose_feet[i]=points[i]+(error+impulse*delta)*decay
 		pose_velocity[i]=(pose_velocity[i]-impulse*frequency*delta)*decay
 		var point: Vector3=p.rig.to_global(pose_feet[i])
-		point.y=maxf(point.y,p.position.y+p.locomotion.SOLE)
+		point.y=maxf(point.y,p.position.y+p.boot_ground_height())
 		var leg=p.left_leg if i==0 else p.right_leg
 		var knee=p.left_knee if i==0 else p.right_knee
 		p.locomotion.solve_leg(leg,knee,p.rig.to_local(point)-leg.position,1)

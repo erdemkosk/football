@@ -46,9 +46,9 @@ func run() -> void:
 	var speed: float=game.players[20].movement_speed()
 	game.management.difficulty=0
 	check(is_equal_approx(speed,game.players[20].movement_speed()),"Difficulty does not secretly change the same footballer's running speed")
-	setup(); player(9,Vector3(24,0,0)); possession(9)
+	setup(); player(9,Vector3(game.P.HALF_WIDTH-4,0,0)); possession(9)
 	for i in range(12,22): player(i,Vector3(12+(i%3)*4,0,6+(i%4)*3))
-	player(17,Vector3(23,0,2)); player(18,Vector3(20,0,0)); player(16,Vector3(23,0,-4))
+	player(17,game.players[9].position+Vector3(-1,0,2)); player(18,game.players[9].position+Vector3(-4,0,0)); player(16,game.players[9].position+Vector3(-1,0,-4))
 	game.opponent_coach.pressing=2; game.team_tactics.update(.2)
 	check(game.team_tactics.roles.values().count("press")==1 and game.team_tactics.roles.values().count("press_support")==1 and game.team_tactics.roles.values().count("cover")==1,"Touchline trap keeps a presser, second presser and cover as separate duties")
 	game.opponent_coach.press_load=7.4; game.opponent_coach.update(.2)
@@ -123,6 +123,8 @@ func run() -> void:
 	check(game.ball.pending_kick and game.ball.held_by==null and game.passes[1]==1,"Keeper release really leaves the hand and counts a physical pass")
 	setup(); player(11,Vector3(0,0,-45)); game.players[20].visible=false
 	game.ball.hold(game.players[11]); game.goalkeeping.holding=11; game.ball.position=game.players[11].hand_center()
+	check(not game.ai_attack.distribute(11) and game.ball.held_by==game.players[11],"A keeper without an immediate outlet briefly waits instead of giving the ball away")
+	game.goalkeeping.hold_age=3.1
 	check(game.ai_attack.distribute(11) and game.keeper_distribution.pending.kind=="punt","A keeper with no safe short outlet can select a physical punt")
 	# Finishing has separate queues so the AI cannot steal the user's timing window.
 	setup(Vector3(0,0,40)); game.ball.freeze=false

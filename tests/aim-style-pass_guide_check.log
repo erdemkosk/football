@@ -1,0 +1,18 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Pass and cross guides stay above the pitch (weather 0, lob false)
+Pass guide error: 0.00068125128746 lob=false weather=0
+PASS: The visible receiving/landing point matches the physical pass (weather 0, lob false)
+PASS: Pass and cross guides stay above the pitch (weather 0, lob true)
+Pass guide error: 0.06902972608805 lob=true weather=0
+PASS: The visible receiving/landing point matches the physical pass (weather 0, lob true)
+PASS: Pass and cross guides stay above the pitch (weather 2, lob false)
+Pass guide error: 0.00068125128746 lob=false weather=2
+PASS: The visible receiving/landing point matches the physical pass (weather 2, lob false)
+PASS: Pass and cross guides stay above the pitch (weather 2, lob true)
+Pass guide error: 0.06209084019065 lob=true weather=2
+PASS: The visible receiving/landing point matches the physical pass (weather 2, lob true)
+PASS: An underpowered pass ends where friction stops it instead of promising the requested target
+PASS: The normal cross releases the exact velocity used by its preview
+PASS: The pass guide disappears as soon as the ball is released
+PASS GUIDE CHECK: 11 checks, 0 failures

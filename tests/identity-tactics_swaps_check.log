@@ -1,0 +1,66 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Defender 83 keeps the same overall with tactical label STP
+PASS: Defender 83 keeps the same overall with tactical label SLB
+PASS: Defender 83 keeps the same overall with tactical label SĞB
+PASS: Defender 83 keeps the same overall with tactical label MO
+PASS: Defender 83 keeps the same overall with tactical label SF
+PASS: Changing formation preserves all individual ratings
+PASS: Selected starter can navigate to another starter
+PASS: Pitch swap waits for explicit confirmation
+PASS: Confirm exchanges the two on-pitch positions
+PASS: Pitch swap preserves ratings and substitution allowance
+PASS: Undo restores both on-pitch positions
+PASS: A reserve can be the first selection
+PASS: Bench-first selection can navigate onto the pitch
+PASS: Incompatible goalkeeper target leaves the source selected
+PASS: Browsing after confirmation does not silently change either chosen player
+PASS: Bench-first confirmation swaps exactly the two selected players
+PASS: Moving from bench to pitch preserves the player's natural-role overall
+PASS: Cancel clears a bench-first selection and returns to that reserve
+PASS: Selecting the same player twice deselects without changing the squad
+PASS: Changing formation preserves all individual ratings
+PASS: Selected starter can navigate to another starter
+PASS: Pitch swap waits for explicit confirmation
+PASS: Confirm exchanges the two on-pitch positions
+PASS: Pitch swap preserves ratings and substitution allowance
+PASS: Undo restores both on-pitch positions
+PASS: A reserve can be the first selection
+PASS: Bench-first selection can navigate onto the pitch
+PASS: Incompatible goalkeeper target leaves the source selected
+PASS: Browsing after confirmation does not silently change either chosen player
+PASS: Bench-first confirmation swaps exactly the two selected players
+PASS: Moving from bench to pitch preserves the player's natural-role overall
+PASS: Cancel clears a bench-first selection and returns to that reserve
+PASS: Selecting the same player twice deselects without changing the squad
+PASS: Changing formation preserves all individual ratings
+PASS: Selected starter can navigate to another starter
+PASS: Pitch swap waits for explicit confirmation
+PASS: Confirm exchanges the two on-pitch positions
+PASS: Pitch swap preserves ratings and substitution allowance
+PASS: Undo restores both on-pitch positions
+PASS: A reserve can be the first selection
+PASS: Bench-first selection can navigate onto the pitch
+PASS: Incompatible goalkeeper target leaves the source selected
+PASS: Browsing after confirmation does not silently change either chosen player
+PASS: Bench-first confirmation swaps exactly the two selected players
+PASS: Moving from bench to pitch preserves the player's natural-role overall
+PASS: Cancel clears a bench-first selection and returns to that reserve
+PASS: Selecting the same player twice deselects without changing the squad
+PASS: Live position swap retains actor identity and attributes
+PASS: Live position swap changes tactical assignments and AI home positions
+PASS: Players are not teleported during a live position swap
+PASS: Live swap preserves condition and discipline
+PASS: Ball possession and controlled player keep their actor references
+PASS: Position swaps remain available after all three substitutions
+PASS: AI role queries follow the new tactical assignments
+PASS: Tactics cards follow the swapped live positions
+PASS: Live navigation follows visual pitch order after a position swap
+PASS: Undo restores live positions without restoring or spending substitutions
+PASS: A queued substitution remains attached to the same player after a position swap
+PASS: Undoing a position swap does not cancel an independent pending substitution
+PASS: Dismissed players cannot be repositioned
+PASS: A player in a substitution animation cannot be repositioned
+PASS: Goalkeeper cannot be moved into an outfield position
+PASS: New match reset restores initial tactical assignments
+TACTICS SWAPS CHECK: 63 checks, 0 failures

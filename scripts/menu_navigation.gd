@@ -16,7 +16,7 @@ func screen() -> String:
 	if is_instance_valid(game.match_menu) and game.match_menu.visible:
 		return "settings:%d:%d" % [game.match_menu.page,game.match_menu.capture_action]
 	if is_instance_valid(game.frontend) and game.frontend.visible:
-		return "frontend:"+game.frontend.stage+str(game.frontend.pane)
+		return "frontend:"+game.frontend.stage+str(game.frontend.pane)+":"+game.frontend.swap_stage
 	if is_instance_valid(game.training_menu) and game.training_menu.visible: return "training_menu"
 	if game.state=="goal" or (game.state=="restart" and game.restart_type=="SANTRA" and not game.training): return game.state
 	return game.state if game.state in ["menu","paused","finished","halftime","ceremony","replay"] else ""
@@ -39,14 +39,15 @@ func update(delta: float) -> void:
 	if game.match_menu.visible and game.match_menu.capture_action>=0: return
 	repeat_in-=delta
 	if repeat_in<=0:
-		repeat_in=0.11
+		repeat_in=0.18 if context.begins_with("frontend:tactics") else 0.11
 		move(direction)
 
 func handle(event: InputEvent) -> bool:
 	if not (event is InputEventJoypadButton or event is InputEventJoypadMotion): return false
 	var pad=game.controller
-	if pad.device<0: pad.adopt_device(event.device)
+	if pad.device!=event.device: pad.claim_device(event.device,true)
 	if event.device!=pad.device: return true
+	pad.input_seen=true
 	sync()
 	if event is InputEventJoypadMotion:
 		if event.axis==JOY_AXIS_LEFT_X: pad.stick.x=event.axis_value
@@ -65,6 +66,11 @@ func handle(event: InputEvent) -> bool:
 		var next := Vector2i.ZERO
 		if pad.stick.length()>0.55:
 			next=Vector2i(int(signf(pad.stick.x)),0) if absf(pad.stick.x)>absf(pad.stick.y) else Vector2i(0,int(signf(pad.stick.y)))
+			if context.begins_with("frontend:tactics") and direction!=Vector2i.ZERO and next.x*direction.x+next.y*direction.y==0:
+				# A slight diagonal wobble must not jump between rows and columns.
+				var current_axis := absf(pad.stick.x) if direction.x!=0 else absf(pad.stick.y)
+				var other_axis := absf(pad.stick.y) if direction.x!=0 else absf(pad.stick.x)
+				if other_axis<current_axis+0.20: next=direction
 		if next!=Vector2i.ZERO and next!=direction:
 			direction=next; repeat_in=0.36
 			move(direction)
@@ -135,10 +141,10 @@ func activate() -> void:
 			option.select(index)
 			option.item_selected.emit(index)
 		return
-	if is_instance_valid(game.frontend) and game.frontend.visible and game.frontend.stage=="teams" and game.frontend.pick_step<2:
+	var focus: Control=game.get_viewport().gui_get_focus_owner()
+	if is_instance_valid(game.frontend) and game.frontend.visible and game.frontend.stage=="teams" and game.frontend.pick_step<2 and game.frontend.is_team_choice(focus):
 		game.frontend.pick_current()
 		return
-	var focus: Control=game.get_viewport().gui_get_focus_owner()
 	if focus is OptionButton:
 		popup_option=focus
 		focus.show_popup()
@@ -146,6 +152,8 @@ func activate() -> void:
 	elif focus is BaseButton and not focus.disabled:
 		if game.training_menu.visible and focus in game.training_menu.cards: game.training_menu.start()
 		else: focus.pressed.emit()
+	else:
+		game.skip_sequence()
 
 func popup_input(event: InputEvent,option: OptionButton) -> void:
 	popup_option=option

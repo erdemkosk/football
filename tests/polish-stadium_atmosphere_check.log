@@ -1,0 +1,29 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: A procedural sky replaces the solid background
+PASS: Cloud decks advance on a bounded update cadence
+PASS: Bloom follows the selected time of day: 0
+PASS: Bloom follows the selected time of day: 2
+PASS: Bloom follows the selected time of day: 1
+PASS: All three skies use distinct palettes
+PASS: Rain increases cloud coverage without resetting the night palette
+PASS: Night glow preserves dark scene detail and excludes ordinary pixels
+PASS: Daytime removes floodlight reflection highlights
+PASS: Two equipment stations and six spare balls furnish the touchline
+PASS: Every prop stays outside the pitch and technical-area walking lane
+PASS: Decorative equipment cannot deflect the live ball or trap actors
+PASS: Equipment geometry shares a small static render budget
+PASS: Both stadium displays show the live score and clock
+PASS: The physical clock visibly advances by one match second
+PASS: Both halves display added time instead of freezing at 90 minutes
+PASS: Extra-time clocks retain correct minutes and seconds
+PASS: Half-time status appears on the physical boards
+PASS: A recorded goal starts a real replay
+PASS: Replay boards show the recorded pre-goal score without mutating live match data
+PASS: Replay boards follow the recorded clock
+PASS: Replay treatment is visible and cannot intercept input
+PASS: Letterbox and grain cover the complete output aspect
+PASS: Pause hides the treatment while preserving the replay board state
+PASS: Replay exit covers the return to live action with a short fade
+PASS: Skipping or finishing replay removes treatment and restores the live scoreboard
+STADIUM ATMOSPHERE CHECK: 26 checks, 0 failures

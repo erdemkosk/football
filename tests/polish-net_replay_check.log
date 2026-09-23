@@ -1,0 +1,13 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: A real scored goal hits and stretches the live net before replay freezes the ball
+PASS: The delayed replay still starts once and preserves the score
+PASS: Replay opens with a one-second goal lower-third
+PASS: Playback does not simulate a second net collision
+PASS: The recorded replay includes the actual net pocket and rebound
+PASS: Goal replay cuts between at least two broadcast cameras
+PASS: Replay cameras stay on the ball instead of an empty goal
+PASS: Finishing replay restores the live net position and velocity exactly
+PASS: The ball resumes physical motion after replay
+PASS: Skipping directly to kickoff cancels the pending replay
+NET REPLAY CHECK: 0 failures

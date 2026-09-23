@@ -1,0 +1,29 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Shooting-range free kick creates a four-player wall
+PASS: Every opponent respects the 9.15 m free-kick distance
+PASS: Attackers stay at least one metre from the wall
+PASS: Keeper covers the open side behind the wall
+PASS: Restart waits for user input with a physically settled ball
+PASS: D charges the shot without taking the restart early
+PASS: Release completes the run-up and launches a physical shot
+PASS: The wall jumps with physical bodies, not only mesh animation
+PASS: Away free-kick geometry mirrors the home team's rules
+PASS: AI also waits for the whistle and takes its free kick
+PASS: Deep free kicks use a build-up formation without a pointless wall
+PASS: Penalty ball is placed on the eleven-metre mark
+PASS: Penalty keeper starts on the goal line
+PASS: Other penalty players remain behind the ball, outside the box and arc
+PASS: Penalty cannot be taken with the pass button
+PASS: Corner organizes the box and keeps defenders clear of the corner arc
+PASS: Goal kick is inside the goal area with opponents outside the penalty area
+PASS: Thrower stands on the touchline with the ball held overhead at their actual height
+PASS: Throw-in opponents respect the two-metre distance
+PASS: S delivers a real overhead throw into the field
+PASS: Automatic selection follows the receiving player after the throw
+PASS: Pause cannot accidentally release a prepared restart
+PASS: Resume returns to the protected set piece with physics active
+PASS: Holding the free-kick button raises the shot
+PASS: A high free kick can physically clear the jumping wall
+PASS: Attackers walk around the end of a solid wall without blocking restart preparation
+SET PIECE CHECK: 0 failures

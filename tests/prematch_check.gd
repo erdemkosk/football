@@ -85,7 +85,7 @@ func run() -> void:
 	check(game.frontend.overlay_caption(0)==game.team_name(0) and game.frontend.overlay_caption(1)==game.team_name(1),"Team names stay visible on the selection overlay")
 	check(game.frontend.team_ovr(0)>=50 and game.frontend.team_ovr(1)>=50,"Team overalls are visible during selection")
 	var team_index: int=game.clubs.selected[0]
-	check(game.frontend.try_carousel(null,-1) and game.clubs.selected[0]!=team_index,"Direction keys change the team being picked")
+	check(game.frontend.try_carousel(root.gui_get_focus_owner(),-1) and game.clubs.selected[0]!=team_index,"Direction keys change the team being picked")
 	var league_index: int=game.clubs.league[0]
 	game.frontend.cycle_league(0,-1)
 	check(game.clubs.league[0]!=league_index,"LB / RB change the league of the side being picked")

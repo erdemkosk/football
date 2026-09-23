@@ -87,13 +87,18 @@ func run() -> void:
 	check(game.state!="playing" and game.controlled!=6,"An offside touch whistles before granting control")
 	for mode in ["training","player_lock","menu","stoppage"]:
 		setup(); receiver_at(Vector3(0,0,.6))
-		if mode=="training": game.training=true
+		if mode=="training": game.training=true; game.training_drills.mode="cross"
 		if mode=="player_lock": game.player_lock=true
 		if mode=="menu": game.menu_match.running=true
 		if mode=="stoppage": game.state="restart"
 		game.first_touch.receive(6,false); game.team_control.update(.01)
 		check(game.controlled==9,"Automatic switching respects "+mode)
 		game.menu_match.running=false
+	setup(); receiver_at(Vector3(0,0,.6))
+	game.training=true; game.training_drills.mode="free"
+	game.first_touch.receive(6,false); game.team_control.update(.01)
+	check(game.controlled==6,"Free practice switches to the receiving teammate like a match")
+	game.training=false
 
 	# Real RigidBody capsule collision, not just a scripted reception callback.
 	setup(); receiver_at(Vector3(0,0,0))

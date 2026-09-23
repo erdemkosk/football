@@ -1,0 +1,18 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Seated fans have a real standing, raised-arm target pose
+PASS: The full stadium uses instanced animated supporters
+PASS: Away supporters occupy their own minority section
+PASS: Support builds during a dangerous attacking position
+PASS: The stand nearest the ball leans in while the far stand stays down
+PASS: An actual shot triggers the crowd reaction
+PASS: A home goal triggers celebration and queues the Mexican wave
+PASS: A new shot does not interrupt goal celebrations
+PASS: Away goals celebrate only their supporters without starting a home wave
+PASS: The wave advances over time around spatially ordered seats
+PASS: Wave cooldown prevents repeated restarts
+PASS: Support returns to calm after the event and wave finish
+PASS: Late pressure in a close match can start a support wave
+PASS: A fresh match resets crowd reactions
+PASS: A goalkeeper save has a distinct shorter cheer
+CROWD CHECK: 0 failures

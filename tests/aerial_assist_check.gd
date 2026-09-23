@@ -99,7 +99,8 @@ func run() -> void:
 	check(game.aerial_assist.active(9) and game.volleys.active(9),"Held shot transfers from approach to the contact animation")
 	key(false); await tick(100)
 	check(contacts==1,"Release during the approach-to-volley transition preserves the shot")
-	await scenario(Vector3(-2,1.95,-.45),Vector3(11,0,0))
+	# The human-sized rig meets this below head height, with a small boot hop.
+	await scenario(Vector3(-2,1.65,-.45),Vector3(11,0,0))
 	key(true); key(false); await tick(100)
 	print("HOP contacts=",contacts," kind=",count_kind," peak=",peak)
 	check(contacts==1 and count_kind=="volley" and peak>.04 and peak<.4,"A slightly high foot-level ball gets a small physical jumping volley")

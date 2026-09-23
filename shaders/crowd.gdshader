@@ -18,7 +18,14 @@ uniform float follow=0.0;
 uniform float home_support=0.35;
 uniform float away_support=0.35;
 uniform float hush=0.0;
+uniform bool club_cloth=false;
+uniform vec4 home_color : source_color=vec4(.90,.93,.88,1.0);
+uniform vec4 home_accent : source_color=vec4(.10,.25,.20,1.0);
+uniform vec4 away_color : source_color=vec4(.83,.27,.20,1.0);
+uniform vec4 away_accent : source_color=vec4(.95,.84,.74,1.0);
+varying vec2 supporter;
 void vertex(){
+ supporter=INSTANCE_CUSTOM.rg;
  float phase=INSTANCE_CUSTOM.r*6.28318;
  float fan_team=step(0.5,INSTANCE_CUSTOM.g);
  float support_level=mix(home_support,away_support,fan_team);
@@ -105,7 +112,15 @@ void vertex(){
  }
 }
 void fragment(){
- ALBEDO=palette_color(COLOR.rgb);
+ vec3 fabric=COLOR.rgb;
+ if(club_cloth) {
+  float away=step(.5,supporter.y);
+  vec3 main=mix(home_color.rgb,away_color.rgb,away);
+  vec3 accent=mix(home_accent.rgb,away_accent.rgb,away);
+  vec3 club=mix(main,accent,step(.70,supporter.x));
+  fabric=mix(club*(.72+supporter.x*.20),fabric,step(.91,supporter.x));
+ }
+ ALBEDO=palette_color(fabric);
  ROUGHNESS=0.98;
  SPECULAR=0.08;
 }

@@ -11,6 +11,7 @@ var charcoal := G.material(Color("162a30"))
 var glass := G.material(Color("657f82"),0.32)
 var score_labels: Array[Label3D] = []
 var clock_labels: Array[Label3D] = []
+var phase_labels: Array[Label3D] = []
 var display_text := ""
 var lamp_glass := G.material(Color("a2b0ab"),0.28)
 var floodlight_mounts: Array[Vector3] = []
@@ -180,20 +181,31 @@ func scoreboard(parent: Node3D,pos: Vector3) -> void:
 	parent.add_child(display)
 	display.position = pos
 	display.rotation.y = PI
-	G.block(display,Vector3(13,4.5,0.4),Vector3.ZERO,trim)
-	G.block(display,Vector3(12.5,4.0,0.08),Vector3(0,0,0.25),charcoal)
-	team_captions.append(label(display,"KIYI       DEPLASMAN",Vector3(0,1.3,0.31),0.017,Color("a7c3c0")))
-	score_labels.append(label(display,"0   :   0",Vector3(0,0.05,0.31),0.043,Color("f1ead5")))
-	clock_labels.append(label(display,"00:00",Vector3(0,-1.35,0.31),0.016,Color("b3c8bc")))
+	G.block(display,Vector3(13,5.2,0.4),Vector3.ZERO,trim)
+	G.block(display,Vector3(12.5,4.7,0.08),Vector3(0,0,0.25),charcoal)
+	var bezel := G.material(Color("96bdb8"))
+	bezel.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
+	G.block(display,Vector3(11.6,.025,.018),Vector3(0,1.27,.31),bezel)
+	team_captions.append(label(display,"KIYI       DEPLASMAN",Vector3(0,1.75,0.31),0.015,Color("c5dbd7")))
+	score_labels.append(label(display,"0   :   0",Vector3(0,0.12,0.31),0.033,Color("f1ead5")))
+	var clock := label(display,"00:00",Vector3(0,-1.56,0.31),0.021,Color("e9ce87"))
+	var digits := SystemFont.new()
+	digits.font_names=PackedStringArray(["Consolas","DejaVu Sans Mono"])
+	digits.font_weight=700
+	clock.font=digits
+	clock_labels.append(clock)
+	phase_labels.append(label(display,"1. YARI",Vector3(-4.40,-1.58,.31),.008,Color("a7c3c0")))
+	label(display,"SEFC",Vector3(4.65,-1.58,.31),.009,Color("a7c3c0"))
 
-func update_score(score: Array,seconds: float,duration: float) -> void:
-	var total = int(clampf(seconds/duration,0,1)*90*60)
-	var time = "%02d:%02d" % [total/60,total%60]
+func update_score(score: Array,seconds: float,duration: float,half: int=2,extended: bool=false,phase: String="") -> void:
+	var time := preload("res://scripts/match_clock.gd").text(seconds,duration,half,extended)
 	var result = "%d   :   %d" % [score[0],score[1]]
-	if display_text==result+time: return
-	display_text = result+time
+	if phase=="": phase="UZATMA" if extended else str(half)+". YARI"
+	if display_text==result+time+phase: return
+	display_text = result+time+phase
 	for text in score_labels: text.text = result
 	for text in clock_labels: text.text = time
+	for text in phase_labels: text.text=phase
 
 func broadcast_positions() -> void:
 	for x in [-P.HALF_WIDTH-1.4,P.HALF_WIDTH+1.4]:

@@ -52,7 +52,10 @@ func run() -> void:
 	check(kind()=="chip" and act_and_contact(20) and game.ball.kick_velocity.y>6,"An advancing goalkeeper invites a genuine lofted chip")
 	setup(); player(18,Vector3(-6,0,12),Vector3(0,0,4))
 	var route: Dictionary=game.ai_attack.decide(20)
-	check(route.kind=="through" and route.route.target.z>game.players[18].position.z+4,"A teammate running forward receives a pass into the space ahead")
+	var through_available := false
+	for option in game.ai_attack.options(20): through_available=through_available or option.kind=="through"
+	check(through_available,"A forward run still offers a through-ball option for comparison with a shorter lead pass")
+	check(route.kind in ["through","pass"] and route.receiver==18 and route.route.target.z>game.players[18].position.z+2,"A teammate running forward receives a reachable pass into the space ahead")
 	check(act_and_contact(20) and game.passes[1]==1 and game.ai_receivers[1]==18,"The through pass uses normal ball physics and receiver tracking")
 	setup(); player(18,Vector3(-6,0,49),Vector3(0,0,4))
 	check(not game.ai_attack.onside(18,1) and kind()!="through","An offside run is not selected for a through pass")

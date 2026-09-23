@@ -1,0 +1,13 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+preparation: 1140.71162280702 us (912 samples)
+ai: 2361.67543859649 us (912 samples)
+contact-preparation: 157.421052631579 us (912 samples)
+body-language: 167.835526315789 us (912 samples)
+players-step: 5582.4725877193 us (912 samples)
+resolve: 25.9605263157895 us (912 samples)
+contacts: 175.373903508772 us (912 samples)
+replay-boundaries: 7.74451754385965 us (912 samples)
+player animate: 112.447442001058 us
+player stain: 7.26738636363636 us
+player step: 236.55821969697 us

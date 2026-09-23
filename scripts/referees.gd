@@ -44,6 +44,20 @@ func reset(show: bool) -> void:
 		actor.collision_mask=1
 		actor.animate(0)
 
+func refresh_kits() -> void:
+	var colors: Array[Color]=[game.clubs.kit(0).primary,game.clubs.kit(1).primary]
+	colors.append_array(game.clubs.keeper_palette())
+	var chosen := Color("eddf48"); var best := -1.0
+	for candidate in [Color("eddf48"),Color("141b22")]:
+		var score := 1.0
+		for color in colors: score=minf(score,game.clubs.separation(candidate,color))
+		if score>best: best=score; chosen=candidate
+	for actor in actors:
+		actor.kit_materials.jersey.albedo_color=chosen
+		actor.kit_materials.printed.albedo_color=chosen
+		actor.kit_materials.socks.albedo_color=Color("141b22")
+		actor.kit_materials.trim.albedo_color=Color("d5dbba") if chosen.get_luminance()<.4 else Color("17202a")
+
 func clear_decision() -> void:
 	decision=""
 	signal_time=0

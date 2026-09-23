@@ -76,7 +76,7 @@ func prepare() -> void:
 		p.velocity=Vector3.ZERO; p.desired=Vector3.ZERO; p.action_timer=0; p.tackle_cooldown=0; p.pose="run"; p.facing=Vector3.BACK; p.rig.rotation=Vector3(0,PI,0); p.rig.position=Vector3.ZERO
 	shooter.position=Vector3(-.45,0,37.8)
 	keeper.position=Vector3(0,0,49.5); keeper.facing=Vector3.FORWARD; keeper.rig.rotation=Vector3.ZERO
-	game.ball.place(Vector3(0,.23,39)); game.ball.active=true
+	game.ball.place(Vector3(0,game.ball.GROUND_HEIGHT,39)); game.ball.active=true
 	keeper_aim=random.randf_range(-3.3,3.3); keeper_delay=random.randf_range(.14,.27)
 
 func handle(event: InputEvent) -> bool:
@@ -124,7 +124,7 @@ func launch(target: Vector2,strength: float) -> void:
 	var accuracy: float=shooter.attributes.finishing/100.0
 	var error_size: float=(1-accuracy)*.5+maxf(0,strength-.82)*2.8
 	var goal:=Vector3(target.x*3.42+random.randf_range(-error_size,error_size),.3+target.y*2.45,50.3)
-	var origin:=Vector3(0,.23,39)
+	var origin:=Vector3(0,game.ball.GROUND_HEIGHT,39)
 	var duration:=lerpf(.78,.38,strength)
 	var velocity: Vector3=(goal-origin)/duration+Vector3.UP*(4.905*duration)
 	game.ball.strike(velocity)
@@ -159,9 +159,9 @@ func update(delta: float) -> void:
 			for n in range(5):
 				if keeper.can_save(last_ball.lerp(point,n/4.0)):
 					saved=true; game.ball.strike(Vector3(signf(point.x)*8,2.2,-9)); break
-		if last_ball.z<50.22 and point.z>=50.22:
-			var cross:=last_ball.lerp(point,(50.22-last_ball.z)/maxf(.001,point.z-last_ball.z))
-			resolve(absf(cross.x)<3.44 and cross.y<2.22)
+		if last_ball.z<(50+game.ball.RADIUS) and point.z>=(50+game.ball.RADIUS):
+			var cross:=last_ball.lerp(point,((50+game.ball.RADIUS)-last_ball.z)/maxf(.001,point.z-last_ball.z))
+			resolve(absf(cross.x)<3.66-game.ball.RADIUS and cross.y<2.44-game.ball.RADIUS)
 		elif age>3 or (point.z<45 and age>1) or absf(point.x)>6: resolve(false)
 		last_ball=point
 	elif phase=="result" and age>2:
@@ -282,5 +282,5 @@ func draw(h) -> void:
 	else: h.center("YÖN TUŞLARI · D ŞUT / ATLA · ESC MOLA",Vector2(720,807),15)
 	if side==0 and phase=="ready":
 		h.draw_rect(Rect2(446,825,548,9),Color("38504b")); h.draw_rect(Rect2(446,825,548*power,9),h.GOLD if power<.83 else Color("e48e73"))
-		var point: Vector2=game.camera.unproject_position(Vector3(aim.x*3.42,.3+aim.y*2.45,50))
+		var point: Vector2=game.screen_position(Vector3(aim.x*3.42,.3+aim.y*2.45,50))
 		h.draw_arc(point,12,0,TAU,32,h.GOLD,2,true); h.draw_circle(point,3,h.PAPER)

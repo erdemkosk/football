@@ -1,0 +1,18 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+CORNER GROUP routine_corner: {"goals":1,"saves":11,"shots":12}
+CORNER GROUP firm_corner: {"goals":5,"saves":7,"shots":12}
+CORNER GROUP box_corner: {"goals":6,"saves":6,"shots":12}
+CORNER GROUP low_corner: {"goals":6,"saves":6,"shots":12}
+CORNER GROUP high_corner: {"goals":6,"saves":6,"shots":12}
+CORNER GROUP hard_corner: {"goals":10,"saves":2,"shots":12}
+CORNER GROUP close: {"goals":8,"saves":4,"shots":12}
+PASS: Routine corner shots with ample flight time are usually stopped
+PASS: Firm shots toward a corner produce both saves and goals
+PASS: An ordinary box corner finish is not an automatic goal or save
+PASS: Reachable low corners do not consistently pass under the gloves
+PASS: High corners remain challenging but physically reachable
+PASS: Hard close corner strikes can beat the keeper without every shot scoring
+PASS: Close one-on-ones still reward the attacker
+KEEPER CORNER MATRIX: {"box_corner":{"goals":6,"saves":6,"shots":12},"close":{"goals":8,"saves":4,"shots":12},"firm_corner":{"goals":5,"saves":7,"shots":12},"hard_corner":{"goals":10,"saves":2,"shots":12},"high_corner":{"goals":6,"saves":6,"shots":12},"low_corner":{"goals":6,"saves":6,"shots":12},"routine_corner":{"goals":1,"saves":11,"shots":12}}
+KEEPER CORNER CHECK: 7 checks, 0 failures

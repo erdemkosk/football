@@ -72,7 +72,7 @@ func scenario(kind: String,team: int,point: Vector3,ball_pos: Vector3,velocity: 
 	check(acquired_nearby and "lift" in phases and "carry" in phases,kind+": pickup occurs only within hand reach before carrying")
 	check(max_step<0.6,kind+": ball stays continuous through pickup, carry and placement")
 	check(walk_distance>2,kind+": taker physically runs to retrieve and return the ball")
-	if kind=="TAÇ": check(game.ball.held_by!=null and game.ball.position.y>1.7,"Throw-in finishes with the same ball held overhead")
+	if kind=="TAÇ": check(game.ball.held_by!=null and game.ball.position.y>game.heading.head_point(game.ball.held_by).y and game.ball.position.distance_to(game.ball.held_by.hand_center())<.3,"Throw-in finishes with the same ball held above the taker's head, at any roster height")
 	else: check(game.ball.held_by==null and game.flat_distance(game.ball.position,game.restart_point)<0.3 and game.ball.position.y<0.3,"Ground restart finishes only after the placed ball settles")
 	check(game.set_pieces.formation_ready(),kind+": legal restart distances are still enforced")
 	if ready:

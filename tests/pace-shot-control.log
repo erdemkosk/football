@@ -1,0 +1,25 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: D begins a charged shot
+PASS: 100 ms right tap corrects aim by only two degrees
+PASS: Strafing during a shot does not replace its starting heading
+PASS: Releasing the arrow retains the adjusted aim
+PASS: Opposite tap smoothly corrects back to the centre
+PASS: Long hold cannot swing the shot sideways beyond fourteen degrees
+PASS: Release uses the displayed aim even if the opposite arrow was just pressed
+PASS: Aiming during a shot does not add curl
+PASS: E during a charged shot is finesse, not shielding
+PASS: Finesse does not start a shield
+PASS: Finesse applies full inside-foot curl toward the far post
+PASS: Release keeps the aimed heading and applies the finesse spin
+PASS: Finesse does not steer the shot with E
+PASS: Q during a charged shot is a chip, not a player switch or finesse
+PASS: Holding Q while shooting does not change the shooter
+PASS: A chip is slower and much higher than a driven shot
+PASS: Chip wins if both Q and E are held
+PASS: Release chips without adding curl
+PASS: Chip does not steer the shot with Q
+PASS: Aim response is identical at 30 and 120 updates per second
+PASS: Pressing both arrows produces no extra turn
+PASS: Mouse aim also respects the turn-rate limit
+SHOT CONTROLS: 0 failures

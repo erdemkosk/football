@@ -1,0 +1,39 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Quick match opens team selection before kickoff
+PASS: Home and opponent are chosen independently
+PASS: Both selections update actual 3D match kits
+PASS: Selected clubs have different named squads
+PASS: Alternate strip updates preview and players
+PASS: Tactical preparation happens before any match time
+PASS: Pre-match roster swap costs no in-match substitution
+PASS: Outfield players cannot replace the goalkeeper in the lineup
+PASS: Formation changes the pitch diagram and real team positions
+PASS: Settings can open above pre-match without losing selections
+PASS: Settings has no roster or tactics tabs
+PASS: Closing settings restores pre-match preparation
+PASS: Prepared match starts with the ceremony
+PASS: Starting lineup survives the start-match reset
+PASS: Chosen tactics survive kickoff
+PASS: Selected opponent survives the ceremony and waits at kickoff
+PASS: K opens separate in-match team management
+PASS: Closing settings over in-match tactics keeps the match paused
+PASS: In-match roster changes still queue substitutions
+PASS: Closing tactics applies queued substitutions before the pending opening kickoff
+PASS: A new quick match resets previous substitutions before roster selection
+PASS: Team cycling avoids accidentally selecting identical opponents
+PASS: Quick match can pick a league and see that league's clubs
+PASS: Team names stay visible on the selection overlay
+PASS: Team overalls are visible during selection
+PASS: Direction keys change the team being picked
+PASS: LB / RB change the league of the side being picked
+PASS: Preview players stand idle until a side is picked
+PASS: Picking a team plays the selected pose
+PASS: After the home pose, focus moves to the opponent
+PASS: After both teams are picked, the next button is focused
+PASS: A third confirm opens tactics
+PASS: Back from tactics returns to team selection
+PASS: B undoes the opponent selection
+PASS: B undoes the home selection
+PASS: Back from quick match returns to the main menu
+PREMATCH CHECK: 0 failures

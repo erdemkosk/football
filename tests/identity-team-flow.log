@@ -1,0 +1,17 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+OPPONENT ATLAS FC rating=82 plan={ "formation": 1, "mentality": 2, "pressing": 2, "line_height": 2, "width": 1, "tempo": 2, "runs": 2, "fullbacks": 1, "anchor": 1 }
+LIVE MATCH difficulty=1 active=60.0 passes=[11, 6] controlled=[8, 5] contacts=19 misses=0 shots=[0, 1] score=[0, 0]
+PASS: Real restarts complete and allow a minute of active football, difficulty 1
+PASS: Both full teams release real passes at difficulty 1
+PASS: Both teams control passes and the opponent completes multiple receptions, difficulty 1
+PASS: Physical pass/shot contacts remain reliable in a contested match, difficulty 1
+ACTION MIX { "pass": 1, "lob_through": 2, "header_pass": 2, "switch": 6, "push": 1, "roll": 1, "cross": 1, "header_shot": 1, "header_clearance": 1, "intercept": 2, "square": 1, "finesse": 1, "through": 3, "driven_pass": 3 }
+OPPONENT LİMAN ATHLETIC rating=66 plan={ "formation": 0, "mentality": 0, "pressing": 0, "line_height": 0, "width": 0, "tempo": 0, "runs": 0, "fullbacks": 0, "anchor": 1 }
+LIVE MATCH difficulty=1 active=60.0 passes=[7, 19] controlled=[5, 14] contacts=28 misses=0 shots=[1, 0] score=[0, 0]
+PASS: Real restarts complete and allow a minute of active football, difficulty 1
+PASS: Both full teams release real passes at difficulty 1
+PASS: Both teams control passes and the opponent completes multiple receptions, difficulty 1
+PASS: Physical pass/shot contacts remain reliable in a contested match, difficulty 1
+ACTION MIX { "pass": 16, "intercept": 2, "one_two": 2, "switch": 1, "square": 1, "finesse": 1, "driven_pass": 6, "push": 1 }
+TEAM IDENTITY FLOW CHECK: 8 checks, 0 failures

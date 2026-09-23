@@ -1,0 +1,29 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+TURN right-cut: peak=1.000 planted=5 foot_error=0.002 pelvis=0.051 joint_step=0.353
+PASS: Support boot holds its world contact while the body changes direction: right-cut
+PASS: Weight shifts onto the support leg without accumulating sideways drift: right-cut
+PASS: Turning boots stay above the turf: right-cut
+PASS: Plant and release avoid an abrupt leg-joint snap: right-cut
+PASS: A completed cut returns to a normal run in the requested direction: right-cut
+TURN left-cut: peak=1.000 planted=7 foot_error=0.002 pelvis=0.056 joint_step=0.485
+PASS: Support boot holds its world contact while the body changes direction: left-cut
+PASS: Weight shifts onto the support leg without accumulating sideways drift: left-cut
+PASS: Turning boots stay above the turf: left-cut
+PASS: Plant and release avoid an abrupt leg-joint snap: left-cut
+PASS: A completed cut returns to a normal run in the requested direction: left-cut
+TURN reverse: peak=1.000 planted=4 foot_error=0.002 pelvis=0.049 joint_step=0.271
+PASS: Support boot holds its world contact while the body changes direction: reverse
+PASS: Weight shifts onto the support leg without accumulating sideways drift: reverse
+PASS: Turning boots stay above the turf: reverse
+PASS: Plant and release avoid an abrupt leg-joint snap: reverse
+PASS: A completed cut returns to a normal run in the requested direction: reverse
+PASS: Release shows a braking stance while preserving existing physical coasting
+PASS: Braking absorbs weight through bent knees
+PASS: Standing after a stop clears braking and weight shift
+PASS: Side steps open and gather instead of playing the forward sprint
+PASS: A shot immediately overrides the directional gait and foot lock
+PASS: A tackle interrupts locomotion and drives the body in the impact direction
+PASS: Practice reset clears old contacts and movement blends
+PASS: Pause freezes the new gait with the physics body
+LOCOMOTION CHECK: 30 checks, 7 failures

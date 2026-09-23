@@ -52,6 +52,7 @@ func instruct(team: int,order: String) -> void:
 func _ready() -> void:
 	for team in range(2): build_dugout(team)
 	build_touchline()
+	add_child(preload("res://scripts/sideline_props.gd").new())
 	reset()
 
 func build_touchline() -> void:
@@ -123,9 +124,9 @@ func add_actor(team: int,role: String,number: int,location: Vector3) -> void:
 	actor.role = role
 	actor.number = number
 	actor.name = "%s_%d_%d" % [role,team,number]
-	add_child(actor)
 	actor.home = location
 	actor.position = location
+	add_child(actor)
 	actors.append(actor)
 
 func reset() -> void:
@@ -143,6 +144,7 @@ func reset() -> void:
 		actor.position = actor.home
 		actor.response = 0
 		actor.target_point=Vector3.INF
+		if actor.role=="fourth": actor.substitution_board.hide()
 		actor.seated = 1.0 if actor.role in ["substitute","physio"] else (0.42 if actor.role=="photographer" else 0.0)
 		actor.animate_actor(1,clock,Vector3.ZERO,"watch",0)
 

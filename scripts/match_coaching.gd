@@ -80,12 +80,18 @@ func accept() -> void:
 	else:
 		notice=result; notice_time=3
 		proposal.clear()
+	return_to_play()
 
 func dismiss(show_notice: bool=true) -> void:
 	if proposal.is_empty(): return
 	dismissed[proposal.shirt]=age+24
 	proposal.clear(); scan_in=6
 	if show_notice: notice="ÖNERİ GEÇİLDİ"; notice_time=2
+	return_to_play()
+
+func return_to_play() -> void:
+	var view: Viewport = game.get_viewport()
+	if view!=null: view.gui_release_focus()
 
 func power_shot_held() -> bool:
 	var pad=game.controller
@@ -95,8 +101,9 @@ func power_shot_held() -> bool:
 func handle(event: InputEvent) -> bool:
 	if event is InputEventJoypadButton or event is InputEventJoypadMotion:
 		var pad=game.controller
-		if pad.device<0: pad.adopt_device(event.device)
+		if pad.device!=event.device: pad.claim_device(event.device,true)
 		if event.device!=pad.device: return false
+		pad.input_seen=true
 		if event is InputEventJoypadMotion and event.axis==JOY_AXIS_TRIGGER_RIGHT:
 			var was_down := trigger_down
 			trigger_down=event.axis_value>(.35 if trigger_down else .55)
@@ -136,32 +143,33 @@ func handle(event: InputEvent) -> bool:
 		if event.keycode==KEY_F8: game.controller.using_gamepad=false; accept(); return true
 		if event.keycode==KEY_F9: game.controller.using_gamepad=false; dismiss(); return true
 	if event is InputEventMouseButton and event.pressed and event.button_index==MOUSE_BUTTON_LEFT and proposal_valid():
-		if ACCEPT.has_point(event.position): accept(); return true
-		if DISMISS.has_point(event.position): dismiss(); return true
+		var point: Vector2=game.ui.from_viewport(event.position)-game.ui.edge_offset(-1,1)
+		if ACCEPT.has_point(point): accept(); return true
+		if DISMISS.has_point(point): dismiss(); return true
 	return false
 
 func draw(hud) -> void:
 	if not available(): return
-	var pad=game.controller
 	var plan: int=game.management.mentality
 	if opened:
-		hud.panel(Rect2(395,679,810,151),Color("142f2b"),10,Color("9ebc9e"))
+		hud.draw_set_transform(game.ui.edge_offset(0,1))
+		hud.panel(Rect2(395,679,810,100),Color("142f2b"),10,Color("9ebc9e"))
 		hud.text("KENARDAN TALİMAT",Vector2(415,707),13,hud.GOLD,true)
 		hud.text("OYUN DEVAM EDİYOR",Vector2(1036,707),10,hud.MUTE)
 		for i in range(3):
 			var x := 415+i*258
 			hud.panel(Rect2(x,722,244,43),hud.GOLD if i==plan else Color("27463b"),6)
 			hud.center(["←  ","↑  ","→  "][i]+TITLES[i],Vector2(x+122,749),14,hud.INK if i==plan else hud.PAPER)
-		hud.pad_hints(Vector2(420,797),[["RT","Basılı tut"],["A","Öneriyi kabul et"],["B","Öneriyi geç"]],24,11)
 	else:
-		hud.panel(Rect2(32,139,230,27),Color(.04,.10,.10,.86),4)
+		hud.draw_set_transform(game.ui.edge_offset(-1,-1))
+		hud.panel(Rect2(32,139,148,27),Color(.04,.10,.10,.86),4)
 		hud.text(TITLES[plan],Vector2(43,157),10,hud.GOLD,true)
-		if pad.using_gamepad: hud.pad_hints(Vector2(158,152),[["RT","Taktik"]],19,9)
-		else: hud.text("F5 / F6 / F7",Vector2(173,157),9,hud.MUTE)
 	if notice_time>0:
+		hud.draw_set_transform(game.ui.edge_offset(0,1))
 		hud.panel(Rect2(395,635,810,34),Color(.06,.15,.13,.94),5)
 		hud.center(notice.left(85),Vector2(800,657),12,hud.GOLD)
 	if proposal_valid():
+		hud.draw_set_transform(game.ui.edge_offset(-1,1))
 		var p=game.players[proposal.slot]
 		var incoming: Dictionary=game.management.bench[0][proposal.reserve]
 		hud.panel(OFFER,Color("142f2b"),10,Color("587b61"))
@@ -170,12 +178,8 @@ func draw(hud) -> void:
 		hud.text(p.display_name+"  →  "+incoming.name,Vector2(47,619),18,hud.PAPER,true)
 		hud.text(["KALECİ","DEFANS","ORTA SAHA","FORVET"][game.management.slot_role(proposal.slot)],Vector2(47,641),10,Color("a8e1be"),true)
 		hud.text("ENERJİ  %d%% → 100%%" % roundi(p.energy*100),Vector2(175,641),11,hud.MUTE)
-		hud.text("Onayla; ilk duraklamada değişsin.",Vector2(47,664),11,hud.MUTE)
 		hud.panel(ACCEPT,Color("305743"),5)
 		hud.panel(DISMISS,Color("29463a"),5)
-		if pad.using_gamepad:
-			hud.pad_hints(Vector2(53,699),[["RT + A","Kabul"]],22,10)
-			hud.pad_hints(Vector2(252,699),[["RT + B","Geç"]],20,9)
-		else:
-			hud.text("F8  ·  KABUL ET",Vector2(68,703),11,hud.PAPER,true)
-			hud.text("F9  ·  GEÇ",Vector2(266,703),10,hud.PAPER,true)
+		hud.center("KABUL",ACCEPT.get_center()+Vector2(0,5),11,hud.PAPER)
+		hud.center("GEÇ",DISMISS.get_center()+Vector2(0,5),11,hud.PAPER)
+	hud.draw_set_transform(Vector2.ZERO)

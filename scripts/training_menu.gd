@@ -8,7 +8,7 @@ var return_state := "menu"
 var return_freeze := false
 var return_focus: Control
 const DESCRIPTIONS := [
-	["SAHA SENİN.","Mevcut antrenman düzeni.","Top sür, çalım dene, kaleciye şut çek."],
+	["ON BİR OYUNCU.","Kendi takımın sahada; oto seçim maçtaki gibi.","Pas ver, kontrol değişir, kaleciye karşı oyna."],
 	["ORTAYA HAREKETLEN.","Takım arkadaşın sırayla iki kanattan orta açar.","Yerini al, şut tuşuyla kafa vur veya kontrol et."],
 	["BARAJI AŞ.","Yön tuşlarıyla noktayı seç, A ile oradan vur.","Yön, güç ve falsoyu birlikte dene."]]
 

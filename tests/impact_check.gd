@@ -50,6 +50,20 @@ func run() -> void:
 	game.strike(9,Vector3(0,1,-18))
 	check(game.feedback.event_count==0,"An ordinary pass does not trigger the heavy shot cue")
 	await arrange()
+	game.players[9].position=Vector3(0,0,-0.8)
+	game.ball.place(Vector3(0,game.ball.GROUND_HEIGHT,-1.15))
+	await frames(3)
+	game.dribbler=9
+	game.last_kicker=9
+	game.finishing.style="power"
+	game.charge=1
+	game.charging=true
+	check(game.power_windup()>0.7,"Holding a power shot tightens the camera and crowd")
+	game.shoot()
+	check(game.feedback.duration>0.33 and game.feedback.amplitude>strong,"A power strike hits harder and longer than a normal shot cue")
+	check(game.ball.streak>0.5,"A power strike leaves a short trail on the ball")
+	check(p.volley_motion.kind=="power" and p.volley_motion.duration>0.75,"Power follow-through lasts longer than a normal finish")
+	await arrange()
 	game.charging=true
 	game.rules.start_tackle(12,Vector3.FORWARD)
 	game.rules.resolve_tackles()

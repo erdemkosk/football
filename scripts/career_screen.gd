@@ -258,6 +258,9 @@ func build() -> void:
 		for id in game.career.club().lineup: portraits.request(portrait_data(id))
 	var focus: Control=null
 	var remembered: String=focus_memory.get(page,"")
+	if remembered=="" and page=="tactics":
+		var id := tactics.default_id(self)
+		if id!="": remembered="tactic:"+id
 	for child in controls.get_children():
 		if not child is BaseButton or child.disabled: continue
 		if focus==null or (remembered=="" and child.position.y>160 and child.position.y<800 and (focus.position.y<160 or focus.position.y>=800)): focus=child
@@ -265,7 +268,10 @@ func build() -> void:
 	if remembered=="" and page in ["squad","market"]:
 		for child in controls.get_children():
 			if child.get_meta("focus_key","")=="player:"+selected: focus=child; break
-	if focus!=null: focus.grab_focus()
+	if focus!=null:
+		focus.grab_focus()
+		if page=="tactics" and focus.get_meta("focus_key","").begins_with("tactic:"):
+			tactics.inspect(self,str(focus.get_meta("focus_key")).substr(7))
 	built_page=page
 	queue_redraw()
 
@@ -286,18 +292,30 @@ func load_career(index: int) -> void:
 	else: status=game.career.error
 
 func choose(index: int) -> void:
-	save_slot=index; new_world=World.create(); page="choose"; overwrite=false; selected_club="c00"; division=0; build()
+	save_slot=index; new_world=World.create(); page="choose"; overwrite=false; selected_club="c00"; division=0
+	if DisplayServer.get_name()!="headless" and is_instance_valid(game.match_menu):
+		division=clampi(game.match_menu.last_career_division,0,World.LEAGUES.size()-1)
+		selected_club=game.match_menu.last_career_club
+		var ids: Array=choose_ids()
+		if selected_club not in ids: selected_club=ids[0] if not ids.is_empty() else "c00"
+	build()
+
+func remember_club() -> void:
+	if DisplayServer.get_name()=="headless" or not is_instance_valid(game.match_menu): return
+	game.match_menu.last_career_club=selected_club
+	game.match_menu.last_career_division=division
+	game.match_menu.persist_session()
 
 func choose_ids() -> Array:
 	return new_world.clubs.keys().filter(func(id): return int(new_world.clubs[id].league)==division)
 
 func build_choose() -> void:
-	option_at(Rect2(52,170,470,44),World.LEAGUES,division,func(v): division=v; selected_club=choose_ids()[0]; build())
+	option_at(Rect2(52,170,470,44),World.LEAGUES,division,func(v): division=v; selected_club=choose_ids()[0]; remember_club(); build())
 	var choices:=choose_ids()
 	for n in range(choices.size()):
 		var id: String=choices[n]
 		var c: Dictionary=new_world.clubs[id]
-		var b:=card_at(Rect2(54+(n%3)*280,248+(n/3)*76,264,63),c.name,func(): selected_club=id; overwrite=false; build(),"club",id)
+		var b:=card_at(Rect2(54+(n%3)*280,248+(n/3)*76,264,63),c.name,func(): selected_club=id; overwrite=false; remember_club(); build(),"club",id)
 		b.add_theme_font_size_override("font_size",12)
 	button_at(Rect2(974,672,396,57),"KAYDIN ÜZERİNE YAZ & BAŞLA" if overwrite else "BU KULÜPLE BAŞLA",begin,true)
 	button_at(Rect2(52,823,220,43),"← KAYITLAR",func(): page="entry"; build())

@@ -55,7 +55,7 @@ func _ready() -> void:
 		p.collision_layer=0; p.collision_mask=0; p.marker.visible=false
 		if i==1 and not guest_data.is_empty(): p.apply_identity(guest_data)
 		p.apply_kit({"primary":Color("263b45") if i==0 else Color("e2dbc9"),"accent":Color("bda26c"),"shorts":Color("1c303a"),"pattern":0,"club_id":club_data.get("badge_id",0)})
-		p.position=Vector3(-1.35 if i==0 else 1.35,-.48,.30)
+		p.position=Vector3(-1.35 if i==0 else 1.35,.54-.85*p.body_scale.y,.30)
 		p.rig.rotation.y=-PI/2 if i==0 else PI/2
 		people.append(p)
 		G.block(root,Vector3(.65,.1,.7),Vector3(p.position.x,.43,.3),dark)

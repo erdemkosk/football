@@ -12,6 +12,7 @@ func reset() -> void:
 
 func apply(p,delta: float) -> void:
 	var next: String=p.pose if p.action_timer>0 else ("skill" if not p.skill_move.is_empty() else ("kick" if p.kick_timer>0 else ("receive" if p.receive_timer>0 else "run")))
+	if next=="run" and p.celebration!="": next="celebrate_"+p.celebration
 	if next!=state:
 		origin=previous.duplicate(); age=0; state=next
 	age+=delta

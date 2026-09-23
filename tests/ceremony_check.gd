@@ -70,6 +70,13 @@ func run() -> void:
 			await physics_frame
 		check(game.state=="set_piece" and game.restart_type=="SANTRA" and game.ceremony.phase=="" and game.ball.active,"One Space press skips safely to the opening kickoff from "+stop)
 	game.start_match()
+	game.ceremony.phase="presentation"
+	key(KEY_ENTER)
+	for frame in range(30):
+		game._physics_process(1.0/120)
+		await physics_frame
+	check(game.state=="set_piece" and game.restart_type=="SANTRA" and game.ceremony.phase=="" and game.ball.active,"Enter skips the ceremony the same way as Space")
+	game.start_match()
 	game.return_menu()
 	check(game.state=="menu" and game.ceremony.phase=="" and not game.ceremony.officials[0].prematch,"Returning to the menu ends the ceremony and restores exhibition officials")
 	game.start_match(true)

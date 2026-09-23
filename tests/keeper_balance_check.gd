@@ -108,8 +108,13 @@ func decisions() -> void:
 	check(redirected.age<redirected.delay and redirected.kicker==game.last_kicker,"A new attacking touch requires a fresh read instead of inheriting an old instant reaction")
 	var easy := reading(1,0); var hard := reading(1,2)
 	check(easy.delay>normal.delay and normal.delay>hard.delay,"Opponent goalkeeper reactions scale with Easy, Normal and Hard")
+	# Clubs now have distinct real attributes. Compare the same goalkeeper
+	# quality on either side when checking for an artificial team advantage.
+	var home_attributes: Dictionary=game.players[0].attributes.duplicate()
+	game.players[0].attributes=game.players[11].attributes.duplicate()
 	var home := reading(0)
-	check(home.delay==normal.delay and home.error==normal.error,"Both teams use the same baseline keeper balance")
+	check(home.delay==normal.delay and home.error==normal.error,"Equal-quality goalkeepers use the same baseline balance on both teams")
+	game.players[0].attributes=home_attributes
 	var crowded := reading(1,1,0.25,true,true)
 	check(crowded.delay>normal.delay and absf(crowded.error)>absf(normal.error),"Fatigue, rain and a screened view make reading the shot harder")
 	var low_fps := reading(1,1,1,false,false,1.0/30)

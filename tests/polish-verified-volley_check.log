@@ -1,0 +1,45 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: A waist-height cross offers a volley rather than a header
+PASS: The shot icon describes the available volley
+PASS: Keyboard D buffers a volley before the ball reaches the foot
+PASS: Aerial contact changes velocity without moving the ball
+CONTACT: gap=0.31736871600151 height=1.29599857330322 support=0.08553105592728 foot=0 kind=volley
+PASS: A fast waist-height cross is struck once by the animated boot
+PASS: The nearer left foot strikes while the other foot remains planted
+PASS: The volley recovers into ordinary movement
+PASS: Aerial contact changes velocity without moving the ball
+PASS: A cross from the opposite side uses the right foot
+PASS: Aerial contact changes velocity without moving the ball
+BOUNCE CONTACT: gap=0.33923152089119 height=0.15500000119209 kind=half_volley
+PASS: A ball bouncing off the real turf produces a low half-volley
+PASS: Aerial contact changes velocity without moving the ball
+LOW CONTACT: volley 0.80719208717346 1 launch=(0.0, 1.118426, -19.07652)
+PASS: A low airborne volley is not mislabeled as a bounced half-volley
+PASS: The physical volley can cross the goal line and score normally
+PASS: An intercepted cross expires without a remote volley or automatic ground shot
+PASS: A grounded ball still uses the responsive ordinary shot
+PASS: A shot held before an incoming deflection adapts to the new ball height
+PASS: Aerial contact changes velocity without moving the ball
+PASS: The adapted shot still waits for an actual boot contact
+PASS: A high cross still selects the existing header
+PASS: Xbox Controller shot button chooses volley instead of a standing tackle
+PASS: Aerial contact changes velocity without moving the ball
+PASS: Xbox Controller can complete a physical volley
+PASS: DualSense shot button chooses volley instead of a standing tackle
+PASS: Aerial contact changes velocity without moving the ball
+PASS: DualSense can complete a physical volley
+PASS: Aerial contact changes velocity without moving the ball
+PASS: Independent controller aim redirects the actual volley along the camera-relative aim
+PASS: Shot power and aim affect the volley velocity
+PASS: Pausing clears a buffered volley
+PASS: Selecting another player cancels the old shot intent
+PASS: A new pass command cancels the buffered volley
+PASS: An unselected teammate cannot shoot without the user's command
+PASS: Practice reset removes pending aerial shots
+PASS: Offside is checked before a volley can count as a shot
+PASS: An opponent can choose a volley in a real shooting position
+PASS: Aerial contact changes velocity without moving the ball
+PASS: Opponent volleys use the same animated boot contact and shot accounting
+PASS: An unreachable overhead ball cannot trigger an impossible high kick
+VOLLEY CHECK: 39 checks, 0 failures

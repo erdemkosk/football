@@ -1,0 +1,12 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Aimed shot releases immediately
+PASS: Aimed action launches exactly once, button 2
+PASS: Physical launch follows the slower aimed preview, button 2
+PASS: Aimed pass waits for physical contact, button 0
+PASS: Aimed action launches exactly once, button 0
+PASS: Physical launch follows the slower aimed preview, button 0
+PASS: Aimed pass waits for physical contact, button 3
+PASS: Aimed action launches exactly once, button 3
+PASS: Physical launch follows the slower aimed preview, button 3
+AIM CONTACT CHECK: 9 checks, 0 failures

@@ -26,7 +26,7 @@ func _process(delta: float) -> void:
 	if visible: queue_redraw()
 
 func _draw() -> void:
-	var origin := Vector2(1177,110)
+	var origin: Vector2=Vector2(1177,110)+get_parent().edge_offset(1,-1)
 	var good := Color("a7d9bb") if fps>=55 else (Color("e9ce87") if fps>=30 else Color("f17561"))
 	var style := StyleBoxFlat.new()
 	style.bg_color=Color(0.025,0.07,0.085,0.94)

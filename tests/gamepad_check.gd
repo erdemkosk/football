@@ -78,6 +78,15 @@ func run() -> void:
 	axis(JOY_AXIS_LEFT_X,1,1)
 	button(JOY_BUTTON_X,true,1)
 	check(game.controller.movement()==Vector3.ZERO and not game.charging,"A second controller cannot hijack the active player")
+	game.controller.device=0
+	game.controller.input_seen=false
+	game.toast=""
+	axis(JOY_AXIS_LEFT_X,0.9,1)
+	check(game.controller.device==1 and game.controller.input_seen and "BAĞLANDI" in game.toast,"A pad plugged in after launch can take over a silent controller slot")
+	axis(JOY_AXIS_LEFT_X,0,1)
+	game.controller.device=0
+	game.controller.input_seen=true
+	game.controller.stick=Vector2.ZERO
 	setup()
 	stick(0,-0.6)
 	button(JOY_BUTTON_A,true)
@@ -209,7 +218,11 @@ func run() -> void:
 	button(JOY_BUTTON_RIGHT_SHOULDER,true)
 	game.controller.connection_changed(0,false)
 	check(game.state=="paused" and not game.charging and game.controller.movement()==Vector3.ZERO and not game.controller.held.has(JOY_BUTTON_RIGHT_SHOULDER),"Disconnect pauses and cancels a charged shot without firing")
+	game.controller.device=-1
+	game.controller.using_gamepad=false
+	game.toast=""
 	game.controller.connection_changed(0,true)
+	check(game.controller.device==0 and game.controller.using_gamepad and "BAĞLANDI" in game.toast,"A pad plugged in after launch announces the connection")
 	button(JOY_BUTTON_A,true)
 	button(JOY_BUTTON_A,false)
 	check(game.state=="playing" and not game.pass_charging and game.shots[0]==0,"Reconnect and A resume safely without passing or shooting")

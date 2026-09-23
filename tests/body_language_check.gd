@@ -1,4 +1,5 @@
 extends SceneTree
+const Language = preload("res://scripts/body_language.gd")
 const DT := 1.0/120.0
 var game
 var player
@@ -75,7 +76,7 @@ func run() -> void:
 	player.desired=Vector3.FORWARD
 	await tick(38)
 	check(player.head_joint.rotation.y< -0.55 and gaze_alignment()>0.99,"Running head tracks a ball beside the run direction")
-	check(player.facing.dot(Vector3.FORWARD)>0.99 and player.velocity.z< -5.5,"Looking sideways never steers or slows the physics body")
+	check(player.facing.dot(Vector3.FORWARD)>0.99 and player.velocity.z< -player.movement_speed()*.96,"Looking sideways never steers or slows the physics body")
 	await capture("tracking",true)
 	game.ball.position=player.position+Vector3(-8,4,-7)
 	await tick(55)
@@ -120,7 +121,7 @@ func run() -> void:
 	check(player.call_timer==0 and not player.call_label.visible,"An automatic space gesture does not create an explicit pass request")
 	await capture("point-right")
 	await tick(110)
-	check(player.body_language.point_age>=0.95 and player.body_language.point_cooldown>2 and player.right_arm.rotation.z<0.3,"The gesture lowers naturally and cannot repeat continuously")
+	check(player.body_language.point_age>=Language.POINT_TIME and player.body_language.point_cooldown>2 and player.right_arm.rotation.z<0.3,"The gesture lowers naturally and cannot repeat continuously")
 	game.support.targets[9]=player.position+Vector3(-7,0,-7)
 	player.body_language.point_cooldown=0
 	await tick(33)
@@ -130,14 +131,14 @@ func run() -> void:
 	await capture("point-left")
 	player.call_timer=1
 	await tick(2)
-	check(player.right_arm.rotation.z>2.5 and player.body_language.point_age>=0.95,"The user's raised-hand pass request takes priority")
+	check(player.right_arm.rotation.z>2.5 and player.body_language.point_age>=Language.POINT_TIME,"The user's raised-hand pass request takes priority")
 	player.call_timer=0; player.body_language.point_cooldown=0
 	player.shot_preparation=1
 	await tick(20)
-	check(player.spine.rotation.y< -0.15 and player.body_language.point_age>=0.95,"Shot preparation keeps its coiled torso and balancing arms")
+	check(player.spine.rotation.y< -0.15 and player.body_language.point_age>=Language.POINT_TIME,"Shot preparation keeps its coiled torso and balancing arms")
 	player.begin_kick(0.9,0.46)
 	await tick(12)
-	check(player.right_leg.rotation.x>0.8 and player.body_language.point_age>=0.95,"A shot immediately overrides a space gesture")
+	check(player.right_leg.rotation.x>0.8 and player.body_language.point_age>=Language.POINT_TIME,"A shot immediately overrides a space gesture")
 	await reset()
 	owner.visible=true; owner.position=Vector3(-9,0,-22)
 	game.dribbler=8; game.ball.position=owner.position+Vector3(0,0.23,-0.6)
@@ -146,10 +147,10 @@ func run() -> void:
 	rival.visible=true; rival.position=game.support.targets[9]
 	player.body_language.point_cooldown=0
 	await tick(5)
-	check(player.body_language.point_age>=0.95,"A marked destination is not advertised as free space")
+	check(player.body_language.point_age>=Language.POINT_TIME,"A marked destination is not advertised as free space")
 	rival.position=(game.ball.position+game.support.targets[9])*0.5
 	await tick(5)
-	check(player.body_language.point_age>=0.95,"A blocked passing lane suppresses the invitation")
+	check(player.body_language.point_age>=Language.POINT_TIME,"A blocked passing lane suppresses the invitation")
 	rival.visible=false
 	await tick(5)
 	var before_cancel: Quaternion=player.right_arm.quaternion
@@ -169,7 +170,7 @@ func run() -> void:
 	await tick(2)
 	var pointing := 0
 	for i in [5,6,7,9]:
-		if game.players[i].body_language.point_age<0.95: pointing+=1
+		if game.players[i].body_language.point_age<Language.POINT_TIME: pointing+=1
 	check(pointing==2,"Only two teammates can signal at once instead of synchronized team-wide gestures")
 	await reset()
 	rival.visible=true; rival.position=player.position+Vector3(1.5,0,0)

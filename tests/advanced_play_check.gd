@@ -44,7 +44,7 @@ func reset(owner: int=9) -> void:
 	game.kick_lock=0; game.dribbler=owner; game.carrier=owner; game.boundary_grace=1
 	game.feedback.reset(); game.match_camera.select("pitch"); game.update_camera(0)
 	for i in range(5): p.step(DT); await physics_frame
-	game.ball.place(p.position+Vector3(0,.23,-.70))
+	game.ball.place(p.position+Vector3(0,game.ball.GROUND_HEIGHT,-.70))
 	await physics_frame; await physics_frame
 
 func tick(count: int=1) -> void:
@@ -208,32 +208,27 @@ func run() -> void:
 		await tick(20)
 		check(game.finishing.style==style,"Keyboard selects "+style+" shot")
 		key(KEY_D,false)
-		check(game.finishing.active(9) and game.shots[0]==0,"Special shot waits for the boot instead of changing a flying ball")
-		var delay: float=game.finishing.pending.contact
-		var remaining := int((delay-.045)/DT)
-		if visual and style=="power":
-			await tick(12); remaining-=12
-			game.camera.projection=Camera3D.PROJECTION_PERSPECTIVE; game.camera.fov=40
-			game.camera.position=p.position+Vector3(4,2.8,-5); game.camera.look_at(p.position+Vector3.UP)
-			await capture("power-windup")
-		await tick(remaining)
-		if visual and style=="power":
-			game.match_camera.select("pitch"); game.update_camera(0); game.hud.show()
-			await capture("timing"); game.hud.hide()
-		key(KEY_D); key(KEY_D,false)
-		check(game.finishing.pending.get("quality",0)>1,"Second press in the green window rewards timing")
+		if style=="timed":
+			check(game.finishing.active(9) and game.shots[0]==0,"Timed shot keeps its deliberate second-press window")
+			var delay: float=game.finishing.pending.contact
+			await tick(int((delay-.045)/DT))
+			key(KEY_D); key(KEY_D,false)
+			check(game.finishing.pending.get("quality",0)>1,"Second press in the green window rewards timing")
+		else:
+			check(game.ball.pending_kick and game.shots[0]==1 and game.finishing.pending.is_empty(),"Charged special shot releases immediately: "+style)
 		await tick(65)
 		print("SPECIAL ",style," shots=",game.shots[0]," output=",game.ball.kick_velocity," spin=",game.ball.spin)
 		check(game.shots[0]==1 and game.finishing.pending.is_empty(),"Special shot makes one physical contact and one shot")
 		if style=="low": check(game.ball.kick_velocity.y<1,"Low driven shot stays low")
-		if style=="power": check(game.ball.kick_velocity.length()>38,"Power shot delivers its higher speed after the longer preparation")
+		if style=="power": check(game.ball.kick_velocity.length()>32,"Power shot delivers its higher speed at release")
 		if style=="outside": check(absf(game.ball.spin)>.5,"Outside-foot shot applies its own physical curve")
 	await reset()
-	key(KEY_D,true,true); key(KEY_D,false); key(KEY_D); key(KEY_D,false)
+	key(KEY_5); key(KEY_5,false); key(KEY_D); key(KEY_D,false); key(KEY_D); key(KEY_D,false)
 	check(game.finishing.pending.quality<.9,"An early second press reduces quality rather than guaranteeing a better shot")
 	await reset()
-	key(KEY_D,true,false,true); key(KEY_D,false)
+	key(KEY_D,true,false,true)
 	game.ball.place(Vector3(6,.23,-30),Vector3(4,0,0)); await physics_frame; await physics_frame
+	key(KEY_D,false)
 	await tick(90)
 	check(game.shots[0]==0 and game.finishing.pending.is_empty(),"A dispossessed power shot misses without a remote strike")
 	for family in ["Xbox Controller","DualSense"]:

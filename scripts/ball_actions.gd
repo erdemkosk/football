@@ -31,6 +31,7 @@ var receive_direction := Vector3.ZERO
 var receive_distance := 0.0
 
 func reset(p) -> void:
+	p.receiving_facing=Vector3.ZERO
 	foot=1; receive_foot=1; kick_turn=0; difficulty=0
 	control_grace=0; contact_cooldown=0; settle_time=0
 	p.receive_timer=0; p.receive_style=""
@@ -132,13 +133,21 @@ func plant_support(p,leg: int,duration: float) -> void:
 	support_foot=leg; support_age=0; support_duration=duration
 	var knee: Node3D=p.left_knee if leg==0 else p.right_knee
 	support_anchor=knee.to_global(BOOT)
-	support_anchor.y=p.global_position.y+p.locomotion.SOLE
+	support_anchor.y=p.global_position.y+p.boot_ground_height()
 
 func start_contact(p,point: Vector3,windup: float) -> void:
 	contact_pending=true; contact_target=point; contact_age=0; contact_windup=windup
 	release_age=1
 	var knee: Node3D=p.left_knee if foot==0 else p.right_knee
 	contact_origin=knee.to_global(BOOT)
+
+func release_charged_shot(p,point: Vector3) -> void:
+	# The button hold already prepared this strike. Start at contact and blend
+	# directly into follow-through instead of scheduling another backswing.
+	start_contact(p,point,.001)
+	contact_age=contact_windup
+	finish_pose(p)
+	finish_contact(p)
 
 func finish_contact(p) -> void:
 	contact_pending=false; release_age=0

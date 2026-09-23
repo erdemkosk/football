@@ -1,0 +1,27 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: One referee and two assistants are separate from the 22 footballers
+PASS: All match officials persist with two assistant flags
+PASS: Ball and official collision masks exclude each other in both directions
+PASS: The main referee runs inside the pitch to follow play
+PASS: North assistant follows the second-last defender outside the touchline
+PASS: An advanced ball takes precedence over the defensive offside line
+PASS: South assistant mirrors the second-last-defender logic
+PASS: The real ball passes through the referee without deflecting or losing speed
+PASS: An uninvolved offside-position player does not cause a false flag
+PASS: Actual involvement produces the existing offside decision
+PASS: The correct assistant raises a flag when offside is awarded
+PASS: After acknowledgement the flag indicates the near-side infringement
+PASS: The referee raises an arm for the indirect free kick
+PASS: The indirect signal stays up for the first kick
+PASS: Another player's touch releases the indirect signal
+PASS: Play waits while the referee presents a booking
+PASS: A real caution raises a visible yellow card
+PASS: The booking sequence releases restart preparation
+PASS: A second caution shows yellow then red in the referee's hand
+PASS: Throw-in decisions have matching assistant and referee direction signals
+PASS: Pause freezes referee movement and decision animation
+PASS: The same ceremony officials take their match duties after skipping
+PASS: Kickoff clears old goal signals without removing officials
+PASS: Practice does not add match officials
+REFEREE CHECK: 0 failures

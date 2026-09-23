@@ -34,7 +34,7 @@ func drop(index: int) -> bool:
 	p.keeper_motion.saved_at=-10; p.keeper_motion.secured=false
 	p.set_piece_pose=""; p.touch_cooldown=.35
 	game.dribbler=-1; game.last_touch=p.team; game.last_kicker=index
-	game.announce("TOPU YERE BIRAKTI")
+	game.hint("TOPU YERE BIRAKTI")
 	return true
 
 func update(delta: float) -> void:
@@ -53,6 +53,14 @@ func resolve() -> void:
 	game.ball.hold_target=p.right_hand.global_position if pending.kind=="throw" else p.hand_center()
 	var release_at := .34 if pending.kind=="throw" else .25
 	if pending.age<release_at: return
+	if pending.has("ai_choice") and pending.kind!="punt":
+		var choice: Dictionary=pending.ai_choice
+		var receiver=game.players[choice.receiver]
+		var route: Dictionary=game.Passing.plan(game.ball.position,receiver.position,receiver.velocity,pending.kind=="throw",game.weather)
+		if not game.ai_attack.delivery.safe(pending.index,route,choice.receiver):
+			reset(); p.set_piece_pose="carry"
+			return
+		pending.velocity=route.velocity; choice.route=route
 	var aim: Vector3=pending.aim
 	var power: float=pending.power
 	pending.released=true
@@ -62,12 +70,17 @@ func resolve() -> void:
 		var finisher=game.ai_attack.finishing if p.team==1 else game.finishing
 		finisher.game=game
 		finisher.queue(pending.index,aim,power,"punt")
+		if pending.has("ai_choice") and not finisher.pending.is_empty(): finisher.pending.ai_delivery=pending.ai_choice
 		p.distribution_move.clear(); pending.clear()
 		return
 	var velocity: Vector3=pending.get("velocity",launch_velocity(pending.kind,aim,power))
 	if game.strike(pending.index,velocity,0,false,"distribution"):
 		game.passes[p.team]+=1
-		game.announce("UZUN EL ATIŞI" if pending.kind=="throw" else "ELLE YERDEN DAĞITIM")
+		if pending.has("ai_choice"):
+			var choice: Dictionary=pending.ai_choice
+			game.ai_receivers[p.team]=choice.receiver; game.ai_pass_time[p.team]=float(choice.route.flight)+2.5
+			game.ai_attack.record("keeper_"+pending.kind)
+		game.hint("UZUN EL ATIŞI" if pending.kind=="throw" else "ELLE YERDEN DAĞITIM")
 
 static func pose(p) -> void:
 	if p.distribution_move.is_empty(): return

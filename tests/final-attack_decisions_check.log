@@ -1,0 +1,34 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: An available wall return cannot override a clear scoring chance
+PASS: Reordering feasible candidates does not change the best decision
+PASS: A safe forward escape beats an available pressure dribble
+PASS: An unpressured carrier uses open grass instead of automatically passing backwards
+PASS: The same backward outlet becomes useful when the carrier is pressed
+PASS: A free far wing remains a reachable switch option beyond ordinary pass range
+PASS: An unobstructed receiver beats the teammate behind a blocked passing lane
+PASS: A layoff earns value only when its next forward lane is open
+PASS: Hard difficulty considers the next pass without changing player physics
+PASS: An attractive destination is penalized when its receiver cannot get there
+PASS: Short, deep and wide duties go to different players in half 1
+PASS: Off-ball jobs supply complementary receiving spaces in half 1
+PASS: Coordinated destinations keep separate passing lanes
+PASS: The cover pair stays behind the coordinated attack
+PASS: Small planning ticks do not repeatedly swap runners' jobs
+PASS: A moving back line immediately caps held off-ball runs
+PASS: A committed pass receiver is released from off-ball coordination
+PASS: Explicit one-two movement keeps priority over a shared role
+PASS: Possession loss clears the previous team's attacking assignments
+PASS: Short, deep and wide duties go to different players in half 2
+PASS: Off-ball jobs supply complementary receiving spaces in half 2
+PASS: Coordinated destinations keep separate passing lanes
+PASS: The cover pair stays behind the coordinated attack
+PASS: Small planning ticks do not repeatedly swap runners' jobs
+PASS: A moving back line immediately caps held off-ball runs
+PASS: A committed pass receiver is released from off-ball coordination
+PASS: Explicit one-two movement keeps priority over a shared role
+PASS: Possession loss clears the previous team's attacking assignments
+PASS: A sent-off player cannot retain an attacking assignment
+PASS: Stoppages discard attacking plans before the real restart sequence
+PASS: Coordinated human teammates still leave every pass and shot to the user
+ATTACK DECISIONS CHECK: 31 checks, 0 failures

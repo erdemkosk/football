@@ -1,0 +1,36 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Pass preparation does not count a pass or start the give-and-go run
+PASS: A dispossessed windup cannot create a phantom receiver or pass statistic
+PASS: A defender behind the ball does not veto a forward escape pass
+PASS: A defender in the actual passing lane still blocks that option
+PASS: A closer opponent does not repeatedly reset the actual carrier's decision time
+PASS: An uncontrolled first touch is settled before attempting another pass
+PASS: A fatigued receiver allows more time to reach the ball instead of assuming full running speed
+PASS: Free-kick positioning continues away from the wall after passing it
+PASS: Open grass permits the shared knock-on
+PASS: The AI runs after and recovers its own knocked-on ball
+PASS FLOW rain=false half=1 passes=3 contacts=3 misses=0 received=true returned=true
+PASS: Moving AI receiver controls the real pass, rain=false half=1
+PASS: A planned give-and-go continues into a controlled physical return, rain=false half=1
+PASS: AI follows through without an uncontested missed swing, rain=false half=1
+PASS FLOW rain=true half=1 passes=3 contacts=3 misses=0 received=true returned=true
+PASS: Moving AI receiver controls the real pass, rain=true half=1
+PASS: A planned give-and-go continues into a controlled physical return, rain=true half=1
+PASS: AI follows through without an uncontested missed swing, rain=true half=1
+PASS FLOW rain=false half=2 passes=3 contacts=3 misses=0 received=true returned=true
+PASS: Moving AI receiver controls the real pass, rain=false half=2
+PASS: A planned give-and-go continues into a controlled physical return, rain=false half=2
+PASS: AI follows through without an uncontested missed swing, rain=false half=2
+PASS: A live attacking move links a physical pass, reception and shot
+LIVE MATCH difficulty=1 active=60.0 passes=[14, 5] controlled=[9, 4] contacts=21 misses=0 shots=[1, 0] score=[0, 0]
+PASS: Real restarts complete and allow a minute of active football, difficulty 1
+PASS: Both full teams release real passes at difficulty 1
+PASS: Both teams control passes and the opponent completes multiple receptions, difficulty 1
+PASS: Physical pass/shot contacts remain reliable in a contested match, difficulty 1
+LIVE MATCH difficulty=2 active=60.0 passes=[13, 10] controlled=[9, 7] contacts=26 misses=0 shots=[0, 1] score=[0, 0]
+PASS: Real restarts complete and allow a minute of active football, difficulty 2
+PASS: Both full teams release real passes at difficulty 2
+PASS: Both teams control passes and the opponent completes multiple receptions, difficulty 2
+PASS: Physical pass/shot contacts remain reliable in a contested match, difficulty 2
+AI MATCH FLOW CHECK: 28 checks, 0 failures

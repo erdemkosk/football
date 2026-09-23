@@ -54,7 +54,8 @@ func run() -> void:
 		results.append(game.ball.position)
 	check(results[0].distance_to(results[1])<0.005 and results[1].z< -1,"The real ball passes through the referee without deflecting or losing speed")
 	await arrange()
-	game.strike(9,Vector3(0,0,-15))
+	# Offside candidates are recorded at contact, not when a swing is queued.
+	game.commit_strike(9,Vector3(0,0,-15))
 	check(10 in game.rules.candidates and refs.actors[1].gesture!="flag_up","An uninvolved offside-position player does not cause a false flag")
 	check(not game.rules.before_touch(10),"Actual involvement produces the existing offside decision")
 	await officials_step(20)

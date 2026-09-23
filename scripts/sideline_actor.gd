@@ -21,6 +21,7 @@ var travel_phase := 0.0
 var mode := "watch"
 var target_point := Vector3.INF
 var velocity := Vector3.ZERO
+var substitution_board: Node3D
 
 func _ready() -> void:
 	var kit := G.material(Color("e2e9dd") if team==0 else Color("bd4936"))
@@ -34,6 +35,7 @@ func _ready() -> void:
 		kit=G.material(Color("d96a2c"))
 		kit_material=kit
 	var top: Material = kit if role in ["substitute","ball_boy"] else tracksuit
+	if role=="fourth": top=G.material(Color("dfd447"))
 	add_child(body)
 	body.position.y = 0.90
 	body.add_child(spine)
@@ -84,15 +86,21 @@ func _ready() -> void:
 		G.sphere(elbow,0.072,Vector3.ZERO,skin if role in ["substitute","ball_boy"] else tracksuit)
 		G.cylinder(elbow,0.065,0.26,Vector3(0,-0.12,0),skin if role in ["substitute","ball_boy"] else tracksuit)
 		G.sphere(elbow,0.072,Vector3(0,-0.285,0),skin)
-	if role in ["assistant","fourth"]:
+	if role=="assistant":
 		var board = G.block(elbows[0],Vector3(0.24,0.32,0.035),Vector3(0,-0.26,-0.07),G.material(Color("b2b6a4")))
 		board.rotation.x = -0.65
 		G.block(board,Vector3(0.18,0.24,0.008),Vector3(0,0,-0.022),G.material(Color("e6e3cc") if role=="assistant" else Color("1d2426")))
+	if role=="fourth":
+		substitution_board=preload("res://scripts/substitution_board.gd").new()
+		spine.add_child(substitution_board); substitution_board.position=Vector3(0,1.23,-.07)
 	if role=="photographer":
 		var camera = G.block(elbows[1],Vector3(0.16,0.11,0.18),Vector3(0,-0.22,-0.12),G.material(Color("1c2226")))
 		G.cylinder(camera,0.045,0.08,Vector3(0,0,-0.12),G.material(Color("2a3236")))
 	seated = 1.0 if role in ["substitute","physio"] else (0.42 if role=="photographer" else 0.0)
 	rotation.y = PI*0.5
+	# Resolve the authored rest pose before the actor is first rendered.
+	travel_phase=fmod(number*2.399,TAU)
+	animate_actor(1.0,number*.17,global_position+Vector3.LEFT*10,"watch",0)
 
 func animate_actor(delta: float,clock: float,ball_position: Vector3,next_mode: String,intensity: float) -> void:
 	mode = next_mode
@@ -122,7 +130,7 @@ func animate_actor(delta: float,clock: float,ball_position: Vector3,next_mode: S
 	var yaw := atan2(-look.x,-look.z)
 	if role not in ["ball_boy","photographer","fourth"]: yaw=clampf(yaw,0.6,2.55)
 	var body_yaw := yaw
-	if (role=="coach" and mode=="watch" and speed>0.15) or (role=="ball_boy" and speed>0.35):
+	if (role=="coach" and mode=="watch" and speed>0.15) or (role=="ball_boy" and speed>0.35) or (mode=="entry" and speed>.2):
 		var movement := position-old
 		if movement.length()>0.001: body_yaw=atan2(-movement.x,-movement.z)
 	rotation.y = lerp_angle(rotation.y,lerpf(body_yaw,PI*0.5,seated if role!="ball_boy" else 0.0),blend)
@@ -197,6 +205,12 @@ func animate_actor(delta: float,clock: float,ball_position: Vector3,next_mode: S
 	if role=="coach" and mode=="watch":
 		var directing := smoothstep(0.4,0.85,sin(clock*0.7))
 		arms[1].rotation.x = lerpf(arms[1].rotation.x,1.4,directing*blend)
+	if role=="fourth" and substitution_board.visible:
+		rotation.y=PI*.5
+		spine.rotation=Vector3.ZERO
+		for i in range(2):
+			arms[i].rotation=Vector3(2.95,0,-.4 if i==0 else .4)
+			elbows[i].rotation=Vector3(.16,0,0)
 
 func hand_center() -> Vector3:
 	if elbows.size()>1: return elbows[1].to_global(Vector3(0,-0.22,0))

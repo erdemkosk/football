@@ -1,0 +1,42 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Quick-match club 0 starts with its real formation and tempo
+PASS: Quick-match club 1 starts with its real formation and tempo
+PASS: Quick-match club 2 starts with its real formation and tempo
+PASS: Quick-match club 3 starts with its real formation and tempo
+PASS: Quick-match club 4 starts with its real formation and tempo
+PASS: Quick-match club 5 starts with its real formation and tempo
+PASS: Quick-match club 6 starts with its real formation and tempo
+PASS: Quick-match club 7 starts with its real formation and tempo
+SQUAD RATINGS: [78, 82, 77, 72, 81, 81, 66, 75] FORMATIONS: [1, 1, 0, 0, 2, 1, 0, 2]
+PASS: Strong and weak local squads show a meaningful difference in their actual lineup ratings
+PASS: Local opponents use all three formations
+PASS: A limited player still needs time to read an otherwise clear shot
+PASS: At fixed difficulty, passing quality changes reaction and execution precision
+PASS: The elite player recognizes and physically strikes the same chance earlier
+PASS: Finishing affects real shot velocity in exhibition as well as career
+PASS: Pace differences remain visible in quick-match sprinting
+PASS: Changing difficulty never grants hidden running speed
+PASS: Tired players read play more slowly
+PASS: A stronger substitute improves live team reading without changing the badge
+STYLE KANATLARDAN OYUN => pass receiver=18
+STYLE SABIRLI PAS OYUNU => pass receiver=17
+PASS: The same open pitch produces a wide outlet for wing play and a short combination for possession play
+PASS: A blocked preferred lane still loses to a safer action
+PASS: Formation 0 sends its actual wide defender forward in half 1
+PASS: Formation 0 preserves its distinct lines in half 1
+PASS: Formation 1 sends its actual wide defender forward in half 1
+PASS: Formation 1 preserves its distinct lines in half 1
+PASS: Formation 2 sends its actual wide defender forward in half 1
+PASS: Formation 2 preserves its distinct lines in half 1
+PASS: Formation 0 sends its actual wide defender forward in half 2
+PASS: Formation 0 preserves its distinct lines in half 2
+PASS: Formation 1 sends its actual wide defender forward in half 2
+PASS: Formation 1 preserves its distinct lines in half 2
+PASS: Formation 2 sends its actual wide defender forward in half 2
+PASS: Formation 2 preserves its distinct lines in half 2
+PASS: Defensive quality 58 never creates an unlimited swarm
+PASS: Defensive quality 90 never creates an unlimited swarm
+PASS: Better defenders hold closer lines and collectively react earlier
+PASS: Saved tactics remain authoritative outside the eight-club catalog
+TEAM IDENTITY CHECK: 36 checks, 0 failures

@@ -6,6 +6,8 @@ var fans: Array[Dictionary] = []
 var chairs: Array[Transform3D] = []
 var chair_colors: Array[Color] = []
 var material := ShaderMaterial.new()
+var cloth_material: ShaderMaterial
+var animation_uniforms: Array[String] = []
 var clock := 0.0
 var event_age := 100.0
 var event_duration := 0.0
@@ -21,6 +23,7 @@ var margin := 0
 var home_support := .35
 var away_support := .35
 var hush := 0.0
+var anticipation := 0.0
 var event_side := 0
 
 func context(score: Array,time: float,length: float) -> void:
@@ -65,6 +68,10 @@ func build(parent: Node3D) -> void:
 	seat_material.vertex_color_is_srgb = true
 	instances(parent,"Seats",chair.commit(),chairs,chair_colors,[],seat_material)
 	material.shader = load("res://shaders/crowd.gdshader")
+	cloth_material=material.duplicate()
+	cloth_material.set_shader_parameter("club_cloth",true)
+	for uniform in material.shader.get_shader_uniform_list():
+		if uniform.name not in ["club_cloth","home_color","home_accent","away_color","away_accent"]: animation_uniforms.append(uniform.name)
 	var cheering := person_meshes(3)
 	for pose in range(4):
 		var model := person_meshes(pose)
@@ -92,7 +99,7 @@ func build(parent: Node3D) -> void:
 			arrays[Mesh.ARRAY_TEX_UV2] = z
 			var animated := ArrayMesh.new()
 			animated.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
-			instances(parent,"Fans_%s_%d" % [part,pose],animated,transforms,colors[part],phases,material)
+			instances(parent,"Fans_%s_%d" % [part,pose],animated,transforms,colors[part],phases,cloth_material if part=="cloth" else material)
 	reset()
 
 func reset() -> void:
@@ -107,7 +114,7 @@ func reset() -> void:
 	excitement = 0
 	follow = 0
 	ball_focus = Vector3.ZERO
-	hush=0; home_support=.35; away_support=.35; progress=0; margin=0
+	hush=0; anticipation=0; home_support=.35; away_support=.35; progress=0; margin=0
 	material.set_shader_parameter("home_support",home_support)
 	material.set_shader_parameter("away_support",away_support)
 	material.set_shader_parameter("hush",0.0)
@@ -122,6 +129,17 @@ func reset() -> void:
 	material.set_shader_parameter("event_age",event_age)
 	material.set_shader_parameter("wave_age",wave_age)
 	material.set_shader_parameter("crowd_time",clock)
+	sync_cloth()
+
+func set_clubs(home: Dictionary,away: Dictionary) -> void:
+	for pair in [["home",home],["away",away]]:
+		cloth_material.set_shader_parameter(pair[0]+"_color",pair[1].badge_primary)
+		cloth_material.set_shader_parameter(pair[0]+"_accent",pair[1].badge_accent)
+
+func sync_cloth() -> void:
+	if cloth_material==null: return
+	for key in animation_uniforms:
+		cloth_material.set_shader_parameter(key,material.get_shader_parameter(key))
 
 func react(kind: String,team: int,location: Vector3) -> void:
 	# A pass or save must not cut off an ongoing goal celebration.
@@ -153,6 +171,7 @@ func start_wave(location: Vector3,delay: float = 0.35) -> void:
 func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int,playing: bool,late_close_match: bool) -> void:
 	clock += delta
 	var silence: float=1.0 if event_kind=="goal" and event_side==1 and event_age<2.3 else (.55 if event_kind=="miss" and event_side==0 and event_age<1.4 else 0.0)
+	silence=maxf(silence,anticipation*0.55)
 	hush=move_toward(hush,silence,delta*(3 if silence>hush else .65))
 	event_age += delta
 	wave_age += delta
@@ -178,6 +197,7 @@ func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int
 	material.set_shader_parameter("home_support",home_support)
 	material.set_shader_parameter("away_support",away_support)
 	material.set_shader_parameter("hush",hush)
+	sync_cloth()
 
 func follow_weight(perimeter: float) -> float:
 	var azimuth := fposmod(atan2(ball_focus.z/60.0,ball_focus.x/45.0)/TAU,1.0)

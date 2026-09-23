@@ -4,14 +4,23 @@ const REACH := 0.47
 const BUFFER := 0.85
 var game
 var requests: Dictionary = {}
+var contact_clearance: Dictionary = {}
 
 func reset() -> void:
 	for index in requests.keys(): cancel(index)
+	for index in contact_clearance.keys(): release_collision(index)
 
-func cancel(index: int) -> void:
+func release_collision(index: int) -> void:
+	game.ball.remove_collision_exception_with(game.players[index])
+	contact_clearance.erase(index)
+
+func cancel(index: int,departing: bool=false) -> void:
 	if active(index) and requests[index].user and game.controlled==index:
 		game.charging=false; game.charge=0
 	requests.erase(index)
+	if contact_clearance.has(index):
+		if departing: contact_clearance[index]=.12
+		else: release_collision(index)
 
 func active(index: int) -> bool:
 	return requests.has(index)
@@ -33,7 +42,7 @@ func window(index: int) -> Dictionary:
 		var time := sample*0.05
 		var point: Vector3=ball.position+velocity*time+Vector3.DOWN*4.905*time*time
 		var standing := head+travel*time
-		if game.flat_distance(point,standing)>0.56 or point.y<standing.y-0.28: continue
+		if game.flat_distance(point,standing)>0.56 or point.y<standing.y-0.12: continue
 		var jump := (point.y-standing.y+10*time*time)/time
 		if jump>=0 and jump<=jump_limit: return {"time":time,"jump":jump}
 	return {}
@@ -54,6 +63,10 @@ func release(index: int,aim: Vector3,power: float) -> void:
 
 func prepare(delta: float) -> void:
 	if game.state!="playing": reset(); return
+	for index in contact_clearance.keys():
+		if active(index) and requests[index].launched: continue
+		contact_clearance[index]-=delta
+		if contact_clearance[index]<=0: release_collision(index)
 	for index in requests.keys():
 		var request: Dictionary=requests[index]
 		var p=game.players[index]
@@ -63,10 +76,17 @@ func prepare(delta: float) -> void:
 		if request.user and not request.released:
 			if not game.charging: cancel(index); continue
 			request.aim=game.shot_direction; request.power=game.charge
-		if request.launched: continue
+		if request.launched:
+			contact_clearance[index]=.08
+			continue
 		var plan := window(index)
 		if plan.is_empty() or plan.time>0.36: continue
 		p.begin_header(plan.jump,request.aim)
+		# The capsule's rounded crown protrudes beyond the animated forehead.
+		# During the header, swept head contact owns this tiny collision window.
+		p.dribble_motion.release_collision()
+		game.ball.add_collision_exception_with(p)
+		contact_clearance[index]=.08
 		request.launched=true
 		request.ball=game.ball.position; request.head=head_point(p)
 
@@ -109,7 +129,7 @@ func resolve() -> void:
 	if intent!="shot":
 		var direction: Vector3=(request.aim*Vector3(1,0,1)).normalized()
 		velocity=direction*(18 if intent=="clearance" else 11)*lerpf(.8,1,quality)+Vector3.UP*(3.2 if intent=="clearance" else 1.2)
-	cancel(best)
+	cancel(best,true)
 	if request.user:
 		game.charging=false; game.charge=0; game.shot_chip=false; game.shot_finesse=false
 	if game.strike(best,velocity,0,false,"header" if intent=="shot" else "header_"+intent):
@@ -119,4 +139,4 @@ func resolve() -> void:
 			game.passes[p.team]+=1
 			game.ai_receivers[p.team]=request.receiver
 			game.ai_pass_time[p.team]=2
-		game.announce("KAFA VURUŞU" if intent=="shot" else ("KAFAYLA UZAKLAŞTIRDI" if intent=="clearance" else "KAFA PASI"))
+		game.hint("KAFA VURUŞU" if intent=="shot" else ("KAFAYLA UZAKLAŞTIRDI" if intent=="clearance" else "KAFA PASI"))

@@ -32,7 +32,7 @@ func update(delta: float,owner: int,possession: int,support) -> void:
 		if not eligible(jobs[role],owner,support):
 			jobs.erase(role); points.erase(role); refresh=0
 	if refresh<=0:
-		refresh=.24
+		refresh=lerpf(.40,.19,game.management.identity.team_quality(team))
 		if hold<=0:
 			jobs.clear(); hold=2.4
 		plan(owner,support)
@@ -95,6 +95,10 @@ func plan(owner: int,support) -> void:
 				if role=="short_outlet": score+=3 if group==2 else 0
 				elif role=="channel_run": score+=(3 if group==3 else 0)-(1-p.energy)*7
 				else: score+=minf(3,absf(p.home.x)*.14)
+				# Prefer the technician as an outlet and a fast runner in the
+				# channel, using the actual lineup rather than shirt numbers.
+				if role=="short_outlet": score+=(float(p.attributes.get("passing",p.attributes.control))-72)*.10
+				elif role=="channel_run": score+=(float(p.attributes.pace)+float(p.attributes.acceleration)-144)*.07
 				if score>best: best=score; chosen=i; destination=at
 		if chosen>=0:
 			jobs[role]=chosen; points[role]=destination; reserved.append(destination)

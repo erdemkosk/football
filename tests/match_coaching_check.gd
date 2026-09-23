@@ -67,6 +67,8 @@ func run() -> void:
 	await capture("xbox")
 	var identity: String=game.players[9].display_name
 	tap(JOY_BUTTON_A)
+	var owner: Control=game.get_viewport().gui_get_focus_owner()
+	check(owner==null or not game.hud.nav_buttons.has(owner),"Accepting a change returns control to the match instead of the HUD")
 	check(game.management.pending.size()==1 and game.management.transit.is_empty() and game.players[9].display_name==identity and game.players[9].energy==.19,"Accepting while playing queues a change without swapping identity or stamina")
 	check(game.shots[0]==0 and game.passes[0]==0 and not game.ball.pending_kick,"RT + A acceptance never plays a pass")
 	game.coaching.refresh(); tap(JOY_BUTTON_B)

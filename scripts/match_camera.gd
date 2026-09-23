@@ -35,9 +35,11 @@ func defaults() -> void:
 
 func cycle() -> void:
 	index=posmod(index+1,IDS.size())
+	preferred=IDS[index]
 	snap=true
 	apply_projection()
-	game.announce("KAMERA  ·  "+label())
+	game.hint("KAMERA  ·  "+label())
+	if is_instance_valid(game.match_menu): game.match_menu.persist_session()
 
 func select(id: String) -> void:
 	var found: int=IDS.find(id)
@@ -153,9 +155,10 @@ func pose(focus: Vector3,zoom: float) -> Dictionary:
 			# Camera lives on +x. Near throw-ins lean back so the ball stays framed.
 			# Corners and free kicks ease behind the taker and look into the play.
 			var near := 0.0 if kick_restart() else smoothstep(16.0,P.HALF_WIDTH-.5,track.x)
-			eye=Vector3(P.HALF_WIDTH+8+near*5.5,18.6+near*7.4,clampf(lerpf(focus.z,track.z,near*0.55),-42,42))
-			look=Vector3(lerpf(clampf(focus.x,-10,10),track.x,near*0.94),lerpf(1.05,0.22,near),lerpf(focus.z,clampf(track.z,-48,48),near))
-			fov=lerpf(40.0,37.0,near)
+			# A higher broadcast angle separates human-sized players and passing lanes.
+			eye=Vector3(P.HALF_WIDTH+8+near*5.5,22.0+near*6.0,clampf(lerpf(focus.z,track.z,near*0.55),-42,42))
+			look=Vector3(lerpf(clampf(focus.x,-10,10),track.x,near*0.94),lerpf(0.80,0.22,near),lerpf(focus.z,clampf(track.z,-48,48),near))
+			fov=lerpf(42.0,39.0,near)
 			var inset := set_piece_inset()
 			if inset>0.0:
 				var piece: Dictionary=behind_kick_pose()

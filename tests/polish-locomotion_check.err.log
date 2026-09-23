@@ -1,0 +1,46 @@
+ERROR: Failed to open log file for writing: user://logs/godot.log
+   at: rotate_file (core/io/logger.cpp:169)
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+ERROR: FAIL: Direction input changes real motion on the first physics tick: right-cut
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/locomotion_check.gd:14)
+       [1] turn_scenario (res://tests/locomotion_check.gd:56)
+       [2] tick (res://tests/locomotion_check.gd:18)
+ERROR: FAIL: Direction input changes real motion on the first physics tick: left-cut
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/locomotion_check.gd:14)
+       [1] turn_scenario (res://tests/locomotion_check.gd:56)
+       [2] tick (res://tests/locomotion_check.gd:18)
+ERROR: FAIL: Direction input changes real motion on the first physics tick: reverse
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/locomotion_check.gd:14)
+       [1] turn_scenario (res://tests/locomotion_check.gd:56)
+       [2] tick (res://tests/locomotion_check.gd:18)
+ERROR: FAIL: Defensive lateral movement keeps looking at the opponent
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/locomotion_check.gd:14)
+       [1] run (res://tests/locomotion_check.gd:124)
+       [2] tick (res://tests/locomotion_check.gd:18)
+ERROR: FAIL: Side steps mirror without rotating the defender away from play
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/locomotion_check.gd:14)
+       [1] run (res://tests/locomotion_check.gd:130)
+       [2] tick (res://tests/locomotion_check.gd:18)
+ERROR: FAIL: Backward defensive running retains forward-facing upper body
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/locomotion_check.gd:14)
+       [1] run (res://tests/locomotion_check.gd:134)
+       [2] tick (res://tests/locomotion_check.gd:18)
+ERROR: FAIL: Backpedalling alternates articulated steps with a grounded support foot
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/locomotion_check.gd:14)
+       [1] run (res://tests/locomotion_check.gd:143)
+       [2] tick (res://tests/locomotion_check.gd:18)

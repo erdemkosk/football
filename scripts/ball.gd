@@ -1,7 +1,10 @@
 extends RigidBody3D
 const G = preload("res://scripts/geometry.gd")
-const RADIUS := 0.22
+const Dimensions = preload("res://scripts/ball_dimensions.gd")
+const RADIUS := Dimensions.RADIUS
+const GROUND_HEIGHT := Dimensions.GROUND_HEIGHT
 const Motion = preload("res://scripts/ball_motion.gd")
+const P = preload("res://scripts/pitch_dimensions.gd")
 var pending_reset := false
 var reset_position := Vector3.ZERO
 var pending_velocity := Vector3.ZERO
@@ -23,6 +26,16 @@ var held_by: Node3D
 var hold_target := Vector3.ZERO
 var held_collision_mask := 11
 var surface: Node3D
+var shell: MeshInstance3D
+var skin: Node3D
+var streak := 0.0
+var streak_dir := Vector3.FORWARD
+var rubber := 0.0
+var rubber_vel := 0.0
+var rubber_axis := Vector3.UP
+var roll_amount := 0.0
+var roll_dir := Vector3.FORWARD
+var ghosts: Array[MeshInstance3D] = []
 
 func hold(player: Node3D) -> void:
 	if held_by==player: return
@@ -63,7 +76,20 @@ func _ready() -> void:
 	shape.radius = RADIUS
 	collision.shape = shape
 	add_child(collision)
-	var shell = G.sphere(self,RADIUS,Vector3.ZERO,G.material(Color("f1eee2"),0.7))
+	skin=Node3D.new()
+	skin.name="BallSkin"
+	add_child(skin)
+	shell = G.sphere(skin,RADIUS,Vector3.ZERO,G.material(Color("f1eee2"),0.7))
+	var trail := StandardMaterial3D.new()
+	trail.albedo_color=Color("f1eee2",0.28)
+	trail.transparency=BaseMaterial3D.TRANSPARENCY_ALPHA
+	trail.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
+	for i in 3:
+		var ghost := G.sphere(self,RADIUS,Vector3.ZERO,trail)
+		ghost.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		ghost.top_level=true
+		ghost.visible=false
+		ghosts.append(ghost)
 	# Twelve pentagonal panels at icosahedron vertices; seams rotate with the physical ball.
 	var phi = (1+sqrt(5.0))/2
 	var directions: Array[Vector3] = []
@@ -74,11 +100,11 @@ func _ready() -> void:
 			directions.append(Vector3(b*phi,0,a).normalized())
 	for d in directions:
 		var panel = CylinderMesh.new()
-		panel.top_radius = 0.065
-		panel.bottom_radius = 0.065
-		panel.height = 0.003
+		panel.top_radius = RADIUS*0.29545
+		panel.bottom_radius = panel.top_radius
+		panel.height = RADIUS*0.01364
 		panel.radial_segments = 5
-		var node = G.mesh(self,panel,G.material(Color("1a252c"),0.75),d*RADIUS)
+		var node = G.mesh(skin,panel,G.material(Color("1a252c"),0.75),d*RADIUS)
 		var axis = Vector3.UP.cross(d)
 		if axis.length()>0.001: node.quaternion = Quaternion(axis.normalized(),acos(Vector3.UP.dot(d)))
 
@@ -93,6 +119,77 @@ func place(p: Vector3, v: Vector3 = Vector3.ZERO) -> void:
 	pending_touch = false
 	pending_control = false
 	spin = 0
+	streak=0
+	clear_rubber()
+	if is_instance_valid(shell): shell.scale=Vector3.ONE
+	for ghost in ghosts: ghost.visible=false
+
+func mark_drive(v: Vector3,amount: float=1.0) -> void:
+	streak=clampf(amount,0,1)
+	streak_dir=(v*Vector3(1,0,1)).normalized()
+	if streak_dir.length()<0.01: streak_dir=Vector3.FORWARD
+
+func ping(dir: Vector3,strength: float) -> void:
+	if dir.length()<0.01: return
+	rubber_axis=dir.normalized()
+	rubber_vel+=clampf(strength,0.0,1.35)*16.5
+
+func clear_rubber() -> void:
+	rubber=0
+	rubber_vel=0
+	rubber_axis=Vector3.UP
+	roll_amount=0
+	roll_dir=Vector3.FORWARD
+	if is_instance_valid(skin): skin.transform=Transform3D.IDENTITY
+
+func deform_basis(axis: Vector3,along: float,side: float) -> Basis:
+	var n: Vector3=axis.normalized()
+	var k: float=along-side
+	return Basis(
+		Vector3(side+k*n.x*n.x,k*n.x*n.y,k*n.x*n.z),
+		Vector3(k*n.y*n.x,side+k*n.y*n.y,k*n.y*n.z),
+		Vector3(k*n.z*n.x,k*n.z*n.y,side+k*n.z*n.z))
+
+func _process(delta: float) -> void:
+	streak=maxf(0,streak-delta*4.2)
+	var travel: Vector3=linear_velocity*Vector3(1,0,1)
+	if pending_kick: travel=kick_velocity*Vector3(1,0,1)
+	var grounded: bool=held_by==null and position.y<RADIUS+0.14
+	var wanted: float=smoothstep(3.2,20.0,travel.length()) if grounded else 0.0
+	if travel.length()>0.4: roll_dir=travel.normalized()
+	roll_amount=move_toward(roll_amount,wanted,delta*(10.0 if wanted>roll_amount else 6.0))
+	if held_by!=null:
+		rubber=move_toward(rubber,0,delta*10)
+		rubber_vel=0
+		roll_amount=move_toward(roll_amount,0,delta*10)
+	else:
+		rubber_vel+=-rubber*175.0*delta
+		rubber_vel*=exp(-7.4*delta)
+		rubber+=rubber_vel*delta
+		if absf(rubber)<0.004 and absf(rubber_vel)<0.10:
+			rubber=0
+			rubber_vel=0
+	if is_instance_valid(skin):
+		var world: Vector3=rubber_axis if rubber_axis.length()>0.01 else Vector3.UP
+		if streak>0.04: world=world.lerp(streak_dir,streak*0.55)
+		if roll_amount>0.03: world=world.lerp(roll_dir,roll_amount*0.88)
+		var local: Vector3=(global_transform.basis.inverse()*world)
+		if local.length()<0.01: local=Vector3.UP
+		var along: float=clampf(1.0-rubber*0.52+streak*0.16+roll_amount*0.28,0.58,1.42)
+		var side: float=clampf(1.0+rubber*0.28-streak*0.08-roll_amount*0.14,0.68,1.42)
+		var basis := deform_basis(local,along,side)
+		basis.y*=clampf(1.0-roll_amount*0.18,0.78,1.0)
+		skin.basis=basis
+	if not is_instance_valid(shell): return
+	shell.scale=Vector3.ONE
+	for i in ghosts.size():
+		var ghost: MeshInstance3D=ghosts[i]
+		if streak<=0.04:
+			ghost.visible=false
+			continue
+		ghost.visible=true
+		ghost.global_position=global_position-streak_dir*(0.22+float(i)*0.30)*streak
+		ghost.scale=Vector3.ONE*(0.86-float(i)*0.14)*clampf(streak*1.08,0,1)
 
 func strike(v: Vector3, curve: float = 0) -> void:
 	ground_bounce_age=INF; previous_vertical_speed=v.y
@@ -103,6 +200,7 @@ func strike(v: Vector3, curve: float = 0) -> void:
 	pending_kick = true
 	spin = curve
 	sleeping = false
+	ping(v,clampf(v.length()/28.0,0.32,1.3))
 
 func touch(v: Vector3,max_impulse: float) -> void:
 	if pending_kick: return
@@ -150,24 +248,48 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		pending_control=false
 	var v = state.linear_velocity
 	ground_bounce_age+=state.step
-	if previous_vertical_speed< -1 and v.y>0.65 and state.transform.origin.y<RADIUS+0.18:
+	var last_vertical := previous_vertical_speed
+	if last_vertical< -1 and v.y>0.65 and state.transform.origin.y<RADIUS+0.18:
 		for contact in range(state.get_contact_count()):
-			if state.get_contact_local_normal(contact).y>0.55: ground_bounce_age=0
+			if state.get_contact_local_normal(contact).y>0.55:
+				ground_bounce_age=0
+				if last_vertical< -1.2: ping(Vector3.UP,clampf(-last_vertical/10.0,0.22,1.05))
 	previous_vertical_speed=v.y
 	var resistance := Motion.profile(surface,state.transform.origin)
 	if is_instance_valid(surface): physics_material_override.bounce=surface.ball_bounce(state.transform.origin)
 	var speed := Vector2(v.x,v.z).length()
-	var rolling: bool=state.transform.origin.y<RADIUS+0.08 and absf(v.y)<1.2
+	var grounded: bool=state.transform.origin.y<RADIUS+0.10
+	# Fast ground travel otherwise chatters: gravity + turf bounce inject a few
+	# millimetres of vertical hop every step. Keep a real descending bounce.
+	var rolling: bool=grounded and (absf(v.y)<1.2 or (absf(v.y)<2.4 and last_vertical>-3.0))
 	if rolling:
+		physics_material_override.bounce=0.0
 		var remaining := Motion.rolling_speed(speed,state.step,resistance)
 		var horizontal := Vector2(v.x,v.z).normalized()*remaining
 		v.x=horizontal.x; v.z=horizontal.y
+		v.y=0
 		var yaw := move_toward(state.angular_velocity.y,0,state.step*resistance.x*5)
 		state.angular_velocity=Vector3(v.z/RADIUS,yaw,-v.x/RADIUS)
+		var settled := state.transform
+		settled.origin.y=GROUND_HEIGHT
+		state.transform=settled
+		previous_vertical_speed=0
 	else:
 		v=Motion.air_velocity(v,state.step,Motion.air_drag(surface))
 		state.angular_velocity*=exp(-0.04*state.step)
 		v=Motion.apply_spin(v,spin,state.step)
 	spin=Motion.decay_spin(spin,state.step,not rolling,resistance.x)
+	# Character collision correction can push this small sphere through the
+	# turf between CCD sweeps. Resolve that penetration against the same flat
+	# ground used by the stadium, so the ball cannot fall out of the match.
+	var point := state.transform.origin
+	if not rolling and is_instance_valid(surface) and absf(point.x)<P.TURF_COLLISION_SIZE.x*.5 and absf(point.z)<P.TURF_COLLISION_SIZE.z*.5 and point.y<RADIUS:
+		var corrected := state.transform
+		corrected.origin.y=RADIUS
+		state.transform=corrected
+		if v.y<0:
+			if v.y< -1.2: ping(Vector3.UP,clampf(-v.y/10.0,0.22,1.05))
+			v.y=-v.y*physics_material_override.bounce if v.y< -1.2 else 0.0
+			ground_bounce_age=0
 	state.linear_velocity = v
 	for net in goal_nets: net.contact(state,RADIUS,mass)

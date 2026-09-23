@@ -15,7 +15,7 @@ func tap(code: int) -> void:
 		var event := InputEventJoypadButton.new(); event.device=0; event.button_index=code; event.pressed=down
 		Input.parse_input_event(event); Input.flush_buffered_events()
 func click(control: Control) -> void:
-	var at := root.get_final_transform()*control.get_global_rect().get_center()
+	var at := root.get_final_transform()*control.get_global_transform_with_canvas()*(control.size*.5)
 	for down in [true,false]:
 		var event := InputEventMouseButton.new(); event.position=at; event.global_position=at; event.pressed=down; event.button_index=MOUSE_BUTTON_LEFT
 		Input.parse_input_event(event); Input.flush_buffered_events()
@@ -32,10 +32,25 @@ func run() -> void:
 	var rig=game.stadium.light_rig
 	check(rig.period==0 and game.stadium.sun.visible and game.stadium.sun.shadow_enabled,"Default daytime uses one real shadow-casting sun")
 	check(rig.floodlights.size()==4 and rig.floodlights.all(func(light): return not light.visible and light.light_energy==0),"Four roof floodlights are present and off during the day")
+	rig.select(1)
+	game.weather.select(2,true)
+	game.weather.update(8)
+	check(game.stadium.env.fog_enabled and game.stadium.env.fog_density>0.004 and rig.shafts.size()==4 and rig.shafts.all(func(shaft): return shaft.visible),"A rainy night adds pitch fog and four floodlight shafts")
+	rig.select(0)
+	check(not game.stadium.env.fog_enabled and rig.shafts.all(func(shaft): return not shaft.visible),"Daylight clears fog and hides the floodlight volumes")
+	game.weather.select(0,true)
 	game.frontend.open_selection(); await settle()
+	# Finish both current team-pick animations before navigating the match options.
+	for side in range(2):
+		game.frontend.pick_side(side)
+		game.frontend._process(1.0)
+	await settle()
 	# The new choice is reachable naturally from the confirmation button with D-pad left.
-	game.frontend.first_focus.grab_focus(); tap(JOY_BUTTON_DPAD_LEFT)
+	game.frontend.go_button.grab_focus(); tap(JOY_BUTTON_DPAD_LEFT)
 	check(root.gui_get_focus_owner()==game.frontend.time_button,"D-pad reaches match time from the pre-match continue button")
+	tap(JOY_BUTTON_A); await settle()
+	check(rig.period==2 and root.gui_get_focus_owner()==game.frontend.time_button,"Xbox A selects warm evening and preserves menu focus")
+	check(game.stadium.sun.visible and game.stadium.sun.rotation_degrees.x> -45,"Evening uses a low golden sun")
 	tap(JOY_BUTTON_A); await settle()
 	check(rig.period==1 and root.gui_get_focus_owner()==game.frontend.time_button,"Xbox A selects night and preserves menu focus")
 	check(not game.stadium.sun.visible and game.stadium.sun.light_energy==0,"Night completely disables sunlight")
@@ -45,6 +60,8 @@ func run() -> void:
 		check(absf(light.position.x)>45 and light.position.y>15 and absf(light.position.z)>30 and (-light.basis.z).y<0,"Floodlight is mounted on the roof and aimed down into the pitch")
 	await click(game.frontend.time_button)
 	check(rig.period==0 and not game.stadium.architecture.lamp_glass.emission_enabled,"Mouse toggles back to daytime and turns off emissive lamps")
+	await click(game.frontend.time_button)
+	check(rig.period==2,"Mouse cycles from noon to evening")
 	await click(game.frontend.time_button)
 	game.frontend.cycle_weather(); game.frontend.cycle_weather()
 	check(rig.period==1 and game.weather.preset==2 and not game.stadium.sun.visible,"Weather and time choices are independent, including a rainy night")

@@ -39,18 +39,19 @@ func net_contact(point: Vector3,direction: Vector3,strength: float) -> void:
 	axis=direction.normalized()
 	if scored: game.controller.net_rumble(strength,game.goal_team==0)
 
-func contact(kind: String,index: int,point: Vector3,direction: Vector3,strength: float,victim: int=-1) -> void:
+func contact(kind: String,index: int,point: Vector3,direction: Vector3,strength: float,victim: int=-1,heavy: bool=false) -> void:
 	last_kind=kind
 	event_count+=1
 	strength=clampf(strength,0,1)
 	var nearby: bool=game.flat_distance(point,game.players[game.controlled].position)<16
 	var personal: bool=game.is_user_player(index) or game.is_user_player(victim)
-	game.audio.contact("shot" if kind=="header" else kind,strength,1.0 if personal else (0.65 if nearby else 0.32))
-	if personal: game.controller.rumble(strength,kind in ["shot","header"])
+	var cue := "power" if heavy and kind in ["shot","header"] else ("shot" if kind=="header" else kind)
+	game.audio.contact(cue,strength,1.0 if personal else (0.65 if nearby else 0.32))
+	if personal: game.controller.rumble(strength*(1.15 if heavy else 1.0),kind in ["shot","header"],0.38 if heavy else -1.0)
 	if personal or nearby:
 		age=0
-		duration=0.23 if kind in ["shot","header"] else 0.30
-		amplitude=lerpf(0.055,0.19,strength)*(1.0 if personal else 0.35)
+		duration=(lerpf(0.34,0.48,strength) if heavy else (0.23 if kind in ["shot","header"] else 0.30))
+		amplitude=lerpf(0.18 if heavy else 0.055,0.32 if heavy else 0.19,strength)*(1.0 if personal else 0.35)
 		if kind=="body_hit": amplitude*=1.25
 		axis=Vector3(direction.x,0,direction.z).normalized()
 		if axis.length()<0.1: axis=Vector3.RIGHT

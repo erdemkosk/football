@@ -117,7 +117,7 @@ func run() -> void:
 	for i in range(22):
 		var p=game.players[i]
 		if p.team==1 and game.flat_distance(p.position,game.restart_point)<9.15: legal=false
-		if p.team==0 and i!=sp.taker and absf(p.position.x)<15 and p.position.z< -32: attackers+=1
+		if p.team==0 and i!=sp.taker and absf(p.position.x)<15 and p.position.z<=-31.9: attackers+=1
 	check(legal and attackers>=4,"Corner organizes the box and keeps defenders clear of the corner arc")
 	await setup("KALE VURUŞU",0,Vector3(0,0,44))
 	legal=true
@@ -125,16 +125,19 @@ func run() -> void:
 		if p.team==1 and absf(p.position.x)<20.16 and p.position.z>33.5: legal=false
 	check(legal and game.restart_point.z>=44.5 and game.players[sp.taker].keeper,"Goal kick is inside the goal area with opponents outside the penalty area")
 	await setup("TAÇ",0,Vector3((P.HALF_WIDTH+0),0,10))
-	check(game.players[sp.taker].position.x>=P.HALF_WIDTH and game.players[sp.taker].set_piece_pose=="throw" and game.ball.position.y>2,"Thrower stands on the touchline with the ball held overhead")
+	check(game.players[sp.taker].position.x>=P.HALF_WIDTH and game.players[sp.taker].set_piece_pose=="throw" and game.ball.position.y>game.heading.head_point(game.players[sp.taker]).y,"Thrower stands on the touchline with the ball held overhead at their actual height")
 	legal=true
 	for p in game.players:
 		if p.team==1 and game.flat_distance(p.position,game.restart_point)<2: legal=false
 	check(legal,"Throw-in opponents respect the two-metre distance")
 	key(KEY_S,true)
-	for i in range(30): game._physics_process(1.0/120)
+	for i in range(30):
+		game._physics_process(1.0/120)
+		await physics_frame
 	key(KEY_S,false)
-	for i in range(45): game._physics_process(1.0/120)
-	await frames(3)
+	for i in range(45):
+		game._physics_process(1.0/120)
+		await physics_frame
 	check(game.state=="playing" and game.ball.linear_velocity.x< -2 and game.ball.position.y>1,"S delivers a real overhead throw into the field")
 	check(game.controlled==game.team_control.predicted_receiver and game.controlled!=sp.taker,"Automatic selection follows the receiving player after the throw")
 	await setup("SERBEST VURUŞ",0,Vector3(0,0,-24))

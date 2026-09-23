@@ -20,7 +20,7 @@ func setup() -> void:
 	for p in game.players: p.collision_layer=0; p.visible=false
 	game.players[9].position=Vector3(8,0,-27.3)
 	game.players[9].facing=Vector3.FORWARD
-	game.ball.place(Vector3(8,0.23,-28))
+	game.ball.place(Vector3(8,game.ball.GROUND_HEIGHT,-28))
 	game.ball.freeze=false; game.ball.active=true
 	game.last_direction=Vector3(-0.23,0,-1).normalized()
 	game.kick_lock=0
@@ -34,7 +34,7 @@ func capture(label: String) -> void:
 func release_restart(restart) -> void:
 	var taker=game.players[restart.taker]
 	game.ball.release_hold(); game.ball.freeze=true; game.ball.pending_reset=false; game.ball.pending_kick=false
-	game.ball.position=game.restart_point+Vector3.UP*.23; game.ball.linear_velocity=Vector3.ZERO
+	game.ball.position=game.restart_point+Vector3.UP*game.ball.GROUND_HEIGHT; game.ball.linear_velocity=Vector3.ZERO
 	taker.visible=true; taker.action_timer=0; taker.set_piece_pose=""
 	taker.position=game.restart_point-restart.direction*.55
 	taker.velocity=Vector3.ZERO; taker.desired=Vector3.ZERO
@@ -64,7 +64,7 @@ func run() -> void:
 			var launch: Vector3=game.shot_velocity(game.last_direction,power,true)
 			spin=game.choose_finesse_curve(game.last_direction)
 			var route := Guide.predict(origin,launch,spin,-50,game.weather)
-			check(route.goal_plane and route.points.size()>15 and Array(route.points).all(func(p): return p.y>=0.219),"The full preview reaches the goal plane above the turf (weather %d / power %.2f)" % [weather,power])
+			check(route.goal_plane and route.points.size()>15 and Array(route.points).all(func(p): return p.y>=game.ball.RADIUS-0.001),"The full preview reaches the goal plane above the turf (weather %d / power %.2f)" % [weather,power])
 			game.ball.strike(launch,spin)
 			var previous := origin
 			var actual := Vector3.INF

@@ -59,7 +59,7 @@ func run() -> void:
 	await physics_frame
 	game.set_process(false); game.set_physics_process(false); game.controller.set_process(false)
 	game.controller.device=0
-	game.match_menu.config_path="/tmp/football-menu-controller-settings.cfg"
+	game.match_menu.config_path="res://tests/menu-controller-settings.cfg"
 	game.controller.reset_bindings()
 	await settle()
 	check(focus()==game.hud.nav_buttons[0],"Main menu starts on Quick Match")
@@ -129,7 +129,7 @@ func run() -> void:
 	await capture("bindings")
 	tap(JOY_BUTTON_RIGHT_SHOULDER)
 	await settle()
-	go(settings.fields[4][0])
+	go(settings.fields[5][0])
 	before=game.pass_assistance
 	tap(JOY_BUTTON_DPAD_LEFT)
 	check(game.pass_assistance==posmod(before-1,3),"Controller changes gameplay preferences")
@@ -148,19 +148,29 @@ func run() -> void:
 	check(game.frontend.stage=="teams","A duplicate press cannot skip team selection")
 	button(JOY_BUTTON_A,false); await settle()
 	var front=game.frontend
-	for index in [1,2,3,5,6,7,9,10]:
-		go(front.controls.get_child(index)); tap(JOY_BUTTON_A); await settle()
-		check(focus()==front.controls.get_child(index),"Team/kit/weather/difficulty retain focus after rebuilding")
-	go(front.first_focus); tap(JOY_BUTTON_A); await settle()
+	for side in range(2):
+		var selected: int=game.clubs.selected[side]
+		tap(JOY_BUTTON_DPAD_RIGHT)
+		check(game.clubs.selected[side]!=selected and focus()==front.team_select[side],"The active team's carousel changes one team and retains confirmation focus")
+		tap(JOY_BUTTON_A)
+		check(front.picked[side] and front.select_wait>0,"A confirms the current team")
+		front._process(1.0)
+		check(front.pick_step==side+1,"Selection advances after the presentation")
+	for property in ["weather_button","difficulty_button","time_button"]:
+		go(front.get(property)); tap(JOY_BUTTON_A); await settle()
+		check(focus()==front.get(property),"Match preferences retain focus after rebuilding")
+	go(front.go_button); tap(JOY_BUTTON_A); await settle()
 	check(front.stage=="tactics","A continues into pre-match tactics")
 	for index in range(11): go(front.slot_buttons[index])
 	go(front.slot_buttons[9]); tap(JOY_BUTTON_A); await settle()
 	var incoming: String=game.management.bench[0][1].name
-	go(front.controls.get_child(14)); tap(JOY_BUTTON_A); await settle()
+	go(front.reserve_buttons[1]); tap(JOY_BUTTON_A); await settle()
+	check(front.swap_stage=="confirm" and focus()==front.swap_action,"Controller previews the reserve before committing")
+	tap(JOY_BUTTON_A); await settle()
 	check(game.players[9].display_name==incoming,"Controller changes the starting lineup")
 	tap(JOY_BUTTON_RIGHT_SHOULDER); await settle()
 	check(front.pane==1,"RB opens the tactical plan")
-	go(front.controls.get_child(14)); tap(JOY_BUTTON_A); await settle()
+	go(front.tactic_buttons[0][1]); tap(JOY_BUTTON_A); await settle()
 	check(game.management.formation==1,"Controller selects 4-3-3")
 	await capture("tactics")
 	var previous_focus: Control=focus()
@@ -171,6 +181,10 @@ func run() -> void:
 	tap(JOY_BUTTON_B); await settle()
 	check(front.stage=="teams","B goes back one pre-match screen")
 	tap(JOY_BUTTON_B); await settle()
+	check(front.pick_step==1 and not front.picked[1],"B first releases the away-team selection")
+	tap(JOY_BUTTON_B); await settle()
+	check(front.pick_step==0 and not front.picked[0],"B then releases the home-team selection")
+	tap(JOY_BUTTON_B); await settle()
 	check(game.state=="menu","B returns from team selection")
 	# A held analog must not navigate a newly opened screen until centered.
 	axis(JOY_AXIS_LEFT_Y,0.9)
@@ -179,10 +193,15 @@ func run() -> void:
 	game.controller.menus.update(1)
 	check(focus()==target,"Held analog cannot run away through a new screen")
 	axis(JOY_AXIS_LEFT_Y,0)
-	tap(JOY_BUTTON_A); await settle(); tap(JOY_BUTTON_A); await settle()
+	for side in range(2):
+		tap(JOY_BUTTON_A); front._process(1.0); await settle()
+	tap(JOY_BUTTON_A); await settle()
+	go(front.first_focus); tap(JOY_BUTTON_A); await settle()
 	check(game.state=="ceremony","Entire pre-match sequence works with the controller")
 	button(JOY_BUTTON_A,true); button(JOY_BUTTON_A,true); button(JOY_BUTTON_A,false)
-	check(game.state=="playing" and not game.pass_charging,"Ceremony skip and held duplicate do not leak into a pass")
+	check(game.state=="set_piece" and game.restart_type=="SANTRA" and not game.pass_charging,"Ceremony skip reaches kickoff without a held duplicate leaking into a pass")
+	# Physics is disabled in this UI fixture; enter live play for the pause-menu checks.
+	game.state="playing"; game.ball.freeze=false
 	tap(JOY_BUTTON_START); await settle()
 	await capture("pause")
 	go(game.hud.nav_buttons[2]); tap(JOY_BUTTON_A); await settle(); tap(JOY_BUTTON_B); await settle()
@@ -205,7 +224,8 @@ func run() -> void:
 	key(KEY_ENTER); await settle()
 	check(settings.visible,"Keyboard Enter activates the focused main-menu item")
 	key(KEY_ESCAPE); await settle()
-	click(game.hud.nav_buttons[2].get_global_rect().get_center()); await settle()
+	var settings_button: Control=game.hud.nav_buttons[2]
+	click(settings_button.get_global_transform_with_canvas()*(settings_button.size*.5)); await settle()
 	check(settings.visible,"Mouse still activates the same main-menu buttons")
 	tap(JOY_BUTTON_B); await settle()
 	game.controller.rebind(KEY_S,JOY_BUTTON_X)
@@ -215,4 +235,5 @@ func run() -> void:
 	check(game.state=="menu" and not game.pass_charging,"Menu B stays fixed and cannot trigger a gameplay action")
 	game.controller.reset_bindings()
 	print("MENU CONTROLLER CHECK: %d checks, %d failures" % [assertions,failures])
+	DirAccess.remove_absolute(game.match_menu.config_path)
 	game.free(); quit(0 if failures==0 else 1)

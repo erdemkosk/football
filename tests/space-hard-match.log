@@ -1,0 +1,8 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+LIVE MATCH difficulty=2 active=60.0 passes=[15, 7] controlled=[12, 5] contacts=26 misses=0 shots=[0, 1] score=[0, 1]
+PASS: Real restarts complete and allow a minute of active football, difficulty 2
+PASS: Both full teams release real passes at difficulty 2
+PASS: Both teams control passes and the opponent completes multiple receptions, difficulty 2
+PASS: Physical pass/shot contacts remain reliable in a contested match, difficulty 2
+HARD MATCH PACE CHECK: 4 checks, 0 failures
