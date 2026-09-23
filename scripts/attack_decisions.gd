@@ -26,6 +26,7 @@ func value(index: int,choice: Dictionary) -> float:
 	var pressure: float=brain.clearance(p.position,p.team)
 	var kind: String=choice.kind
 	var mentality: int=game.team_tactics.plan_for(p.team)
+	var danger: Dictionary=brain.pressure_read(index)
 	if kind in ["carry","push","feint","roll","roulette","elastico","scoop"]:
 		var at: Vector3=brain.carry_target(index)
 		var room: float=minf(8,brain.clearance(at,p.team))
@@ -34,6 +35,9 @@ func value(index: int,choice: Dictionary) -> float:
 		elif kind!="carry": score+=7+(float(p.attributes.control)-72)*.16-maxf(0,.4-p.energy)*12
 		# A crowded own third is a poor place for a speculative individual run.
 		if p.position.z*forward< -25 and pressure<3: score-=9
+		# A sprinting presser several metres away can be more urgent than a
+		# stationary marker. Release a safe pass before the challenge arrives.
+		score-=danger.urgency*clampf(danger.closing,0,8)*2.2
 		return score
 	if choice.has("velocity") or choice.get("advanced",false):
 		var quality: float=brain.shot_quality(p.position,p.team)
@@ -54,6 +58,7 @@ func value(index: int,choice: Dictionary) -> float:
 	var own_third: float=clampf((-p.position.z*forward-15)/30,0,1)
 	var risk_cost: float=40+own_third*16-(mentality-1)*5
 	var score: float=25+clampf(progress,-20,24)*(.65+(mentality-1)*.12)+minf(8,free_space)*1.3-risk*risk_cost-float(route.flight)*3
+	score+=danger.urgency*clampf(danger.closing,0,8)*(1-risk)*1.8
 	score+=maxf(0,4-pressure)*3+(float(p.attributes.get("passing",p.attributes.control))-72)*.07
 	score+=(float(q.attributes.control)-72)*.06
 	score+=brain.shot_quality(destination,p.team)*24

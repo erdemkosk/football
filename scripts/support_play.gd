@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 var game
 var runs: Dictionary = {}
 var targets: Dictionary = {}
@@ -20,7 +21,7 @@ func passed(passer: int,receiver: int,one_two: bool=false) -> void:
 	if one_two:
 		var p=game.players[passer]
 		var target: Vector3=p.position+Vector3(clampf(-p.position.x,-4,4),0,game.attack_sign(p.team)*9)
-		target.x=clampf(target.x,-29,29); target.z=clampf(target.z,-46,46)
+		target.x=clampf(target.x,-(P.HALF_WIDTH-3),(P.HALF_WIDTH-3)); target.z=clampf(target.z,-46,46)
 		runs[passer].merge({"explicit":true,"time":ONE_TWO_TIME,"target":target,"previous":p.position,"distance":0.0},true)
 		p.call_timer=ONE_TWO_TIME
 
@@ -72,7 +73,7 @@ func update(delta: float) -> void:
 			target=runs[i].origin+Vector3(3 if p.position.x<ball.x else -3,0,forward*13)
 			role="give_go"
 		elif wing and ball.z*forward> -15 and p.number in [2,5] and signf(p.home.x)==side:
-			target=Vector3(side*28,0,ball.z+forward*13)
+			target=Vector3(side*(P.HALF_WIDTH-4),0,ball.z+forward*13)
 			role="overlap"
 		elif wing and ball.z*forward>25 and p.number in [7,8,10,11]:
 			match p.number:
@@ -104,7 +105,7 @@ func update(delta: float) -> void:
 				target.z=ball.z-forward*9; role="support"
 			# A low outlet and a wide outlet help play around sustained user pressing.
 			elif game.opponent_coach.escape_press and group==2 and role=="support":
-				target.x=signf(p.home.x+.01)*clampf(absf(p.home.x)+5,10,27)
+				target.x=signf(p.home.x+.01)*clampf(absf(p.home.x)+5,10,P.HALF_WIDTH-5)
 				target.z=ball.z+forward*(-7 if i%2==0 else 5)
 		# Sample receiving space and the passing lane; each role keeps its own
 		# region instead of everybody converging on the nearest empty point.
@@ -112,7 +113,7 @@ func update(delta: float) -> void:
 		var best_value := -INF
 		for offset in [Vector3.ZERO,Vector3(-4,0,0),Vector3(4,0,0),Vector3(0,0,-forward*4)]:
 			var candidate: Vector3=target+offset
-			candidate.x=clampf(candidate.x,-29,29)
+			candidate.x=clampf(candidate.x,-(P.HALF_WIDTH-3),(P.HALF_WIDTH-3))
 			candidate.z=forward*minf(clampf(candidate.z*forward,-43,46),maxf(0,line))
 			var clearance := 8.0
 			var lane := 5.0

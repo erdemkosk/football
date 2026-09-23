@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 ## Opponent decisions use the same ball, pass planners, stamina and contact windows.
 var game
 var think_in: Dictionary = {}
@@ -39,19 +40,72 @@ func onside(index: int,team: int) -> bool:
 func level(team: int) -> int:
 	return game.opponent_coach.level() if team==1 else 1
 
-func carry_target(index: int) -> Vector3:
-	if carry_cache.has(index): return carry_cache[index]
+func pressure_read(index: int) -> Dictionary:
 	var p=game.players[index]
+	var result := {"gap":20.0,"closing":0.0,"time":10.0,"urgency":0.0,"opponent":-1}
+	var horizon: float=[.28,.52,.72][level(p.team)]
+	for j in range(game.players.size()):
+		var q=game.players[j]
+		if not q.visible or q.dismissed or q.team==p.team: continue
+		var offset: Vector3=(p.position-q.position)*Vector3(1,0,1)
+		var gap := offset.length()
+		if gap>12: continue
+		var relative: Vector3=(q.velocity-p.velocity)*Vector3(1,0,1)
+		var closing := maxf(0,relative.dot(offset.normalized()))
+		var meeting := clampf(offset.dot(relative)/maxf(.01,relative.length_squared()),0,horizon)
+		var predicted := (offset-relative*meeting).length()
+		var urgency := 1-smoothstep(1.0,4.8,minf(gap,predicted))
+		if urgency>result.urgency or (is_equal_approx(urgency,result.urgency) and gap<result.gap):
+			result={"gap":gap,"closing":closing,"time":maxf(0,gap-1.1)/maxf(.1,closing),"urgency":urgency,"opponent":j}
+	return result
+
+func future_clearance(point: Vector3,team: int,time: float) -> float:
+	var room := 20.0
+	for q in game.players:
+		if not q.visible or q.dismissed or q.team==team: continue
+		var predicted: Vector3=q.position+(q.velocity*Vector3(1,0,1)).limit_length(11)*time
+		room=minf(room,game.flat_distance(predicted,point))
+	return room
+
+func carry_sprint(index: int,target: Vector3,read: Dictionary) -> bool:
+	var p=game.players[index]
+	if p.energy<.28 or p.exhausted or p.ball_actions.control_grace>0 or p.receive_timer>.12: return false
+	var aim: Vector3=((target-p.position)*Vector3(1,0,1)).normalized()
+	var room := future_clearance(p.position+aim*3.2,p.team,.32)
+	var pursued: bool=read.closing>1.5 and read.gap<10 and read.urgency>.12
+	var open_run: bool=room>5.5 and game.flat_distance(p.position,target)>3 and p.position.z*game.attack_sign(p.team)<30
+	return room>1.8 and (pursued or open_run)
+
+func carry_movement(index: int,target: Vector3) -> Vector3:
+	var p=game.players[index]
+	var offset: Vector3=(target-p.position)*Vector3(1,0,1)
+	var ball_offset: Vector3=(game.ball.position-p.position)*Vector3(1,0,1)
+	if p.receive_timer>0 and ball_offset.length()>.85:
+		# Complete the receiving step before accelerating away from the ball.
+		# This is body steering; the ball still needs its normal foot impulse.
+		var settle: Vector3=game.ball.linear_velocity*Vector3(1,0,1)+ball_offset*4-p.velocity*Vector3(1,0,1)*.35
+		return (settle/maxf(1,p.movement_speed())).limit_length(.7)
+	return offset.normalized()*clampf(offset.length()/1.4,0,1)
+
+func carry_target(index: int) -> Vector3:
+	var p=game.players[index]
+	var read := pressure_read(index)
+	if carry_cache.has(index) and read.urgency<.35: return carry_cache[index]
 	var forward: float=game.attack_sign(p.team)
 	var target := Vector3(clampf(p.position.x*.65,-22,22),0,forward*48)
 	if not game.autonomous_kicks(p.team): return target
 	var best := -INF
-	for side in [0.0,-.65,.65,-1.15,1.15]:
-		var aim := Vector3(side,0,forward).normalized()
+	var directions := [Vector3(0,0,forward),Vector3(-.65,0,forward).normalized(),Vector3(.65,0,forward).normalized(),Vector3(-1.15,0,forward).normalized(),Vector3(1.15,0,forward).normalized()]
+	if read.urgency>.25:
+		directions.append_array([Vector3.LEFT,Vector3.RIGHT,Vector3(-.8,0,-forward).normalized(),Vector3(.8,0,-forward).normalized()])
+	for aim: Vector3 in directions:
 		var at: Vector3=p.position+aim*5.5
-		at.x=clampf(at.x,-29,29); at.z=clampf(at.z,-47,47)
-		var room := minf(clearance(at,p.team),clearance(p.position+aim*2.2,p.team)+2)
+		at.x=clampf(at.x,-(P.HALF_WIDTH-3),(P.HALF_WIDTH-3)); at.z=clampf(at.z,-47,47)
+		var room := minf(future_clearance(at,p.team,.55),future_clearance(p.position+aim*2.2,p.team,.26)+1)
 		var value: float=room*.8+(at.z-p.position.z)*forward*.5-absf(at.x)*.015
+		var near_room := future_clearance(p.position+aim*2.2,p.team,.3)
+		value-=maxf(0,2.5-near_room)*(3+read.urgency*3)
+		value-=maxf(0,absf(p.position.x+aim.x*7)-(P.HALF_WIDTH-2))*3
 		if value>best: best=value; target=at
 	carry_cache[index]=target
 	return target
@@ -79,7 +133,7 @@ func receiving_target(index: int) -> Vector3:
 		var reach := maxf(0,pace*time-maxf(0,pace-initial)*minf(time,.25)*.5)
 		if offset.length()<=reach+.65: break
 	point.y=0
-	point.x=clampf(point.x,-31,31); point.z=clampf(point.z,-48.5,48.5)
+	point.x=clampf(point.x,-(P.HALF_WIDTH-1),(P.HALF_WIDTH-1)); point.z=clampf(point.z,-48.5,48.5)
 	return point
 
 func receiving_movement(index: int,target: Vector3) -> Vector3:
@@ -259,7 +313,8 @@ func options(index: int) -> Array[Dictionary]:
 	var risk_bias: float=game.team_tactics.plan_for(p.team)-1
 	var forward: float=game.attack_sign(p.team)
 	var position: Vector3=p.position
-	var pressure := clearance(position,p.team)
+	var read := pressure_read(index)
+	var pressure := minf(clearance(position,p.team),lerpf(8,1,read.urgency))
 	var result: Array[Dictionary]=[{"kind":"carry"}]
 	var return_to: int=game.support.return_option(index)
 	if return_to>=0:
@@ -304,7 +359,8 @@ func options(index: int) -> Array[Dictionary]:
 			if clearance(position+side,p.team)>2:
 				if level(p.team)>0 and p.attributes.control>=80:
 					var kind := "roll"
-					if level(p.team)==2 and pressure<1.7: kind="roulette"
+					if level(p.team)==2 and p.attributes.control>=84 and pressure<1.5: kind="rainbow"
+					elif level(p.team)==2 and pressure<1.7: kind="roulette"
 					elif level(p.team)==2 and p.velocity.length()>4: kind="elastico"
 					elif absf(position.x)>24: kind="scoop"
 					result.append({"kind":kind,"side":signf(side.x)*forward})
@@ -312,17 +368,21 @@ func options(index: int) -> Array[Dictionary]:
 		if pressure>7 and position.z*forward<28 and clearance(position+Vector3(0,0,forward*7),p.team)>5:
 			result.append({"kind":"push"})
 	if position.z*forward< -28 and pressure<3.2:
-		var target := Vector3(25 if position.x>=0 else -25,0,position.z+forward*32)
+		var target := Vector3((25 if position.x>=0 else -25)*P.WIDTH_RATIO,0,position.z+forward*32)
 		result.append(pass_choice("clearance",game.Passing.plan(game.ball.position,target,Vector3.ZERO,true,game.weather),-1))
 	return result
 
 func act(index: int) -> bool:
 	var p=game.players[index]
+	var read := pressure_read(index)
 	if game.dribbler>=0 and game.dribbler!=index: return false
 	# Finish the touch already in progress before choosing another action.
 	if p.ball_actions.contact_pending or p.ball_actions.control_grace>0 or p.receive_timer>0 and game.dribbler!=index: return false
-	if not game.autonomous_kicks(p.team) or game.state!="playing" or p.action_timer>0 or game.skills.active.has(index) or not game.can_touch(index,1.15) or game.ball.pending_kick or game.kick_lock>0 or p.touch_cooldown>0 or p.ai_think<game.management.reaction(p.team) or think_in.get(index,0.0)>0: return false
-	think_in[index]=[.52,.30,.18][level(p.team)]*[1.45,1.0,.72][game.management.detail(p.team,"tempo")]
+	var urgent: bool=read.closing>2 and read.urgency>.4
+	var reaction: float=game.management.reaction(p.team)*(.7 if urgent else 1.0)
+	if urgent and think_in.get(index,0.0)>.12: think_in[index]=.12
+	if not game.autonomous_kicks(p.team) or game.state!="playing" or p.action_timer>0 or game.skills.active.has(index) or not game.can_touch(index,1.15) or game.ball.pending_kick or game.kick_lock>0 or p.touch_cooldown>0 or p.ai_think<reaction or think_in.get(index,0.0)>0: return false
+	think_in[index]=.12 if urgent else [.52,.30,.18][level(p.team)]*[1.45,1.0,.72][game.management.detail(p.team,"tempo")]
 	var choice := decide(index)
 	if choice.is_empty(): return false
 	var kind: String=choice.kind
@@ -332,7 +392,7 @@ func act(index: int) -> bool:
 		var aim: Vector3=choice.aim.rotated(Vector3.UP,game.rng.randf_range(-error,error))
 		if finishing.queue(index,aim,choice.power,kind): record(kind); return true
 		return false
-	if kind in ["roll","roulette","elastico","scoop"]:
+	if kind in ["roll","roulette","elastico","scoop","rainbow","heel","flick"]:
 		if game.skills.start(index,kind,choice.side):
 			skill_in[index]=[5.0,4.0,3.2][level(p.team)]; record(kind); return true
 		return false
@@ -430,5 +490,5 @@ func aerial_target(index: int,fallback: Vector3) -> Vector3:
 		if point.y<head-.2: break
 		result=point
 		if point.y<head+1.3 and game.flat_distance(p.position,point)<time*(7.5 if p.energy>.3 else 5.4)+.5: break
-	result.x=clampf(result.x,-30,30); result.y=0; result.z=clampf(result.z,-48,48)
+	result.x=clampf(result.x,-(P.HALF_WIDTH-2),(P.HALF_WIDTH-2)); result.y=0; result.z=clampf(result.z,-48,48)
 	return result

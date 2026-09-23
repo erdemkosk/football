@@ -1,4 +1,5 @@
 extends Node3D
+const P = preload("res://scripts/pitch_dimensions.gd")
 signal atmosphere_event(kind: String,team: int,location: Vector3)
 const G = preload("res://scripts/geometry.gd")
 const Crowd = preload("res://scripts/crowd.gd")
@@ -58,19 +59,20 @@ func lighting() -> void:
 	add_child(sun)
 
 func pitch() -> void:
-	var foundation=G.block(self,Vector3(132,1,162),Vector3(0,-0.6,0),G.material(Color("202e2d")))
+	var foundation=G.block(self,Vector3(132+P.EXTRA_WIDTH,1,162),Vector3(0,-0.6,0),G.material(Color("202e2d")))
 	foundation.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 	grass.shader = load("res://shaders/grass.gdshader")
+	grass.set_shader_parameter("half_pitch",Vector2(P.HALF_WIDTH,P.HALF_LENGTH))
 	# Flat ground receives player/roof shadows, but has nothing below it to shade.
 	# Excluding these large coplanar slabs avoids grazing-light shadow acne.
-	for area in [Vector3(78,0.12,115),Vector3(64,0.1,100)]:
-		var turf_mesh=G.block(self,area,Vector3(0,-0.12 if area.x>64 else -0.05,0),grass)
+	for area in [Vector3(P.WIDTH+14,0.12,115),Vector3(P.WIDTH,0.1,P.LENGTH)]:
+		var turf_mesh=G.block(self,area,Vector3(0,-0.12 if area.x>P.WIDTH else -0.05,0),grass)
 		turf_mesh.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var turf = G.collision_box(self,Vector3(150,1,180),Vector3(0,-0.5,0),0.05)
 	turf.physics_material_override.friction = 0.65
-	outline(-32,-50,32,50)
-	line(Vector2(-32,0),Vector2(32,0))
+	outline(-P.HALF_WIDTH,-P.HALF_LENGTH,P.HALF_WIDTH,P.HALF_LENGTH)
+	line(Vector2(-P.HALF_WIDTH,0),Vector2(P.HALF_WIDTH,0))
 	arc(Vector2.ZERO,9.15,0,TAU)
 	spot(Vector2.ZERO)
 	for side in [-1,1]:
@@ -80,9 +82,9 @@ func pitch() -> void:
 		arc(Vector2(0,side*39),9.15,0.645 if side<0 else PI+0.645,PI-0.645 if side<0 else TAU-0.645)
 		goal_frame(side)
 		for sx in [-1,1]:
-			arc(Vector2(sx*32,side*50),1.0,0 if sx<0 and side<0 else (PI*0.5 if sx>0 and side<0 else (PI if sx>0 else PI*1.5)),PI*0.5 if sx<0 and side<0 else (PI if sx>0 and side<0 else (PI*1.5 if sx>0 else TAU)))
-			G.rod(self,Vector3(sx*32,0,side*50),Vector3(sx*32,1.5,side*50),0.035,white)
-			G.block(self,Vector3(0.42,0.27,0.02),Vector3(sx*32+0.21,1.36,side*50),G.material(Color("f2e763")))
+			arc(Vector2(sx*P.HALF_WIDTH,side*50),1.0,0 if sx<0 and side<0 else (PI*0.5 if sx>0 and side<0 else (PI if sx>0 else PI*1.5)),PI*0.5 if sx<0 and side<0 else (PI if sx>0 and side<0 else (PI*1.5 if sx>0 else TAU)))
+			G.rod(self,Vector3(sx*P.HALF_WIDTH,0,side*50),Vector3(sx*P.HALF_WIDTH,1.5,side*50),0.035,white)
+			G.block(self,Vector3(0.42,0.27,0.02),Vector3(sx*P.HALF_WIDTH+0.21,1.36,side*50),G.material(Color("f2e763")))
 
 func line(a: Vector2, b: Vector2, thickness: float = 0.12) -> void:
 	var delta = b-a
@@ -128,7 +130,7 @@ func stands() -> void:
 	for side in [-1,1]:
 		for row in range(12):
 			var y = row*0.56+0.25
-			var x = side*(39.5+row*0.95)
+			var x = side*(39.5+P.SIDE_SHIFT+row*0.95)
 			if side>0 and row<6:
 				for end in [-1,1]: G.block(self,Vector3(1.0,0.55,53),Vector3(x,y,end*29.5),concrete)
 			else: G.block(self,Vector3(1.0,0.55,112),Vector3(x,y,0),concrete)
@@ -143,33 +145,33 @@ func stands() -> void:
 			var z = -54+aisle*22*0.82+0.41
 			if side>0 and absf(z)<3.3: continue
 			for edge in [-0.56,0.56]:
-				G.rod(self,Vector3(side*39.5,1.2,z+edge),Vector3(side*49.95,7.36,z+edge),0.035,rail)
+				G.rod(self,Vector3(side*(39.5+P.SIDE_SHIFT),1.2,z+edge),Vector3(side*(49.95+P.SIDE_SHIFT),7.36,z+edge),0.035,rail)
 				for row in [0,4,8,11]:
-					var x = side*(39.5+row*0.95)
+					var x = side*(39.5+P.SIDE_SHIFT+row*0.95)
 					G.rod(self,Vector3(x,row*0.56+0.5,z+edge),Vector3(x,row*0.56+1.2,z+edge),0.03,rail)
 		if side>0:
 			for end in [-1,1]:
-				G.block(self,Vector3(0.18,0.65,53),Vector3(side*38.8,0.35,end*29.5),front)
-				G.rod(self,Vector3(side*38.8,0.95,end*3),Vector3(side*38.8,0.95,end*56),0.045,rail)
+				G.block(self,Vector3(0.18,0.65,53),Vector3(side*(38.8+P.SIDE_SHIFT),0.35,end*29.5),front)
+				G.rod(self,Vector3(side*(38.8+P.SIDE_SHIFT),0.95,end*3),Vector3(side*(38.8+P.SIDE_SHIFT),0.95,end*56),0.045,rail)
 		else:
-			G.block(self,Vector3(0.18,0.65,112),Vector3(side*38.8,0.35,0),front)
-			G.rod(self,Vector3(side*38.8,0.95,-56),Vector3(side*38.8,0.95,56),0.045,rail)
+			G.block(self,Vector3(0.18,0.65,112),Vector3(side*(38.8+P.SIDE_SHIFT),0.35,0),front)
+			G.rod(self,Vector3(side*(38.8+P.SIDE_SHIFT),0.95,-56),Vector3(side*(38.8+P.SIDE_SHIFT),0.95,56),0.045,rail)
 		for row in range(9):
 			var y = row*0.56+0.25
 			var z = side*(58.5+row*0.95)
-			G.block(self,Vector3(99,0.55,1),Vector3(0,y,z),concrete)
+			G.block(self,Vector3(99+P.EXTRA_WIDTH,0.55,1),Vector3(0,y,z),concrete)
 			for col in range(117):
-				var x = -48+col*0.82
+				var x = (-48+col*0.82)*(99+P.EXTRA_WIDTH)/99
 				if col%23 in [0,1]:
 					G.block(self,Vector3(0.82,0.025,0.07),Vector3(x,y+0.29,z-side*0.39),stair_edge)
 					continue
 				crowd.seat(Vector3(x+(row%2)*0.13,y+0.275,z),PI if side<0 else 0,row,col/23)
 		for aisle in range(1,5):
-			var x = -48+aisle*23*0.82+0.41
+			var x = (-48+aisle*23*0.82+0.41)*(99+P.EXTRA_WIDTH)/99
 			for edge in [-0.56,0.56]:
 				G.rod(self,Vector3(x+edge,1.2,side*58.5),Vector3(x+edge,5.68,side*66.1),0.035,rail)
-		G.block(self,Vector3(99,0.65,0.18),Vector3(0,0.35,side*57.8),front)
-		G.rod(self,Vector3(-49,0.95,side*57.8),Vector3(49,0.95,side*57.8),0.045,rail)
+		G.block(self,Vector3(99+P.EXTRA_WIDTH,0.65,0.18),Vector3(0,0.35,side*57.8),front)
+		G.rod(self,Vector3(-49-P.SIDE_SHIFT,0.95,side*57.8),Vector3(49+P.SIDE_SHIFT,0.95,side*57.8),0.045,rail)
 	architecture = Architecture.new()
 	add_child(architecture)
 	architecture.build(crowd)
@@ -179,7 +181,7 @@ func stands() -> void:
 		for section in range(3):
 			var banner = Node3D.new()
 			add_child(banner)
-			banner.position = Vector3(-33+section*33,1.12,side*57.55)
+			banner.position = Vector3((-33+section*33)*P.WIDTH_RATIO,1.12,side*57.55)
 			if side>0: banner.rotation.y = PI
 			G.block(banner,Vector3(12,0.95,0.035),Vector3.ZERO,front)
 			board_label(banner,["KIYI 1967","HEP BİRLİKTE","BİZİM ŞEHRİMİZ"][section],Vector3(0,0,0.025),Color("bcbda4"),0.015)
@@ -192,19 +194,19 @@ func details() -> void:
 			if side>0 and absf(absf(-49.5+i*9)-12)<10.1: continue
 			var board = Node3D.new()
 			add_child(board)
-			board.position = Vector3(side*35.6,0.65,-49.5+i*9)
+			board.position = Vector3(side*(P.HALF_WIDTH+3.6),0.65,-49.5+i*9)
 			board.rotation.y = side*PI*0.5
 			G.block(board,Vector3(8.65,1.2,0.12),Vector3.ZERO,navy if i%2==0 else gold)
 			board_label(board,["STARTING ELEVEN FC", "THE BEAUTIFUL GAME", "KIYI  •  1967", "PLAY WITH HEART"][i%4],Vector3(0,0,0.07),Color("e9e2cd") if i%2==0 else Color("153e40"),0.012)
 		for i in range(8):
 			var board = Node3D.new()
 			add_child(board)
-			board.position = Vector3(-30.8+i*8.8,0.65,side*55.8)
+			board.position = Vector3((-30.8+i*8.8)*P.WIDTH_RATIO,0.65,side*55.8)
 			if side>0: board.rotation.y = PI
-			G.block(board,Vector3(8.4,1.2,0.12),Vector3.ZERO,navy)
+			G.block(board,Vector3(8.4*P.WIDTH_RATIO,1.2,0.12),Vector3.ZERO,navy)
 			board_label(board,"KIYI ARENA" if i%2 else "SEFC",Vector3(0,0,0.07),Color("e9e2cd"),0.016)
 	# Clear technical areas give both teams a view of the pitch.
-	for z in [-12,12]: outline(32.4,z-5.2,35.0,z+5.2)
+	for z in [-12,12]: outline(P.HALF_WIDTH+.4,z-5.2,P.HALF_WIDTH+3,z+5.2)
 	sidelines = Sidelines.new()
 	add_child(sidelines)
 
@@ -214,8 +216,8 @@ func boundary_walls() -> void:
 	for side in [-1, 1]:
 		# Godot adds the two materials' bounce values. Keep the perimeter's
 		# contribution small so repeated rebounds cannot add energy to the ball.
-		var sideline=G.collision_box(self, Vector3(0.22, 24, 112), Vector3(side * 35.55, 12, 0), 0.08)
-		var endline=G.collision_box(self, Vector3(78, 24, 0.22), Vector3(0, 12, side * 55.7), 0.08)
+		var sideline=G.collision_box(self, Vector3(0.22, 24, 112), Vector3(side * (P.HALF_WIDTH+3.55), 12, 0), 0.08)
+		var endline=G.collision_box(self, Vector3(P.WIDTH+14, 24, 0.22), Vector3(0, 12, side * 55.7), 0.08)
 		# Perimeter containment belongs to the ball; people can use the tunnel.
 		sideline.collision_layer=8
 		endline.collision_layer=8

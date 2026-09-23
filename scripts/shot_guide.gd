@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 ## Aim estimate only: the launched rigid body remains responsible for collisions.
 const Motion = preload("res://scripts/ball_motion.gd")
 const RADIUS := 0.22
@@ -65,6 +66,6 @@ static func predict(origin: Vector3,velocity: Vector3,spin: float,goal_z: float,
 			points.append(position)
 			break
 		if frame%4==3: points.append(position)
-		if position.distance_to(origin)>75 or absf(position.x)>34 or absf(position.z)>52 or velocity.length()<0.5: break
+		if position.distance_to(origin)>75 or absf(position.x)>P.HALF_WIDTH+2 or absf(position.z)>52 or velocity.length()<0.5: break
 	if points[-1].distance_to(position)>0.001: points.append(position)
 	return {"points":points,"target":position,"goal_plane":crossed,"on_target":crossed and absf(position.x)<3.44 and position.y<2.22,"bounced":bounced}

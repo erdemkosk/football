@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 ## Named match cameras. Play starts on the sideline; C cycles the rest.
 const IDS: PackedStringArray = ["pitch","broadcast","sideline","end","tactical"]
 const LABELS: PackedStringArray = ["SAHA","YAYIN","KENAR","KALE","TAKTİK"]
@@ -94,13 +95,13 @@ func behind_kick_pose() -> Dictionary:
 	if kind=="KORNER":
 		var attack: float=game.attack_sign(game.restart_team)
 		var side_sign := 1.0 if point.x>=0.0 else -1.0
-		return {eye=Vector3(clampf(point.x*0.55+side_sign*6.4,-28,28),14.0,clampf(attack*12.0,-36,36)),look=Vector3(point.x*0.5,1.2,attack*46),fov=50.0}
+		return {eye=Vector3(clampf(point.x*0.55+side_sign*6.4,-P.HALF_WIDTH+4,P.HALF_WIDTH-4),14.0,clampf(attack*12.0,-36,36)),look=Vector3(point.x*0.5,1.2,attack*46),fov=50.0}
 	if kind=="PENALTI":
 		back=11.2; height=3.15; side_off=1.55; look_ahead=13.5; fov=38.0
 	elif point.distance_to(Vector3(0,0,game.attack_sign(game.restart_team)*50))<22.0:
 		back=9.6; height=3.55; side_off=2.35; look_ahead=18.0; fov=41.0
 	var eye: Vector3=point-toward*back+side*side_off+Vector3.UP*height
-	eye.x=clampf(eye.x,-39,40)
+	eye.x=clampf(eye.x,-P.HALF_WIDTH-7,P.HALF_WIDTH+8)
 	eye.z=clampf(eye.z,-54,54)
 	var look: Vector3=point+toward*look_ahead+Vector3.UP*1.08
 	if kind=="PENALTI":
@@ -151,8 +152,8 @@ func pose(focus: Vector3,zoom: float) -> Dictionary:
 			var track: Vector3=tracked_point(focus)
 			# Camera lives on +x. Near throw-ins lean back so the ball stays framed.
 			# Corners and free kicks ease behind the taker and look into the play.
-			var near := 0.0 if kick_restart() else smoothstep(16.0,31.5,track.x)
-			eye=Vector3(40.0+near*5.5,18.6+near*7.4,clampf(lerpf(focus.z,track.z,near*0.55),-42,42))
+			var near := 0.0 if kick_restart() else smoothstep(16.0,P.HALF_WIDTH-.5,track.x)
+			eye=Vector3(P.HALF_WIDTH+8+near*5.5,18.6+near*7.4,clampf(lerpf(focus.z,track.z,near*0.55),-42,42))
 			look=Vector3(lerpf(clampf(focus.x,-10,10),track.x,near*0.94),lerpf(1.05,0.22,near),lerpf(focus.z,clampf(track.z,-48,48),near))
 			fov=lerpf(40.0,37.0,near)
 			var inset := set_piece_inset()
@@ -184,7 +185,7 @@ func pose(focus: Vector3,zoom: float) -> Dictionary:
 		offset*=zoom_scale
 		offset.y*=elevation
 		# A distant low sideline must remain above the stadium seating.
-		if is_sideline() and look.x+offset.x>45: offset.y=maxf(offset.y,22.0-look.y)
+		if is_sideline() and look.x+offset.x>P.HALF_WIDTH+13: offset.y=maxf(offset.y,22.0-look.y)
 	eye=look+offset
 	return {eye=eye,look=look,projection=projection,size=size,fov=fov}
 

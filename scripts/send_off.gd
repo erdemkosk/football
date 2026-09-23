@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 ## Dismissal is immediate in the match rules; its presentation leaves on foot.
 const Player = preload("res://scripts/footballer.gd")
 var game
@@ -88,7 +89,7 @@ func nearby(team: int,point: Vector3,excluded: int) -> Array[int]:
 
 func blocks_restart() -> bool:
 	for entry in exits:
-		if entry.phase!="exit" or entry.actor.position.x<33.3: return true
+		if entry.phase!="exit" or entry.actor.position.x<P.HALF_WIDTH+1.3: return true
 	return false
 
 func confrontation() -> Dictionary:
@@ -178,7 +179,7 @@ func choreograph(entry: Dictionary,delta: float) -> void:
 
 func walk_out(entry: Dictionary,delta: float) -> void:
 	var actor=entry.actor
-	var targets: Array[Vector3]=[Vector3(33.8,0,clampf(entry.center.z,-46,46)),Vector3(35.0,0,0),Vector3(46.0,0,0)]
+	var targets: Array[Vector3]=[Vector3(P.HALF_WIDTH+1.8,0,clampf(entry.center.z,-46,46)),Vector3(P.HALF_WIDTH+3,0,0),Vector3(46+P.SIDE_SHIFT,0,0)]
 	var target: Vector3=targets[entry.gate]
 	if game.flat_distance(actor.position,target)<0.5:
 		entry.gate+=1
@@ -214,7 +215,7 @@ func update_camera(_delta: float) -> bool:
 	var entry := confrontation()
 	if entry.is_empty():
 		for departure in exits:
-			if departure.actor.position.x<33.3:
+			if departure.actor.position.x<P.HALF_WIDTH+1.3:
 				entry=departure
 				break
 	if entry.is_empty() or game.state in ["menu","setup","replay"]: return false

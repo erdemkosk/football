@@ -1,4 +1,5 @@
 extends SceneTree
+const P = preload("res://scripts/pitch_dimensions.gd")
 var game
 var failures := 0
 func _initialize() -> void: call_deferred("run")
@@ -24,7 +25,7 @@ func run() -> void:
 	game.start_match(false,false)
 	game.set_physics_process(false)
 	game.update_camera(0)
-	check(game.match_camera.is_sideline() and game.camera.projection==Camera3D.PROJECTION_PERSPECTIVE and absf(game.camera.position.x-40)<0.05,"A match starts on the east sideline")
+	check(game.match_camera.is_sideline() and game.camera.projection==Camera3D.PROJECTION_PERSPECTIVE and absf(game.camera.position.x-(P.HALF_WIDTH+8))<0.05,"A match starts on the east sideline")
 	var seen: PackedStringArray=[]
 	for _i in range(5):
 		key(KEY_C)
@@ -32,12 +33,12 @@ func run() -> void:
 		seen.append(game.match_camera.id())
 	check(seen==PackedStringArray(["end","tactical","pitch","broadcast","sideline"]),"C walks end, tactical, pitch and broadcast, then returns to the sideline")
 	check(game.match_camera.is_sideline() and game.camera.projection==Camera3D.PROJECTION_PERSPECTIVE,"The fifth press restores the default sideline")
-	game.ball.place(Vector3(32,0.23,8),Vector3.ZERO)
+	game.ball.place(Vector3((P.HALF_WIDTH+0),0.23,8),Vector3.ZERO)
 	game.state="set_piece"
 	game.restart_type="TAÇ"
-	game.restart_point=Vector3(32,0,8)
+	game.restart_point=Vector3((P.HALF_WIDTH+0),0,8)
 	game.update_camera(0)
-	check(game.camera.position.x>43 and game.camera.position.y>22,"Sideline leans back and up when the ball reaches the near touchline")
+	check(game.camera.position.x>P.HALF_WIDTH+11 and game.camera.position.y>22,"Sideline leans back and up when the ball reaches the near touchline")
 	check(framed(game.restart_point+Vector3.UP*0.9),"A near-side throw-in stays inside the frame")
 	game.ball.place(Vector3.ZERO,Vector3.ZERO)
 	game.state="playing"
@@ -82,7 +83,7 @@ func run() -> void:
 	var kick_goal := Vector3(0,1.2,game.attack_sign(0)*50)
 	check(kick_eye.distance_to(Vector3(0,0,-25))<16 and kick_eye.z>-25+2 and framed(Vector3(0,0,-25)+Vector3.UP) and framed(kick_goal),"A free kick stands behind the taker and keeps the goal in frame")
 	game.controller.stick=Vector2.ZERO
-	game.begin_restart("KORNER",0,Vector3(32,0,game.attack_sign(0)*49.6))
+	game.begin_restart("KORNER",0,Vector3((P.HALF_WIDTH+0),0,game.attack_sign(0)*49.6))
 	game.state="set_piece"
 	game.set_pieces.recovery.phase="ready"
 	game.match_camera.select("sideline")

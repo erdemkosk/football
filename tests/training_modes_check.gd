@@ -1,4 +1,5 @@
 extends SceneTree
+const P = preload("res://scripts/pitch_dimensions.gd")
 const DT := 1.0/120
 var game
 var checks := 0
@@ -125,7 +126,7 @@ func run() -> void:
 	check(game.training_drills.placing() and game.training_drills.attempt==4,"A keeper save ends the attempt like an out")
 	game.goal(0); game.skip_to_kickoff(); await tick(60)
 	check(game.training_drills.placing() and game.practice_goals==1 and game.training_drills.mode=="free_kick","Skipping a training goal returns to spot selection")
-	game.begin_restart("TAÇ",1,Vector3(32,0,-30)); await tick(400)
+	game.begin_restart("TAÇ",1,Vector3((P.HALF_WIDTH+0),0,-30)); await tick(400)
 	check(game.training_drills.placing() and game.training_drills.mode=="free_kick","An out-of-play ball automatically returns to spot selection")
 	game.start_match(true,true,false,"cross"); await tick(260)
 	game.ball.hold(game.players[11]); game.goalkeeping.holding=11; game.goalkeeping.hold_age=0; await tick(125)

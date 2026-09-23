@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 var game
 var targets: Dictionary = {}
 var roles: Dictionary = {}
@@ -29,7 +30,7 @@ func landing() -> Vector3:
 		var speed: float=Vector2(velocity.x,velocity.z).length()
 		var distance: float=game.Passing.Motion.distance_at(speed,.40,game.Passing.Motion.profile(game.weather,point))
 		point+=(velocity*Vector3(1,0,1)).normalized()*minf(distance,7)
-	return Vector3(clampf(point.x,-31,31),0,clampf(point.z,-49,49))
+	return Vector3(clampf(point.x,-(P.HALF_WIDTH-1),(P.HALF_WIDTH-1)),0,clampf(point.z,-49,49))
 
 func update(delta: float) -> void:
 	if game.state!="playing" or game.ball.held_by!=null:
@@ -61,7 +62,7 @@ func update(delta: float) -> void:
 			var forward: float=game.attack_sign(team)
 			var side := -1.0 if game.players[next].position.x<point.x else 1.0
 			var support := point+Vector3(side*4.0,0,forward*(2 if team==attacking_team else -4))
-			targets[next]=Vector3(clampf(support.x,-29,29),0,clampf(support.z,-46,46))
+			targets[next]=Vector3(clampf(support.x,-(P.HALF_WIDTH-3),(P.HALF_WIDTH-3)),0,clampf(support.z,-46,46))
 			roles[next]="finish" if team==attacking_team else "protect_goal"
 
 func arrival(index: int,point: Vector3) -> float:

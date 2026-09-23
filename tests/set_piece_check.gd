@@ -1,4 +1,5 @@
 extends SceneTree
+const P = preload("res://scripts/pitch_dimensions.gd")
 var game
 var failures := 0
 var visual := false
@@ -110,7 +111,7 @@ func run() -> void:
 	game.camera_focus=Vector3(0,0,-34)
 	game.update_camera(1)
 	await snapshot("penalty-formation")
-	await setup("KORNER",0,Vector3(31.6,0,-49.6))
+	await setup("KORNER",0,Vector3((P.HALF_WIDTH-0.4),0,-49.6))
 	var attackers=0
 	legal=true
 	for i in range(22):
@@ -123,8 +124,8 @@ func run() -> void:
 	for p in game.players:
 		if p.team==1 and absf(p.position.x)<20.16 and p.position.z>33.5: legal=false
 	check(legal and game.restart_point.z>=44.5 and game.players[sp.taker].keeper,"Goal kick is inside the goal area with opponents outside the penalty area")
-	await setup("TAÇ",0,Vector3(32,0,10))
-	check(game.players[sp.taker].position.x>=32 and game.players[sp.taker].set_piece_pose=="throw" and game.ball.position.y>2,"Thrower stands on the touchline with the ball held overhead")
+	await setup("TAÇ",0,Vector3((P.HALF_WIDTH+0),0,10))
+	check(game.players[sp.taker].position.x>=P.HALF_WIDTH and game.players[sp.taker].set_piece_pose=="throw" and game.ball.position.y>2,"Thrower stands on the touchline with the ball held overhead")
 	legal=true
 	for p in game.players:
 		if p.team==1 and game.flat_distance(p.position,game.restart_point)<2: legal=false
@@ -134,7 +135,8 @@ func run() -> void:
 	key(KEY_S,false)
 	for i in range(45): game._physics_process(1.0/120)
 	await frames(3)
-	check(game.state=="playing" and game.ball.linear_velocity.x< -2 and game.ball.position.y>1 and game.controlled==sp.taker,"S delivers a real overhead throw into the field and keeps the thrower selected")
+	check(game.state=="playing" and game.ball.linear_velocity.x< -2 and game.ball.position.y>1,"S delivers a real overhead throw into the field")
+	check(game.controlled==game.team_control.predicted_receiver and game.controlled!=sp.taker,"Automatic selection follows the receiving player after the throw")
 	await setup("SERBEST VURUŞ",0,Vector3(0,0,-24))
 	key(KEY_D,true)
 	key(KEY_ESCAPE,true)

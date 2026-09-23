@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 ## The interval keeps score, discipline and player identity across the end change.
 var game
 var age := 0.0
@@ -43,7 +44,7 @@ func update(delta: float) -> void:
 	age+=delta
 	for p in game.players:
 		if not p.visible: continue
-		var slot := Vector3(33.5+(p.number%2)*1.0,0,(-12 if p.team==0 else 12)+(p.number-6)*1.1)
+		var slot := Vector3(P.HALF_WIDTH+1.5+(p.number%2)*1.0,0,(-12 if p.team==0 else 12)+(p.number-6)*1.1)
 		var destination: Vector3=game.set_pieces.recovery.around_goal(p.position,slot)
 		var offset: Vector3=(destination-p.position)*Vector3(1,0,1)
 		p.desired=offset.normalized()*minf(0.55,offset.length())

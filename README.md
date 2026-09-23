@@ -166,7 +166,7 @@ Sol analog hareket eder; sağ analog veya yön düğmeleri koşudan bağımsız 
 | E basılı | Top sendeyken vücuduyla koru; şut şarjındayken falso; topsuzken topa dönük yavaş savunma adımları |
 | Z | Kısa vücut çalımı ve yana top dokunuşu; stamina ve bekleme süresi kullanır |
 | V | Topu ileri aç, ardından yön tuşları/W ile yetiş |
-| Q | Topun gidişini ve savunma konumunu gözeterek oyuncu değiştir; yön tuşu seçim yönünü etkiler |
+| Q | Topa yakın uygun oyuncuya geç; sonraki hedef içi boş okla gösterilir |
 | Tab | Tek oyuncuda kalma / takım kontrolü |
 | Fare tekeri | Kamerayı yakınlaştır / uzaklaştır |
 | F2 (ana menü) | Baraja karşı serbest vuruşla maça başla |
@@ -191,9 +191,17 @@ Xbox kontrolcüsü: **sol analog** hareket ve yön, **X** top sendeyken şut (ba
 **B × 2 — yerden sert orta:** B'ye 0,23 saniye içinde iki ayrı basış yap. Top yerden yaklaşık 27–31 m/sn hızla çıkar; zemin ve hava koşullarına göre sürtünmeyle yavaşlar, hedefe kendiliğinden yönelmez. İlk B kısa bir ayak hazırlığı başlatır; ikinci basış gelmezse normal havadan orta çıkar. Topsuz B hâlâ kayar; duran top kontrolleri aynıdır. Mola, top kaybı veya bağlantı kesilmesi bekleyen ortayı iptal eder.
 
 
+İlk yarı, seremoni tamamlandığında veya atlandığında **santra vuruşuyla** başlar. Top orta noktada bekler; takımlar kendi yarısında, rakipler merkez çemberinin dışında yerleşir. **S / Xbox A / PlayStation çarpı** ile ilk pası verene kadar maç saati ilerlemez. Seremoniyi geçme tuşu aynı anda pas vermez. İkinci yarıya rakip santrasıyla devam edilir.
+
 Kıyı Spor beyaz-yeşil formayla ilk yarıda **yukarıdaki**, ikinci yarıda **aşağıdaki kaleye** hücum eder. Takım kontrolü varsayılan olarak açıktır: S/A/Y pasından sonra alıcıya, topu kazanan takım arkadaşına ve savunmada belirgin biçimde daha uygun oyuncuya geçilir. LB/Q ile yaptığın seçim kısa süre korunur; kontrol işareti yakın oyuncular arasında sürekli atlamaz. Gelen pasta analog/yön girişi yoksa alıcı topu karşılar; yön verdiğinde hareket kontrolü tamamen sendedir. Tab ile tek oyuncuda kalma açıldığında pas sonrası kontrol değiştirilmez; pas verip boşa koşarak yeniden isteyebilirsin. Topsuzken S/A oyuncu değiştirmez: el kaldırıp pas istersin. Takım arkadaşın yaklaşık üç saniye içinde uygun pas yolunu arar; koşuna göre topu önüne bırakır, gerekirse havadan oynar. Markajdaysan boşa çıkmalısın. Rakip pası kesebilir; gelen top fiziksel olarak kontrol edilir.
 
 Otomatik seçim pasın gerçek hızı, yüksekliği, falso ve zemin direncine göre topu karşılayabilecek oyuncuya uçuş sırasında geçer. Top başka bir takım arkadaşına değerse, kontrolü tam sağlayamasa bile seçim hemen ona aktarılır; ilk kontrol animasyonu, müdahale sonrası bekleme ve önceki LB seçimi bunu geciktirmez. Yakın oyuncular arasında kararsız geçişler önlenir; gerçek temas olmadığı sürece manuel seçim ve hazırlanmış kafa/vole korunur. `tests/auto_selection_check.gd` uçuş tahmini, yerden/göğüs kontrolü, seken top ve gerçek fizik çarpışmasını doğrular.
+
+Top rakipteyken veya boşta yavaş ilerlerken otomatik seçim, topa yakın ve müdahale edebilecek oyuncuyu önceler; 8 metre uzaklaşma / 5 metre avantaj şartı yoktur. Yakınlıkla birlikte topun kısa süre sonraki konumu, oyuncunun hareket yönü ve kondisyonu değerlendirilir. Küçük mesafe farkları seçim değiştirmez; belirgin bir müdahale fırsatında beklenmez. Yerde kalan veya ihraç edilen oyuncu atlanır, yakın mesafede başlamış müdahale tamamlanır. **LB / L1 / Q** aynı yakın oyuncu sıralamasını kullanır; sol analog ve yön tuşları bu seçimi saptırmaz. Belirli bir oyuncuya yönlü geçiş **sağ analogla** yapılır. Manuel seçim bir saniye korunur; gerçek top teması her zaman önceliklidir. `tests/defensive_selection_check.gd`, iki yarıda canlı top sürüşü, yakın savunma, kararlılık, klavye ve Xbox/PlayStation geçişlerini doğrular.
+
+Gerçek temas, önceki oyuncunun top sahipliğini ve taşıma kuvvetini de bitirir; eski sahip bilgisi kontrolü geri alamaz. Normal hızda öne veya yana gelen paslar iki takımda da güvenilir biçimde kontrol edilir. Yorgunluk, teknik ve yakın baskı dokunuş mesafesini değiştirir; tek başına kolay pası sektirmez. Pası verenin vuruş kilidi alıcıya taşınmaz. Alçak sekmeler ayakla karşılanır; göğüs/uyluk kontrolü top ayağa inene kadar kesintisiz sürer. Arkada kalan, çok sert gelen veya zor uzanılan toplarda sekme korunur. Top gerçek fizik gövdesi olarak kalır ve rakip araya girebilir. `tests/reliable_reception_check.gd` iki takımda koşarak/ayakta karşılama, yakın pas, alçak sekme, yağmur, yorgunluk ve zor top sınırlarını gerçek fizik akışıyla doğrular.
+
+Rakip, baskıya gelen oyuncunun görünen hızını ve yaklaşma yönünü hesaba katar. Açık kaçışta normal stamina harcayarak hızlanır, karşıdan baskıda yana döner ve güvenli pası daha erken değerlendirir. Zorluk seviyesi öngörü süresini etkiler. `tests/pressure_reception_check.gd` hızlı baskı, pasla çıkış, iki takımda fiziksel karşılama ve top sahipliği devrini doğrular.
 
 Bizim takımda pas, şut ve orta kararı kullanıcıya aittir. Seçili olmayan takım arkadaşları destek koşusu, bindirme, markaj ve müdahale yapabilir; top kendilerine gelince kendiliğinden pas veya şut atmazlar. S/A ile açıkça pas istemek yine takım arkadaşına pas komutu verir. Kalecimiz topu tuttuğunda kontrol ona geçer ve dağıtım komutunu bekler. Rakip ve ana menüdeki gösteri maçının iki takımı normal yapay zekâyla oynar.
 
@@ -221,7 +229,9 @@ Kaleciler top-kale açısına yerleşir, ceza sahasında ulaşabilecekleri boş 
 
 Kayarak müdahalede topa temiz temasla oyuncuya çarpmanın sesi farklıdır. Gövde temasında iki oyuncunun göreli hızına bağlı itme, sendeleme veya düşüp toparlanma uygulanır. Yerde toparlanırken oyuncu topu kontrol edemez; kontrol ettiğin oyuncuya darbe geldiğinde şut/pas hazırlığı kesilir ve kısa bir ekran kenarı tepkisi görülür. Temas sesleri düdükle aynı ses kanalını paylaşmaz. Faul ve kart kararı mevcut topa önce temas kurallarıyla verilir; iki takım aynı tepkileri kullanır.
 
-Sprint normal koşudan belirgin biçimde hızlıdır. Kesintisiz sprint yaklaşık on sekiz saniyede oyuncuyu yorar. Normal koşu daha yavaş stamina tüketir; enerji azaldıkça hız ve hızlanma düşer. Yorulan oyuncu yürüyüş temposuna geçer. Sprinti yeniden açmak için W'yi bırakmak ve en az %32 stamina toplamak gerekir. Durmak, yürümekten daha hızlı toparlar; göstergedeki çizgi geri dönüş eşiğini gösterir. Gol sonrası stamina dolmaz. Yeni maç ve yeni antrenman denemesi tam enerjiyle başlar; yapay zekâ da aynı kurallara tabidir.
+Sprint normal koşudan belirgin biçimde hızlıdır. Tam enerji ve ortalama kondisyonla kesintisiz sprint yaklaşık 35 saniyede oyuncuyu yorar. Sprint tüketimi saniyede %2,6, normal koşu tüketimi %0,27’dir; normal koşuyla 120 saniyelik bir devrenin sonunda yaklaşık %68 enerji kalır. Oyuncunun kondisyon özelliği bu süreleri etkiler; enerji azaldıkça hız ve hızlanma düşer. Yorulan oyuncu yürüyüş temposuna geçer. Sprinti yeniden açmak için W'yi bırakmak ve en az %32 stamina toplamak gerekir. Durmak, yürümekten daha hızlı toparlar; göstergedeki çizgi geri dönüş eşiğini gösterir. Gol sonrası stamina dolmaz. Yeni maç ve yeni antrenman denemesi tam enerjiyle başlar; yapay zekâ da aynı kurallara tabidir.
+
+Saha 72 × 100 metredir; önceki 64 metrelik genişliğe göre kanatlarda toplam 8 metre daha fazla alan vardır. Formasyonlar, destek koşuları, pas hedefleri, taç/korner sınırları ve saha kenarı yerleşimi bu genişliği kullanır.
 
 ## Hava ve saha
 
@@ -473,7 +483,7 @@ Rakip pası hazırlarken topun hareketini takip eder; pas sayacı, alıcı göre
 
 Rakip teknik direktörü maç içindeki gerçek hareketleri izler: kullanılan kanat, yapılmış dikine paslar ve kendi pas çıkışına uygulanan baskı zaman içinde değerlendirilir. Eski gözlemler etkisini kaybeder; taraf veya oyun biçimi değişince rakip tekrar uyum sağlar. Kolay seviyede değerlendirme daha yavaş ve sınırlı, Normal'de daha erken, Zor'da daha sık ve belirgindir. Kullanıcının tuşları, hazırladığı nişan veya sonraki komutu okunmaz; hız, stamina ve top fiziğine zorluk kaynaklı bonus eklenmez.
 
-Rakip top kaybından sonra kısa süreli karşı pres, çizgi kenarında ikinci oyuncuyla sıkıştırma, arkada kademe, koşucuyu kaleye yakın tarafından takip ve pas arası kullanır. Yoğun pres aralarında dinlenir; yorgun takım baskıyı azaltır. Ceza sahasında veya sarı kartı varken arkadan/kapalı topa müdahaleden kaçınır, kontrollü yaklaşır; açık topa temiz müdahale yapabilir. Şut yolu kapalıysa başka çözüm, daha iyi konumdaki arkadaşına gol pası, uygun koşuya havadan ara pas, sert düz pas, teknik oyuncuyla ball roll/roulette/elastico/scoop ve boşluğa sürüş seçebilir. Alçak sert, power ve dış ayak şutları aynı fiziksel ayak temasıyla çıkar. Rakip kaleci güvenli yere elle dağıtır, baskıda uzun atışı veya ayaktan açışı kullanır.
+Rakip top kaybından sonra kısa süreli karşı pres, çizgi kenarında ikinci oyuncuyla sıkıştırma, arkada kademe, koşucuyu kaleye yakın tarafından takip ve pas arası kullanır. Yoğun pres aralarında dinlenir; yorgun takım baskıyı azaltır. Ceza sahasında veya sarı kartı varken arkadan/kapalı topa müdahaleden kaçınır, kontrollü yaklaşır; açık topa temiz müdahale yapabilir. Şut yolu kapalıysa başka çözüm, daha iyi konumdaki arkadaşına gol pası, uygun koşuya havadan ara pas, sert düz pas, teknik oyuncuyla ball roll/roulette/elastico/scoop/rainbow ve boşluğa sürüş seçebilir. Alçak sert, power ve dış ayak şutları aynı fiziksel ayak temasıyla çıkar. Rakip kaleci güvenli yere elle dağıtır, baskıda uzun atışı veya ayaktan açışı kullanır.
 
 Savunmacı topa yakınlığı topu kazanmakla karıştırmaz. Görünen koşu hızından yaklaşma noktasını hesaplar, sprint yapan hücumcuyla birlikte hızlanır ve geçilince kaleye daha yakın arkadaşına baskı görevini devreder. Kademe, eski savunmacının bulunduğu yere değil yeni koşu yolunun arkasına gelir. Ayakta müdahale için topun 120 ms sonraki temas alanında kalması beklenir; boşa ayak uzatmak yerine koşmaya devam edilebilir. Kolay/Normal/Zor seviyelerinde gözlem aralığı ve öngörü değişir; hız, fiziksel erişim ve kondisyon kuralları ortaktır. Ani yön değişikliği, boş kanat ve yorgun savunmacıya karşı hız avantajı hâlâ işe yarar. Gerçek fizik adımlarıyla kontrol: `godot --headless --path . --fixed-fps 120 --script tests/defensive_pressure_check.gd`.
 
@@ -514,9 +524,10 @@ F1 kontrol rehberi artık sekiz sekmelidir. **Çalımlar**, **Bitiricilik**, **�
 | Hareket | Klavye | Xbox (PlayStation simgeleri otomatik görünür) |
 |---|---|---|
 | Roulette / ball roll / elastico / scoop turn | 1 / 2 / 3 / 4; yön ile taraf seç | Sağ analog: geri / yan / hızlı karşılıklı yan / ileri |
+| Rainbow / heel flick / flick up | 6 / 7 / 8 | LT + sağ analog: geri / ileri / yan |
 | İkinci adam baskısı | Space basılı | Rakipteyken A basılı |
 | Omuz / pas arası | J / L | Rakipteyken L3 / LT + X |
-| Yönlü oyuncu seçimi | Q + yön | Topsuzken sağ analog; LB + sol analog |
+| Yönlü oyuncu seçimi | Kontrolcüde sağ analog; Q yakın oyuncuya geçer | Topsuzken sağ analog; LB yakın oyuncuya geçer |
 | Alçak sert / power / dış ayak şutu | Ctrl + D / Shift + D / Alt + D | RB + X / LB + RT + X / LB + LT + X |
 | Sonraki normal şutta zamanlama | 5, ardından D | Top ayağındayken L3, ardından X |
 | Timed finishing | Özel şutu bırak; yeşil aralıkta D'ye tekrar bas | Özel şutu bırak; yeşil aralıkta X'e tekrar bas |
@@ -525,15 +536,15 @@ F1 kontrol rehberi artık sekiz sekmelidir. **Çalımlar**, **Bitiricilik**, **�
 | Kaleci: elle yerden pas / uzun el atışı | S / Y | A / Y |
 | Kaleci: ayaktan açış / yere bırak | D / V | X / R3 |
 
-Sağ analog yönleri çalımda oyuncunun baktığı yöne göredir. Şut hazırlanırken sağ analog nişan işlevini sürdürür. Top ayağındayken sağ analogla ball roll için yana dokunulur; 0,18 saniye içinde karşı yana çevrilirse elastico olur. Dört çalım farklı gerçek top darbeleri, ayak/gövde hareketleri, kondisyon maliyeti ve kısa toparlanma süresi kullanır; rakipten bağışıklık vermez. Scoop küçük bir fiziksel kaldırma ve çapraz dönüş yapar. Yeni pas/şut komutu devam eden çalımı kesebilir.
+Sağ analog yönleri çalımda oyuncunun baktığı yöne göredir. Şut hazırlanırken sağ analog nişan işlevini sürdürür. Top ayağındayken sağ analogla ball roll için yana dokunulur; 0,18 saniye içinde karşı yana çevrilirse elastico olur. **LT** basılıyken sağ analog ekstra flick’leri açar: geri rainbow, ileri heel flick, yana flick up. Yedi çalım farklı gerçek top darbeleri, ayak/gövde hareketleri, kondisyon maliyeti ve kısa toparlanma süresi kullanır; rakipten bağışıklık vermez. Scoop küçük bir kaldırma, rainbow topu oyuncunun üzerinden atar, flick up vole için havaya bırakır. Yeni pas/şut komutu devam eden çalımı kesebilir.
 
-Sonraki LB/Q hedefi sahada açık mavi işaretle, baskıya çağrılan oyuncu yeşil PRES yazısıyla gösterilir. Yönlü seçim en yakın oyuncu yerine belirtilen doğrultuyu önceler. İkinci adam baskısı en fazla dört saniye sürer, enerji tüketir ve kısa dinlenme ister; seçili oyuncunun kontrolünü devralmaz. Omuz müdahalesi kütleye bağlı sınırlı itiş üretir; arkadan veya toptan uzaktaki itiş fauldür. Pas arası uzanan gerçek ayağa temas gerektirir. Dummy yalnızca kısa süreli alçak gelen pası bırakır, topun hızını/yönünü değiştirmez; bitince veya iptal edilince normal çarpışma geri gelir.
+Sonraki LB/L1/Q hedefi sahada açık mavi, içi boş okla; baskıya çağrılan oyuncu yeşil PRES yazısıyla gösterilir. Sağ analogla yönlü seçim belirtilen doğrultuyu önceler. İkinci adam baskısı en fazla dört saniye sürer, enerji tüketir ve kısa dinlenme ister; seçili oyuncunun kontrolünü devralmaz. Omuz müdahalesi kütleye bağlı sınırlı itiş üretir; arkadan veya toptan uzaktaki itiş fauldür. Pas arası uzanan gerçek ayağa temas gerektirir. Dummy yalnızca kısa süreli alçak gelen pası bırakır, topun hızını/yönünü değiştirmez; bitince veya iptal edilince normal çarpışma geri gelir.
 
 Özel şutlar topa gerçek ayak temasına kadar bekler. Power shot daha uzun hazırlanır, normal şuttan belirgin biçimde daha sert çıkar ve bu sırada top kaybedilebilir; alçak sert şut düşük yükselişli, dış ayak şutu güçlü ayağın dışına doğru fiziksel kavisli gider. İkinci basış isteğe bağlıdır: yeşil pencerede hız/temas kalitesi artar, erken basış şutu zayıflatır ve yön hatası getirir. İkinci basış yapılmazsa standart kalitede vurulur; gol garanti edilmez. Normal şutun mevcut anlık tepkisi korunur; zamanlama normal şut için 5/L3 ile önceden seçilir.
 
 Kaleci elde tuttuğu gerçek topu elle yerden gönderir, omuz üzerinden uzun fırlatır, düşürüp ayakla açar veya sahaya bırakır. Yön ve güç kullanıcıdadır; güvenli bir takım arkadaşına zorunlu otomatik pas verilmez. Ayaktan açış ayak temasını bekler ve şut istatistiğine değil dağıtıma sayılır. Mola, rehber, yeni maç ve kontrolcü kopması bekleyen yeni komutları temizler.
 
-Bu davranışlar için `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/advanced_play_check.gd`; görüntüler için başsız seçenekleri kaldırıp `-- --visual` ekleyin. Test; 4 çalım, gerçek sekme/kaldırma, yönlü seçim, baskı, omuz, pas arası, dummy temizliği, sert paslar, 4 özel şut modu, iki kontrolcü ailesi, kalecinin 4 dağıtımı ve komut listesini kapsar.
+Bu davranışlar için `godot --headless --path . --fixed-fps 120 --disable-render-loop --script res://tests/advanced_play_check.gd`; görüntüler için başsız seçenekleri kaldırıp `-- --visual` ekleyin. Test; 7 çalım, gerçek sekme/kaldırma, yönlü seçim, baskı, omuz, pas arası, dummy temizliği, sert paslar, 4 özel şut modu, iki kontrolcü ailesi, kalecinin 4 dağıtımı ve komut listesini kapsar.
 
 ## Top teması ve hareket akışı
 

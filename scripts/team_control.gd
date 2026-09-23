@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 ## Select the receiver in flight; actual contact always wins over prediction.
 const Motion = preload("res://scripts/ball_motion.gd")
 var game
@@ -12,6 +13,9 @@ var previous_contacts: Array[int] = []
 var previous_velocity := Vector3.ZERO
 var predicted_receiver := -1
 var predicted_point := Vector3.ZERO
+var departing_player := -1
+var defence_candidate := -1
+var defence_candidate_age := 0.0
 
 func reset() -> void:
 	cooldown=0
@@ -20,6 +24,8 @@ func reset() -> void:
 	touch_hold=0; prediction_in=0
 	previous_contacts.clear(); previous_velocity=Vector3.ZERO
 	predicted_receiver=-1
+	departing_player=-1
+	defence_candidate=-1; defence_candidate_age=0
 
 func eligible(index: int) -> bool:
 	return index>=0 and index<game.players.size() and game.players[index].team==0 and game.players[index].visible and not game.players[index].dismissed
@@ -28,10 +34,20 @@ func automatic() -> bool:
 	return not game.training and not game.player_lock and not game.menu_match.running and game.state=="playing"
 
 func touched(index: int) -> void:
+	if game.state!="playing" or index<0 or index>=game.players.size(): return
+	var player=game.players[index]
+	if not player.visible or player.dismissed: return
+	# A real deflection ends the previous carry, even when both bodies remain
+	# close to the ball. Otherwise update() immediately selects that old owner.
+	if game.dribbler>=0 and game.dribbler!=index:
+		game.players[game.dribbler].dribble_motion.release_collision()
+		game.dribbler=-1
+	if game.carrier>=0 and game.carrier!=index: game.carrier=-1
 	if not automatic() or not eligible(index): return
 	# A chest trap, spill or tackle is still a touch, even during recovery.
 	manual_hold=0; touch_hold=.18; prediction_in=0
 	predicted_receiver=-1
+	departing_player=-1
 	if game.controlled==index: return
 	if game.requested_receiver>=0: game.clear_pass_request()
 	select(index)
@@ -39,6 +55,7 @@ func touched(index: int) -> void:
 
 func released(index: int) -> void:
 	touch_hold=0; cooldown=0; prediction_in=0
+	departing_player=index
 	if index==game.controlled: manual_hold=0
 
 func physical_contacts() -> void:
@@ -46,9 +63,13 @@ func physical_contacts() -> void:
 	for body in game.ball.get_colliding_bodies():
 		var index: int=game.players.find(body)
 		if index<0: continue
+		if not game.players[index].visible or game.players[index].dismissed: continue
 		contacts.append(index)
 		# Continuous capsule overlap must not repeatedly steal a manual choice.
-		if index not in previous_contacts and not (index==game.last_kicker and game.kick_lock>0): touched(index)
+		if index not in previous_contacts and not (index==game.last_kicker and game.kick_lock>0):
+			game.last_touch=game.players[index].team
+			game.last_kicker=index
+			touched(index)
 	previous_contacts=contacts
 
 func follow_pass(receiver: int,route: Dictionary) -> void:
@@ -72,7 +93,66 @@ func select(index: int,manual: bool=false) -> void:
 		game.last_direction=direction.normalized() if direction.length()>0.1 else p.facing
 		for i in range(game.players.size()): game.players[i].chosen=i==index
 	cooldown=0.75
-	if manual: manual_hold=1.4; predicted_receiver=-1
+	defence_candidate=-1; defence_candidate_age=0
+	if manual: manual_hold=1.0; predicted_receiver=-1
+
+func opponent_possession() -> bool:
+	if game.ball.held_by!=null: return game.ball.held_by.team==1
+	return game.dribbler>=0 and game.players[game.dribbler].visible and game.players[game.dribbler].team==1
+
+func committed_challenge(index: int) -> bool:
+	var p=game.players[index]
+	return eligible(index) and p.action_timer>0 and p.pose in ["poke","slide","intercept"] and game.flat_distance(p.position,game.ball.position)<2.4
+
+func defender_cost(index: int) -> float:
+	if not eligible(index): return INF
+	var p=game.players[index]
+	if p.keeper or p.action_timer>0 or p.dummy_time>0: return INF
+	var ball: Vector3=game.ball.position*Vector3(1,0,1)
+	var velocity: Vector3=game.ball.kick_velocity if game.ball.pending_kick else game.ball.linear_velocity
+	if opponent_possession() and game.dribbler>=0: velocity=game.players[game.dribbler].velocity
+	# Proximity remains the main signal. A short look ahead distinguishes an
+	# already beaten chaser from the nearby defender who can meet the runner.
+	var target := ball+(velocity*Vector3(1,0,1)).limit_length(14)*.26
+	var offset: Vector3=ball-p.position*Vector3(1,0,1)
+	var gap := offset.length()
+	var cost: float=gap*.55+game.flat_distance(p.position,target)*.45
+	var closing: float=p.velocity.dot(offset.normalized()) if gap>.01 else 0.0
+	cost+=clampf(-closing*.12,0,.8)+(1-p.energy)*.35
+	return cost
+
+func switch_choice(exclude_current: bool=true) -> int:
+	var best := -1
+	var cost := INF
+	for i in range(1,11):
+		if exclude_current and i==game.controlled: continue
+		var candidate_cost := defender_cost(i)
+		if candidate_cost<cost: best=i; cost=candidate_cost
+	return best
+
+func next_switch() -> int:
+	if game.state!="playing" or game.training or game.menu_match.running or eligible(game.dribbler) or game.ball.held_by!=null: return -1
+	return switch_choice()
+
+func select_defender(delta: float) -> void:
+	var best := switch_choice(false)
+	if best<0 or best==game.controlled:
+		defence_candidate=-1; defence_candidate_age=0
+		return
+	var current_cost := defender_cost(game.controlled)
+	var advantage := current_cost-defender_cost(best)
+	# Small positional differences are not a reason to take the cursor away.
+	if advantage<.65:
+		defence_candidate=-1; defence_candidate_age=0
+		return
+	if defence_candidate!=best: defence_candidate=best; defence_candidate_age=0
+	defence_candidate_age+=delta
+	var current_gap: float=game.flat_distance(game.players[game.controlled].position,game.ball.position)
+	var best_gap: float=game.flat_distance(game.players[best].position,game.ball.position)
+	var urgent := is_inf(current_cost) or advantage>2.4 or (best_gap<2.1 and current_gap>best_gap+.9)
+	if urgent or (cooldown<=0 and defence_candidate_age>=.09):
+		select(best)
+		cooldown=.28
 
 func update(delta: float) -> void:
 	cooldown=maxf(0,cooldown-delta)
@@ -88,9 +168,16 @@ func update(delta: float) -> void:
 	if eligible(game.dribbler):
 		touched(game.dribbler)
 		return
-	if eligible(game.controlled) and (manual_hold>0 or touch_hold>0): return
-	if game.ball.held_by!=null or not game.kick_contact.pending.is_empty(): return
+	var opposing := opponent_possession()
+	var committed := committed_challenge(game.controlled)
+	if eligible(game.controlled):
+		if manual_hold>0 and (current.action_timer<=0 or committed): return
+		if touch_hold>0 and not opposing: return
+	if not game.kick_contact.pending.is_empty(): return
 	if game.aerial_shot_active(game.controlled): return
+	if committed: return
+	# Calling a second presser is an explicit choice to cover with this player.
+	if game.defending.pressing and game.defending.presser>=0 and eligible(game.controlled) and current.action_timer<=0: return
 	var owner := -1
 	if game.dribbler<0 and game.kick_lock<=0 and game.ball.position.y<1.05 and game.ball.linear_velocity.length()<16:
 		owner=game.nearest_to_ball(1.12)
@@ -99,32 +186,30 @@ func update(delta: float) -> void:
 		if eligible(owner) and (not p.keeper or game.last_touch==0) and p.action_timer<=0 and p.touch_cooldown<=0 and p.dummy_time<=0:
 			if owner!=game.controlled: select(owner)
 			return
-	if game.charging or game.pass_charging or game.aerial_shot_active(game.controlled) or game.requested_receiver>=0: return
+	if opposing:
+		# An intercepted pass must not leave the old attack's input state locking
+		# the cursor to a player who is no longer involved in the challenge.
+		if game.requested_receiver>=0: game.clear_pass_request()
+		if game.pass_charging: game.cancel_pass()
+		game.charging=false; game.charge=0
+	elif game.charging or game.pass_charging or game.requested_receiver>=0: return
 	var velocity: Vector3=game.ball.kick_velocity if game.ball.pending_kick else game.ball.linear_velocity
 	var changed := velocity.distance_to(previous_velocity)>4
 	previous_velocity=velocity
-	if game.dribbler<0 and (velocity.length()>2 or game.ball.position.y>.6) and (prediction_in<=0 or changed):
+	var in_flight: bool=game.dribbler<0 and game.ball.held_by==null and (velocity.length()>2 or game.ball.position.y>.6)
+	var current_available: bool=eligible(game.controlled) and current.action_timer<=0 and current.dummy_time<=0
+	if in_flight and (prediction_in<=0 or changed or not current_available):
 		prediction_in=.08
 		var reception := predict_receiver(velocity)
 		predicted_receiver=reception.index
 		predicted_point=reception.point
-		if reception.index>=0 and reception.index!=game.controlled and (not eligible(game.controlled) or ((cooldown<=0 or changed) and reception.advantage>.22)):
+		if reception.index>=0 and reception.index!=game.controlled and (not current_available or ((cooldown<=0 or changed) and reception.advantage>.22)):
 			select(reception.index)
-			return
-	if current.visible and not current.dismissed and (cooldown>0 or manual_hold>0 or current.action_timer>0): return
-	var threat: Vector3=game.ball.position+game.ball.linear_velocity.limit_length(20)*0.3
-	if game.ball.held_by!=null: return
-	var best := -1
-	var best_cost := INF
-	for i in range(1,11):
-		var p=game.players[i]
-		if not p.visible or p.dismissed or p.action_timer>0: continue
-		var cost: float=game.flat_distance(p.position,threat)+(1-p.energy)*1.5
-		if cost<best_cost: best_cost=cost; best=i
-	var current_distance: float=game.flat_distance(current.position,threat)
-	# A substantial advantage avoids the cursor hopping between nearby defenders.
-	if best>=0 and best!=game.controlled and (not current.visible or current.dismissed or (current_distance>8 and best_cost+5<current_distance)):
-		select(best)
+	# Do not undo a valid receiver choice with the ground-defence heuristic,
+	# especially while the real rigid body is still applying a pending kick.
+	if in_flight and predicted_receiver>=0: return
+	predicted_receiver=-1
+	select_defender(delta)
 
 func predict_receiver(velocity: Vector3) -> Dictionary:
 	var costs: Dictionary={}
@@ -134,7 +219,7 @@ func predict_receiver(velocity: Vector3) -> Dictionary:
 		if not eligible(i): continue
 		var p=game.players[i]
 		if p.action_timer>0 or p.dummy_time>0 or i in game.rules.candidates: continue
-		if i==game.last_kicker and (game.kick_lock>0 or own_pass): continue
+		if i==departing_player and (game.kick_lock>0 or own_pass): continue
 		# Keep the outfield defence selected on opponent shots until a real save.
 		if p.keeper and not (own_pass and game.ai_receivers[0]==i): continue
 		costs[i]=INF
@@ -154,7 +239,7 @@ func predict_receiver(velocity: Vector3) -> Dictionary:
 		spin=Motion.decay_spin(spin,STEP,airborne)
 		point+=velocity*STEP
 		if point.y<.22: point.y=.22; velocity.y=0
-		if absf(point.x)>32 or absf(point.z)>50: break
+		if absf(point.x)>P.HALF_WIDTH or absf(point.z)>50: break
 		if point.y>2.05 or (point.y>.65 and velocity.y>2.5): continue
 		var time := sample*STEP
 		for i in costs:
@@ -186,6 +271,6 @@ func reception_direction() -> Vector3:
 	# A through-ball recipient keeps the run into space instead of checking back.
 	if run_receiver==game.controlled and velocity.dot(run_target-game.ball.position)>0 and distance>1.1:
 		target=run_target
-	target.x=clampf(target.x,-30,30); target.z=clampf(target.z,-48,48)
+	target.x=clampf(target.x,-(P.HALF_WIDTH-2),(P.HALF_WIDTH-2)); target.z=clampf(target.z,-48,48)
 	var offset: Vector3=(target-p.position)*Vector3(1,0,1)
 	return offset.normalized()*clampf(offset.length()/1.4,0,1)

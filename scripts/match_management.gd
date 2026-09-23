@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 ## Roster slots remain stable for physics and AI; shirt identity is independent.
 var game
 const MAX_SUBS := 3
@@ -54,7 +55,7 @@ func apply_formation() -> void:
 	for p in game.players:
 		var shape: Array=SHAPES[formation if p.team==0 else opponent_formation]
 		var pos: Vector2=shape[p.number-1]
-		p.home=Vector3(pos.x,0,pos.y)*(-game.attack_sign(p.team))
+		p.home=Vector3(pos.x*P.WIDTH_RATIO,0,pos.y)*(-game.attack_sign(p.team))
 		p.home.x*=([.78,1.0,1.14][width] if p.team==0 else 1.0)
 
 func committed(team: int) -> int:
@@ -146,7 +147,7 @@ func prepare_substitutions() -> void:
 			if game.players[index].team==p.team and transit[index].phase=="out": reserved+=1
 		if reserved>=MAX_SUBS: continue
 		transit[item.slot]={"reserve":item.reserve,"phase":"out","target":p.position,"old":p.display_name}
-		game.stadium.sidelines.start_entry(item.slot,item.reserve,Vector3(32.8,0,(-3 if p.team==0 else 3)+(item.slot%11)*1.2))
+		game.stadium.sidelines.start_entry(item.slot,item.reserve,Vector3(P.HALF_WIDTH+.8,0,(-3 if p.team==0 else 3)+(item.slot%11)*1.2))
 	pending.clear()
 
 func update_substitutions(delta: float) -> bool:
@@ -157,7 +158,7 @@ func update_substitutions(delta: float) -> bool:
 	for index in transit.keys():
 		var item: Dictionary=transit[index]
 		var p=game.players[index]
-		var gate := Vector3(32.8,0,(-3 if p.team==0 else 3)+(index%11)*1.2)
+		var gate := Vector3(P.HALF_WIDTH+.8,0,(-3 if p.team==0 else 3)+(index%11)*1.2)
 		var destination: Vector3=gate if item.phase=="out" else item.target
 		destination=game.set_pieces.recovery.around_goal(p.position,destination)
 		var offset: Vector3=(destination-p.position)*Vector3(1,0,1)
@@ -231,7 +232,7 @@ func adjust_target(index: int,target: Vector3) -> Vector3:
 	elif p.team==1 and game.carrier>=0 and game.players[game.carrier].team==1:
 		# Late chasing teams commit runners; a leading team keeps more cover.
 		target.z+=forward*(game.team_tactics.plan_for(1)-1)*(4 if slot_role(index)==1 else 6)
-	target.x=clampf(target.x,-29,29)
+	target.x=clampf(target.x,-(P.HALF_WIDTH-3),(P.HALF_WIDTH-3))
 	target.z=clampf(target.z,-45,45)
 	return target
 
@@ -243,6 +244,8 @@ func detail(team: int,key: String) -> int:
 func update_clock(delta: float) -> void:
 	if game.career.cups.extra_active(): return
 	if game.training: return
+	# Waiting for the opening kickoff is before play, not injury time.
+	if game.match_time<=0: return
 	var half_index: int=game.half-1
 	# Active-play time is retained; stoppages earn a bounded extra period.
 	if game.state in ["restart","set_piece","goal"] and added[half_index]<0:

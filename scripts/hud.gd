@@ -1,4 +1,5 @@
 extends Control
+const P = preload("res://scripts/pitch_dimensions.gd")
 const Brand = preload("res://scripts/branding.gd")
 var shot_guide := preload("res://scripts/shot_guide.gd").new()
 var pass_guide := preload("res://scripts/shot_guide.gd").new()
@@ -240,7 +241,7 @@ func draw_pass_guide(plan: Dictionary,route: Dictionary,color: Color,opacity: fl
 	color.a*=opacity
 	draw_ball_path(route.points,color)
 	var warning := ""
-	if absf(route.target.x)>32 or absf(route.target.z)>50: warning="DIŞARI"
+	if absf(route.target.x)>P.HALF_WIDTH or absf(route.target.z)>50: warning="DIŞARI"
 	elif game.pass_charging and game.pass_risk>0.48: warning="RAKİP"
 	draw_landing_disc(route.target,color,plan.get("lob",false))
 	if warning!="": draw_target_marker(route.target,warning,color)
@@ -387,14 +388,15 @@ func minimap() -> void:
 	draw_rect(pitch,Color(1,1,1,0.24),false,1)
 	draw_line(Vector2(1281,750.5),Vector2(1393,750.5),Color(1,1,1,0.22),1)
 	draw_arc(Vector2(1337,750.5),14,0,TAU,32,Color(1,1,1,0.22),1,true)
-	for side in [-1,1]: draw_rect(Rect2(1310,673 if side<0 else 804,54,24),Color(1,1,1,0.22),false,1)
+	var box_size := Vector2(40.32/P.WIDTH*112,16.5/P.LENGTH*155)
+	for side in [-1,1]: draw_rect(Rect2(1337-box_size.x*.5,673 if side<0 else 828-box_size.y,box_size.x,box_size.y),Color(1,1,1,0.22),false,1)
 	for i in range(game.players.size()):
 		var p = game.players[i]
 		if not p.visible: continue
-		var pos = Vector2(1337+p.position.x/64*112,750.5+p.position.z/100*155)
+		var pos = Vector2(1337+p.position.x/P.WIDTH*112,750.5+p.position.z/P.LENGTH*155)
 		draw_circle(pos,3 if i==game.controlled else 2.2,GOLD if i==game.controlled else game.clubs.kit(p.team).primary)
 	var ball_pos: Vector3 = game.ball.position
-	draw_circle(Vector2(1337+ball_pos.x/64*112,750.5+ball_pos.z/100*155),2.3,Color.WHITE)
+	draw_circle(Vector2(1337+ball_pos.x/P.WIDTH*112,750.5+ball_pos.z/P.LENGTH*155),2.3,Color.WHITE)
 	center("↑  HÜCUM",Vector2(1337,643),10,Color(1,1,1,0.7))
 
 func menu() -> void:

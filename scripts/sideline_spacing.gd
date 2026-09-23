@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 ## Visual people keep their own lanes without becoming obstacles for the football.
 const CLEARANCE := 1.12
 
@@ -7,7 +8,7 @@ static func outside_direction(at: Vector3) -> Vector3:
 
 static func lane(point: Vector3) -> Vector3:
 	if absf(point.z)<50.4:
-		point.x=signf(point.x)*clampf(absf(point.x),32.55,35.18)
+		point.x=signf(point.x)*clampf(absf(point.x),P.HALF_WIDTH+.55,P.HALF_WIDTH+3.18)
 	return point
 
 static func separate(point: Vector3,obstacles: Array[Vector3]) -> Vector3:

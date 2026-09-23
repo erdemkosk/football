@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 var game
 var holding := -1
 var hold_age := 0.0
@@ -194,7 +195,7 @@ func update(index: int,delta: float) -> Vector3:
 	if called and p.action_timer<=0:
 		var anticipation: float=clampf(game.flat_distance(p.position,ball)/12,0.12,0.65)
 		target=ball+bv.limit_length(25)*anticipation
-		target=Vector3(clampf(target.x,-30,30),0,clampf(target.z,-48,48))
+		target=Vector3(clampf(target.x,-(P.HALF_WIDTH-2),(P.HALF_WIDTH-2)),0,clampf(target.z,-48,48))
 		p.sprinting=game.flat_distance(p.position,target)>1.4
 		modes[index]="manual_rush"
 	# Outside the penalty area a rushing keeper must use his feet.

@@ -1,4 +1,5 @@
 extends SceneTree
+const P = preload("res://scripts/pitch_dimensions.gd")
 var game
 var failures := 0
 func _initialize() -> void: call_deferred("run")
@@ -15,13 +16,13 @@ func scenario(team: int) -> void:
 	var original := 8 if team==0 else 19
 	var nearby := 17 if team==0 else 6
 	game.players[original].position=Vector3(side*30,0,-19)
-	game.players[nearby].position=Vector3(side*32,0,7)
+	game.players[nearby].position=Vector3(side*(P.HALF_WIDTH+0),0,7)
 	game.players[nearby].energy=0.3
 	# A firm roll travels about 27 m with the new turf resistance.
 	game.ball.place(Vector3(side*33,0.23,-20),Vector3(0,0,13))
 	await physics_frame
 	await physics_frame
-	game.begin_restart("TAÇ",team,Vector3(side*32,0,-20))
+	game.begin_restart("TAÇ",team,Vector3(side*(P.HALF_WIDTH+0),0,-20))
 	var recovery=game.set_pieces.recovery
 	check(recovery.collector==original,"The whistle initially finds the player near the exit point")
 	var selected := false

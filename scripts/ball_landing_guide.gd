@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 ## Read-only help for the ball already in flight, independent of who kicked it.
 const Motion = preload("res://scripts/ball_motion.gd")
 const RADIUS := .22
@@ -14,7 +15,7 @@ func reset() -> void:
 	prediction.clear(); refresh_in=0; age=0; opacity=0; last_velocity=Vector3.ZERO
 
 static func on_pitch(point: Vector3) -> bool:
-	return absf(point.x)<32 and absf(point.z)<50
+	return absf(point.x)<P.HALF_WIDTH and absf(point.z)<50
 
 static func predict(origin: Vector3,velocity: Vector3,spin: float,surface=null) -> Dictionary:
 	var result: Dictionary={}

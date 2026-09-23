@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 ## Complementary off-ball jobs, refreshed at a bounded rate. Jobs persist long
 ## enough to finish a movement; the normal locomotion/stamina systems execute it.
 var game
@@ -60,7 +61,7 @@ func plan(owner: int,support) -> void:
 	var anchors := {
 		"short_outlet":ball+Vector3(-open_side*7,0,-forward*5),
 		"channel_run":ball+Vector3(open_side*8*width,0,forward*depth),
-		"wide_outlet":Vector3(-open_side*25*width,0,ball.z+forward*3)
+		"wide_outlet":Vector3(-open_side*25*P.WIDTH_RATIO*width,0,ball.z+forward*3)
 	}
 	var reserved: Array[Vector3]=[]
 	for index in support.targets:
@@ -76,7 +77,7 @@ func plan(owner: int,support) -> void:
 			var p=game.players[i]
 			for offset in [Vector3.ZERO,Vector3(-3,0,0),Vector3(3,0,0),Vector3(0,0,-forward*3)]:
 				var at: Vector3=anchors[role]+offset
-				at.x=clampf(at.x,-29,29)
+				at.x=clampf(at.x,-(P.HALF_WIDTH-3),(P.HALF_WIDTH-3))
 				at.z=forward*minf(clampf(at.z*forward,-42,44),maxf(0,game.rules.offside_line(team)-.9))
 				var overlaps := false
 				for occupied in reserved:

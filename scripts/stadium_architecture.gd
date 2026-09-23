@@ -1,4 +1,5 @@
 extends Node3D
+const P = preload("res://scripts/pitch_dimensions.gd")
 var team_captions: Array[Label3D] = []
 ## One continuous stadium shell, with the playing surface kept unobstructed.
 const G = preload("res://scripts/geometry.gd")
@@ -22,13 +23,13 @@ func build(crowd) -> void:
 	# Thin roof sheets still shade the seating below, without self-shadow banding.
 	roof.disable_receive_shadows=true
 	var forecourt=G.block(self,Vector3(244,0.18,270),Vector3(0,-0.82,0),G.material(Color("3a493f")))
-	var paving=G.block(self,Vector3(154,0.3,196),Vector3(0,-0.63,0),G.material(Color("555d58")))
+	var paving=G.block(self,Vector3(154+P.EXTRA_WIDTH,0.3,196),Vector3(0,-0.63,0),G.material(Color("555d58")))
 	forecourt.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	paving.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	for side in [-1,1]:
-		grandstand(crowd,side*PI*0.5,112,53,8.6,63,47,164)
-		grandstand(crowd,0 if side>0 else PI,99,69,6.9,82,65,126)
-		for other in [-1,1]: corner(Vector3(side*57,0,other*62))
+		grandstand(crowd,side*PI*0.5,112,53+P.SIDE_SHIFT,8.6,63+P.SIDE_SHIFT,47+P.SIDE_SHIFT,164)
+		grandstand(crowd,0 if side>0 else PI,99+P.EXTRA_WIDTH,69,6.9,82,65,126+P.EXTRA_WIDTH)
+		for other in [-1,1]: corner(Vector3(side*(57+P.SIDE_SHIFT),0,other*62))
 	player_tunnel()
 	broadcast_positions()
 	exterior()
@@ -46,15 +47,16 @@ func grandstand(crowd,angle: float,width: float,start: float,base: float,back: f
 		var y = base+row*0.63
 		var z = start+row*0.95
 		G.block(stand,Vector3(width,0.6,1),Vector3(0,y,z),stone)
-		var count = int(width/0.84)-2
+		var seat_width = width-P.EXTRA_WIDTH if is_end else width
+		var count = int(seat_width/0.84)-2
 		for col in range(count):
-			var x = -width*0.5+1+col*0.84
+			var x = (-seat_width*0.5+1+col*0.84)*width/seat_width
 			if col%22 in [0,1]:
 				G.block(stand,Vector3(0.84,0.025,0.06),Vector3(x,y+0.32,z-0.37),frame)
 				continue
 			crowd.seat(stand.transform*Vector3(x,y+0.3,z),angle,row,col/22)
 		for col in range(22,count,22):
-			var x = -width*0.5+1+col*0.84
+			var x = (-seat_width*0.5+1+col*0.84)*width/seat_width
 			G.rod(stand,Vector3(x,y+0.3,z),Vector3(x,y+1.15,z),0.025,frame)
 			if row<5: G.rod(stand,Vector3(x,y+1.15,z),Vector3(x,y+1.78,z+0.95),0.025,frame)
 	# Dark circulation voids and concrete piers give the upper deck depth.
@@ -71,7 +73,7 @@ func grandstand(crowd,angle: float,width: float,start: float,base: float,back: f
 		G.block(stand,Vector3(0.22,19.8,0.6),Vector3(x,9.9,back),frame)
 		G.block(stand,Vector3(2.2,3.1,0.1),Vector3(x+2.1,1.55,back+0.28),charcoal)
 	var depth = back-lip
-	var inner_width = 94.0 if is_end else 130.0
+	var inner_width = 94.0+P.EXTRA_WIDTH if is_end else 130.0
 	var panels = int(roof_width/7)
 	roof.cull_mode = BaseMaterial3D.CULL_DISABLED
 	var translucent = G.material(Color(0.4,0.55,0.53,0.22),0.6)
@@ -159,6 +161,7 @@ func player_tunnel() -> void:
 	var tunnel = Node3D.new()
 	add_child(tunnel)
 	tunnel.name = "PlayerTunnel"
+	tunnel.position.x=P.SIDE_SHIFT
 	var entrance_floor=G.block(tunnel,Vector3(12.3,0.03,5.4),Vector3(39.2,0.035,0),G.material(Color("334944")))
 	entrance_floor.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	for z in [-3,3]: G.block(tunnel,Vector3(21,3.3,0.23),Vector3(49.15,1.65,z),trim)
@@ -193,7 +196,7 @@ func update_score(score: Array,seconds: float,duration: float) -> void:
 	for text in clock_labels: text.text = time
 
 func broadcast_positions() -> void:
-	for x in [-33.4,33.4]:
+	for x in [-P.HALF_WIDTH-1.4,P.HALF_WIDTH+1.4]:
 		for z in [-44,44]:
 			var pos = Vector3(x,1.35,z)
 			for offset in [Vector3(-0.42,-1.3,0.3),Vector3(0.42,-1.3,0.3),Vector3(0,-1.3,-0.45)]:

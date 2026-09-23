@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 ## Collect at the actual resting ball, relay through the air, then prepare the restart.
 var owner_ref: WeakRef
 var setup:
@@ -138,7 +139,7 @@ func step(delta: float) -> void:
 		var lead: float=clampf(gap/8,0,0.45)
 		destination=ball.position+Vector3(ball.linear_velocity.x,0,ball.linear_velocity.z)*lead
 		destination.y=0
-		destination.x=clampf(destination.x,-35.0,35.0)
+		destination.x=clampf(destination.x,-(P.HALF_WIDTH+3),(P.HALF_WIDTH+3))
 		destination.z=clampf(destination.z,-55.1,55.1)
 		var approach: Vector3=(destination-p.position)*Vector3(1,0,1)
 		if approach.length()>0.35: destination-=approach.normalized()*0.16

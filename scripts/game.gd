@@ -1,4 +1,5 @@
 extends Node3D
+const P = preload("res://scripts/pitch_dimensions.gd")
 const Player = preload("res://scripts/footballer.gd")
 const Ball = preload("res://scripts/ball.gd")
 const Stadium = preload("res://scripts/stadium.gd")
@@ -274,7 +275,7 @@ func make_teams() -> void:
 			p.number = i+1
 			p.keeper = i==0
 			p.display_name = names[i] if team==0 else ["MARC","LUCA","IVAN","ALEX","THEO","RAFA","OMAR","LEO","NICO","ENZO","SAM"][i]
-			p.home = Vector3(formation[i].x,0,formation[i].y)*(1 if team==0 else -1)
+			p.home = Vector3(formation[i].x*P.WIDTH_RATIO,0,formation[i].y)*(1 if team==0 else -1)
 			p.position = p.home
 			p.facing = Vector3.FORWARD if team==0 else Vector3.BACK
 			players.append(p)
@@ -794,7 +795,7 @@ func simulate_match(delta: float) -> void:
 			p.chosen = is_user_player(i)
 			if p.visible:
 				p.step(delta)
-				p.position.x = clampf(p.position.x,-34,34)
+				p.position.x = clampf(p.position.x,-(P.HALF_WIDTH+2),(P.HALF_WIDTH+2))
 				p.position.z = clampf(p.position.z,-51,51)
 		duels.resolve(delta)
 		if state!="playing": return
@@ -1493,9 +1494,11 @@ func update_ai(_delta: float) -> void:
 			var distance = flat_distance(p.position,ball.position)
 			if has_ball:
 				target = ai_attack.carry_target(i)
+				var pressure_read: Dictionary=ai_attack.pressure_read(i)
+				p.sprinting=ai_attack.carry_sprint(i,target,pressure_read)
 				if dribbler==i:
 					for q in players:
-						if q.visible and q.team!=p.team and flat_distance(p.position,q.position)<1.6:
+						if q.visible and q.team!=p.team and flat_distance(p.position,q.position)<1.6 and not p.sprinting:
 							p.protecting=true
 							p.facing=duels.shield_direction(i)
 							break
@@ -1518,7 +1521,7 @@ func update_ai(_delta: float) -> void:
 					if p.number in [2,3,4,5]:
 						var mark = players[(11 if p.team==0 else 0)+8+(p.number%3)]
 						target = target.lerp(mark.position-Vector3(0,0,forward*3),0.30)
-				target.x = clampf(target.x,-29,29)
+				target.x = clampf(target.x,-(P.HALF_WIDTH-3),(P.HALF_WIDTH-3))
 				target.z = clampf(target.z,-43,43)
 		if not p.keeper and i in support.targets and not has_ball and not receiving_pass and not chasing_ball:
 			target=support.targets[i]
@@ -1536,6 +1539,7 @@ func update_ai(_delta: float) -> void:
 		var offset: Vector3 = target-p.position
 		offset.y = 0
 		p.desired = offset.normalized()*clampf(offset.length()/1.4,0,1)
+		if has_ball and not p.keeper: p.desired=ai_attack.carry_movement(i,target)
 		if receiving_pass and not defensive_duty and not (i in second_balls.targets): p.desired=ai_attack.receiving_movement(i,target)
 		if defensive_duty and p.team==1: p.desired=team_tactics.defensive_movement(i,target)
 		if p.protecting: p.desired*=0.45
@@ -1551,13 +1555,13 @@ func update_contacts(delta: float) -> void:
 	for i in range(players.size()):
 		if i!=dribbler and not players[i].dribble_motion.preparing: players[i].dribble_motion.release_collision()
 	if ball.pending_kick or ball.held_by!=null: return
-	if first_touch.airborne():
-		dribbler=-1
-		return
+	if first_touch.airborne(): return
 	# Keep possession through a turn; a nearby opponent can still win the ball.
 	if dribbler>=0:
 		var owner=players[dribbler]
-		if not owner.visible or owner.action_timer>0 or aerial_shot_active(dribbler) or (owner.keeper and not is_user_player(dribbler)) or flat_distance(owner.position,ball.position)>(2.05 if owner.active_sprint else 1.65) or ball.position.y>1.05 or ball.linear_velocity.length()>18 or kick_lock>0 or ball.pending_kick:
+		var settling: bool=first_touch.settling(dribbler)
+		if not owner.visible or owner.action_timer>0 or aerial_shot_active(dribbler) or (owner.keeper and not is_user_player(dribbler)) or flat_distance(owner.position,ball.position)>(2.05 if owner.active_sprint else 1.65) or ball.position.y>(2.0 if settling else 1.05) or ball.linear_velocity.length()>18 or kick_lock>0 or ball.pending_kick:
+			owner.ball_actions.settle_time=0
 			owner.dribble_motion.release_collision()
 			dribbler=-1
 	carrier=dribbler
@@ -1575,10 +1579,10 @@ func update_contacts(delta: float) -> void:
 	var p=players[carrier]
 	possession[p.team]+=delta
 	if carrier!=dribbler:
-		if kick_lock>0 or p.touch_cooldown>0 or p.ball_actions.contact_cooldown>0 or (p.keeper and not is_user_player(carrier)): return
+		if (kick_lock>0 and last_kicker==carrier) or p.touch_cooldown>0 or p.ball_actions.contact_cooldown>0 or (p.keeper and not is_user_player(carrier)): return
 		var extended: bool=nearest_distance>1.12
 		if extended and (nearest_distance>1.34 or ball.position.y>0.7 or (ball.linear_velocity-p.velocity).dot(ball.position-p.position)>0): return
-		if extended and not is_user_player(carrier) and ai_receivers[p.team]==carrier:
+		if extended:
 			var offset: Vector3=(ball.position-p.position)*Vector3(1,0,1)
 			var relative: Vector3=(ball.linear_velocity-p.velocity)*Vector3(1,0,1)
 			var meeting := clampf(-offset.dot(relative)/maxf(.01,relative.length_squared()),0,.12)
@@ -1586,11 +1590,15 @@ func update_contacts(delta: float) -> void:
 			# that would otherwise go past, instead of spilling every easy pass.
 			if ball.position.y<.55 and (offset+relative*meeting).length()<1.0: return
 		var speed: float=ball.linear_velocity.length()
-		if speed>16 and not (ai_receivers[p.team]==carrier and last_touch==p.team and speed<27):
+		var routine_control: bool=ball.position.y<.7 and speed<25 and (ball.linear_velocity-p.velocity).dot(ball.position-p.position)<.3
+		if speed>16 and not routine_control and not (ai_receivers[p.team]==carrier and last_touch==p.team and speed<27):
 			if nearest_distance<0.65:
 				if not rules.before_touch(carrier,false): return
 				last_touch=p.team
 				team_control.touched(carrier)
+				# Let a point-blank hard impact finish bouncing before attempting
+				# a second control; the solver first reports its slowed contact speed.
+				p.touch_cooldown=maxf(p.touch_cooldown,.18)
 			return
 		if not rules.before_touch(carrier): return
 		reactions.received(carrier)
@@ -1608,6 +1616,7 @@ func update_contacts(delta: float) -> void:
 			announce("İLK DOKUNUŞ · TOP SENDE")
 	elif not rules.before_touch(carrier): return
 	team_control.touched(carrier)
+	if first_touch.settle(carrier): return
 	if p.ball_actions.control_grace>0 or skills.active.has(carrier): return
 	p.dribble_motion.carry(self,carrier,delta)
 
@@ -1629,12 +1638,12 @@ func check_boundaries() -> void:
 					var scoring_team := 0 if side==int(attack_sign(0)) else 1
 					if rules.allows_goal(scoring_team): goal(scoring_team)
 					return
-	if absf(current.x)>32.22:
-		begin_restart("TAÇ",1-last_touch,Vector3(signf(current.x)*32,0,clampf(current.z,-49,49)))
+	if absf(current.x)>P.HALF_WIDTH+Ball.RADIUS:
+		begin_restart("TAÇ",1-last_touch,Vector3(signf(current.x)*P.HALF_WIDTH,0,clampf(current.z,-49,49)))
 	elif absf(current.z)>50.22:
 		var defending_team = 1 if current.z*attack_sign(0)>0 else 0
 		if last_touch==defending_team:
-			begin_restart("KORNER",1-defending_team,Vector3(signf(current.x+0.001)*31.6,0,signf(current.z)*49.6))
+			begin_restart("KORNER",1-defending_team,Vector3(signf(current.x+0.001)*(P.HALF_WIDTH-.4),0,signf(current.z)*49.6))
 		else:
 			if absf(current.x)<9 and ball.linear_velocity.length()>8:
 				stadium.react("miss",last_touch,current)
@@ -1697,7 +1706,7 @@ func begin_restart(kind: String,team: int,point: Vector3) -> void:
 	broadcast.restart()
 	restart_team = team
 	restart_type = kind
-	restart_point = Vector3(clampf(point.x,-32,32),0,clampf(point.z,-49.6,49.6))
+	restart_point = Vector3(clampf(point.x,-P.HALF_WIDTH,P.HALF_WIDTH),0,clampf(point.z,-49.6,49.6))
 	if kind=="KALE VURUŞU": restart_point=Vector3(0,0,-attack_sign(team)*45)
 	if kind=="PENALTI": restart_point=Vector3(0,0,attack_sign(team)*39)
 	# Indirect kicks inside the goal area are moved to its parallel boundary.

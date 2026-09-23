@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 ## Team-level duties are assigned once; individual AI follows them without kicking.
 var game
 var targets: Dictionary = {}
@@ -61,7 +62,7 @@ func update(delta: float) -> void:
 		var group: int=game.management.slot_role(i)
 		var depth: float=line+([0,0,11,22][group])
 		var bias: float=game.opponent_coach.wing_bias*3.0 if team==1 else 0.0
-		var at := Vector3(clampf(p.home.x*.78+ball.x*.24+bias,-27,27),0,forward*clampf(depth,-43,36))
+		var at := Vector3(clampf(p.home.x*.78+ball.x*.24+bias,-(P.HALF_WIDTH-5),(P.HALF_WIDTH-5)),0,forward*clampf(depth,-43,36))
 		targets[i]=at; roles[i]="block"
 		var cost: float=game.flat_distance(p.position,ball)+(1-p.energy)*3
 		if team==1:
@@ -73,7 +74,7 @@ func update(delta: float) -> void:
 		if cost<closest and p.action_timer<=0: closest=cost; pressers[team]=i
 	var presser: int=pressers[team]
 	if presser<0: return
-	var trigger: bool=absf(ball.x)>22 or carrier.receive_timer>0 or carrier.energy<.28
+	var trigger: bool=absf(ball.x)>22*P.WIDTH_RATIO or carrier.receive_timer>0 or carrier.energy<.28
 	var press := press_level(team)
 	if team==1 and game.opponent_coach.level()==0: press=mini(press,1)
 	var reach: float=[8.0,14.0,24.0][press]+(5 if trigger else 0)
@@ -101,7 +102,7 @@ func update(delta: float) -> void:
 		var cost: float=game.flat_distance(q.position,hole)+(7 if game.management.slot_role(i)==3 else 0)
 		if cost<cover_cost: covering=i; cover_cost=cost
 	if covering>=0:
-		targets[covering]=Vector3(clampf(hole.x,-25,25),0,forward*clampf(hole.z*forward,-44,30))
+		targets[covering]=Vector3(clampf(hole.x,-(P.HALF_WIDTH-7),(P.HALF_WIDTH-7)),0,forward*clampf(hole.z*forward,-44,30))
 		roles[covering]="cover"
 	# The remaining midfielders block lanes toward nearby attacking receivers.
 	var assigned: Array=[]
@@ -121,7 +122,7 @@ func update(delta: float) -> void:
 			roles[i]="screen"
 	if team==1: opponent_duties(owner,presser,covering,trigger,in_box)
 	for i in targets:
-		targets[i].x=clampf(targets[i].x,-31,31)
+		targets[i].x=clampf(targets[i].x,-(P.HALF_WIDTH-1),(P.HALF_WIDTH-1))
 		targets[i].z=clampf(targets[i].z,-48,48)
 
 func defensive_movement(index: int,target: Vector3) -> Vector3:
@@ -181,5 +182,5 @@ func opponent_duties(owner: int,presser: int,covering: int,trigger: bool,in_box:
 			assigned.append(runner)
 			var q=game.players[runner]
 			var target: Vector3=q.position+q.velocity*([.08,.25,.42][brain.level()])+Vector3(0,0,-forward*1.3)
-			targets[i]=Vector3(clampf(target.x,-28,28),0,forward*clampf(target.z*forward,-47,15))
+			targets[i]=Vector3(clampf(target.x,-(P.HALF_WIDTH-4),(P.HALF_WIDTH-4)),0,forward*clampf(target.z*forward,-47,15))
 			roles[i]="recover" if game.players[i].position.z*forward>target.z*forward+2 else "track"

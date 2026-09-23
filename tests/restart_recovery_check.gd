@@ -1,4 +1,5 @@
 extends SceneTree
+const P = preload("res://scripts/pitch_dimensions.gd")
 var game
 var failures := 0
 var visual := false
@@ -88,10 +89,10 @@ func run() -> void:
 	game=load("res://main.tscn").instantiate()
 	root.add_child(game)
 	await frames(3)
-	await scenario("TAÇ",0,Vector3(32,0,10),Vector3(32.5,3,10),Vector3(6,2,3),8,Vector3(28,0,8))
-	await scenario("KORNER",0,Vector3(31.6,0,-49.6),Vector3(25,3,-51),Vector3(6,2,-6),8,Vector3(23,0,-43))
+	await scenario("TAÇ",0,Vector3((P.HALF_WIDTH+0),0,10),Vector3((P.HALF_WIDTH+0.5),3,10),Vector3(6,2,3),8,Vector3(28,0,8))
+	await scenario("KORNER",0,Vector3((P.HALF_WIDTH-0.4),0,-49.6),Vector3(25,3,-51),Vector3(6,2,-6),8,Vector3(23,0,-43))
 	await scenario("KALE VURUŞU",1,Vector3(0,0,-45),Vector3(0,1,-53.2),Vector3(1,1,-2),11,Vector3(0,0,-46))
-	await scenario("TAÇ",1,Vector3(-32,0,-12),Vector3(-32.5,4,-12),Vector3(-7,1,-2),18,Vector3(-27,0,-9))
+	await scenario("TAÇ",1,Vector3(-(P.HALF_WIDTH+0),0,-12),Vector3(-(P.HALF_WIDTH+0.5),4,-12),Vector3(-7,1,-2),18,Vector3(-27,0,-9))
 	await scenario("KALE VURUŞU",1,Vector3(0,0,-45),Vector3(1.27,0.23,-50.64),Vector3(0,0,-3),11,Vector3(6,0,-52))
 	game.free()
 	print("RESTART RECOVERY CHECK: %d failures" % failures)

@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 ## Close control uses a damped ground force and animated boot contacts.
 ## Sprinting loosens the guide; a released ball is an ordinary rigid body.
 const BOOT := Vector3(0,-.42,-.05)
@@ -127,7 +128,8 @@ func carry(game,index: int,_delta: float) -> void:
 	# Keep a controlled ball in front of the standing player, not tied to the
 	# bobbing toe. The small stride pulse preserves visible touches without jitter.
 	var acquired: bool=contacts>0 or p.ball_actions.contact_cooldown>0
-	var guided: bool=acquired and offset.length()<1.30 and incoming.length()<15.5 and absf(ball.position.x)<32.2 and absf(ball.position.z)<50.2
+	var settling: bool=p.receive_timer>0 and p.ball_actions.contact_cooldown>0
+	var guided: bool=acquired and offset.length()<(1.45 if settling else 1.30) and incoming.length()<15.5 and absf(ball.position.x)<P.HALF_WIDTH+.2 and absf(ball.position.z)<50.2
 	if guided:
 		var technique: float=clampf((float(p.attributes.control)-45)/50,0,1)
 		var reach: float=(.82 if p.active_sprint else .51)+(.035 if moving else 0.0)*sin(p.run_phase*2)

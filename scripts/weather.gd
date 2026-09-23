@@ -1,4 +1,5 @@
 extends Node3D
+const P = preload("res://scripts/pitch_dimensions.gd")
 ## One surface model drives shading, ball response, player grip and persistent marks.
 const MARK_LIMIT := 3072
 const SPRAY_LIMIT := 96
@@ -29,7 +30,7 @@ func _ready() -> void:
 	drop.size=Vector3(0.018,0.52,0.018)
 	rain_mesh=instances(drop,rain_material,2200)
 	for i in range(2200):
-		rain_mesh.multimesh.set_instance_transform(i,Transform3D(Basis.IDENTITY,Vector3(rng.randf_range(-35,35),rng.randf_range(0,18),rng.randf_range(-54,54))))
+		rain_mesh.multimesh.set_instance_transform(i,Transform3D(Basis.IDENTITY,Vector3(rng.randf_range(-P.HALF_WIDTH-3,P.HALF_WIDTH+3),rng.randf_range(0,18),rng.randf_range(-54,54))))
 		rain_mesh.multimesh.set_instance_custom_data(i,Color(rng.randf(),0,0,0))
 	mark_material.shader=load("res://shaders/surface_mark.gdshader")
 	var sole := PlaneMesh.new()
@@ -70,7 +71,7 @@ func instances(mesh: Mesh,material: Material,count: int) -> MultiMeshInstance3D:
 	node.multimesh=batch
 	node.material_override=material
 	node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	node.custom_aabb=AABB(Vector3(-40,-3,-60),Vector3(80,25,120))
+	node.custom_aabb=AABB(Vector3(-P.HALF_WIDTH-8,-3,-60),Vector3(P.WIDTH+16,25,120))
 	add_child(node)
 	return node
 
@@ -97,7 +98,7 @@ func reset_match() -> void:
 	select(preset,true)
 
 func mud_at(point: Vector3) -> float:
-	if absf(point.x)>32 or absf(point.z)>50: return 0.0
+	if absf(point.x)>P.HALF_WIDTH or absf(point.z)>50: return 0.0
 	var patch := 0.0
 	for area in PATCHES:
 		var distance := Vector2((point.x-area.x)/area.z,(point.z-area.y)/area.w).length()
@@ -199,7 +200,7 @@ func trail(from: Vector3,to: Vector3,width: float,color: Color) -> void:
 	stamp((from+to)*0.5,travel.normalized(),Vector2(width,travel.length()+0.008),color,true)
 
 func stamp(at: Vector3,direction: Vector3,size: Vector2,color: Color,is_trail: bool=false) -> void:
-	if absf(at.x)>32 or absf(at.z)>50: return
+	if absf(at.x)>P.HALF_WIDTH or absf(at.z)>50: return
 	var basis := Basis(Vector3.UP,atan2(direction.x,direction.z))*Basis.from_scale(Vector3(size.x,1,size.y))
 	marks.multimesh.set_instance_transform(mark_cursor,Transform3D(basis,Vector3(at.x,0.023+float(mark_cursor%5)*0.0002,at.z)))
 	marks.multimesh.set_instance_color(mark_cursor,color)
@@ -209,7 +210,7 @@ func stamp(at: Vector3,direction: Vector3,size: Vector2,color: Color,is_trail: b
 	marks.multimesh.visible_instance_count=mark_count
 
 func splash(at: Vector3,velocity: Vector3,count: int,mud: float) -> void:
-	if absf(at.x)>32 or absf(at.z)>50: return
+	if absf(at.x)>P.HALF_WIDTH or absf(at.z)>50: return
 	for i in range(count):
 		var drop: Dictionary=spray_data[spray_cursor]
 		drop.position=Vector3(at.x,0.12,at.z)

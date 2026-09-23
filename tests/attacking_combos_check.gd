@@ -38,6 +38,12 @@ func setup(second_half: bool=false) -> void:
 	game.rules.reset()
 func combo() -> void:
 	button(JOY_BUTTON_LEFT_SHOULDER); tap(JOY_BUTTON_A); button(JOY_BUTTON_LEFT_SHOULDER,false)
+func contact() -> void:
+	# A kick is committed by the animated boot, after the button queues it.
+	for frame in range(20):
+		if game.kick_contact.pending.is_empty(): return
+		var actor=game.players[game.kick_contact.pending.index]
+		game.kick_contact.prepare(DT); actor.step(DT); game.kick_contact.resolve()
 func capture(name: String) -> void:
 	if "--visual" not in OS.get_cmdline_user_args(): return
 	game.camera.size=32; game.camera.position=Vector3(12,45,0); game.camera.look_at(Vector3(12,0,-24))
@@ -53,6 +59,7 @@ func run() -> void:
 	check(game.controlled==9,"Holding LB in possession leaves the passer selected for the chord")
 	button(JOY_BUTTON_A)
 	check(game.passes[0]==1 and game.shots[0]==0 and not game.charging,"LB + A makes a ground one-two instead of a normal pass")
+	contact(); game.team_control.update(DT)
 	check(game.last_kicker==9 and game.controlled==6 and game.ball.kick_velocity.y<0.5,"The original passer plays physically and control moves to the wall player")
 	check(game.support.runs.has(9) and game.support.runs[9].get("explicit",false),"Only the original passer receives the explicit one-two run")
 	var target: Vector3=game.support.runs[9].target
@@ -97,6 +104,7 @@ func run() -> void:
 	var chip_aim: Vector3=game.shot_direction
 	game.charge=0.55
 	button(JOY_BUTTON_X,false)
+	contact()
 	var chip: Vector3=game.ball.kick_velocity
 	check(game.shots[0]==1 and chip.y>6.5 and chip.length()<24 and is_zero_approx(game.ball.spin),"Releasing X chips the ball over the keeper line without curl")
 	check((chip*Vector3(1,0,1)).normalized().distance_to(chip_aim)<0.0001,"The chip keeps the aimed heading")
@@ -114,8 +122,10 @@ func run() -> void:
 	game.update_control(DT)
 	check(game.players[9].shot_preparation>0,"The waiting cross has a visible kicking preparation")
 	game.controller.combos.update(0.24)
+	contact()
 	check(game.passes[0]==1 and game.ball.kick_velocity.y>3,"One B still releases a normal airborne cross after the double-tap window")
 	setup(); tap(JOY_BUTTON_B); game.controller.combos.update(0.1); tap(JOY_BUTTON_B)
+	contact()
 	var velocity: Vector3=game.ball.kick_velocity
 	check(game.passes[0]==1 and velocity.y<0.2 and velocity.length()>=27,"Two quick B presses produce one hard ground cross")
 	check(game.controlled==9 and game.shots[0]==0,"Driven cross keeps the passer selected and counts as a pass")
@@ -123,6 +133,7 @@ func run() -> void:
 	check(game.passes[0]==1 and game.players[6].pose!="slide","A third rapid tap cannot cause a second kick or an accidental receiver slide")
 	setup(); button(JOY_BUTTON_B); button(JOY_BUTTON_B)
 	game.controller.combos.update(0.24); button(JOY_BUTTON_B,false)
+	contact()
 	check(game.passes[0]==1 and game.ball.kick_velocity.y>3,"Holding B is a single lob, not a double tap")
 	setup(); tap(JOY_BUTTON_B); game.ball.position+=Vector3(6,0,0); game.controller.combos.update(0.1); tap(JOY_BUTTON_B)
 	check(game.passes[0]==0 and game.players[9].pose!="slide","Losing the ball during the wind-up cancels the cross without a remote kick or slide")
@@ -131,6 +142,7 @@ func run() -> void:
 	setup(); tap(JOY_BUTTON_B); game.controller.connection_changed(0,false); game.controller.combos.update(0.5)
 	check(game.state=="paused" and game.passes[0]==0,"Disconnect discards the pending cross")
 	setup(); tap(JOY_BUTTON_B); button(JOY_BUTTON_X,true,1); game.controller.combos.update(0.24)
+	contact()
 	check(game.passes[0]==1 and game.ball.kick_velocity.y>3,"A second controller cannot alter or cancel the first controller's gesture")
 	setup(); game.players[9].position+=Vector3(8,0,0); game.dribbler=6
 	tap(JOY_BUTTON_B)
@@ -144,6 +156,7 @@ func run() -> void:
 	setup(); game.ball.freeze=false; game.ball.place(Vector3(20,0.23,-15.75))
 	await physics_frame; await physics_frame
 	tap(JOY_BUTTON_B); game.controller.combos.update(0.1); tap(JOY_BUTTON_B)
+	contact()
 	var launch: Vector3=game.ball.kick_velocity
 	game.players[6].position.x=-22
 	var peak := 0.0

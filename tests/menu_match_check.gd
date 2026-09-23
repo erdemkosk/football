@@ -131,7 +131,7 @@ func run() -> void:
 	game.frontend.confirm()
 	check(game.state=="ceremony" and not game.audio.background and game.audio.match_audio,"A real match keeps its ceremony and restores normal match audio")
 	game.ceremony.finish(true)
-	check(game.state=="playing" and game.is_user_player(game.controlled),"Real match returns the team to user control")
+	check(game.state in ["restart","set_piece"] and game.restart_type=="SANTRA" and game.is_user_player(game.controlled),"Real match returns the team to user control at the opening kickoff")
 	game.return_menu()
 	await advance(1)
 	check(game.state=="menu" and game.menu_match.phase=="playing" and game.ball.active,"Returning from a real match starts the live menu again")

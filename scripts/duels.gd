@@ -176,24 +176,6 @@ func ai_can_challenge(index: int,owner: int,sliding: bool=false) -> bool:
 	return not sliding or (ball_opened(owner) and game.ball.position.y<0.65 and start.distance_to(ball)<2.2)
 
 func switch_choice() -> int:
-	var direction: Vector3=game.movement_input()
-	if direction.length()>.3:
-		var directional: int=game.defending.directional_choice(direction)
-		if directional>=0: return directional
-	var threat: Vector3=game.ball.position+game.ball.linear_velocity.limit_length(20)*0.38
-	if game.dribbler>=0 and game.players[game.dribbler].team==1:
-		threat=game.players[game.dribbler].position+game.players[game.dribbler].velocity*0.5
-	var best := -1
-	var best_cost := INF
-	var input: Vector3=game.movement_input()
-	for i in range(1,11):
-		var p=game.players[i]
-		if not p.visible or i==game.controlled: continue
-		var cost: float=game.flat_distance(p.position,threat)
-		if game.last_touch==1 and p.position.z*game.attack_sign(1)>threat.z*game.attack_sign(1): cost-=3.0
-		if p.action_timer>0: cost+=10
-		cost+=(1-p.energy)*2
-		var relative: Vector3=(p.position-game.players[game.controlled].position)*Vector3(1,0,1)
-		if input.length()>0 and relative.length()>0.1: cost-=input.normalized().dot(relative.normalized())*5
-		if cost<best_cost: best_cost=cost; best=i
-	return best
+	# LB/Q means the next nearby challenger. Directional selection belongs to
+	# the right stick, so running with the left stick cannot redirect this button.
+	return game.team_control.switch_choice()

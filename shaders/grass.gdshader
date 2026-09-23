@@ -12,12 +12,13 @@ float noise(vec2 p) {
  vec2 i=floor(p); vec2 f=fract(p); f=f*f*(3.0-2.0*f);
  return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);
 }
+uniform vec2 half_pitch = vec2(36.0, 50.0);
 void vertex(){world_pos=(MODEL_MATRIX*vec4(VERTEX,1.0)).xyz;}
 void fragment(){
  vec2 p=world_pos.xz;
  // Broad, low-contrast mowing bands; no hard edge or subpixel normal noise.
  float stripe=smoothstep(-0.16,0.16,sin((p.y+50.0)*0.376991));
- if(abs(p.x)>32.0 || abs(p.y)>50.0) stripe=0.35;
+ if(abs(p.x)>half_pitch.x || abs(p.y)>half_pitch.y) stripe=0.35;
  vec3 grass=mix(vec3(0.116,0.213,0.133),vec3(0.128,0.231,0.146),stripe);
  float footprint=max(length(dFdx(p)),length(dFdy(p)));
  float detail=1.0-smoothstep(0.06,0.15,footprint);
@@ -29,7 +30,7 @@ void fragment(){
  wear+=play_wear*0.08*(0.45+noise(p*0.55)*0.55);
  float mud=max(max(patch(p,vec4(0,-47,8,5)),patch(p,vec4(0,47,8,5))),patch(p,vec4(0,0,7,5)));
  mud=max(mud,max(max(patch(p,vec4(-23,-17,6,10)),patch(p,vec4(22,20,7,9))),patch(p,vec4(9,-31,5,6))));
- if(abs(p.x)>32.0 || abs(p.y)>50.0) mud=0.0;
+ if(abs(p.x)>half_pitch.x || abs(p.y)>half_pitch.y) mud=0.0;
  mud*=smoothstep(0.25,0.95,wetness);
  float broken=smoothstep(0.18,0.78,noise(p*1.15)*0.7+noise(p*3.0)*0.3);
  float puddle=smoothstep(0.58,0.86,noise(p*0.75))*mud;

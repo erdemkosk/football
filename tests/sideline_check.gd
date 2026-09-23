@@ -1,4 +1,5 @@
 extends SceneTree
+const P = preload("res://scripts/pitch_dimensions.gd")
 var game
 var sidelines
 var failures := 0
@@ -58,8 +59,8 @@ func run() -> void:
 	var bounds_ok:=true
 	for actor in sidelines.actors:
 		if actor.role in ["ball_boy","photographer","fourth"]:
-			if absf(actor.position.x)<32.2 and absf(actor.position.z)<50.2: bounds_ok=false
-		elif actor.position.x<32.4 or actor.position.x>38.6: bounds_ok=false
+			if absf(actor.position.x)<P.HALF_WIDTH+.2 and absf(actor.position.z)<50.2: bounds_ok=false
+		elif actor.position.x<P.HALF_WIDTH+.4 or actor.position.x>P.HALF_WIDTH+6.6: bounds_ok=false
 	check(bounds_ok,"All sideline personnel stay outside the playing field")
 	advance(16)
 	check(sub.seated>0.99 and sub.position.distance_to(sub.home)<0.02,"Substitutes return to their seats after the reaction")
@@ -67,7 +68,7 @@ func run() -> void:
 	advance(0.7)
 	check(sub.mode=="encourage" and other.mode=="disappointed","Saves bring encouragement and disappointment to the correct teams")
 	sidelines.reset()
-	var restart_at := Vector3(32,0,-18)
+	var restart_at := Vector3((P.HALF_WIDTH+0),0,-18)
 	sidelines.update(0.8,restart_at,Vector3.ZERO,0,false,"TAÇ",restart_at)
 	var walker=sidelines.collector_for("TAÇ",restart_at)
 	check(walker!=null and walker.mode=="collect" and walker.position.distance_to(walker.home)>0.15,"A throw-in sends the nearest ball boy along the touchline")
@@ -76,13 +77,13 @@ func run() -> void:
 	game.training=false
 	game.state="restart"
 	game.restart_type="TAÇ"
-	game.restart_point=Vector3(32,0,0)
+	game.restart_point=Vector3((P.HALF_WIDTH+0),0,0)
 	for p in game.players:
 		p.position=Vector3(0,0,0)
 		p.visible=true
 	game.ball.release_hold()
-	game.ball.position=Vector3(33.2,0.23,0)
-	game.ball.place(Vector3(33.2,0.23,0))
+	game.ball.position=Vector3((P.HALF_WIDTH+1.2),0.23,0)
+	game.ball.place(Vector3((P.HALF_WIDTH+1.2),0.23,0))
 	game.ball.linear_velocity=Vector3.ZERO
 	game.ball.pending_reset=false
 	var liner=sidelines.actors.filter(func(a): return a.role=="ball_boy" and absf(a.home.z)<1.0 and a.home.x>0)[0]

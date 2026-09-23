@@ -12,6 +12,7 @@ var stretch := 0.0
 var receive_speed := 0.0
 var receive_start: Array[Quaternion] = []
 var control_grace := 0.0
+var settle_time := 0.0
 var contact_cooldown := 0.0
 var contact_pending := false
 var contact_target := Vector3.ZERO
@@ -31,7 +32,7 @@ var receive_distance := 0.0
 
 func reset(p) -> void:
 	foot=1; receive_foot=1; kick_turn=0; difficulty=0
-	control_grace=0; contact_cooldown=0
+	control_grace=0; contact_cooldown=0; settle_time=0
 	p.receive_timer=0; p.receive_style=""
 	receive_start.clear()
 	contact_pending=false; support_foot=-1; support_age=1; support_weight=0; release_age=1
@@ -40,6 +41,7 @@ func reset(p) -> void:
 
 func update(delta: float) -> void:
 	control_grace=maxf(0,control_grace-delta)
+	settle_time=maxf(0,settle_time-delta)
 	contact_cooldown=maxf(0,contact_cooldown-delta)
 	support_age+=delta
 	release_age+=delta

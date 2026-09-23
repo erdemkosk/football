@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 ## Deterministic restart formations, then a protected, player-controlled kick.
 const Passing = preload("res://scripts/passing.gd")
 const Recovery = preload("res://scripts/restart_recovery.gd")
@@ -55,7 +56,7 @@ func prepare() -> void:
 			if kind=="PENALTI": rating = 0 if p.number==10 else 100+p.number
 			if rating<nearest: nearest=rating; taker=i
 		var pos: Vector3 = p.home+Vector3(point.x*0.16,0,point.z*0.34)
-		pos.x = clampf(pos.x,-29,29)
+		pos.x = clampf(pos.x,-(P.HALF_WIDTH-3),(P.HALF_WIDTH-3))
 		pos.z = clampf(pos.z,-44,44)
 		if p.keeper: pos = Vector3(clampf(point.x*0.06,-2,2),0,-game.attack_sign(p.team)*46)
 		targets[i] = pos
@@ -106,7 +107,7 @@ func prepare() -> void:
 			targets[attackers[j]] = Vector3(point.x-signf(point.x)*(7+j*5),0,clampf(point.z+(j-1)*7,-46,46))
 	if kind=="KALE VURUŞU":
 		for j in range(mini(4,attackers.size())):
-			targets[attackers[j]] = Vector3(-23+j*15,0,-forward*(36 if j%2 else 29))
+			targets[attackers[j]] = Vector3((-23+j*15)*P.WIDTH_RATIO,0,-forward*(36 if j%2 else 29))
 	if kind=="SANTRA":
 		for i in targets:
 			var p=game.players[i]
@@ -134,7 +135,7 @@ func prepare() -> void:
 		targets[i] = pos
 	targets[taker] = point-direction*0.92
 	if kind=="TAÇ":
-		targets[taker]=Vector3(signf(point.x)*32.32,0,point.z)
+		targets[taker]=Vector3(signf(point.x)*(P.HALF_WIDTH+.32),0,point.z)
 	for i in targets:
 		var p = game.players[i]
 		p.desired=Vector3.ZERO
@@ -160,7 +161,7 @@ func outside_circle(pos: Vector3,center: Vector3,radius: float) -> Vector3:
 	var cost := INF
 	for step in range(36):
 		var candidate := center+delta.normalized().rotated(Vector3.UP,step*TAU/36)*radius
-		if absf(candidate.x)>31 or absf(candidate.z)>49: continue
+		if absf(candidate.x)>P.HALF_WIDTH-1 or absf(candidate.z)>49: continue
 		var d := candidate.distance_to(pos)
 		if d<cost: cost=d; best=candidate
 	return best if cost<INF else pos

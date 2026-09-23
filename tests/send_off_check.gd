@@ -1,4 +1,5 @@
 extends SceneTree
+const P = preload("res://scripts/pitch_dimensions.gd")
 var game
 var failures := 0
 var visual := false
@@ -80,7 +81,7 @@ func run() -> void:
 		if was_blocking:
 			waited=waited and game.state=="restart"
 			dead_ball_moved=dead_ball_moved or game.ball.position.distance_to(ball_start)>0.5
-		if entry.phase=="exit" and actor.position.x>=33.3 and not crossed:
+		if entry.phase=="exit" and actor.position.x>=P.HALF_WIDTH+1.3 and not crossed:
 			crossed=true
 			check(game.referees.ready_for_restart(),"Referee permits play after the player crosses the touchline")
 			check(absf(actor.energy-stamina)<0.00001,"Even an exhausted player leaves without losing stamina")
@@ -145,7 +146,7 @@ func run() -> void:
 		game.players[20].position=point+direction*1.2
 		game.players[8].position=point+Vector3(2.2,0,1.2)
 		game.players[19].position=point-direction*3
-		game.players[7].position=point.lerp(Vector3(33.8,0,clampf(point.z,-46,46)),0.7)
+		game.players[7].position=point.lerp(Vector3(P.HALF_WIDTH+1.8,0,clampf(point.z,-46,46)),0.7)
 		game.referees.actors[0].position=point+Vector3(-10,0,-5)
 		game.ball.place(point+Vector3(2,0.3,0))
 		if scenario==4: game.players[0].receive_impact(Vector3.FORWARD,0.4)

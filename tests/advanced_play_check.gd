@@ -108,6 +108,32 @@ func run() -> void:
 		check(lean<.40,"Skill balance stays anatomically bounded throughout the animation")
 		if number==3: check(peak>.35,"Scoop physically lifts the ball")
 	check(outputs[0].distance_to(outputs[1])>.15 and outputs[1].distance_to(outputs[2])>.10,"Skill types produce distinct physical ball paths")
+	var flick_peak := {"rainbow":0.0,"heel":0.0,"flick":0.0}
+	for kind in ["rainbow","heel","flick"]:
+		await reset()
+		var energy: float=p.energy
+		var before: Vector3=game.ball.position
+		key({"rainbow":KEY_6,"heel":KEY_7,"flick":KEY_8}[kind]); key({"rainbow":KEY_6,"heel":KEY_7,"flick":KEY_8}[kind],false)
+		check(game.skills.active.has(9) and p.skill_move.kind==kind,"Keyboard starts a "+kind)
+		check(game.ball.position==before and p.energy<energy,kind+" spends stamina without teleporting the ball")
+		for frame in range(110):
+			await tick(); flick_peak[kind]=maxf(flick_peak[kind],game.ball.position.y)
+		check(game.skills.active.is_empty() and p.skill_move.is_empty(),kind+" ends and returns normal dribbling")
+	check(flick_peak.rainbow>.80,"Rainbow lifts the ball over the player")
+	check(flick_peak.flick>.45,"Flick up pops the ball for a follow-up")
+	check(flick_peak.rainbow>flick_peak.heel,"Rainbow climbs higher than a heel flick")
+	await reset()
+	game.controller.held[100+JOY_AXIS_TRIGGER_LEFT]=KEY_E
+	game.advanced_controls.skill_gesture(-p.facing)
+	check(game.skills.active.has(9) and p.skill_move.kind=="rainbow","LT + right-stick back starts a rainbow")
+	await reset()
+	game.controller.held[100+JOY_AXIS_TRIGGER_LEFT]=KEY_E
+	game.advanced_controls.skill_gesture(p.facing)
+	check(game.skills.active.has(9) and p.skill_move.kind=="heel","LT + right-stick forward starts a heel flick")
+	await reset()
+	game.controller.held[100+JOY_AXIS_TRIGGER_LEFT]=KEY_E
+	game.advanced_controls.skill_gesture(p.facing.cross(Vector3.UP))
+	check(game.skills.active.has(9) and p.skill_move.kind=="flick","LT + right-stick lateral starts a flick up")
 	await reset()
 	game.controller.adopt_device(0,"Xbox Controller")
 	axis(JOY_AXIS_RIGHT_X,1); axis(JOY_AXIS_RIGHT_X,0); await tick(25)

@@ -1,4 +1,5 @@
 extends Node3D
+const P = preload("res://scripts/pitch_dimensions.gd")
 const G = preload("res://scripts/geometry.gd")
 const Actor = preload("res://scripts/sideline_actor.gd")
 var actors: Array[Node3D] = []
@@ -54,16 +55,16 @@ func _ready() -> void:
 	reset()
 
 func build_touchline() -> void:
-	for corner in [Vector3(35.1,0,-48.6),Vector3(35.1,0,48.6),Vector3(-35.1,0,-48.6),Vector3(-35.1,0,48.6),Vector3(35.1,0,0),Vector3(-35.1,0,0)]:
+	for corner in [Vector3((P.HALF_WIDTH+3.1),0,-48.6),Vector3((P.HALF_WIDTH+3.1),0,48.6),Vector3(-(P.HALF_WIDTH+3.1),0,-48.6),Vector3(-(P.HALF_WIDTH+3.1),0,48.6),Vector3((P.HALF_WIDTH+3.1),0,0),Vector3(-(P.HALF_WIDTH+3.1),0,0)]:
 		add_actor(0 if corner.z<0 else 1,"ball_boy",30+actors.size(),corner)
-	add_actor(0,"fourth",40,Vector3(38.35,0,0))
-	add_actor(0,"photographer",41,Vector3(33.7,0,-22.4))
+	add_actor(0,"fourth",40,Vector3((P.HALF_WIDTH+6.35),0,0))
+	add_actor(0,"photographer",41,Vector3((P.HALF_WIDTH+1.7),0,-22.4))
 
 func build_dugout(team: int) -> void:
 	var z := -12.0 if team==0 else 12.0
 	var shelter := Node3D.new()
 	add_child(shelter)
-	shelter.position = Vector3(37.15,0,z)
+	shelter.position = Vector3((P.HALF_WIDTH+5.15),0,z)
 	shelter.rotation.y = PI*0.5
 	var frame := G.material(Color("637878"),0.42)
 	var trim := G.material(Color("244d43") if team==0 else Color("804738"))
@@ -103,18 +104,18 @@ func build_dugout(team: int) -> void:
 			G.rod(shelter,Vector3(x+edge,0.12,0.20),Vector3(x+edge,0.73,0.20),0.024,frame)
 			G.rod(shelter,Vector3(x+edge,0.73,0.20),Vector3(x+edge,0.73,-0.25),0.024,frame)
 		add_actor(team,"substitute",12+i,shelter.to_global(Vector3(x,0.04,0.04)))
-	add_actor(team,"coach",24+team,Vector3(33.75,0,z))
-	add_actor(team,"assistant",26+team,Vector3(34.65,0,z+4.6))
-	add_actor(team,"physio",28+team,Vector3(37.1,0,z-5.9))
-	G.block(self,Vector3(0.62,0.48,0.63),Vector3(37.2,0.24,z-5.9),chair)
-	var kit = G.block(self,Vector3(0.45,0.36,0.65),Vector3(36.6,0.22,z-5.65),G.material(Color("a05543")))
+	add_actor(team,"coach",24+team,Vector3((P.HALF_WIDTH+1.75),0,z))
+	add_actor(team,"assistant",26+team,Vector3((P.HALF_WIDTH+2.65),0,z+4.6))
+	add_actor(team,"physio",28+team,Vector3((P.HALF_WIDTH+5.1),0,z-5.9))
+	G.block(self,Vector3(0.62,0.48,0.63),Vector3((P.HALF_WIDTH+5.2),0.24,z-5.9),chair)
+	var kit = G.block(self,Vector3(0.45,0.36,0.65),Vector3((P.HALF_WIDTH+4.6),0.22,z-5.65),G.material(Color("a05543")))
 	G.block(kit,Vector3(0.012,0.21,0.055),Vector3(-0.23,0,0),G.material(Color("ede9dd")))
 	G.block(kit,Vector3(0.014,0.055,0.21),Vector3(-0.23,0,0),G.material(Color("ede9dd")))
-	G.block(self,Vector3(0.62,0.62,0.62),Vector3(36.9,0.34,z+5.75),G.material(Color("56768b")))
-	G.block(self,Vector3(0.66,0.06,0.66),Vector3(36.9,0.68,z+5.75),G.material(Color("dedfd3")))
+	G.block(self,Vector3(0.62,0.62,0.62),Vector3((P.HALF_WIDTH+4.9),0.34,z+5.75),G.material(Color("56768b")))
+	G.block(self,Vector3(0.66,0.06,0.66),Vector3((P.HALF_WIDTH+4.9),0.68,z+5.75),G.material(Color("dedfd3")))
 	for i in range(3):
-		G.cylinder(self,0.055,0.23,Vector3(36.65+i*0.17,0.835,z+5.75),G.material(Color("b0c8cb")))
-		G.cylinder(self,0.035,0.045,Vector3(36.65+i*0.17,0.97,z+5.75),trim)
+		G.cylinder(self,0.055,0.23,Vector3((P.HALF_WIDTH+4.65)+i*0.17,0.835,z+5.75),G.material(Color("b0c8cb")))
+		G.cylinder(self,0.035,0.045,Vector3((P.HALF_WIDTH+4.65)+i*0.17,0.97,z+5.75),trim)
 
 func add_actor(team: int,role: String,number: int,location: Vector3) -> void:
 	var actor = Actor.new()
@@ -202,7 +203,7 @@ func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int
 		elif actor.role=="substitute" and actor.number==14 and playing and event_age>event_duration and clock>22:
 			actor_mode="jog"
 			intensity=0.35
-			actor.target_point=Vector3(33.55,0,(-9.5 if actor.team==0 else 9.5)+sin(clock*0.32+actor.team)*6.2)
+			actor.target_point=Vector3((P.HALF_WIDTH+1.55),0,(-9.5 if actor.team==0 else 9.5)+sin(clock*0.32+actor.team)*6.2)
 		elif age>0 and age<event_duration:
 			var strength := smoothstep(0,0.30,age)*(1-smoothstep(event_duration-0.7,event_duration,age))
 			if event_kind=="goal":
@@ -235,12 +236,12 @@ func collector_for(stoppage: String,restart_point: Vector3) -> Node3D:
 
 func outside(point: Vector3) -> Vector3:
 	var at := Vector3(point.x,0,point.z)
-	if absf(at.x)>=absf(at.z)*32.0/50.0:
-		at.x=signf(at.x if absf(at.x)>0.2 else 1.0)*34.55
+	if absf(at.x)>=absf(at.z)*P.HALF_WIDTH/P.HALF_LENGTH:
+		at.x=signf(at.x if absf(at.x)>0.2 else 1.0)*(P.HALF_WIDTH+2.55)
 		at.z=clampf(at.z,-48.8,48.8)
 	else:
 		at.z=signf(at.z if absf(at.z)>0.2 else 1.0)*51.15
-		at.x=clampf(at.x,-31.2,31.2)
+		at.x=clampf(at.x,-P.HALF_WIDTH+.8,P.HALF_WIDTH-.8)
 	return at
 
 func is_fetching() -> bool:
@@ -275,7 +276,7 @@ func fetch_target(restart_point: Vector3,ball_position: Vector3) -> Vector3:
 	if fetch_phase=="return" and fetch_boy!=null: return fetch_boy.home
 	if fetch_phase in ["carry","wait"]: return outside(restart_point)
 	var at := Vector3(ball_position.x,0,ball_position.z)
-	at.x=signf(at.x if absf(at.x)>0.2 else 1.0)*maxf(32.7,absf(at.x))
+	at.x=signf(at.x if absf(at.x)>0.2 else 1.0)*maxf(P.HALF_WIDTH+.7,absf(at.x))
 	at.z=clampf(at.z,-49.2,49.2)
 	return at
 
@@ -284,7 +285,7 @@ func owns_loose_ball() -> bool:
 	if game.restart_type!="TAÇ" or game.state not in ["restart","set_piece"]: return false
 	var ball=game.ball
 	if ball.held_by!=null and ball.held_by!=fetch_boy: return false
-	if absf(ball.position.x)<31.6: return false
+	if absf(ball.position.x)<P.HALF_WIDTH-.4: return false
 	var speed: float=Vector2(ball.linear_velocity.x,ball.linear_velocity.z).length()
 	if fetch_phase=="" and (ball.position.y>0.85 or speed>2.8): return false
 	var boy := nearest_boy(ball.position)
@@ -307,7 +308,7 @@ func nearest_boy(point: Vector3) -> Node3D:
 
 func step_fetch(delta: float,stoppage: String,restart_point: Vector3,ball_position: Vector3) -> void:
 	var player_has: bool=is_instance_valid(game) and is_instance_valid(game.ball) and game.ball.held_by!=null and game.ball.held_by!=fetch_boy
-	var back_in: bool=is_instance_valid(game) and is_instance_valid(game.ball) and absf(game.ball.position.x)<31.6 and game.ball.held_by!=fetch_boy
+	var back_in: bool=is_instance_valid(game) and is_instance_valid(game.ball) and absf(game.ball.position.x)<P.HALF_WIDTH-.4 and game.ball.held_by!=fetch_boy
 	if stoppage!="TAÇ" or player_has or back_in or (fetch_phase=="" and not owns_loose_ball()):
 		if fetch_phase!="" and fetch_phase!="return":
 			if is_instance_valid(game) and game.ball.held_by==fetch_boy: game.ball.release_hold()

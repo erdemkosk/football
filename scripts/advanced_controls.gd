@@ -37,8 +37,15 @@ func start_dummy(index: int) -> bool:
 
 func skill_gesture(direction: Vector3) -> void:
 	var p=game.players[game.controlled]
+	var fancy: bool=game.controller.action_held(KEY_E) or Input.is_key_pressed(KEY_E)
 	var forward: float=direction.dot(p.facing)
 	var lateral: float=direction.dot(p.facing.cross(Vector3.UP))
+	if fancy:
+		roll_side=0
+		if forward<-.35: game.skills.start(game.controlled,"rainbow",side())
+		elif forward>.35: game.skills.start(game.controlled,"heel",side())
+		else: game.skills.start(game.controlled,"flick",side())
+		return
 	if absf(lateral)>absf(forward):
 		var sign_side := signf(lateral)
 		if roll_side!=0 and sign_side!=roll_side:
@@ -116,6 +123,8 @@ func handle(event: InputEvent) -> bool:
 		if not event.pressed or event.echo: return false
 		if event.keycode in [KEY_1,KEY_2,KEY_3,KEY_4]:
 			game.skills.start(index,["roulette","roll","elastico","scoop"][event.keycode-KEY_1],side()); return true
+		if event.keycode in [KEY_6,KEY_7,KEY_8]:
+			game.skills.start(index,["rainbow","heel","flick"][event.keycode-KEY_6],side()); return true
 		if event.keycode==KEY_5:
 			game.finishing.timed_armed=not game.finishing.timed_armed; return true
 		if event.keycode==KEY_J: game.defending.shoulder(index); return true
@@ -184,12 +193,14 @@ func handle(event: InputEvent) -> bool:
 
 func draw(hud) -> void:
 	if game.state!="playing" or game.menu_match.running: return
-	var next: int=game.duels.switch_choice()
-	if next>=0 and next!=game.controlled and not game.training:
+	var next: int=game.team_control.next_switch()
+	if next>=0:
 		var p=game.players[next]
-		if not game.camera.is_position_behind(p.position):
-			var at: Vector2=game.screen_position(p.position+Vector3.UP*2.6)
-			hud.draw_arc(at,8,0,TAU,16,Color("9fcbe2",.7),1.4,true)
+		var point: Vector3=p.position+Vector3.UP*2.75
+		var at: Vector2=game.screen_position(point)
+		if not game.camera.is_position_behind(point) and Rect2(12,85,1416,705).has_point(at):
+			# A hollow arrow previews the same candidate used by LB/L1/Q.
+			hud.draw_polyline(PackedVector2Array([at+Vector2(-5,-4),at+Vector2(5,-4),at+Vector2(0,3),at+Vector2(-5,-4)]),Color("9fcbe2",.8),1.5,true)
 			if game.controller.using_gamepad:
 				game.controller.Glyphs.draw_sequence(hud,at+Vector2(-9,-19),game.controller.label_for(KEY_Q),game.controller.family,hud.font,18,9)
 			else: hud.center(OS.get_keycode_string(game.match_menu.key_for(KEY_Q)),at+Vector2(0,-12),10,Color("9fcbe2"))

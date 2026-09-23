@@ -117,6 +117,10 @@ func run() -> void:
 	await capture("prematch")
 	game.frontend.confirm(); game.ceremony.finish(true)
 	game.ball.freeze=false
+	for frame in range(30):
+		game._physics_process(1.0/120.0)
+		await physics_frame
+	tap(JOY_BUTTON_A)
 	for frame in range(600):
 		game._physics_process(1.0/120.0)
 		await physics_frame

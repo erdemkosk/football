@@ -38,7 +38,7 @@ func run() -> void:
 		game.team_control.update(.01)
 		check(game.controlled==6,"A first-touch cooldown cannot switch back to the old player")
 	setup(); receiver_at(Vector3(0,0,1.25))
-	game.ball.linear_velocity=Vector3.BACK*13
+	game.ball.linear_velocity=Vector3.BACK*25
 	var controlled_touch: bool=game.first_touch.receive(6,true)
 	check(not controlled_touch and game.dribbler<0 and game.controlled==6,"A stretched deflection selects its player even without secured possession")
 	setup(); receiver_at(Vector3(0,0,.5))
@@ -71,6 +71,20 @@ func run() -> void:
 	game.ball.position=game.players[6].position+Vector3(0,.23,-.6)
 	game.first_touch.receive(6,true)
 	check(game.controlled==6,"A later real touch overrides manual off-ball selection")
+	setup(); receiver_at(Vector3(0,0,-10))
+	game.ball.position=game.heading.head_point(game.players[9])+Vector3.UP*.15
+	game.ball.linear_velocity=Vector3.DOWN
+	check(game.heading.arm(9,Vector3.FORWARD,.3,true),"The user can prepare a header before contact")
+	game.team_control.update(.05)
+	check(game.controlled==9 and game.heading.active(9),"Prediction preserves a prepared aerial finish")
+	game.ball.position=game.players[6].position+Vector3(0,1.35,-.4)
+	game.first_touch.receive(6,false)
+	check(game.controlled==6 and not game.heading.active(9),"Another teammate's actual touch takes priority over the old aerial finish")
+	setup(); receiver_at(Vector3(0,0,-40))
+	game.ball.position=game.players[6].position+Vector3(0,.23,-.6)
+	game.rules.candidates.append(6)
+	game.update_contacts(.01)
+	check(game.state!="playing" and game.controlled!=6,"An offside touch whistles before granting control")
 	for mode in ["training","player_lock","menu","stoppage"]:
 		setup(); receiver_at(Vector3(0,0,.6))
 		if mode=="training": game.training=true
@@ -88,13 +102,14 @@ func run() -> void:
 	await physics_frame; await physics_frame
 	game.ball.strike(Vector3.RIGHT*10)
 	game.last_kicker=17; game.last_touch=1; game.team_control.select(9,true)
+	game.dribbler=9; game.carrier=9 # Deliberately stale owner at the moment of impact.
 	var collision_seen := false
 	for frame in range(90):
 		await physics_frame
 		game.rules.update(1.0/120); game.team_control.update(1.0/120)
 		if game.ball.get_colliding_bodies().has(game.players[6]):
 			collision_seen=true
-			check(game.controlled==6,"A real physics body deflection transfers control on its contact frame")
+			check(game.controlled==6 and game.dribbler!=9 and game.carrier!=9,"A real physics deflection transfers control on its contact frame and clears the stale owner")
 			break
 	check(collision_seen,"The deflection scenario physically collides with the teammate")
 	check(game.shots[0]==0 and game.passes[0]==0,"Selection does not authorize automatic passes or shots")

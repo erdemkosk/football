@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 ## Script only the exercise partner; every delivery, shot and save uses live physics.
 const MODES := ["free","cross","free_kick"]
 const TITLES := ["SERBEST ANTRENMAN","ORTA & KAFA","SERBEST VURUŞ"]
@@ -35,7 +36,7 @@ func setup() -> void:
 		p.collision_layer=2 if p.visible else 0
 	if mode=="free": return
 	if mode=="cross":
-		station=Vector3(23 if attempt%2==1 else -23,0,-39)
+		station=Vector3((23 if attempt%2==1 else -23)*P.WIDTH_RATIO,0,-39)
 		game.players[9].position=Vector3(0,0,-40)
 		var partner=game.players[feeder]
 		partner.position=station
@@ -105,7 +106,7 @@ func place_move() -> Vector3:
 
 func show_place() -> void:
 	var attack: float=game.attack_sign(0)
-	place_point.x=clampf(place_point.x,-29,29)
+	place_point.x=clampf(place_point.x,-(P.HALF_WIDTH-3),(P.HALF_WIDTH-3))
 	place_point.z=clampf(place_point.z,-46.5 if attack<0 else -6,6 if attack<0 else 46.5)
 	game.restart_point=place_point
 	game.restart_type="SERBEST VURUŞ"

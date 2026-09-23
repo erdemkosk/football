@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 ## A continuous goal-to-kickoff sequence. All movement uses player physics.
 var game
 var age := 0.0
@@ -39,7 +40,7 @@ func begin(team: int) -> void:
 	var side := -1.0 if game.players[scorer].position.x<0 else 1.0
 	# The away end is in the south-east corner; celebrate toward those fans.
 	if team==1: side=1
-	gathering=Vector3(side*21,0,game.attack_sign(team)*38)
+	gathering=Vector3(side*21*P.WIDTH_RATIO,0,game.attack_sign(team)*38)
 	var teammates: Array[int] = []
 	for i in range(game.players.size()):
 		var p=game.players[i]
@@ -101,7 +102,7 @@ func update(delta: float) -> void:
 					p.desired+=tangent*(1.2-gap.length())
 		p.step(delta)
 		if offset.length()<1.0:
-			var look: Vector3=(Vector3(signf(gathering.x)*42,0,gathering.z)-p.position) if i==scorer else gathering-p.position
+			var look: Vector3=(Vector3(signf(gathering.x)*(42+P.SIDE_SHIFT),0,gathering.z)-p.position) if i==scorer else gathering-p.position
 			look.y=0
 			if look.length()>0.1:
 				p.facing=look.normalized()
@@ -127,7 +128,7 @@ func update_camera(delta: float) -> void:
 		var shot: Dictionary=game.match_camera.apply(player_focus,game.zoom,delta)
 		game.camera.position=shot.eye; game.camera.look_at(shot.look)
 		return
-	var focus := player_focus.lerp(Vector3(signf(gathering.x)*38,0,gathering.z),0.24)
+	var focus := player_focus.lerp(Vector3(signf(gathering.x)*(38+P.SIDE_SHIFT),0,gathering.z),0.24)
 	focus.y=0
 	game.camera_focus=game.camera_focus.lerp(focus,1-exp(-delta*2.2))
 	var close := smoothstep(1.5,4.0,age)

@@ -1,4 +1,5 @@
 extends SceneTree
+const P = preload("res://scripts/pitch_dimensions.gd")
 var game
 var failures := 0
 func _initialize() -> void: call_deferred("run")
@@ -83,7 +84,7 @@ func run() -> void:
 	check(not game.goalkeeping.rush_requested,"Opening tactics clears a held keeper call")
 	setup(); button(JOY_BUTTON_Y); game.controller.connection_changed(0,false)
 	check(game.state=="paused" and not game.goalkeeping.rush_requested,"Disconnecting the controller stops the keeper call")
-	setup(); button(JOY_BUTTON_Y); game.begin_restart("TAÇ",1,Vector3(32,0,30))
+	setup(); button(JOY_BUTTON_Y); game.begin_restart("TAÇ",1,Vector3(P.HALF_WIDTH,0,30))
 	check(not game.goalkeeping.rush_requested,"A whistle clears the keeper call before the restart")
 	setup(); game.controller.rebind(KEY_Y,JOY_BUTTON_RIGHT_STICK); button(JOY_BUTTON_RIGHT_STICK)
 	check(game.goalkeeping.rush_requested,"The keeper call follows the remapped through-ball button")
@@ -91,6 +92,13 @@ func run() -> void:
 	check(not game.goalkeeping.rush_requested,"Releasing the remapped button stops the call")
 	setup(); game.players[0].position=Vector3(3,0,30.8); game.players[0].animate(1)
 	button(JOY_BUTTON_Y); game.goalkeeping.update(0,0.01)
+	# Feet clearances are committed by the animated boot contact, not on request.
+	for frame in range(30):
+		game.kick_contact.prepare(1.0/120)
+		game.players[0].step(1.0/120)
+		game.kick_contact.resolve()
+		if game.ball.pending_kick: break
+		await physics_frame
 	check(game.last_kicker==0 and game.ball.pending_kick and game.ball.held_by==null and game.saves[0]==0,"Outside the penalty area the keeper clears the ball with his feet, never his hands")
 	setup(); button(JOY_BUTTON_Y); var keeper=game.players[0]
 	keeper.facing=Vector3.FORWARD; keeper.animate(1); game.ball.position=keeper.left_hand.global_position
@@ -100,7 +108,7 @@ func run() -> void:
 	# A fatigued substitute must run out, retain fatigue, and still walk through the gate.
 	setup(); var p=game.players[9]; p.position=Vector3(-22,0,8); p.energy=0.03; p.exhausted=true
 	var old_name: String=p.display_name
-	game.management.queue_sub(9,1); game.begin_restart("TAÇ",0,Vector3(32,0,8))
+	game.management.queue_sub(9,1); game.begin_restart("TAÇ",0,Vector3(P.HALF_WIDTH,0,8))
 	var peak := 0.0; var exit_time := 0.0; var exited := false; var completed := false; var exit_point := Vector3.ZERO
 	for n in range(3000):
 		var active: bool=game.management.update_substitutions(1.0/120)
@@ -113,7 +121,7 @@ func run() -> void:
 				await capture("substitution")
 		if not active: completed=true; break
 	check(peak>8 and exit_time<8,"Even an exhausted outgoing player covers the long route at a fast run")
-	check(exited and exit_point.x>32 and completed and game.management.used[0]==1,"Player identity changes only at the touchline and the substitute physically returns")
+	check(exited and exit_point.x>P.HALF_WIDTH and completed and game.management.used[0]==1,"Player identity changes only at the touchline and the substitute physically returns")
 	check(p.energy==1 and not p.exhausted and not p.stamina_free_movement and p.movement_speed()<7,"The fresh substitute returns to normal match speed and stamina rules")
 	print("KEEPER CALL / SUBSTITUTION CHECK: %d failures" % failures)
 	game.free(); await process_frame; quit(0 if failures==0 else 1)

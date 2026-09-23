@@ -1,8 +1,9 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 const Official = preload("res://scripts/referee.gd")
 var game
 var actors: Array = []
-var targets: Array[Vector3] = [Vector3(-8,0,3),Vector3(-33.2,0,-12),Vector3(33.2,0,12)]
+var targets: Array[Vector3] = [Vector3(-8,0,3),Vector3(-(P.HALF_WIDTH+1.2),0,-12),Vector3((P.HALF_WIDTH+1.2),0,12)]
 var decision := ""
 var decision_age := 0.0
 var decision_team := 0
@@ -55,7 +56,7 @@ func clear_decision() -> void:
 		actor.signal_pose("")
 
 func kickoff_target(index: int) -> Vector3:
-	return [Vector3(-8,0,3),Vector3(-33.2,0,-12),Vector3(33.2,0,12)][index]
+	return [Vector3(-8,0,3),Vector3(-(P.HALF_WIDTH+1.2),0,-12),Vector3((P.HALF_WIDTH+1.2),0,12)][index]
 
 func activate(reposition: bool) -> void:
 	for i in range(3):
@@ -92,8 +93,8 @@ func offside(attacking_team: int,point: Vector3) -> void:
 	decision="OFSAYT"
 	decision_point=point
 	decision_age=0
-	var width: float=point.x+32 if assistant_index==1 else 32-point.x
-	actors[assistant_index].zone=0 if width<21.3 else (1 if width<42.7 else 2)
+	var width: float=point.x+P.HALF_WIDTH if assistant_index==1 else P.HALF_WIDTH-point.x
+	actors[assistant_index].zone=0 if width<P.WIDTH/3 else (1 if width<P.WIDTH*2/3 else 2)
 	actors[assistant_index].signal_pose("flag_up")
 
 func show_card(point: Vector3,second_yellow: bool,direct: bool=false) -> void:
@@ -162,11 +163,11 @@ func update(delta: float) -> void:
 	var follow := Vector3(clampf(ball.x*0.4-7,-24,24),0,clampf(ball.z-forward*9,-42,42))
 	if game.state in ["restart","set_piece"]:
 		follow=game.restart_point+Vector3(-6 if game.restart_point.x>0 else 6,0,-forward*5)
-		follow.x=clampf(follow.x,-27,27)
+		follow.x=clampf(follow.x,-P.HALF_WIDTH+5,P.HALF_WIDTH-5)
 		follow.z=clampf(follow.z,-45,45)
 	if decision=="GOL": follow=Vector3(-8,0,0)
 	if game.state=="finished": follow=actors[0].position
-	if game.state=="halftime": follow=Vector3(29,0,0)
+	if game.state=="halftime": follow=Vector3(P.HALF_WIDTH-3,0,0)
 	var look: Vector3=ball-actors[0].position
 	var pose := "indirect" if indirect_pending else ""
 	if decision=="AVANTAJ" and decision_age<3: pose="advantage"
@@ -207,7 +208,7 @@ func update(delta: float) -> void:
 		var attack_team := (0 if i==1 else 1) if game.half==1 else (1 if i==1 else 0)
 		var end := -1.0 if i==1 else 1.0
 		var line: float=game.rules.offside_line(attack_team)
-		targets[i]=Vector3(-33.2 if i==1 else 33.2,0,end*clampf(line,0,50))
+		targets[i]=Vector3(-(P.HALF_WIDTH+1.2) if i==1 else (P.HALF_WIDTH+1.2),0,end*clampf(line,0,50))
 		var flag_pose := ""
 		var flag_look := Vector3(1 if i==1 else -1,0,0)
 		if i==assistant_index and game.state in ["restart","set_piece"]:
@@ -226,5 +227,5 @@ func update(delta: float) -> void:
 			var point: Vector3=game.ball.position
 			if absf(point.z-targets[i].z)<2.2 and absf(point.x-targets[i].x)<1.0 and sideline.fetch_boy.position.distance_to(point)<4.5:
 				# Step out briefly for a pickup while retaining the correct offside z-line.
-				targets[i].x=(-1 if i==1 else 1)*35.0
+				targets[i].x=(-1 if i==1 else 1)*(P.HALF_WIDTH+3)
 		move_actor(actors[i],targets[i],flag_look,delta)

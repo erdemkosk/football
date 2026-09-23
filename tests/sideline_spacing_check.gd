@@ -1,4 +1,5 @@
 extends SceneTree
+const P = preload("res://scripts/pitch_dimensions.gd")
 var game
 var failures := 0
 var checks := 0
@@ -32,24 +33,24 @@ func run() -> void:
 		var sign_x: int=int(scenario.x)
 		side.reset(); game.referees.reset(true)
 		game.state="restart"; game.restart_type="TAÇ"
-		game.restart_point=Vector3(sign_x*32,0,sign_x*20)
+		game.restart_point=Vector3(sign_x*(P.HALF_WIDTH+0),0,sign_x*20)
 		game.referees.restart("TAÇ",0,game.restart_point)
 		for p in game.players: p.position=Vector3(0,0,0)
 		var official=game.referees.actors[1 if sign_x<0 else 2]
-		official.position=Vector3(sign_x*33.2,0,sign_x*20)
+		official.position=Vector3(sign_x*(P.HALF_WIDTH+1.2),0,sign_x*20)
 		game.ball.place(official.position+Vector3(0,.23,0))
 		for i in range(3): await physics_frame
 		game.ball.freeze=true
 		game.ball.position=official.position+Vector3(0,.23,0)
 		game.ball.pending_reset=false
 		var boy=side.nearest_boy(game.ball.position)
-		boy.position=Vector3(sign_x*35.1,0,sign_x*20+scenario.y)
+		boy.position=Vector3(sign_x*(P.HALF_WIDTH+3.1),0,sign_x*20+scenario.y)
 		minimum=INF
 		var lane_clear := true
 		for frame in range(1200):
 			step("TAÇ",game.restart_point)
 			minimum=minf(minimum,gap())
-			lane_clear=lane_clear and absf(boy.position.x)<=35.181 and absf(boy.position.x)>=32.549
+			lane_clear=lane_clear and absf(boy.position.x)<=P.HALF_WIDTH+3.181 and absf(boy.position.x)>=P.HALF_WIDTH+.549
 		check(lane_clear,"Collection stays between the touchline and advertising boards, scenario="+str(scenario))
 		check(minimum>=1.10,"Pickup and carry avoid the assistant on touchline "+str(sign_x))
 		check(game.ball.held_by==boy and side.fetch_phase=="wait","The nearest boy can retrieve a ball at the assistant's feet and deliver it, side="+str(sign_x))
@@ -65,12 +66,12 @@ func run() -> void:
 	# Exercise the complete physical pickup -> handover -> legal throw-in flow.
 	game.start_match(false,false); game.set_physics_process(false)
 	for p in game.players: p.position=Vector3(0,0,0)
-	game.ball.place(Vector3(33.2,.23,20))
+	game.ball.place(Vector3((P.HALF_WIDTH+1.2),.23,20))
 	for i in range(3): await physics_frame
 	var boy=side.nearest_boy(game.ball.position)
-	boy.position=Vector3(35.1,0,21)
-	game.referees.actors[2].position=Vector3(33.2,0,20)
-	game.begin_restart("TAÇ",0,Vector3(32,0,20))
+	boy.position=Vector3((P.HALF_WIDTH+3.1),0,21)
+	game.referees.actors[2].position=Vector3((P.HALF_WIDTH+1.2),0,20)
+	game.begin_restart("TAÇ",0,Vector3((P.HALF_WIDTH+0),0,20))
 	var saw_pickup := false
 	var saw_handover := false
 	minimum=INF
@@ -86,13 +87,13 @@ func run() -> void:
 	check(minimum>=1.10,"The assistant and boy remain apart during the complete physical restart")
 	# A boy may reach the ball after recovery already assigned a nearby player.
 	game.start_match(false,false); game.set_physics_process(false)
-	game.ball.place(Vector3(34.9,.23,32.1))
+	game.ball.place(Vector3((P.HALF_WIDTH+2.9),.23,32.1))
 	for i in range(3): await physics_frame
-	game.begin_restart("TAÇ",0,Vector3(32,0,31.85))
+	game.begin_restart("TAÇ",0,Vector3((P.HALF_WIDTH+0),0,31.85))
 	var recovery=game.set_pieces.recovery
 	recovery.enter("retrieve")
 	boy=side.nearest_boy(game.ball.position)
-	boy.position=Vector3(34.55,0,31.85)
+	boy.position=Vector3((P.HALF_WIDTH+2.55),0,31.85)
 	side.fetch_boy=boy; side.fetch_phase="carry"; side.fetch_age=0
 	game.ball.hold(boy)
 	recovery.step(1.0/120)

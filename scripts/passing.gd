@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 const GRAVITY := 9.81
 const Motion = preload("res://scripts/ball_motion.gd")
 
@@ -56,7 +57,7 @@ static func plan(origin: Vector3,receiver: Vector3,run: Vector3,lob: bool,surfac
 			speed=Motion.passing_speed(clampf(9+distance*0.47,10,25),distance,resistance)
 			flight=Motion.travel_time(speed,distance,resistance)
 		target = receiver+motion*minf(flight,2.2)*0.82
-		target.x = clampf(target.x,-30.5,30.5)
+		target.x = clampf(target.x,-(P.HALF_WIDTH-1.5),(P.HALF_WIDTH-1.5))
 		target.z = clampf(target.z,-48,48)
 		target.y = 0.23
 	var offset := Vector3(target.x-origin.x,0,target.z-origin.z)
@@ -110,7 +111,7 @@ static func through_to(origin: Vector3,runner,power: float,forward: float,surfac
 	var run_direction := motion.normalized() if motion.length()>1.0 else Vector3(0,0,forward)
 	var space: float=lerpf(4.5,10.5,power)
 	var target: Vector3=runner.position+run_direction*space
-	target.x=clampf(target.x,-30,30)
+	target.x=clampf(target.x,-(P.HALF_WIDTH-2),(P.HALF_WIDTH-2))
 	target.z=clampf(target.z,-47.5,47.5)
 	target.y=0.23
 	var distance: float=Vector2(target.x-origin.x,target.z-origin.z).length()
@@ -147,7 +148,7 @@ static func driven_cross(origin: Vector3,receiver: Vector3,run: Vector3,surface=
 		speed=clampf(26+distance*0.12,27,31)
 		flight=flight_time(origin,target,speed,surface)
 		target=receiver+(run*Vector3(1,0,1)).limit_length(10.4)*minf(flight,1.8)*0.8
-		target.x=clampf(target.x,-30.5,30.5); target.z=clampf(target.z,-48,48); target.y=0.23
+		target.x=clampf(target.x,-(P.HALF_WIDTH-1.5),(P.HALF_WIDTH-1.5)); target.z=clampf(target.z,-48,48); target.y=0.23
 	var aim := ((target-origin)*Vector3(1,0,1)).normalized()
 	return {"target":target,"velocity":aim*speed+Vector3.UP*0.12,"flight":flight,"lob":false,"driven":true}
 
@@ -160,7 +161,7 @@ static func driven_pass(origin: Vector3,receiver: Vector3,run: Vector3,surface=n
 		speed=Motion.passing_speed(clampf(13+distance*.30,17,23),distance,Motion.along(surface,origin,target))
 		flight=flight_time(origin,target,speed,surface)
 		target=receiver+(run*Vector3(1,0,1)).limit_length(10.4)*minf(flight,2.2)*.82
-		target.x=clampf(target.x,-30,30); target.z=clampf(target.z,-48,48); target.y=.23
+		target.x=clampf(target.x,-(P.HALF_WIDTH-2),(P.HALF_WIDTH-2)); target.z=clampf(target.z,-48,48); target.y=.23
 	return {"target":target,"velocity":((target-origin)*Vector3(1,0,1)).normalized()*speed+Vector3.UP*.12,"flight":flight,"lob":false,"driven":true}
 
 static func switch_plan(origin: Vector3,direction: Vector3,power: float,team: int,passer: int,players: Array,assistance: float,forward: float,offside: float,surface=null) -> Dictionary:
@@ -169,7 +170,7 @@ static func switch_plan(origin: Vector3,direction: Vector3,power: float,team: in
 	var reach := lerpf(18,60,power)
 	aim=nudge_heading(origin,aim,reach,team,passer,players,assistance,false,forward,offside)
 	var target := origin+aim*reach
-	target.x=clampf(target.x,-30.5,30.5)
+	target.x=clampf(target.x,-(P.HALF_WIDTH-1.5),(P.HALF_WIDTH-1.5))
 	target.z=clampf(target.z,-48,48)
 	target.y=0.23
 	var distance := Vector2(target.x-origin.x,target.z-origin.z).length()

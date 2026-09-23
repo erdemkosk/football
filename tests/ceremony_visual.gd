@@ -21,7 +21,7 @@ func run() -> void:
 		if phase!="" and not phase in captured and game.ceremony.age>(2.8 if phase=="presentation" else 2.0):
 			await capture(phase)
 			captured.append(phase)
-		if game.state=="playing": break
+		if game.state in ["restart","set_piece"]: break
 	print("CEREMONY VISUAL: %s" % [captured])
 	game.free()
 	quit(0 if captured.size()==3 else 1)

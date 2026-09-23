@@ -1,4 +1,5 @@
 extends RefCounted
+const P = preload("res://scripts/pitch_dimensions.gd")
 ## Active-play offside and the first/second-touch restrictions on restarts.
 var advantage: Dictionary = {}
 var deferred_cards: Array = []
@@ -96,7 +97,7 @@ func update(delta: float) -> void:
 func allows_goal(team: int) -> bool:
 	if restart_taker<0: return true
 	if team!=restart_team:
-		game.begin_restart("KORNER",team,Vector3(signf(game.ball.position.x+0.001)*31.6,0,signf(game.ball.position.z)*49.6))
+		game.begin_restart("KORNER",team,Vector3(signf(game.ball.position.x+0.001)*(P.HALF_WIDTH-.4),0,signf(game.ball.position.z)*49.6))
 		game.announce("DURAN TOPTAN DOĞRUDAN KENDİ KALESİNE · KORNER")
 		return false
 	if restart_kind in ["TAÇ","ENDİREKT VURUŞ"]:

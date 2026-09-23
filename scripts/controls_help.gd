@@ -128,6 +128,9 @@ func rows() -> Array:
 			advanced_entry("Ball roll","Tabanla yana taşı. Sağ / sol yön hangi ayağın kullanılacağını seçer.","RS ← / →","2 + YÖN"),
 			advanced_entry("Elastico","Dışa göster, içe çek. Sağ analogu hızla bir yandan diğerine çevir.","RS → ←","3 + YÖN"),
 			advanced_entry("Scoop turn","Topu hafif kaldırarak çapraz dön. Düşük hızda daha kontrollüdür.","RS ↑","4 + YÖN"),
+			advanced_entry("Rainbow","Topuğuyla topu arkadan üzerinden atar.","LT + RS ↓","6"),
+			advanced_entry("Heel flick","Topukla topu arkaya bırakır; savunmayı keser.","LT + RS ↑","7"),
+			advanced_entry("Flick up","Topu önünde havaya kaldırır; vole veya kafa için.","LT + RS ← / →","8"),
 			entry("Kısa vücut çalımı","Yakın kontrolde kısa aldatma; koşuya devam edebilirsin.",binding(KEY_Z)),
 			entry("Topu ileri aç","Topu öne it; boş alanda arkasından hızlan.",binding(KEY_V)),
 			advanced_entry("Bağlama göre sağ analog","Top ayağında: çalım. Savunmada: oyuncu seç. Şut hazırlarken: nişan.","RS","YÖN TUŞLARI"),
@@ -175,12 +178,12 @@ func rows() -> Array:
 				entry("Ayakta müdahale","Topsuzken ayağını uzatıp topu almaya çalış.",binding(KEY_D) if use_pad else binding(KEY_G)),
 				entry("Kayarak müdahale","Topsuzken kay. Önce rakibe temas edersen faul olabilir.",binding(KEY_A) if use_pad else binding(KEY_X)),
 				entry("Kaleciyi çıkar","Savunmada basılı tut; bırakınca kaleci yerine döner.",binding(KEY_Y)),
-				entry("Oyuncu değiştir","Tehlikeye yakın oyuncuyu seç; yön vererek seçimi etkile.",binding(KEY_Q)),
+				entry("Oyuncu değiştir","Topa yakın uygun oyuncuya geç. Sonraki hedef içi boş okla gösterilir; koşu yönün seçimi değiştirmez.",binding(KEY_Q)),
 				entry("Rakibi karşıla","Basılı tut; topa dönük kısa, kontrollü adımlarla savun.",binding(KEY_E)),
 				advanced_entry("İkinci adam baskısı","Rakipteyken tut: yeşil PRES oyuncusu basar. En fazla 4 sn; kondisyon harcar.",binding(KEY_S)+" TUT","SPACE TUT"),
 				advanced_entry("Omuz mücadelesi","Rakibin yanında omuz koy. Arkadan veya topsuz itiş faul olabilir.","L3","J"),
 				advanced_entry("Pas arası","Ayağını pas yoluna uzat. Doğru zamanlamayla topu keser; ıskalayabilir.","LT + "+binding(KEY_D),"L"),
-				advanced_entry("Yönlü oyuncu seçimi","Savunmada sağ analogu hedefe it. LB/Q'nun sonraki hedefi sahada işaretlidir.","RS / LB + LS","Q + YÖN") ]
+				advanced_entry("Yönlü oyuncu seçimi","Savunmada sağ analogu seçmek istediğin oyuncuya doğru it. Manuel seçimin kısa süre korunur.","RS","KONTROLCÜ: RS") ]
 		2:
 			return [
 				entry("Hareket","Oyuncuyu yönlendir; son hareket yönün pas ve şuta temel olur.","SOL ANALOG" if use_pad else "↑  ↓  ←  →"),
