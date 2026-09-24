@@ -2,8 +2,12 @@ extends SceneTree
 var game
 var checks := 0
 var failures := 0
+var capture_prefix := "presentation-"
 
-func _initialize() -> void: call_deferred("run")
+func _initialize() -> void:
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--capture-prefix="): capture_prefix=arg.trim_prefix("--capture-prefix=")
+	call_deferred("run")
 func check(ok: bool,message: String) -> void:
 	checks+=1
 	if ok: print("PASS: "+message)
@@ -16,7 +20,7 @@ func capture(label: String) -> void:
 	await settle(); RenderingServer.force_draw(false)
 	var frame := root.get_texture().get_image()
 	check(not frame.is_empty(),"Rendered presentation: "+label)
-	check(frame.save_png("res://tests/presentation-"+label+".png")==OK,"Saved visual review: "+label)
+	check(frame.save_png("res://tests/"+capture_prefix+label+".png")==OK,"Saved visual review: "+label)
 
 func run() -> void:
 	game=load("res://main.tscn").instantiate(); root.add_child(game); await physics_frame
@@ -103,8 +107,10 @@ func run() -> void:
 		if flake.life<=0: continue
 		paper+=1
 		if absf(flake.position.z)>54.0 or absf(flake.position.x)>48.0: from_stand+=1
-		if flake.position.distance_to(Vector3(0,2,-50))<12.0: from_net+=1
-	check(paper>=40 and from_stand>paper*0.7 and from_net==0,"Goal paper is thrown from the stands, not the net")
+		# A 12 m sphere also includes the first terrace rows behind the goal.
+		# Check the goal enclosure instead, and require every initial flake outside the pitch apron.
+		if absf(flake.position.x)<5 and absf(flake.position.z)>=49 and absf(flake.position.z)<=54 and flake.position.y<4: from_net+=1
+	check(paper>=40 and from_stand==paper and from_net==0,"Goal paper is thrown from the stands, not the net")
 	var flare_live := 0
 	for flare in burst.flares:
 		if flare.life>0: flare_live+=1

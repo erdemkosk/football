@@ -1,0 +1,71 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+ERROR: Skinned vertex matches original world position
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/player_batch_check.gd:10)
+       [1] verify (res://tests/player_batch_check.gd:40)
+       [2] run (res://tests/player_batch_check.gd:67)
+ERROR: Skinned lighting normal matches original
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/player_batch_check.gd:10)
+       [1] verify (res://tests/player_batch_check.gd:45)
+       [2] run (res://tests/player_batch_check.gd:67)
+ERROR: Skinned vertex matches original world position
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/player_batch_check.gd:10)
+       [1] verify (res://tests/player_batch_check.gd:40)
+       [2] run (res://tests/player_batch_check.gd:67)
+ERROR: Skinned lighting normal matches original
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/player_batch_check.gd:10)
+       [1] verify (res://tests/player_batch_check.gd:45)
+       [2] run (res://tests/player_batch_check.gd:67)
+ERROR: Skinned vertex matches original world position
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/player_batch_check.gd:10)
+       [1] verify (res://tests/player_batch_check.gd:40)
+       [2] run (res://tests/player_batch_check.gd:67)
+ERROR: Skinned lighting normal matches original
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/player_batch_check.gd:10)
+       [1] verify (res://tests/player_batch_check.gd:45)
+       [2] run (res://tests/player_batch_check.gd:67)
+ERROR: Skinned vertex matches original world position
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/player_batch_check.gd:10)
+       [1] verify (res://tests/player_batch_check.gd:40)
+       [2] run (res://tests/player_batch_check.gd:67)
+ERROR: Skinned lighting normal matches original
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/player_batch_check.gd:10)
+       [1] verify (res://tests/player_batch_check.gd:45)
+       [2] run (res://tests/player_batch_check.gd:67)
+ERROR: Skinned vertex matches original world position
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/player_batch_check.gd:10)
+       [1] verify (res://tests/player_batch_check.gd:40)
+       [2] run (res://tests/player_batch_check.gd:67)
+ERROR: Skinned lighting normal matches original
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/player_batch_check.gd:10)
+       [1] verify (res://tests/player_batch_check.gd:45)
+       [2] run (res://tests/player_batch_check.gd:67)
+ERROR: Skinned vertex matches original world position
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/player_batch_check.gd:10)
+       [1] verify (res://tests/player_batch_check.gd:40)
+       [2] run (res://tests/player_batch_check.gd:67)
+RIGID BATCH: 449400 vertices, max_position_error_m=2.12372350692749 max_normal_error=1.99995887279511 failures=860640

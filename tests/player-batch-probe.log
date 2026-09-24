@@ -1,0 +1,16 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce RTX 3070
+ERROR: Can't create shader cache folder, no shader caching will happen: user://
+   at: RendererCompositorRD (servers/rendering/renderer_rd/renderer_compositor_rd.cpp:337)
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+BATCH sources=15 draws=1 joints=10
+STATIC batch=false trial=0 fps=132.858076454437 p95=7.905 physics=0.10807207207207 render=1.07602402469417 gpu=5.96614714785739 draws=946.678678678679
+STATIC batch=true trial=0 fps=134.275982702376 p95=7.96 physics=0.0914494047619 render=0.91247023908155 gpu=5.97298215116773 draws=716.0
+STATIC batch=true trial=1 fps=135.591105223497 p95=7.661 physics=0.12505014749263 render=0.83855162327972 gpu=5.79315635096007 draws=716.0
+STATIC batch=false trial=1 fps=136.384070340584 p95=7.743 physics=0.10480938416422 render=0.95127859335841 gpu=5.99403225641446 draws=940.0
+LIVE batch=false trial=0 fps=51.7373192825387 p95=23.387 physics=6.2884153846154 render=3.41988461017609 gpu=3.84393846255082 draws=1516.48461538462
+LIVE batch=true trial=0 fps=59.1677654014093 p95=18.418 physics=5.51193918918918 render=2.74559459815154 gpu=3.66735811169083 draws=636.141891891892
+LIVE batch=true trial=1 fps=57.1301640874195 p95=21.458 physics=5.39836363636363 render=3.12075524563556 gpu=4.0491468439569 draws=1099.38461538462
+LIVE batch=false trial=1 fps=49.9222411172358 p95=25.327 physics=5.700248 render=3.53079199790955 gpu=5.32756799125671 draws=1614.192

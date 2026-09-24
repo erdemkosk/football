@@ -1,0 +1,45 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce RTX 3070
+ERROR: Can't create shader cache folder, no shader caching will happen: user://
+   at: RendererCompositorRD (servers/rendering/renderer_rd/renderer_compositor_rd.cpp:337)
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+PASS: 224 club/kit pairings retain light/dark separation
+PASS: The starting captain wears a real upper-arm band
+PASS: Captaincy follows player identity during tactical swaps
+PASS: Dismissal transfers the armband to one remaining player
+PASS: Both keepers have shaped gloves and contrasting wrist cuffs
+PASS: A name change changes the baked jersey print
+PASS: Returning to the same identity reuses its print atlas
+PASS: Shoulders are broader than the front-to-back torso silhouette
+PASS: A high ball's shadow remains directly on its ground position
+PASS: Ball altitude softens and enlarges the shadow without losing it
+PASS: Dry turf has no player reflections
+PASS: Wet turf reflects articulated players and officials in one bounded batch
+PASS: Hidden actors and the hidden ball leave no ghost reflections or shadows
+PASS: Running dirt grows across the match instead of saturating in its opening seconds
+PASS: Socks accumulate more dirt than the upper shirt
+PASS: A ground slide adds localized dirt immediately
+PASS: Pausing never ages the player's clothes
+PASS: A fresh kit resets every dirt layer
+PASS: Starting another match restores a clean kit and the original captain
+PASS: An airborne strike never sprays dirt from the turf
+PASS: A ground strike emits a short dry-grass burst
+PASS: Home blocks and away corner receive the selected club colours
+PASS: Recoloured fans retain the correct team's goal reaction
+PASS: Goal paper is thrown from the stands, not the net
+PASS: Scoring supporters light terrace flares
+PASS: Supporters unfurl terrace banners after a goal
+PASS: A terrace banner opens rather than appearing fully formed
+PASS: Away flares stay in the visiting section
+PASS: A new match clears stand celebrations
+PASS: Fourth official displays the actual outgoing and incoming shirt numbers
+PASS: The substitution has a broadcast strip without opening any menu
+PASS: The strip and raised board clear after the announcement
+PASS: Noon has a high sun, evening a low sun, and night uses floodlights
+PASS: Rain retains the selected evening palette
+PASS: A match reset clears pending substitution graphics
+PASS: Live wet match keeps physics and presentation finite
+PASS: Live effects stay inside their fixed render budgets
+MATCH PRESENTATION CHECK: 37 checks, 0 failures

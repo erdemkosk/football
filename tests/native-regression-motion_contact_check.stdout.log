@@ -1,0 +1,81 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+PASS: kick accepted at 30 Hz
+PASS: Input starts motion before impulse and sound
+PASS: Real boot contact commits within 100 ms at 30 Hz
+PASS: One contact commits trajectory, sound and feedback together
+PASS: cross accepted at 30 Hz
+PASS: Input starts motion before impulse and sound
+PASS: Real boot contact commits within 100 ms at 30 Hz
+PASS: One contact commits trajectory, sound and feedback together
+PASS: shot accepted at 30 Hz
+PASS: Input starts motion before impulse and sound
+PASS: Real boot contact commits within 100 ms at 30 Hz
+PASS: One contact commits trajectory, sound and feedback together
+PASS: The crowd reacts at the shot's actual contact
+PASS: kick accepted at 60 Hz
+PASS: Input starts motion before impulse and sound
+PASS: Real boot contact commits within 100 ms at 60 Hz
+PASS: One contact commits trajectory, sound and feedback together
+PASS: cross accepted at 60 Hz
+PASS: Input starts motion before impulse and sound
+PASS: Real boot contact commits within 100 ms at 60 Hz
+PASS: One contact commits trajectory, sound and feedback together
+PASS: shot accepted at 60 Hz
+PASS: Input starts motion before impulse and sound
+PASS: Real boot contact commits within 100 ms at 60 Hz
+PASS: One contact commits trajectory, sound and feedback together
+PASS: The crowd reacts at the shot's actual contact
+PASS: kick accepted at 120 Hz
+PASS: Input starts motion before impulse and sound
+PASS: Real boot contact commits within 100 ms at 120 Hz
+PASS: One contact commits trajectory, sound and feedback together
+PASS: cross accepted at 120 Hz
+PASS: Input starts motion before impulse and sound
+PASS: Real boot contact commits within 100 ms at 120 Hz
+PASS: One contact commits trajectory, sound and feedback together
+PASS: shot accepted at 120 Hz
+PASS: Input starts motion before impulse and sound
+PASS: Real boot contact commits within 100 ms at 120 Hz
+PASS: One contact commits trajectory, sound and feedback together
+PASS: The crowd reacts at the shot's actual contact
+PASS: A moving boot releases a live running ball in either direction
+PASS: A moving boot releases a live running ball in either direction
+PASS: Movement responds on the first tick during the kick approach
+PASS: A tackle before contact cancels the shot without ghost sound or impulse
+PASS: A ball outside anatomical reach is never remotely kicked
+PASS: Pause preserves and freezes the short contact approach
+PASS: The paused approach resumes with one physical contact
+PASS: A shot bears weight on a stable support foot in world space
+PASS: First touch follows the requested left/right/back direction
+PASS: Directed control applies a bounded impulse without teleporting the ball
+PASS: First touch follows the requested left/right/back direction
+PASS: Directed control applies a bounded impulse without teleporting the ball
+PASS: First touch follows the requested left/right/back direction
+PASS: Directed control applies a bounded impulse without teleporting the ball
+PASS: Less technical players expose the ball farther on the same directed control
+PASS: Agile and powerful builds have distinct cadence, stride and torso weight
+PASS: Stationary shielding creates a matched pair with opposite contact directions
+PASS: A lateral standing tackle chooses the foot on the ball's side
+PASS: A first touch can chain directly into a skill
+PASS: First touch to skill retains the current stride and torso continuity
+PASS: A skill can chain directly into a pass
+PASS: The chained pass owns one contact and cleanly ends the skill
+PASS: Keeper has a distinct foot action
+PASS: Keeper foot save requires actual body/limb proximity
+PASS: A saved ball cannot trigger an instantaneous second save
+PASS: Keeper has a distinct spread action
+PASS: Keeper spread save requires actual body/limb proximity
+PASS: A saved ball cannot trigger an instantaneous second save
+PASS: Keeper has a distinct smother action
+PASS: Keeper smother save requires actual body/limb proximity
+PASS: A saved ball cannot trigger an instantaneous second save
+PASS: Keeper has a distinct rebound action
+PASS: Keeper rebound save requires actual body/limb proximity
+PASS: A saved ball cannot trigger an instantaneous second save
+PASS: A grounded keeper can attempt a rebound after real recovery time
+PASS: A real low ball is gathered by a ground smother through the match keeper logic
+PASS: A real low ball is gathered by a recovered second attempt through the match keeper logic
+MOTION CONTACT CHECK: 76 checks, 0 failures

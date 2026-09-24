@@ -37,6 +37,9 @@ var surge := 0.0
 var event_side := 0
 var home_only := false
 var session_fill := 1.0
+var published: Dictionary = {}
+var upload_age := 0.0
+var upload_group := 0
 
 static func visiting(position: Vector3) -> bool:
 	# Opposite long stand, +z half: the sideline camera actually sees this block.
@@ -197,6 +200,7 @@ func build_supporter_props(parent: Node3D) -> void:
 		instances(parent,"Supporter_"+kind,surface.commit(),transforms[kind],colors[kind],phases[kind],mat)
 
 func reset() -> void:
+	published.clear(); upload_age=0; upload_group=0
 	home_attack=-1.0
 	clock = 0
 	event_age = 100
@@ -251,9 +255,16 @@ func set_session(practice: bool) -> void:
 func sync_cloth() -> void:
 	if cloth_material==null: return
 	for key in animation_uniforms:
-		cloth_material.set_shader_parameter(key,material.get_shader_parameter(key))
-		if key in ["supporter_prop","flag_prop"]: continue
-		for prop in prop_materials: prop.set_shader_parameter(key,material.get_shader_parameter(key))
+		var value: Variant=material.get_shader_parameter(key)
+		publish(key,value)
+
+func publish(key: String,value: Variant) -> void:
+	if published.has(key) and published[key]==value: return
+	published[key]=value
+	material.set_shader_parameter(key,value)
+	if cloth_material!=null: cloth_material.set_shader_parameter(key,value)
+	if key in ["supporter_prop","flag_prop"]: return
+	for prop in prop_materials: prop.set_shader_parameter(key,value)
 
 func react(kind: String,team: int,location: Vector3) -> void:
 	# A pass or save must not cut off an ongoing goal celebration.
@@ -276,6 +287,7 @@ func react(kind: String,team: int,location: Vector3) -> void:
 	hush_team=team if kind=="miss" else (1-team if kind=="goal" else 0)
 	material.set_shader_parameter("hush_team",float(hush_team))
 	if kind=="goal" and team==0: start_wave(location,3.5)
+	sync_cloth()
 
 func start_wave(location: Vector3,delay: float = 0.35) -> void:
 	if wave_cooldown>0: return
@@ -283,6 +295,7 @@ func start_wave(location: Vector3,delay: float = 0.35) -> void:
 	wave_cooldown = 22
 	material.set_shader_parameter("wave_origin",fposmod(atan2(location.z/60,location.x/45)/TAU,1.0))
 	material.set_shader_parameter("wave_age",wave_age)
+	sync_cloth()
 
 func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int,playing: bool,late_close_match: bool) -> void:
 	clock += delta
@@ -309,19 +322,26 @@ func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int
 	excitement = maxf(danger*0.55,(1.0 if event_kind=="goal" else 0.82)*clampf((event_duration-event_age)/1.5,0,1))
 	ball_focus=ball_position
 	follow=lerpf(follow,0.78 if playing else 0.08,1-exp(-delta*2.4))
-	material.set_shader_parameter("crowd_time",clock)
-	material.set_shader_parameter("event_age",event_age)
-	material.set_shader_parameter("wave_age",wave_age)
-	material.set_shader_parameter("danger",danger)
-	material.set_shader_parameter("danger_team",float(team))
-	material.set_shader_parameter("follow",follow)
-	material.set_shader_parameter("ball_focus",ball_focus)
-	material.set_shader_parameter("home_support",home_support)
-	material.set_shader_parameter("away_support",away_support)
-	material.set_shader_parameter("surge",surge)
-	material.set_shader_parameter("hush",hush)
-	material.set_shader_parameter("hush_team",float(hush_team))
-	sync_cloth()
+	# Animation clocks remain smooth. Slow atmosphere uploads alternate groups;
+	# event changes bypass this schedule and reach every material immediately.
+	publish("crowd_time",clock)
+	publish("event_age",event_age)
+	publish("wave_age",wave_age)
+	upload_age+=delta
+	if upload_age<1.0/30.0: return
+	upload_age=fmod(upload_age,1.0/30.0)
+	if upload_group==0:
+		publish("danger",danger)
+		publish("danger_team",float(team))
+		publish("follow",follow)
+		publish("ball_focus",ball_focus)
+	else:
+		publish("home_support",home_support)
+		publish("away_support",away_support)
+		publish("surge",surge)
+		publish("hush",hush)
+		publish("hush_team",float(hush_team))
+	upload_group=1-upload_group
 
 func follow_weight(perimeter: float) -> float:
 	var azimuth := fposmod(atan2(ball_focus.z/60.0,ball_focus.x/45.0)/TAU,1.0)

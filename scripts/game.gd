@@ -365,6 +365,7 @@ func start_match(practice: bool = false,show_ceremony: bool = true,background: b
 		hint(training_drills.title() if practice else "İLK DÜDÜK  ·  HÜCUM YÖNÜ ↑")
 
 func reset_positions(team: int) -> void:
+	work_budget.reset()
 	reset_advanced_play()
 	heading.reset(); volleys.reset(); aerial_assist.reset()
 	second_balls.reset(); physical_contests.reset(); team_tactics.reset()
@@ -422,6 +423,7 @@ func reset_positions(team: int) -> void:
 	camera_focus = Vector3.ZERO
 
 func reset_practice() -> void:
+	work_budget.reset()
 	reset_advanced_play()
 	second_balls.reset(); physical_contests.reset(); broadcast.reset()
 	state="playing"
@@ -655,13 +657,16 @@ func return_menu() -> void:
 	start_match(false,false,true)
 
 var render_running_poses := true
+var work_budget := preload("res://scripts/match_work_budget.gd").new()
 
 func flush_running_poses() -> void:
 	for p in players: p.flush_running_pose()
 	for actor in referees.actors: actor.flush_running_pose()
 
 func _process(delta: float) -> void:
-	flush_running_poses()
+	for p in players:
+		if p.pending_pose_delta>=p.running_pose_interval or not p.defer_running_pose or not p.can_defer_running_pose(): p.flush_running_pose()
+	for actor in referees.actors: actor.flush_running_pose()
 	if state=="finished" and career.in_match: career.finish_match()
 	toast_timer = maxf(0,toast_timer-delta)
 	if is_instance_valid(hud) and is_instance_valid(hud.toast_overlay): hud.toast_overlay.queue_redraw()
@@ -751,6 +756,7 @@ func _physics_process(delta: float) -> void:
 
 func simulate_match(delta: float) -> void:
 	if state!="playing":
+		work_budget.reset()
 		flush_running_poses()
 		for p in players: p.defer_running_pose=false
 	for p in players: p.receiving_facing=Vector3.ZERO
@@ -833,6 +839,7 @@ func simulate_match(delta: float) -> void:
 				# Keep contact poses at 120 Hz; off-ball running is evaluated at
 				# the next draw (or replay sample), never several times unseen.
 				p.defer_running_pose=render_running_poses and not p.chosen and p.position.distance_squared_to(ball.position)>64.0
+				p.running_pose_interval=1.0/30.0 if work_budget.enabled and p.position.distance_squared_to(ball.position)>18.0*18.0 else 0.0
 				p.step(delta)
 				var bounded: Vector3=p.position.clamp(Vector3(-(P.HALF_WIDTH+2),-INF,-51),Vector3(P.HALF_WIDTH+2,INF,51))
 				if bounded!=p.position: p.position=bounded
@@ -1509,6 +1516,7 @@ func tackle() -> void:
 	rules.start_tackle(controlled,last_direction)
 
 func update_ai(_delta: float) -> void:
+	work_budget.game=self
 	opponent_coach.update(_delta)
 	support.update(_delta)
 	team_tactics.update(_delta)
@@ -1522,8 +1530,10 @@ func update_ai(_delta: float) -> void:
 		if d<distances[p.team]: distances[p.team] = d; nearest[p.team] = i
 	for i in range(players.size()):
 		var p = players[i]
-		p.defensive_turn_load=0
 		if is_user_player(i) or not p.visible or p.dismissed: continue
+		var decision_delta: float=work_budget.decision_delta(i,_delta,nearest)
+		if decision_delta<=0: continue
+		p.defensive_turn_load=0
 		p.protecting=false
 		p.jockeying=false
 		if state!="playing": return
@@ -1624,7 +1634,7 @@ func update_ai(_delta: float) -> void:
 		if defensive_duty: p.desired=team_tactics.defensive_movement(i,target)
 		var duty: String=team_tactics.roles.get(i,"") if defensive_duty else support.roles.get(i,"")
 		var shape_only: bool=not p.keeper and not has_ball and not receiving_pass and not chasing_ball and not p.sprinting and duty not in ["press","press_support","contain","track","recover","give_go","one_two","overlap","channel_run"] and not second_balls.targets.has(i)
-		if shape_only: p.desired=ai_attack.positional_movement(i,target,_delta)
+		if shape_only: p.desired=ai_attack.positional_movement(i,target,decision_delta)
 		else: ai_attack.positioning.erase(i)
 		if p.protecting: p.desired*=0.45
 		# Local separation keeps formations open and avoids stacks of bodies.

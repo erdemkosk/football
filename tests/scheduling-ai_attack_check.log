@@ -1,0 +1,43 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: A clear scoring position produces a physical shot
+PASS: A wide scoring angle can use a curled shot
+PASS: An advancing goalkeeper invites a genuine lofted chip
+PASS: Normal AI uses a power shot with finishing ability, energy and space
+PASS: A tired player avoids a costly power shot
+PASS: Nearby pressure prevents a long power-shot windup
+PASS: A forward run still offers a through-ball option for comparison with a shorter lead pass
+PASS: A teammate running forward receives a reachable pass into the space ahead
+PASS: The through pass uses normal ball physics and receiver tracking
+PASS: An offside run is not selected for a through pass
+PASS: Nearby pressure with a safe wall player triggers a one-two
+PASS: The AI passer starts the same bounded three-second run as the user
+PASS: The wall player returns the ball and ends the original run
+PASS: A wide attack targets a teammate at head height with an aerial cross
+PASS: The cross is kicked by the winger with no ball teleport
+PASS: A clear byline cutback becomes a hard ground cross
+PASS: Pressure on one wing prompts a lofted switch toward the free opposite wing
+PASS: Close pressure and lateral space trigger a stamina-consuming body feint
+PASS: An opponent feint does not cancel user input or repeat every simulation tick
+PASS: Open grass allows the AI to push the real ball ahead at a stamina cost
+PASS: The AI can recycle possession with an ordinary safe pass
+PASS: A trapped defender with no safe outlet clears toward the flank
+PASS: The user team never passes, shoots, or performs possession skills without permission
+PASS: AI decisions cannot remotely kick a ball outside foot reach
+PASS: AI recognizes a reachable incoming ball for header shot
+PASS: AI header shot changes velocity without moving the ball
+PASS: AI header shot waits for actual animated head contact
+PASS: Header shot records the appropriate match statistic
+PASS: Header shot sends the ball away from the AI's own goal
+PASS: AI recognizes a reachable incoming ball for header clearance
+PASS: AI header clearance changes velocity without moving the ball
+PASS: AI header clearance waits for actual animated head contact
+PASS: Header clearance records the appropriate match statistic
+PASS: Header clearance sends the ball away from the AI's own goal
+PASS: AI recognizes a reachable incoming ball for header pass
+PASS: AI header pass changes velocity without moving the ball
+PASS: AI header pass waits for actual animated head contact
+PASS: Header pass records the appropriate match statistic
+PASS: Header pass sends the ball away from the AI's own goal
+PASS: AI attacking decisions reverse with second-half ends
+AI ATTACK CHECK: 40 checks, 0 failures

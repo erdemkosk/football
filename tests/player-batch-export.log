@@ -1,0 +1,637 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+ERROR: Could not create editor data directory: C:/Users/erdem/AppData/Roaming/Godot
+   at: EditorPaths (editor/file_system/editor_paths.cpp:201)
+ERROR: Could not create editor config directory: C:/Users/erdem/AppData/Roaming/Godot
+   at: EditorPaths (editor/file_system/editor_paths.cpp:216)
+ERROR: Could not create editor cache directory: C:/Users/erdem/AppData/Local/Godot
+   at: EditorPaths (editor/file_system/editor_paths.cpp:237)
+
+ERROR: Cannot open file 'C:/Users/erdem/AppData/Local/Godot/editor_doc_cache-4.7.res'.
+   at: load (core/io/resource_format_binary.cpp:1156)
+ERROR: Failed loading resource: C:/Users/erdem/AppData/Local/Godot/editor_doc_cache-4.7.res.
+   at: _load (core/io/resource_loader.cpp:317)
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+ERROR: Could not open 'user://' directory: 'user://'.
+   at: _get_and_create_snapshot_storage_dir (modules/objectdb_profiler/editor/objectdb_profiler_panel.cpp:157)
+ERROR: Cannot open directory 'C:/Users/erdem/AppData/Roaming/Godot/feature_profiles'.
+   at: _update_profile_list (editor/settings/editor_feature_profile.cpp:392)
+[   0% ] first_scan_filesystem | Started Projenin ilk başlatılması (5 steps)
+[   0% ] first_scan_filesystem | Dosya yapısı taranıyor...
+[  16% ] first_scan_filesystem | Genel sınıf isimleri yükleniyor...
+ERROR: Cannot create file 'C:/Users/erdem/AppData/Local/Godot/editor_doc_cache-4.7.res'.
+   at: save (core/io/resource_format_binary.cpp:2117)
+ERROR: Cannot save editor help cache (C:/Users/erdem/AppData/Local/Godot/editor_doc_cache-4.7.res).
+   at: _gen_doc_thread (editor/doc/editor_help.cpp:3071)
+[  33% ] first_scan_filesystem | GDExtension'lar doğrulanıyor...
+[  50% ] first_scan_filesystem | Otomatik yükleme betikleri oluşturuluyor...
+[  66% ] first_scan_filesystem | Eklentiler başlatılıyor...
+[  83% ] first_scan_filesystem | Dosya taraması başlatılıyor...
+[ DONE ] first_scan_filesystem
+
+[   0% ] update_scripts_classes | Started Genel sınıflar kaydediliyor... (139 steps)
+[   0% ] update_scripts_classes | 
+[   0% ] update_scripts_classes | 
+[   1% ] update_scripts_classes | 
+[   2% ] update_scripts_classes | 
+[   2% ] update_scripts_classes | 
+[   3% ] update_scripts_classes | 
+[   4% ] update_scripts_classes | 
+[   5% ] update_scripts_classes | 
+[   5% ] update_scripts_classes | 
+[   6% ] update_scripts_classes | 
+[   7% ] update_scripts_classes | 
+[   7% ] update_scripts_classes | 
+[   8% ] update_scripts_classes | 
+[   9% ] update_scripts_classes | 
+[  10% ] update_scripts_classes | 
+[  10% ] update_scripts_classes | 
+[  11% ] update_scripts_classes | 
+[  12% ] update_scripts_classes | 
+[  12% ] update_scripts_classes | 
+[  13% ] update_scripts_classes | 
+[  14% ] update_scripts_classes | 
+[  15% ] update_scripts_classes | 
+[  15% ] update_scripts_classes | 
+[  16% ] update_scripts_classes | 
+[  17% ] update_scripts_classes | 
+[  17% ] update_scripts_classes | 
+[  18% ] update_scripts_classes | 
+[  19% ] update_scripts_classes | 
+[  20% ] update_scripts_classes | 
+[  20% ] update_scripts_classes | 
+[  21% ] update_scripts_classes | 
+[  22% ] update_scripts_classes | 
+[  22% ] update_scripts_classes | 
+[  23% ] update_scripts_classes | 
+[  24% ] update_scripts_classes | 
+[  25% ] update_scripts_classes | 
+[  25% ] update_scripts_classes | 
+[  26% ] update_scripts_classes | 
+[  27% ] update_scripts_classes | 
+[  27% ] update_scripts_classes | 
+[  28% ] update_scripts_classes | 
+[  29% ] update_scripts_classes | 
+[  30% ] update_scripts_classes | 
+[  30% ] update_scripts_classes | 
+[  31% ] update_scripts_classes | 
+[  32% ] update_scripts_classes | 
+[  32% ] update_scripts_classes | 
+[  33% ] update_scripts_classes | 
+[  34% ] update_scripts_classes | 
+[  35% ] update_scripts_classes | 
+[  35% ] update_scripts_classes | 
+[  36% ] update_scripts_classes | 
+[  37% ] update_scripts_classes | 
+[  37% ] update_scripts_classes | 
+[  38% ] update_scripts_classes | 
+[  39% ] update_scripts_classes | 
+[  40% ] update_scripts_classes | 
+[  40% ] update_scripts_classes | 
+[  41% ] update_scripts_classes | 
+[  42% ] update_scripts_classes | 
+[  42% ] update_scripts_classes | 
+[  43% ] update_scripts_classes | 
+[  44% ] update_scripts_classes | 
+[  45% ] update_scripts_classes | 
+[  45% ] update_scripts_classes | 
+[  46% ] update_scripts_classes | 
+[  47% ] update_scripts_classes | 
+[  47% ] update_scripts_classes | 
+[  48% ] update_scripts_classes | 
+[  49% ] update_scripts_classes | 
+[  50% ] update_scripts_classes | 
+[  50% ] update_scripts_classes | 
+[  51% ] update_scripts_classes | 
+[  52% ] update_scripts_classes | 
+[  52% ] update_scripts_classes | 
+[  53% ] update_scripts_classes | 
+[  54% ] update_scripts_classes | 
+[  55% ] update_scripts_classes | 
+[  55% ] update_scripts_classes | 
+[  56% ] update_scripts_classes | 
+[  57% ] update_scripts_classes | 
+[  57% ] update_scripts_classes | 
+[  58% ] update_scripts_classes | 
+[  59% ] update_scripts_classes | 
+[  60% ] update_scripts_classes | 
+[  60% ] update_scripts_classes | 
+[  61% ] update_scripts_classes | 
+[  62% ] update_scripts_classes | 
+[  62% ] update_scripts_classes | 
+[  63% ] update_scripts_classes | 
+[  64% ] update_scripts_classes | 
+[  65% ] update_scripts_classes | 
+[  65% ] update_scripts_classes | 
+[  66% ] update_scripts_classes | 
+[  67% ] update_scripts_classes | 
+[  67% ] update_scripts_classes | 
+[  68% ] update_scripts_classes | 
+[  69% ] update_scripts_classes | 
+[  70% ] update_scripts_classes | 
+[  70% ] update_scripts_classes | 
+[  71% ] update_scripts_classes | 
+[  72% ] update_scripts_classes | 
+[  72% ] update_scripts_classes | 
+[  73% ] update_scripts_classes | 
+[  74% ] update_scripts_classes | 
+[  75% ] update_scripts_classes | 
+[  75% ] update_scripts_classes | 
+[  76% ] update_scripts_classes | 
+[  77% ] update_scripts_classes | 
+[  77% ] update_scripts_classes | 
+[  78% ] update_scripts_classes | 
+[  79% ] update_scripts_classes | 
+[  80% ] update_scripts_classes | 
+[  80% ] update_scripts_classes | 
+[  81% ] update_scripts_classes | 
+[  82% ] update_scripts_classes | 
+[  82% ] update_scripts_classes | 
+[  83% ] update_scripts_classes | 
+[  84% ] update_scripts_classes | 
+[  85% ] update_scripts_classes | 
+[  85% ] update_scripts_classes | 
+[  86% ] update_scripts_classes | 
+[  87% ] update_scripts_classes | 
+[  87% ] update_scripts_classes | 
+[  88% ] update_scripts_classes | 
+[  89% ] update_scripts_classes | 
+[  90% ] update_scripts_classes | 
+[  90% ] update_scripts_classes | 
+[  91% ] update_scripts_classes | 
+[  92% ] update_scripts_classes | 
+[  92% ] update_scripts_classes | 
+[  93% ] update_scripts_classes | 
+[  94% ] update_scripts_classes | 
+[  95% ] update_scripts_classes | 
+[  95% ] update_scripts_classes | 
+[  96% ] update_scripts_classes | 
+[  97% ] update_scripts_classes | 
+[  97% ] update_scripts_classes | 
+[  98% ] update_scripts_classes | 
+[ DONE ] update_scripts_classes
+
+[   0% ] _update_scan_actions | Started Eylemler taranıyor... (27 steps)
+[   0% ] _update_scan_actions | card-cheer.mp3
+[   3% ] _update_scan_actions | crowd-chant-english.mp3
+[   7% ] _update_scan_actions | crowd-chant-old.mp3
+[  10% ] _update_scan_actions | crowd-chant-terrace.mp3
+[  14% ] _update_scan_actions | crowd-cheering.mp3
+[  17% ] _update_scan_actions | crowd-drums.mp3
+[  21% ] _update_scan_actions | crowd-swell-1.mp3
+[  25% ] _update_scan_actions | crowd-swell-2.mp3
+[  28% ] _update_scan_actions | crowd-swell-3.mp3
+[  32% ] _update_scan_actions | crowd-swell-4.mp3
+[  35% ] _update_scan_actions | foul-cheer.mp3
+[  39% ] _update_scan_actions | goal-cheer.mp3
+[  42% ] _update_scan_actions | goal-roar.mp3
+[  46% ] _update_scan_actions | menu-theme.mp3
+[  50% ] _update_scan_actions | referee-whistle.mp3
+[  53% ] _update_scan_actions | replay-chant.mp3
+[  57% ] _update_scan_actions | stadium-ambience.mp3
+[  60% ] _update_scan_actions | stadium-packed-1.mp3
+[  64% ] _update_scan_actions | stadium-packed-2.mp3
+[  67% ] _update_scan_actions | stadium-packed-3.mp3
+[  71% ] _update_scan_actions | stadium-packed-4.mp3
+[  75% ] _update_scan_actions | walkout-crowd.mp3
+[  78% ] _update_scan_actions | sefc-crest.png
+[  82% ] _update_scan_actions | sefc-icon.png
+[  85% ] _update_scan_actions | sefc-splash.png
+[  89% ] _update_scan_actions | supporter-slogan.svg
+[  92% ] _update_scan_actions | icon.svg
+[ DONE ] _update_scan_actions
+
+[   0% ] reimport | Started Varlıklar (Yeniden)İçe Aktarılıyor (27 steps)
+[   0% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[   3% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[   7% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  10% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  14% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  17% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  21% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  25% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  28% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  32% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  35% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  39% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  42% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  46% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  50% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  53% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  57% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  60% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  64% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  67% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  71% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  75% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  78% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  82% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  85% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  89% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[  92% ] reimport | Dosyalar, yeniden içe aktarma için hazırlanıyor...
+[   0% ] reimport | Yeniden içe aktarma öncesi işlemler yürütülüyor...
+[   0% ] reimport | walkout-crowd.mp3
+[   3% ] reimport | stadium-packed-4.mp3
+[   7% ] reimport | stadium-packed-3.mp3
+[  10% ] reimport | stadium-packed-2.mp3
+[  14% ] reimport | stadium-packed-1.mp3
+[  17% ] reimport | stadium-ambience.mp3
+[  21% ] reimport | replay-chant.mp3
+[  25% ] reimport | referee-whistle.mp3
+[  28% ] reimport | menu-theme.mp3
+[  32% ] reimport | goal-roar.mp3
+[  35% ] reimport | goal-cheer.mp3
+[  39% ] reimport | foul-cheer.mp3
+[  42% ] reimport | crowd-swell-4.mp3
+[  46% ] reimport | crowd-swell-3.mp3
+[  50% ] reimport | crowd-swell-2.mp3
+[  53% ] reimport | crowd-swell-1.mp3
+[  57% ] reimport | crowd-drums.mp3
+[  60% ] reimport | crowd-cheering.mp3
+[  64% ] reimport | crowd-chant-terrace.mp3
+[  67% ] reimport | crowd-chant-old.mp3
+[  71% ] reimport | crowd-chant-english.mp3
+[  75% ] reimport | card-cheer.mp3
+[  78% ] reimport | walkout-crowd.mp3
+[  82% ] reimport | stadium-packed-4.mp3
+[  85% ] reimport | stadium-packed-3.mp3
+[  89% ] reimport | stadium-packed-2.mp3
+[  92% ] reimport | stadium-packed-1.mp3
+[  96% ] reimport | Varlık İçe Aktarımı Tamamlanıyor...
+[ DONE ] reimport
+
+[   0% ] reimport | Started Varlıklar (Yeniden)İçe Aktarılıyor (27 steps)
+[   0% ] reimport | Yeniden içe aktarma sonrası işlemler yürütülüyor...
+[ DONE ] reimport
+
+[   0% ] savepack | Started Paketleme (102 steps)
+[   1% ] savepack | Dosya Depolanıyor: res://native/match.cfg
+[   1% ] savepack | Dosya Depolanıyor: res://licenses/GODOT_CPP_LICENSE.md
+[   1% ] savepack | Dosya Depolanıyor: res://licenses/LIBCXX_LICENSE.txt
+[   1% ] savepack | Dosya Depolanıyor: res://licenses/MINGW_COPYING.txt
+[   1% ] savepack | Dosya Depolanıyor: res://addons/native_match_export/export.gdc
+[   1% ] savepack | Dosya Depolanıyor: res://addons/native_match_export/plugin.gdc
+[   2% ] savepack | Dosya Depolanıyor: res://.godot/imported/card-cheer.mp3-8fdc98f07342fa4780a9f10d2dc98758.mp3str
+[   2% ] savepack | Dosya Depolanıyor: res://assets/audio/card-cheer.mp3.import
+[   2% ] savepack | Dosya Depolanıyor: res://.godot/imported/crowd-chant-english.mp3-e3448b8b39cabf31aeb893f9f8c3fcf8.mp3str
+[   2% ] savepack | Dosya Depolanıyor: res://assets/audio/crowd-chant-english.mp3.import
+[   3% ] savepack | Dosya Depolanıyor: res://.godot/imported/crowd-chant-old.mp3-cc23a37201570bb8f120e2be40f5b940.mp3str
+[   3% ] savepack | Dosya Depolanıyor: res://assets/audio/crowd-chant-old.mp3.import
+[   3% ] savepack | Dosya Depolanıyor: res://.godot/imported/crowd-chant-terrace.mp3-6b2cd18bacf1114457ec0d582bb475a4.mp3str
+[   3% ] savepack | Dosya Depolanıyor: res://assets/audio/crowd-chant-terrace.mp3.import
+[   4% ] savepack | Dosya Depolanıyor: res://.godot/imported/crowd-cheering.mp3-81eef63a4d79963999d0571bdab3c533.mp3str
+[   4% ] savepack | Dosya Depolanıyor: res://assets/audio/crowd-cheering.mp3.import
+[   4% ] savepack | Dosya Depolanıyor: res://.godot/imported/crowd-drums.mp3-b307e7b56e2316010d9a8846778d6e22.mp3str
+[   4% ] savepack | Dosya Depolanıyor: res://assets/audio/crowd-drums.mp3.import
+[   5% ] savepack | Dosya Depolanıyor: res://.godot/imported/crowd-swell-1.mp3-a96454d525c36d6f7cafa7c2f5bc34cd.mp3str
+[   5% ] savepack | Dosya Depolanıyor: res://assets/audio/crowd-swell-1.mp3.import
+[   5% ] savepack | Dosya Depolanıyor: res://.godot/imported/crowd-swell-2.mp3-53e8a83c8362d4d57a722c238a0cea9c.mp3str
+[   5% ] savepack | Dosya Depolanıyor: res://assets/audio/crowd-swell-2.mp3.import
+[   6% ] savepack | Dosya Depolanıyor: res://.godot/imported/crowd-swell-3.mp3-aa17c165c9c473b4dfb858fd711f930c.mp3str
+[   6% ] savepack | Dosya Depolanıyor: res://assets/audio/crowd-swell-3.mp3.import
+[   6% ] savepack | Dosya Depolanıyor: res://.godot/imported/crowd-swell-4.mp3-12c3c2926bceae957806e2269fde77eb.mp3str
+[   6% ] savepack | Dosya Depolanıyor: res://assets/audio/crowd-swell-4.mp3.import
+[   7% ] savepack | Dosya Depolanıyor: res://.godot/imported/foul-cheer.mp3-36463533b152ce3c55cd638f68944ea7.mp3str
+[   7% ] savepack | Dosya Depolanıyor: res://assets/audio/foul-cheer.mp3.import
+[   7% ] savepack | Dosya Depolanıyor: res://.godot/imported/goal-cheer.mp3-0cdaf1bd5dcf000e7f1ddef6b2e33bc0.mp3str
+[   7% ] savepack | Dosya Depolanıyor: res://assets/audio/goal-cheer.mp3.import
+[   8% ] savepack | Dosya Depolanıyor: res://.godot/imported/goal-roar.mp3-045426b7761ffce5ece1eadd68e776a7.mp3str
+[   8% ] savepack | Dosya Depolanıyor: res://assets/audio/goal-roar.mp3.import
+[   8% ] savepack | Dosya Depolanıyor: res://.godot/imported/menu-theme.mp3-ec4bbfb0f612a759977170a5f9754291.mp3str
+[   8% ] savepack | Dosya Depolanıyor: res://assets/audio/menu-theme.mp3.import
+[   9% ] savepack | Dosya Depolanıyor: res://.godot/imported/referee-whistle.mp3-22013ccb59e08dd96dc7391592a9d7e5.mp3str
+[   9% ] savepack | Dosya Depolanıyor: res://assets/audio/referee-whistle.mp3.import
+[  10% ] savepack | Dosya Depolanıyor: res://.godot/imported/replay-chant.mp3-a0933f9bf81073c4ede99552d96f7764.mp3str
+[  10% ] savepack | Dosya Depolanıyor: res://assets/audio/replay-chant.mp3.import
+[  10% ] savepack | Dosya Depolanıyor: res://.godot/imported/stadium-ambience.mp3-916ae383dd8424ac5f7294adb8ab0b82.mp3str
+[  10% ] savepack | Dosya Depolanıyor: res://assets/audio/stadium-ambience.mp3.import
+[  11% ] savepack | Dosya Depolanıyor: res://.godot/imported/stadium-packed-1.mp3-8cf2a345f9b1b27fcfcce2a31428a9f6.mp3str
+[  11% ] savepack | Dosya Depolanıyor: res://assets/audio/stadium-packed-1.mp3.import
+[  11% ] savepack | Dosya Depolanıyor: res://.godot/imported/stadium-packed-2.mp3-fc901212a710f4341ad5d23a3948b746.mp3str
+[  11% ] savepack | Dosya Depolanıyor: res://assets/audio/stadium-packed-2.mp3.import
+[  12% ] savepack | Dosya Depolanıyor: res://.godot/imported/stadium-packed-3.mp3-a40cf0e53f7f7c65ae42fc6b474f6016.mp3str
+[  12% ] savepack | Dosya Depolanıyor: res://assets/audio/stadium-packed-3.mp3.import
+[  12% ] savepack | Dosya Depolanıyor: res://.godot/imported/stadium-packed-4.mp3-0f5a434c1b20cd2efe3960d1f177d5d8.mp3str
+[  12% ] savepack | Dosya Depolanıyor: res://assets/audio/stadium-packed-4.mp3.import
+[  13% ] savepack | Dosya Depolanıyor: res://.godot/imported/walkout-crowd.mp3-29b7775fbbeb817bdc94c8d621aa3db0.mp3str
+[  13% ] savepack | Dosya Depolanıyor: res://assets/audio/walkout-crowd.mp3.import
+[  13% ] savepack | Dosya Depolanıyor: res://.godot/imported/sefc-crest.png-0de1f307559fd4b41d47587a4c7077ac.ctex
+[  13% ] savepack | Dosya Depolanıyor: res://assets/branding/sefc-crest.png.import
+[  14% ] savepack | Dosya Depolanıyor: res://.godot/imported/sefc-icon.png-f15ab741581253b7231f10401d79d2e1.ctex
+[  14% ] savepack | Dosya Depolanıyor: res://assets/branding/sefc-icon.png.import
+[  14% ] savepack | Dosya Depolanıyor: res://.godot/imported/sefc-splash.png-217fe6f36d5623239e74b80465e42e2c.ctex
+[  14% ] savepack | Dosya Depolanıyor: res://assets/branding/sefc-splash.png.import
+[  15% ] savepack | Dosya Depolanıyor: res://assets/branding/sefc.icns
+[  15% ] savepack | Dosya Depolanıyor: res://assets/branding/sefc.ico
+[  16% ] savepack | Dosya Depolanıyor: res://.godot/imported/supporter-slogan.svg-e8f8acee6d918cad53817c7941caf2fe.ctex
+[  16% ] savepack | Dosya Depolanıyor: res://assets/branding/supporter-slogan.svg.import
+[  16% ] savepack | Dosya Depolanıyor: res://.godot/exported/133200997/export-3070c538c03ee49b7677ff960a3f5195-main.scn
+[  17% ] savepack | Dosya Depolanıyor: res://scripts/advanced_controls.gdc
+[  18% ] savepack | Dosya Depolanıyor: res://scripts/advanced_finishing.gdc
+[  18% ] savepack | Dosya Depolanıyor: res://scripts/aerial_assist.gdc
+[  19% ] savepack | Dosya Depolanıyor: res://scripts/aim_indicator.gdc
+[  19% ] savepack | Dosya Depolanıyor: res://scripts/ai_attack.gdc
+[  20% ] savepack | Dosya Depolanıyor: res://scripts/ai_delivery.gdc
+[  20% ] savepack | Dosya Depolanıyor: res://scripts/arm_pose.gdc
+[  21% ] savepack | Dosya Depolanıyor: res://scripts/attacking_combos.gdc
+[  21% ] savepack | Dosya Depolanıyor: res://scripts/attack_decisions.gdc
+[  22% ] savepack | Dosya Depolanıyor: res://scripts/attack_shape.gdc
+[  22% ] savepack | Dosya Depolanıyor: res://scripts/audio.gdc
+[  23% ] savepack | Dosya Depolanıyor: res://scripts/ball.gdc
+[  23% ] savepack | Dosya Depolanıyor: res://scripts/ball_actions.gdc
+[  24% ] savepack | Dosya Depolanıyor: res://scripts/ball_dimensions.gdc
+[  24% ] savepack | Dosya Depolanıyor: res://scripts/ball_landing_guide.gdc
+[  25% ] savepack | Dosya Depolanıyor: res://scripts/ball_motion.gdc
+[  26% ] savepack | Dosya Depolanıyor: res://scripts/body_language.gdc
+[  26% ] savepack | Dosya Depolanıyor: res://scripts/branding.gdc
+[  27% ] savepack | Dosya Depolanıyor: res://scripts/career.gdc
+[  27% ] savepack | Dosya Depolanıyor: res://scripts/career_art.gdc
+[  28% ] savepack | Dosya Depolanıyor: res://scripts/career_calendar.gdc
+[  28% ] savepack | Dosya Depolanıyor: res://scripts/career_card.gdc
+[  29% ] savepack | Dosya Depolanıyor: res://scripts/career_contracts.gdc
+[  29% ] savepack | Dosya Depolanıyor: res://scripts/career_cups.gdc
+[  30% ] savepack | Dosya Depolanıyor: res://scripts/career_director.gdc
+[  30% ] savepack | Dosya Depolanıyor: res://scripts/career_director_screen.gdc
+[  31% ] savepack | Dosya Depolanıyor: res://scripts/career_finale.gdc
+[  31% ] savepack | Dosya Depolanıyor: res://scripts/career_international.gdc
+[  32% ] savepack | Dosya Depolanıyor: res://scripts/career_office.gdc
+[  32% ] savepack | Dosya Depolanıyor: res://scripts/career_screen.gdc
+[  33% ] savepack | Dosya Depolanıyor: res://scripts/career_showcase.gdc
+[  33% ] savepack | Dosya Depolanıyor: res://scripts/career_tactics.gdc
+[  33% ] savepack | Dosya Depolanıyor: res://scripts/career_tactics_card.gdc
+[  34% ] savepack | Dosya Depolanıyor: res://scripts/career_terms.gdc
+[  34% ] savepack | Dosya Depolanıyor: res://scripts/career_turkey.gdc
+[  35% ] savepack | Dosya Depolanıyor: res://scripts/career_world.gdc
+[  35% ] savepack | Dosya Depolanıyor: res://scripts/carry_gait.gdc
+[  36% ] savepack | Dosya Depolanıyor: res://scripts/celebration_pose.gdc
+[  36% ] savepack | Dosya Depolanıyor: res://scripts/ceremony.gdc
+[  37% ] savepack | Dosya Depolanıyor: res://scripts/club_catalog.gdc
+[  37% ] savepack | Dosya Depolanıyor: res://scripts/contextual_finish.gdc
+[  38% ] savepack | Dosya Depolanıyor: res://scripts/controller_glyphs.gdc
+[  38% ] savepack | Dosya Depolanıyor: res://scripts/controller_hint.gdc
+[  39% ] savepack | Dosya Depolanıyor: res://scripts/controls_help.gdc
+[  39% ] savepack | Dosya Depolanıyor: res://scripts/crowd.gdc
+[  40% ] savepack | Dosya Depolanıyor: res://scripts/defence_controls.gdc
+[  40% ] savepack | Dosya Depolanıyor: res://scripts/display_settings.gdc
+[  41% ] savepack | Dosya Depolanıyor: res://scripts/district_geometry.gdc
+[  42% ] savepack | Dosya Depolanıyor: res://scripts/dribble_motion.gdc
+[  42% ] savepack | Dosya Depolanıyor: res://scripts/duels.gdc
+[  43% ] savepack | Dosya Depolanıyor: res://scripts/duel_training.gdc
+[  43% ] savepack | Dosya Depolanıyor: res://scripts/first_touch.gdc
+[  44% ] savepack | Dosya Depolanıyor: res://scripts/footballer.gdc
+[  44% ] savepack | Dosya Depolanıyor: res://scripts/football_rules.gdc
+[  45% ] savepack | Dosya Depolanıyor: res://scripts/game.gdc
+[  45% ] savepack | Dosya Depolanıyor: res://scripts/gamepad.gdc
+[  46% ] savepack | Dosya Depolanıyor: res://scripts/geometry.gdc
+[  46% ] savepack | Dosya Depolanıyor: res://scripts/goalkeeping.gdc
+[  47% ] savepack | Dosya Depolanıyor: res://scripts/goal_celebration.gdc
+[  47% ] savepack | Dosya Depolanıyor: res://scripts/goal_net.gdc
+[  48% ] savepack | Dosya Depolanıyor: res://scripts/ground_skills.gdc
+[  48% ] savepack | Dosya Depolanıyor: res://scripts/hair_styles.gdc
+[  49% ] savepack | Dosya Depolanıyor: res://scripts/half_time.gdc
+[  50% ] savepack | Dosya Depolanıyor: res://scripts/heading.gdc
+[  50% ] savepack | Dosya Depolanıyor: res://scripts/hud.gdc
+[  51% ] savepack | Dosya Depolanıyor: res://scripts/impact_feedback.gdc
+[  51% ] savepack | Dosya Depolanıyor: res://scripts/impact_motion.gdc
+[  52% ] savepack | Dosya Depolanıyor: res://scripts/keeper_distribution.gdc
+[  52% ] savepack | Dosya Depolanıyor: res://scripts/keeper_motion.gdc
+[  53% ] savepack | Dosya Depolanıyor: res://scripts/kick_contact.gdc
+[  53% ] savepack | Dosya Depolanıyor: res://scripts/kit_cloth.gdc
+[  54% ] savepack | Dosya Depolanıyor: res://scripts/kit_graphics.gdc
+[  54% ] savepack | Dosya Depolanıyor: res://scripts/kit_preview.gdc
+[  55% ] savepack | Dosya Depolanıyor: res://scripts/led_boards.gdc
+[  55% ] savepack | Dosya Depolanıyor: res://scripts/locomotion.gdc
+[  56% ] savepack | Dosya Depolanıyor: res://scripts/match_broadcast.gdc
+[  56% ] savepack | Dosya Depolanıyor: res://scripts/match_camera.gdc
+[  57% ] savepack | Dosya Depolanıyor: res://scripts/match_clock.gdc
+[  57% ] savepack | Dosya Depolanıyor: res://scripts/match_coaching.gdc
+[  58% ] savepack | Dosya Depolanıyor: res://scripts/match_frontend.gdc
+[  59% ] savepack | Dosya Depolanıyor: res://scripts/match_management.gdc
+[  59% ] savepack | Dosya Depolanıyor: res://scripts/match_menu.gdc
+[  60% ] savepack | Dosya Depolanıyor: res://scripts/match_reactions.gdc
+[  60% ] savepack | Dosya Depolanıyor: res://scripts/match_replay.gdc
+[  61% ] savepack | Dosya Depolanıyor: res://scripts/menu_match.gdc
+[  61% ] savepack | Dosya Depolanıyor: res://scripts/menu_navigation.gdc
+[  62% ] savepack | Dosya Depolanıyor: res://scripts/menu_screen.gdc
+[  62% ] savepack | Dosya Depolanıyor: res://scripts/motion_transition.gdc
+[  63% ] savepack | Dosya Depolanıyor: res://scripts/native_match.gdc
+[  63% ] savepack | Dosya Depolanıyor: res://scripts/opponent_coach.gdc
+[  64% ] savepack | Dosya Depolanıyor: res://scripts/passing.gdc
+[  64% ] savepack | Dosya Depolanıyor: res://scripts/pause_art.gdc
+[  65% ] savepack | Dosya Depolanıyor: res://scripts/performance_hud.gdc
+[  65% ] savepack | Dosya Depolanıyor: res://scripts/physical_contests.gdc
+[  66% ] savepack | Dosya Depolanıyor: res://scripts/pitch_burst.gdc
+[  66% ] savepack | Dosya Depolanıyor: res://scripts/pitch_dimensions.gdc
+[  66% ] savepack | Dosya Depolanıyor: res://scripts/pitch_presence.gdc
+[  67% ] savepack | Dosya Depolanıyor: res://scripts/player_appearance.gdc
+[  67% ] savepack | Dosya Depolanıyor: res://scripts/player_attributes.gdc
+[  68% ] savepack | Dosya Depolanıyor: res://scripts/player_physique.gdc
+[  68% ] savepack | Dosya Depolanıyor: res://scripts/player_reaction.gdc
+[  69% ] savepack | Dosya Depolanıyor: res://scripts/quick_match_art.gdc
+[  69% ] savepack | Dosya Depolanıyor: res://scripts/referee.gdc
+[  70% ] savepack | Dosya Depolanıyor: res://scripts/referees.gdc
+[  70% ] savepack | Dosya Depolanıyor: res://scripts/replay_frame.gdc
+[  71% ] savepack | Dosya Depolanıyor: res://scripts/restart_recovery.gdc
+[  71% ] savepack | Dosya Depolanıyor: res://scripts/rigid_player_batch.gdc
+[  72% ] savepack | Dosya Depolanıyor: res://scripts/screen_layout.gdc
+[  72% ] savepack | Dosya Depolanıyor: res://scripts/second_balls.gdc
+[  73% ] savepack | Dosya Depolanıyor: res://scripts/send_off.gdc
+[  74% ] savepack | Dosya Depolanıyor: res://scripts/set_pieces.gdc
+[  74% ] savepack | Dosya Depolanıyor: res://scripts/shot_guide.gdc
+[  75% ] savepack | Dosya Depolanıyor: res://scripts/sidelines.gdc
+[  75% ] savepack | Dosya Depolanıyor: res://scripts/sideline_actor.gdc
+[  76% ] savepack | Dosya Depolanıyor: res://scripts/sideline_props.gdc
+[  76% ] savepack | Dosya Depolanıyor: res://scripts/sideline_spacing.gdc
+[  77% ] savepack | Dosya Depolanıyor: res://scripts/skill_moves.gdc
+[  77% ] savepack | Dosya Depolanıyor: res://scripts/squad_card.gdc
+[  78% ] savepack | Dosya Depolanıyor: res://scripts/squad_portraits.gdc
+[  78% ] savepack | Dosya Depolanıyor: res://scripts/stadium.gdc
+[  79% ] savepack | Dosya Depolanıyor: res://scripts/stadium_architecture.gdc
+[  79% ] savepack | Dosya Depolanıyor: res://scripts/stadium_district.gdc
+[  80% ] savepack | Dosya Depolanıyor: res://scripts/stadium_lighting.gdc
+[  80% ] savepack | Dosya Depolanıyor: res://scripts/static_geometry.gdc
+[  81% ] savepack | Dosya Depolanıyor: res://scripts/substitution_board.gdc
+[  81% ] savepack | Dosya Depolanıyor: res://scripts/support_play.gdc
+[  82% ] savepack | Dosya Depolanıyor: res://scripts/tactics_art.gdc
+[  83% ] savepack | Dosya Depolanıyor: res://scripts/team_control.gdc
+[  83% ] savepack | Dosya Depolanıyor: res://scripts/team_identity.gdc
+[  84% ] savepack | Dosya Depolanıyor: res://scripts/team_tactics.gdc
+[  84% ] savepack | Dosya Depolanıyor: res://scripts/training_drills.gdc
+[  85% ] savepack | Dosya Depolanıyor: res://scripts/training_menu.gdc
+[  85% ] savepack | Dosya Depolanıyor: res://scripts/training_preview.gdc
+[  86% ] savepack | Dosya Depolanıyor: res://scripts/volleys.gdc
+[  86% ] savepack | Dosya Depolanıyor: res://scripts/volley_pose.gdc
+[  87% ] savepack | Dosya Depolanıyor: res://scripts/weather.gdc
+[  87% ] savepack | Dosya Depolanıyor: res://shaders/color_space.gdshaderinc
+[  88% ] savepack | Dosya Depolanıyor: res://shaders/contact_shadow.gdshader
+[  88% ] savepack | Dosya Depolanıyor: res://shaders/crowd.gdshader
+[  89% ] savepack | Dosya Depolanıyor: res://shaders/crowd_motion.gdshaderinc
+[  89% ] savepack | Dosya Depolanıyor: res://shaders/district_glow.gdshader
+[  90% ] savepack | Dosya Depolanıyor: res://shaders/district_light_pool.gdshader
+[  91% ] savepack | Dosya Depolanıyor: res://shaders/flood_shaft.gdshader
+[  91% ] savepack | Dosya Depolanıyor: res://shaders/grass.gdshader
+[  92% ] savepack | Dosya Depolanıyor: res://shaders/jersey.gdshader
+[  92% ] savepack | Dosya Depolanıyor: res://shaders/led_board.gdshader
+[  93% ] savepack | Dosya Depolanıyor: res://shaders/match_sky.gdshader
+[  93% ] savepack | Dosya Depolanıyor: res://shaders/net.gdshader
+[  94% ] savepack | Dosya Depolanıyor: res://shaders/pitch_paint.gdshader
+[  94% ] savepack | Dosya Depolanıyor: res://shaders/rain.gdshader
+[  95% ] savepack | Dosya Depolanıyor: res://shaders/replay_frame.gdshader
+[  95% ] savepack | Dosya Depolanıyor: res://shaders/supporter_banner.gdshader
+[  96% ] savepack | Dosya Depolanıyor: res://shaders/supporter_flag.gdshader
+[  96% ] savepack | Dosya Depolanıyor: res://shaders/surface_mark.gdshader
+[  97% ] savepack | Dosya Depolanıyor: res://shaders/wet_reflection.gdshader
+[  97% ] savepack | Dosya Depolanıyor: res://benchmark.gdc
+[  98% ] savepack | Dosya Depolanıyor: res://.godot/exported/133200997/export-28395dbe62d0b5bddcf22bf1788a036e-benchmark.scn
+[  98% ] savepack | Dosya Depolanıyor: res://addons/native_match_export/export.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://addons/native_match_export/plugin.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://main.tscn.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/advanced_controls.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/advanced_finishing.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/aerial_assist.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/aim_indicator.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/ai_attack.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/ai_delivery.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/arm_pose.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/attacking_combos.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/attack_decisions.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/attack_shape.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/audio.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/ball.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/ball_actions.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/ball_dimensions.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/ball_landing_guide.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/ball_motion.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/body_language.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/branding.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/career.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/career_art.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/career_calendar.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/career_card.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/career_contracts.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/career_cups.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/career_director.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/career_director_screen.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/career_finale.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/career_international.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/career_office.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/career_screen.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/career_showcase.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/career_tactics.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/career_tactics_card.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/career_terms.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/career_turkey.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/career_world.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/carry_gait.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/celebration_pose.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/ceremony.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/club_catalog.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/contextual_finish.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/controller_glyphs.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/controller_hint.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/controls_help.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/crowd.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/defence_controls.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/display_settings.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/district_geometry.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/dribble_motion.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/duels.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/duel_training.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/first_touch.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/footballer.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/football_rules.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/game.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/gamepad.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/geometry.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/goalkeeping.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/goal_celebration.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/goal_net.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/ground_skills.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/hair_styles.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/half_time.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/heading.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/hud.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/impact_feedback.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/impact_motion.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/keeper_distribution.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/keeper_motion.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/kick_contact.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/kit_cloth.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/kit_graphics.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/kit_preview.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/led_boards.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/locomotion.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/match_broadcast.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/match_camera.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/match_clock.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/match_coaching.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/match_frontend.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/match_management.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/match_menu.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/match_reactions.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/match_replay.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/menu_match.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/menu_navigation.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/menu_screen.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/motion_transition.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/native_match.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/opponent_coach.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/passing.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/pause_art.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/performance_hud.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/physical_contests.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/pitch_burst.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/pitch_dimensions.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/pitch_presence.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/player_appearance.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/player_attributes.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/player_physique.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/player_reaction.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/quick_match_art.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/referee.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/referees.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/replay_frame.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/restart_recovery.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/rigid_player_batch.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/screen_layout.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/second_balls.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/send_off.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/set_pieces.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/shot_guide.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/sidelines.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/sideline_actor.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/sideline_props.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/sideline_spacing.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/skill_moves.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/squad_card.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/squad_portraits.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/stadium.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/stadium_architecture.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/stadium_district.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/stadium_lighting.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/static_geometry.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/substitution_board.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/support_play.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/tactics_art.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/team_control.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/team_identity.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/team_tactics.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/training_drills.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/training_menu.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/training_preview.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/volleys.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/volley_pose.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://scripts/weather.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://benchmark.gd.remap
+[  98% ] savepack | Dosya Depolanıyor: res://benchmark.tscn.remap
+[  98% ] savepack | Dosya Depolanıyor: res://.godot/global_script_class_cache.cfg
+[  98% ] savepack | Dosya Depolanıyor: res://assets/branding/sefc-icon.png
+[  98% ] savepack | Dosya Depolanıyor: res://assets/branding/sefc-splash.png
+[  98% ] savepack | Dosya Depolanıyor: res://.godot/uid_cache.bin
+[  98% ] savepack | Dosya Depolanıyor: res://project.binary
+[ DONE ] savepack
+
+ERROR: Can't save resource to empty path. Provide non-empty path or a Resource with non-empty resource_path.
+   at: save (core/io/resource_saver.cpp:108)
+ERROR: Error saving editor settings to 
+   at: save (editor/settings/editor_settings.cpp:1525)

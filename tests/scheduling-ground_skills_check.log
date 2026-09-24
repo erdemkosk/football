@@ -1,0 +1,57 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: Duel training fields only the learner and defender
+PASS: Training keeps control on the learner and starts with a stationary defender
+PASS: Keyboard maps the new intent: stop_go
+PASS: Keyboard maps the new intent: knock_around
+PASS: Sprint and right-stick map the new intent: stop_go
+PASS: Sprint and right-stick map the new intent: knock_around
+PASS: Starts roll on side -1
+PASS: Preparation cannot move the ball before contact: roll
+PASS: Uses discrete physical contacts: roll / 1
+PASS: Ball impulse requires actual boot proximity: roll
+PASS: Exit retains bounded physical movement and body pose: roll
+PASS: Returns control after the move: roll
+PASS: Starts roll on side 1
+PASS: Preparation cannot move the ball before contact: roll
+PASS: Uses discrete physical contacts: roll / 1
+PASS: Ball impulse requires actual boot proximity: roll
+PASS: Exit retains bounded physical movement and body pose: roll
+PASS: Returns control after the move: roll
+PASS: Starts stop_go on side -1
+PASS: Preparation cannot move the ball before contact: stop_go
+PASS: Uses discrete physical contacts: stop_go / 2
+PASS: Ball impulse requires actual boot proximity: stop_go
+PASS: Exit retains bounded physical movement and body pose: stop_go
+PASS: Returns control after the move: stop_go
+PASS: Starts stop_go on side 1
+PASS: Preparation cannot move the ball before contact: stop_go
+PASS: Uses discrete physical contacts: stop_go / 2
+PASS: Ball impulse requires actual boot proximity: stop_go
+PASS: Exit retains bounded physical movement and body pose: stop_go
+PASS: Returns control after the move: stop_go
+PASS: Starts knock_around on side -1
+PASS: Preparation cannot move the ball before contact: knock_around
+PASS: Uses discrete physical contacts: knock_around / 1
+PASS: Ball impulse requires actual boot proximity: knock_around
+PASS: Exit retains bounded physical movement and body pose: knock_around
+PASS: Returns control after the move: knock_around
+PASS: Starts knock_around on side 1
+PASS: Preparation cannot move the ball before contact: knock_around
+PASS: Uses discrete physical contacts: knock_around / 1
+PASS: Ball impulse requires actual boot proximity: knock_around
+PASS: Exit retains bounded physical movement and body pose: knock_around
+PASS: Returns control after the move: knock_around
+PASS: Pass cancels preparation before the foot commits
+PASS: A deflected ball cancels the move without a rescue impulse
+PASS: Knock-around relinquishes possession for a real race
+PASS: An opponent's possession interrupts the exit
+PASS: Rejected input explains low energy
+PASS: Repeated input explains recovery instead of silently failing
+PASS: Stage two uses the stationary tackling partner
+PASS: Training defender uses the same timed tackle as a match
+PASS: Final stage releases the defender to normal match AI
+PASS: Two successful attempts advance the lesson
+PASS: Pause cancels preparation without striking the ball
+PASS: Training menu exposes the new workshop
+GROUND SKILLS CHECK: 54 checks, 0 failures

@@ -1,0 +1,18 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+preparation: 837.065833333333 us (1200 samples)
+ai: 978.383333333333 us (1200 samples)
+contact-preparation: 92.2158333333333 us (1200 samples)
+body-language: 136.0875 us (1200 samples)
+players-step: 3511.09166666667 us (1200 samples)
+resolve: 20.3558333333333 us (1200 samples)
+contacts: 114.305 us (1200 samples)
+replay-boundaries: 4.84666666666667 us (1200 samples)
+player timers-weather: 9.43784090909091 us
+player steering: 5.67670454545455 us
+player body-physics: 37.4251515151515 us
+player facing-locomotion: 13.3544318181818 us
+player body-language: 4.62280303030303 us
+player ball-actions: 4.38007575757576 us
+player animation: 74.6950378787879 us
+player footprints: 5.87450757575758 us

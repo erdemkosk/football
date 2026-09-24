@@ -1,4 +1,5 @@
 extends RefCounted
+const Native=preload("res://scripts/native_match.gd")
 ## Shared resistance model for the physical ball and pre-kick trajectory estimates.
 const DRY_ROLLING := 2.0
 const DRY_DAMPING := 0.12
@@ -84,6 +85,12 @@ static func sample_flight(origin: Vector3,velocity: Vector3,spin: float,seconds:
 		flight_origin=origin; flight_velocity=velocity; flight_spin=spin; flight_drag=drag
 	var key := [seconds,steps]
 	if flight_samples.has(key): return flight_samples[key].duplicate()
+	var kernel := Native.get_kernel()
+	if kernel!=null and spin==0.0 and steps>=0 and steps<=1000000:
+		var result: PackedVector3Array=kernel.sample_straight_flight(origin,velocity,seconds,steps,drag)
+		if flight_samples.size()>=8: flight_samples.clear()
+		flight_samples[key]=result.duplicate()
+		return result
 	var points := PackedVector3Array([origin])
 	var delta := seconds/float(maxi(1,steps))
 	var position := origin
@@ -100,6 +107,8 @@ static func sample_flight(origin: Vector3,velocity: Vector3,spin: float,seconds:
 	return points
 
 static func lob_velocity(origin: Vector3,target: Vector3,flight: float,surface=null) -> Vector3:
+	var kernel := Native.get_kernel()
+	if kernel!=null: return kernel.lob_velocity(origin,target,flight,air_drag(surface))
 	var launch := (target-origin)/flight+Vector3.UP*4.905*flight
 	var drag := air_drag(surface)
 	var delta := flight/48

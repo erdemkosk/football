@@ -2,7 +2,6 @@ shader_type spatial;
 render_mode diffuse_burley;
 #include "res://shaders/color_space.gdshaderinc"
 varying vec3 world_pos;
-varying vec3 reflected_flood;
 uniform float wetness = 0.0;
 uniform float weather_clock = 0.0;
 uniform float rain = 0.0;
@@ -16,17 +15,41 @@ float noise(vec2 p) {
  return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);
 }
 uniform vec2 half_pitch = vec2(36.0, 50.0);
+// Gradient noise has no flat cell centres. Its analytic derivative shares
+// the four corner samples used by wetness and filters the fine surface slope.
+uint wet_bits(ivec2 cell) {
+ uvec2 q=uvec2(cell);
+ uint h=q.x*1597334677u ^ q.y*3812015801u;
+ h=(h^(h>>16u))*2246822519u;
+ h=h^(h>>13u);
+ return h;
+}
+float wet_hash(ivec2 cell) {
+ return float(wet_bits(cell)&0x00ffffffu)/16777215.0;
+}
+vec2 wet_gradient(ivec2 cell) {
+ uint h=wet_bits(cell);
+ vec2 g=(h&1u)==0u ? vec2(.9238795,.3826834) : vec2(.3826834,.9238795);
+ g.x=(h&2u)==0u ? g.x : -g.x;
+ g.y=(h&4u)==0u ? g.y : -g.y;
+ return g;
+}
+vec3 wet_noise(vec2 point) {
+ ivec2 cell=ivec2(floor(point));
+ vec2 f=fract(point);
+ vec2 u=f*f*f*(f*(f*6.0-15.0)+10.0);
+ vec2 du=30.0*f*f*(f-1.0)*(f-1.0);
+ vec2 ga=wet_gradient(cell), gb=wet_gradient(cell+ivec2(1,0));
+ vec2 gc=wet_gradient(cell+ivec2(0,1)), gd=wet_gradient(cell+ivec2(1,1));
+ float a=dot(ga,f), b=dot(gb,f-vec2(1,0));
+ float c=dot(gc,f-vec2(0,1)), d=dot(gd,f-vec2(1,1));
+ float value=mix(mix(a,b,u.x),mix(c,d,u.x),u.y);
+ vec2 gradient=mix(mix(ga,gb,u.x),mix(gc,gd,u.x),u.y);
+ gradient+=du*vec2(mix(b-a,d-c,u.y),mix(c-a,d-b,u.x));
+ return vec3(.5+value*.65,gradient*.65);
+}
 void vertex(){
  world_pos=(MODEL_MATRIX*vec4(VERTEX,1.0)).xyz;
- // Pick one lamp for the whole surface, using the camera's reflected sightline.
- // This runs per vertex, and cannot produce four competing patches of glare.
- float best=-2.0;
- reflected_flood=flood_positions[0];
- for(int i=0;i<4;i++) {
-  vec3 mirror=flood_positions[i]*vec3(1,-1,1);
-  float facing=dot(normalize(mirror-CAMERA_POSITION_WORLD),-INV_VIEW_MATRIX[2].xyz);
-  if(facing>best) { best=facing; reflected_flood=flood_positions[i]; }
- }
 }
 void fragment(){
  vec2 p=world_pos.xz;
@@ -46,31 +69,55 @@ void fragment(){
  mud=max(mud,max(max(patch(p,vec4(-23,-17,6,10)),patch(p,vec4(22,20,7,9))),patch(p,vec4(9,-31,5,6))));
  if(abs(p.x)>half_pitch.x || abs(p.y)>half_pitch.y) mud=0.0;
  mud*=smoothstep(0.25,0.95,wetness);
- float broken=smoothstep(0.18,0.78,noise(p*1.15)*0.7+noise(p*3.0)*0.3);
  // Boot traffic exposes earth through the centre of each six-yard box.
  float goalmouth=exp(-pow(p.x/4.3,2.0)-pow((abs(p.y)-48.0)/2.7,2.0));
  float scars=smoothstep(.32,.75,noise(p*2.7)*.6+noise(p*8.0)*.4);
  wear+=goalmouth*(.28+play_wear*.30)*scars;
- float puddle=smoothstep(0.58,0.86,noise(p*0.75))*mud;
- vec3 turf=mix(grass,vec3(0.15,0.16,0.095),wear)*(1.0-wetness*0.10);
- turf=mix(turf,vec3(0.138,0.132,0.072),play_wear*0.22*(1.0-wetness*0.35));
- turf=mix(turf,vec3(0.125,0.102,0.059),mud*broken*0.78);
- turf=mix(turf,vec3(.23,.185,.105)*(1.0-wetness*.38),goalmouth*scars*(.18+play_wear*.23));
- vec2 cell=floor(p*1.6);
- float phase=fract(weather_clock*1.7+hash(cell));
- float ring=1.0-smoothstep(0.015,0.05,abs(length(fract(p*1.6)-0.5)-phase*0.55));
- vec3 water=vec3(0.12,0.16,0.16)+ring*(1.0-phase)*rain*0.045;
- ALBEDO=palette_color(mix(turf,water,puddle*0.65));
- ROUGHNESS=clamp(mix(.96+grain*.3,.56+broken*.12,wetness)*(1.0-puddle*.62),.18,1.0);
- SPECULAR=wetness*(0.22+puddle*0.22);
- // The strongest reflected lamp produces one broken highlight, not a luminous field.
- float glint=0.0;
- if (flood_glint>0.0 && wetness>0.05) {
-  vec3 eye=normalize(CAMERA_POSITION_WORLD-world_pos);
-  vec3 ray=normalize(reflected_flood-world_pos);
-  float alignment=max(dot(reflect(-ray,vec3(0,1,0)),eye),0.0);
-  glint=pow(alignment,220.0);
+ vec3 turf=mix(grass,vec3(0.15,0.16,0.095),wear);
+ turf=mix(turf,vec3(0.138,0.132,0.072),play_wear*0.22);
+ turf=mix(turf,vec3(.23,.185,.105),goalmouth*scars*(.18+play_wear*.23));
+ float roughness=.96+grain*.3;
+ float specular=0.0;
+ if(wetness>0.0) {
+  vec3 broad=wet_noise(p*.21+vec2(7.7,-19.0));
+  vec2 rotated=vec2(p.x*.8+p.y*.6,-p.x*.6+p.y*.8);
+  vec3 broken=wet_noise(rotated*.95+broad.yz*.35);
+  float damp=wetness*(.72+.28*broad.x);
+  // A water film darkens living grass gently; pooled water keeps the turf
+  // beneath it visible instead of painting opaque blue/black camouflage.
+  turf*=1.0-damp*.105;
+  float exposed=mud*smoothstep(.28,.80,broken.x)*(.22+play_wear*.16);
+  turf=mix(turf,vec3(.115,.111,.069),exposed);
+  float pool=smoothstep(.52,.72,broad.x*.60+broken.x*.40);
+  pool*=smoothstep(.12,.80,mud)*smoothstep(.55,1.0,wetness);
+  roughness=mix(roughness,.67+broken.x*.10,damp);
+  roughness=mix(roughness,.48,pool);
+  specular=wetness*mix(.23,.32,pool);
+  // Filter blade-scale slopes with the pixel footprint so the distant
+  // playing surface stays calm as the camera moves.
+  vec2 slope=broad.yz*.006*damp;
+  float blade_detail=1.0-smoothstep(.22,.55,footprint*30.0);
+  if(blade_detail>0.0) {
+   vec3 blades=wet_noise(rotated*vec2(30.0,7.0));
+   vec2 blade_slope=vec2(blades.y*.8-blades.z*.6,blades.y*.6+blades.z*.8);
+   slope+=blade_slope*.028*blade_detail*damp*(1.0-pool*.85);
+  }
+  if(pool>.01 && rain>.01 && detail>.01) {
+   vec2 cell=floor(p*2.3);
+   float seed=wet_hash(ivec2(cell));
+   vec2 impact=vec2(wet_hash(ivec2(cell)+ivec2(13,7)),wet_hash(ivec2(cell)+ivec2(3,29)))*.30+.35;
+   float age=fract(weather_clock*mix(1.1,1.7,seed)+seed);
+   vec2 offset=fract(p*2.3)-impact;
+   float radius=length(offset);
+   float ring=1.0-smoothstep(.018,.075,abs(radius-age*.27));
+   float ripple=sin((radius-age*.27)*95.0)*ring*age*(1.0-age);
+   slope+=offset/max(radius,.01)*ripple*.06*rain*pool*detail;
+  }
+  vec3 world_normal=normalize((INV_VIEW_MATRIX*vec4(NORMAL,0.0)).xyz);
+  world_normal=normalize(world_normal+vec3(-slope.x,0.0,-slope.y)*max(world_normal.y,0.0));
+  NORMAL=normalize((VIEW_MATRIX*vec4(world_normal,0.0)).xyz);
  }
- float surface_break=mix(.68,.66+.18*sin(p.x*17.0+p.y*9.0)*sin(p.y*29.0),detail);
- EMISSION=vec3(.67,.80,1.0)*glint*surface_break*wetness*wetness*flood_glint*.24;
+ ALBEDO=palette_color(turf);
+ ROUGHNESS=clamp(roughness,.48,1.0);
+ SPECULAR=specular;
 }

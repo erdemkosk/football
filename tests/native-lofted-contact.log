@@ -1,0 +1,28 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+PASS: LB + Y prepares an aerial pass without a ground through-ball or keeper call
+PASS: The original passer stays selected until the kick
+PASS: Short press previews an aerial pass along the aimed heading
+PASS: Holding Y sends the lofted pass farther along the same heading
+PASS: Releasing LB first keeps the prepared aerial pass intact
+PASS: Releasing Y queues the exact previewed lofted kick for physical contact
+PASS: The lofted pass reaches actual boot contact
+PASS: Releasing Y kicks the previewed physical pass and leaves the passer selected
+PASS: The lofted gesture resets after release
+PASS: Y then LB also selects the aerial pass without losing held power
+PASS: The reverse button order also reaches boot contact
+PASS: Either release order produces a single aerial pass
+PASS: Releasing an earlier A press cannot fire a lofted pass that is waiting for Y
+PASS: The overlapping gesture still releases exactly once with Y
+PASS: Losing possession cancels the lofted pass
+PASS: Pause safely cancels the lofted gesture
+PASS: Manual assistance setting preserves the exact lofted heading
+PASS: An offside winger is excluded from long-pass assistance
+PASS: Y alone remains the usual through ball
+PASS: The airborne switch physically launches before measuring its flight
+PASS: Real aerial switch lands on the far wing despite receiver movement, weather=false
+PASS: The airborne switch physically launches before measuring its flight
+PASS: Real aerial switch lands on the far wing despite receiver movement, weather=true
+LOFTED SWITCH CHECK: 23 checks, 0 failures

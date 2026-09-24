@@ -1,0 +1,22 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+PASS: New players have a live stance before the first physics tick
+PASS: A completed hand gesture cannot leave twisted elbow axes in the next animation
+PASS: Reserves start seated with bent arms instead of an authored rest pose
+PASS: Waiting substitutes retain breathing and small independent movement
+PASS: An unreachable high ball does not start a futile shot animation
+PASS: Rejected aerial input leaves the runner moving
+PASS: Reachable aerial shot enters a real volley preparation
+PASS: A deflection out of reach cancels the unfinished kick
+PASS: Cancelled volley keeps movement and records no phantom shot
+HAND DELIVERY 0 backpass=false hands=true held=true saves=1
+PASS: Keeper 0 respects hand contact and back-pass rules (false)
+HAND DELIVERY 0 backpass=true hands=false held=false saves=0
+PASS: Keeper 0 respects hand contact and back-pass rules (true)
+HAND DELIVERY 1 backpass=false hands=true held=true saves=1
+PASS: Keeper 1 respects hand contact and back-pass rules (false)
+HAND DELIVERY 1 backpass=true hands=false held=false saves=0
+PASS: Keeper 1 respects hand contact and back-pass rules (true)
+ANIMATION CONTINUITY CHECK: 13 checks, 0 failures

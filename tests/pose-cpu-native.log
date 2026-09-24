@@ -1,0 +1,12 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+base-locomotion mean_us=24.314670794322 calls=26488
+actions mean_us=6.72383720930233 calls=26488
+body-language mean_us=2.93110087586832 calls=26488
+foot-plant mean_us=7.14440501359106 calls=26488
+transition mean_us=5.97866958622773 calls=26488
+boot-contact mean_us=2.01321353065539 calls=26488
+carry-keeper mean_us=5.65459830866808 calls=26488
+reaction-gaze-cloth mean_us=10.3107067351253 calls=26488

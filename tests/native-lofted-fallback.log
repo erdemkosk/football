@@ -1,0 +1,39 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+PASS: LB + Y prepares an aerial pass without a ground through-ball or keeper call
+PASS: The original passer stays selected until the kick
+PASS: Short press previews an aerial pass along the aimed heading
+PASS: Holding Y sends the lofted pass farther along the same heading
+PASS: Releasing LB first keeps the prepared aerial pass intact
+ERROR: FAIL: Releasing Y kicks the previewed physical pass and leaves the passer selected
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/lofted_switch_check.gd:9)
+       [1] run (res://tests/lofted_switch_check.gd:47)
+PASS: The lofted gesture resets after release
+PASS: Y then LB also selects the aerial pass without losing held power
+ERROR: FAIL: Either release order produces a single aerial pass
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/lofted_switch_check.gd:9)
+       [1] run (res://tests/lofted_switch_check.gd:52)
+PASS: Releasing an earlier A press cannot fire a lofted pass that is waiting for Y
+PASS: The overlapping gesture still releases exactly once with Y
+PASS: Losing possession cancels the lofted pass
+PASS: Pause safely cancels the lofted gesture
+PASS: Manual assistance setting preserves the exact lofted heading
+PASS: An offside winger is excluded from long-pass assistance
+PASS: Y alone remains the usual through ball
+ERROR: FAIL: Real aerial switch lands on the far wing despite receiver movement, weather=false
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/lofted_switch_check.gd:9)
+       [1] run (res://tests/lofted_switch_check.gd:81)
+ERROR: FAIL: Real aerial switch lands on the far wing despite receiver movement, weather=true
+   at: push_error (core/variant/variant_utility.cpp:1023)
+   GDScript backtrace (most recent call first):
+       [0] check (res://tests/lofted_switch_check.gd:9)
+       [1] run (res://tests/lofted_switch_check.gd:81)
+LOFTED SWITCH CHECK: 18 checks, 4 failures

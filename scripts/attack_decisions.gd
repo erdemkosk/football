@@ -124,17 +124,21 @@ func continuation(passer: int,receiver: int,origin: Vector3,flight: float) -> fl
 	var team: int=game.players[passer].team
 	var forward: float=game.attack_sign(team)
 	var best := 0.0
+	# This synchronous lane search observes one unchanged pitch layout.
+	var opponents: Array[Vector3]=[]
+	var offside: float=game.rules.offside_line(team)
+	for opponent in game.players:
+		if not opponent.visible or opponent.dismissed or opponent.team==team: continue
+		opponents.append(opponent.position+opponent.velocity*Vector3(1,0,1)*minf(.45,flight*.4))
 	for j in range(game.players.size()):
-		if j==passer or j==receiver or not game.ai_attack.onside(j,team): continue
 		var q=game.players[j]
+		if j==passer or j==receiver or not q.visible or q.dismissed or q.team!=team or q.keeper or q.position.z*forward>offside+.10: continue
 		var future: Vector3=q.position+(q.velocity*Vector3(1,0,1)).limit_length(8)*minf(flight,.65)
 		var progress: float=(future.z-origin.z)*forward
 		var distance: float=game.flat_distance(origin,future)
 		if distance<4 or distance>25 or progress<3: continue
 		var lane := 5.0
-		for opponent in game.players:
-			if not opponent.visible or opponent.dismissed or opponent.team==team: continue
-			var at: Vector3=opponent.position+opponent.velocity*Vector3(1,0,1)*minf(.45,flight*.4)
+		for at in opponents:
 			var near := Geometry3D.get_closest_point_to_segment(at*Vector3(1,0,1),origin*Vector3(1,0,1),future*Vector3(1,0,1))
 			lane=minf(lane,game.flat_distance(at,near))
 		if lane<1.5: continue

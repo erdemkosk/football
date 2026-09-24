@@ -100,6 +100,11 @@ func plant(p,leg: int) -> void:
 
 func apply_pose(p,amount: float,stride: float) -> void:
 	if not available(p): return
+	var rig: Node3D=p.rig
+	var spine: Node3D=p.spine
+	var left_arm: Node3D=p.left_arm
+	var right_arm: Node3D=p.right_arm
+	var gait_width: float=p.gait_width
 	var lateral := smoothstep(0.2,0.85,absf(side))*(1-backward*0.45)
 	var direction := signf(side)
 	var reverse_stride := stride*lerpf(1.0,-0.62,backward)
@@ -112,7 +117,7 @@ func apply_pose(p,amount: float,stride: float) -> void:
 		var phase := -stride*sign_leg
 		var leg_rotation:=leg.rotation
 		leg_rotation.x=lerpf(0.1-reverse_stride*sign_leg*0.78*amount,0.13+phase*0.12*amount,lateral)
-		leg_rotation.z=lerpf(sign_leg*0.035*p.gait_width,sign_leg*0.18*p.gait_width+stride*direction*0.20*amount,lateral)
+		leg_rotation.z=lerpf(sign_leg*0.035*gait_width,sign_leg*0.18*gait_width+stride*direction*0.20*amount,lateral)
 		var lift := lerpf(maxf(0,-phase),maxf(0,phase),backward)
 		var knee_rotation:=knee.rotation
 		knee_rotation.x=-0.19-lift*lerpf(1.08,0.68,lateral)*amount-lateral*0.1-backward*0.06
@@ -123,20 +128,27 @@ func apply_pose(p,amount: float,stride: float) -> void:
 		leg.rotation=leg_rotation; knee.rotation=knee_rotation
 	# Bounded pelvis shift transfers weight onto the outside support leg.
 	var support_side := -1.0 if plant_leg==0 else 1.0
-	p.rig.position.x=sin(p.motion_clock*2.0+p.number*0.8)*0.013*(1-amount)+support_side*cut*0.055
-	p.rig.rotation.z=lerp_angle(p.rig.rotation.z,-side*0.08-cut_side*cut*0.12,maxf(lateral,cut)*0.55)
-	p.rig.rotation.x=lerp_angle(p.rig.rotation.x,0.09,braking*0.65)
+	rig.position.x=sin(p.motion_clock*2.0+p.number*0.8)*0.013*(1-amount)+support_side*cut*0.055
+	var rig_rotation := rig.rotation
+	rig_rotation.z=lerp_angle(rig_rotation.z,-side*0.08-cut_side*cut*0.12,maxf(lateral,cut)*0.55)
+	rig_rotation.x=lerp_angle(rig_rotation.x,0.09,braking*0.65)
+	rig.rotation=rig_rotation
 	# The free leg takes a short catch step while the supporting knee loads.
 	if braking>.25 and plant_leg>=0:
 		var free_leg: Node3D=p.right_leg if plant_leg==0 else p.left_leg
 		free_leg.rotation.x+=sin(clampf(plant_age/PLANT_TIME,0,1)*PI)*braking*.16
-	p.spine.rotation.x=lerpf(p.spine.rotation.x,-0.22,backward*0.45+braking*0.35)
-	p.spine.rotation.z=lerpf(p.spine.rotation.z,cut_side*cut*0.12,lateral*0.25+cut*0.6)
+	var spine_rotation := spine.rotation
+	spine_rotation.x=lerpf(spine_rotation.x,-0.22,backward*0.45+braking*0.35)
+	spine_rotation.z=lerpf(spine_rotation.z,cut_side*cut*0.12,lateral*0.25+cut*0.6)
+	spine.rotation=spine_rotation
 	var balance := maxf(lateral*0.65,maxf(braking,cut))
-	p.left_arm.rotation.z=lerpf(p.left_arm.rotation.z,-0.52,balance)
-	p.right_arm.rotation.z=lerpf(p.right_arm.rotation.z,0.52,balance)
-	p.left_arm.rotation.x=lerpf(p.left_arm.rotation.x,-reverse_stride*0.34*amount,lateral*0.6+backward*0.5)
-	p.right_arm.rotation.x=lerpf(p.right_arm.rotation.x,reverse_stride*0.34*amount,lateral*0.6+backward*0.5)
+	var left_rotation := left_arm.rotation
+	var right_rotation := right_arm.rotation
+	left_rotation.z=lerpf(left_rotation.z,-0.52,balance)
+	right_rotation.z=lerpf(right_rotation.z,0.52,balance)
+	left_rotation.x=lerpf(left_rotation.x,-reverse_stride*0.34*amount,lateral*0.6+backward*0.5)
+	right_rotation.x=lerpf(right_rotation.x,reverse_stride*0.34*amount,lateral*0.6+backward*0.5)
+	left_arm.rotation=left_rotation; right_arm.rotation=right_rotation
 
 func finish_pose(p) -> void:
 	if not available(p): return
@@ -181,18 +193,22 @@ func finish_pose(p) -> void:
 			# During recovery the other boot takes support. Only the visual pelvis
 			# follows it; the CharacterBody and its collision capsule stay untouched.
 	# Pelvis compression must not push the free boot through the turf.
+	var floor_y: float=p.global_position.y+p.boot_ground_height()
+	if feet.size()!=2: feet.resize(2)
 	for i in range(2):
 		var leg: Node3D=p.left_leg if i==0 else p.right_leg
 		var knee: Node3D=p.left_knee if i==0 else p.right_knee
 		var point: Vector3=knee.to_global(BOOT)
-		if point.y<p.global_position.y+p.boot_ground_height()-.002:
-			point.y=p.global_position.y+p.boot_ground_height()
+		if point.y<floor_y-.002:
+			point.y=floor_y
 			solve_leg(leg,knee,p.rig.to_local(point)-leg.position,1)
+			# IK changed this knee; refresh only this foot before sharing the result.
+			point=knee.to_global(BOOT)
+		feet[i]=point
 	if plant_leg>=0:
 		last_hip=(p.left_leg if plant_leg==0 else p.right_leg).quaternion
 		last_knee=(p.left_knee if plant_leg==0 else p.right_knee).quaternion
 	last_pelvis=p.rig.position.y
-	feet.assign([p.left_knee.to_global(BOOT),p.right_knee.to_global(BOOT)])
 
 func solve_leg(leg: Node3D,knee: Node3D,target: Vector3,weight: float) -> void:
 	# Two-bone IK, including the boot's forward offset, in the rig's local space.

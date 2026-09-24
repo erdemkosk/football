@@ -1,0 +1,10 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+POSE body_error=0.00166677124798 vector=(0.0, -0.001666, -0.000034) energy_error=0.0 foot_error=0.00678894016892 penetration=-0.02309007320106
+PASS: 20 FPS pose scheduling preserves 120 Hz movement, turning, braking and stamina
+PASS: Scheduled running feet stay within 2 cm of the full-frequency reference through sprint and cuts
+PASS: Scheduled feet retain ground contact without sinking through the pitch
+PASS: An already-idle player does not flush the same idle pose every physics tick
+RENDER POSE: 4 checks, 0 failures

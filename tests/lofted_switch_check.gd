@@ -25,6 +25,15 @@ func setup() -> void:
 	game.controlled=9; game.dribbler=9; game.rules.reset()
 func charge(seconds: float) -> void:
 	for i in range(roundi(seconds*120)): game.update_control(1.0/120)
+func await_kick_contact() -> bool:
+	var contacts: int=game.kick_contact.contacts
+	for frame in range(30):
+		game.kick_contact.prepare(1.0/120)
+		game.players[9].step(1.0/120)
+		game.kick_contact.resolve()
+		await physics_frame
+		if game.kick_contact.contacts>contacts: return true
+	return false
 func capture() -> void:
 	if "--visual" not in OS.get_cmdline_user_args(): return
 	game.camera.size=76; game.camera.position=Vector3(0,70,24); game.camera.look_at(Vector3(0,0,-10)); game.hud.queue_redraw()
@@ -44,11 +53,14 @@ func run() -> void:
 	button(JOY_BUTTON_LEFT_SHOULDER,false)
 	check(game.pass_lob and game.controlled==9,"Releasing LB first keeps the prepared aerial pass intact")
 	button(JOY_BUTTON_Y,false)
+	check(not game.kick_contact.pending.is_empty() and game.kick_contact.pending.velocity==route.velocity,"Releasing Y queues the exact previewed lofted kick for physical contact")
+	check(await await_kick_contact(),"The lofted pass reaches actual boot contact")
 	check(game.passes[0]==1 and game.controlled==9 and game.ball.kick_velocity.is_equal_approx(route.velocity),"Releasing Y kicks the previewed physical pass and leaves the passer selected")
 	check(not game.pass_charging and not game.pass_lob,"The lofted gesture resets after release")
 	setup(); button(JOY_BUTTON_Y); charge(0.2); button(JOY_BUTTON_LEFT_SHOULDER)
 	check(game.pass_lob and game.pass_power>0.25,"Y then LB also selects the aerial pass without losing held power")
 	button(JOY_BUTTON_Y,false); button(JOY_BUTTON_LEFT_SHOULDER,false)
+	check(await await_kick_contact(),"The reverse button order also reaches boot contact")
 	check(game.passes[0]==1 and game.ball.kick_velocity.y>5,"Either release order produces a single aerial pass")
 	setup(); game.controller.stick=Vector2.ZERO; game.last_direction=Vector3.BACK
 	button(JOY_BUTTON_A); button(JOY_BUTTON_LEFT_SHOULDER); button(JOY_BUTTON_Y); charge(0.3); button(JOY_BUTTON_A,false)
@@ -73,6 +85,7 @@ func run() -> void:
 		button(JOY_BUTTON_LEFT_SHOULDER); button(JOY_BUTTON_Y); charge(0.52)
 		route=game.pass_preview.duplicate(); var target: Vector3=route.target
 		button(JOY_BUTTON_Y,false); button(JOY_BUTTON_LEFT_SHOULDER,false)
+		check(await await_kick_contact(),"The airborne switch physically launches before measuring its flight")
 		game.players[7].position.x=20
 		var peak := 0.0
 		for tick in range(roundi(route.flight*120)):

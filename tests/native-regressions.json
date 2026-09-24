@@ -1,0 +1,72 @@
+[
+  {
+    "test": "ball_resistance_check",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "ball_landing_check",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "ai_delivery_check",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "ai_attack_check",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "attack_decisions_check",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "lofted_switch_check",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "locomotion_check",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "motion_contact_check",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "carry_gait_check",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "animation_continuity_check",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "body_language_check",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "replay_comfort_check",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "render_pose_check",
+    "passed": true,
+    "exit_code": 0
+  },
+  {
+    "test": "fps_regression_check",
+    "passed": true,
+    "exit_code": 0
+  }
+]

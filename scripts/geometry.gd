@@ -1,7 +1,7 @@
 extends RefCounted
 static var rigid_meshes: Dictionary={}
 
-static func combine_rigid(parent: Node3D,parts: Array,cache_key: String) -> MeshInstance3D:
+static func combine_rigid(parent: Node3D,parts: Array,cache_key: String,anchors: Array=[]) -> MeshInstance3D:
 	# Same vertices, normals, UVs and material; fewer moving render instances.
 	if not rigid_meshes.has(cache_key):
 		var builder:=SurfaceTool.new()
@@ -10,7 +10,10 @@ static func combine_rigid(parent: Node3D,parts: Array,cache_key: String) -> Mesh
 		rigid_meshes[cache_key]=builder.commit()
 	var result:=mesh(parent,rigid_meshes[cache_key],parts[0].material_override,Vector3.ZERO)
 	result.name="Rigid_"+cache_key
-	for part in parts: part.free()
+	for part in parts:
+		# Keep gameplay attachment/contact anchors at precisely the same transform.
+		if part in anchors: part.mesh=null
+		else: part.free()
 	return result
 
 static func material(color: Color, roughness: float = 0.85) -> StandardMaterial3D:

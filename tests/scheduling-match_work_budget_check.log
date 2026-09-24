@@ -1,0 +1,19 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+PASS: The distant test player has no active contact or turn
+PASS: Distant routine decisions run at 12–20 Hz instead of 120 Hz
+PASS: Skipped decision time is preserved for positional timers
+PASS: A nearby ball bypasses the budget on the same physics tick
+PASS: A newly selected pass receiver reacts immediately at any distance
+PASS: Pressing assignments keep full-rate decisions
+PASS: A committed boot contact never waits for the distant timer
+PASS: Possession changes invalidate distant decisions immediately
+PASS: A large target change bypasses the timer
+PASS: A far running pose can wait between rendered frames
+PASS: A distant running pose flushes at its 30 Hz deadline
+PASS: Protection cancels visual deferral immediately
+PASS: Replay snapshots flush pending poses before recording
+PASS: Goals reach every crowd material immediately, outside the staggered uploads
+PASS: Crowd animation clocks advance every frame
+PASS: Reset removes all delayed work
+MATCH WORK BUDGET: 16 checks, 0 failures

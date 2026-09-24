@@ -27,12 +27,13 @@ var presence: Node3D
 func _ready() -> void:
 	rng.seed=8201
 	rain_material.shader=load("res://shaders/rain.gdshader")
-	var drop := BoxMesh.new()
-	drop.size=Vector3(0.028,0.72,0.028)
+	# Soft streaks use two triangles instead of solid six-sided rods.
+	var drop := QuadMesh.new()
+	drop.size=Vector2.ONE
 	rain_mesh=instances(drop,rain_material,2200)
 	for i in range(2200):
 		rain_mesh.multimesh.set_instance_transform(i,Transform3D(Basis.IDENTITY,Vector3(rng.randf_range(-P.HALF_WIDTH-3,P.HALF_WIDTH+3),rng.randf_range(0,18),rng.randf_range(-54,54))))
-		rain_mesh.multimesh.set_instance_custom_data(i,Color(rng.randf(),0,0,0))
+		rain_mesh.multimesh.set_instance_custom_data(i,Color(rng.randf(),rng.randf(),rng.randf(),rng.randf()))
 	mark_material.shader=load("res://shaders/surface_mark.gdshader")
 	var sole := PlaneMesh.new()
 	sole.size=Vector2.ONE
@@ -113,8 +114,8 @@ func mud_at(point: Vector3) -> float:
 		patch=maxf(patch,1.0-smoothstep(0.3,1.0,distance))
 	return patch*smoothstep(0.25,0.95,wetness)
 
-func grip_at(point: Vector3) -> float:
-	return 1.0-wetness*0.12-mud_at(point)*0.15
+func grip_at(point: Vector3,sampled_mud: float=-1.0) -> float:
+	return 1.0-wetness*0.12-(mud_at(point) if sampled_mud<0 else sampled_mud)*0.15
 
 func ball_drag(point: Vector3) -> float:
 	# Wet intact grass skids; churned earth absorbs motion.

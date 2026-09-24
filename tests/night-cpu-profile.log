@@ -1,0 +1,15 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce RTX 3070
+ERROR: Can't create shader cache folder, no shader caching will happen: user://
+   at: RendererCompositorRD (servers/rendering/renderer_rd/renderer_compositor_rd.cpp:337)
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+update_camera calls=431 mean_us=63.4872389791183 p95_us=78 max_us=152
+update_ai calls=86 mean_us=964.790697674419 p95_us=1433 max_us=2055
+update_contacts calls=86 mean_us=79.0232558139535 p95_us=125 max_us=141
+simulate_match calls=744 mean_us=3440.03629032258 p95_us=4344 max_us=7450
+_physics_process calls=744 mean_us=3516.41801075269 p95_us=4419 max_us=7546
+flush_running_poses calls=1087 mean_us=39.9797608095676 p95_us=20 max_us=2277
+update_stadium_score calls=429 mean_us=17.6130536130536 p95_us=24 max_us=84
+_process calls=429 mean_us=788.312354312354 p95_us=1709 max_us=3236

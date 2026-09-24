@@ -93,6 +93,7 @@ static func risk(origin: Vector3,pass_plan: Dictionary,team: int,players: Array)
 		var gap := Vector2(predicted.x-intercept.x,predicted.z-intercept.z).length()
 		var reach := 1.0+minf(1.3,time*0.7)
 		result = maxf(result,clampf((reach+0.65-gap)/maxf(reach,0.1),0,1))
+		if result>=1.0: break
 	return result
 
 static func assisted_plan(origin: Vector3,direction: Vector3,power: float,team: int,passer: int,players: Array,assistance: float=0.65,through: bool=false,forward: float=-1,offside: float=100,surface=null) -> Dictionary:

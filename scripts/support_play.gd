@@ -7,7 +7,7 @@ var roles: Dictionary = {}
 var shape := preload("res://scripts/attack_shape.gd").new()
 const ONE_TWO_DISTANCE := 12.0
 const ONE_TWO_TIME := 3.0
-const PLAN_INTERVAL := .05
+const PLAN_INTERVAL := .10
 var plan_age := 0.0
 var plan_elapsed := 0.0
 var plan_owner := -2
@@ -72,7 +72,7 @@ func update(delta: float) -> void:
 	# A newly committed receiver must leave its support assignment immediately.
 	settings.append(game.ai_receivers[team] if game.ai_pass_time[team]>0 else -1)
 	for key in ["width","tempo","runs","fullbacks","anchor"]: settings.append(game.management.detail(team,key))
-	var valid := plan_age>0 and owner==plan_owner and settings==plan_settings and ball.distance_squared_to(plan_ball)<.35*.35
+	var valid := plan_age>0 and owner==plan_owner and settings==plan_settings and ball.distance_squared_to(plan_ball)<.8*.8
 	if valid:
 		# Movement, stamina and explicit-run lifetimes still advance at 120 Hz.
 		# Recheck offside every tick even between spatial-planning samples.

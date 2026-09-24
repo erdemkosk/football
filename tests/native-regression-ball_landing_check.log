@@ -1,0 +1,34 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+LANDING ERROR weather=0 curve=0.0: 0.052 m
+PASS: The landing marker matches the physical ball in weather 0 with spin 0.0
+PASS: A grounded descending ball clears its old airborne marker
+PASS: The actual bounce creates a new marker for its next landing
+LANDING ERROR weather=0 curve=2.3: 0.066 m
+PASS: The landing marker matches the physical ball in weather 0 with spin 2.3
+PASS: A grounded descending ball clears its old airborne marker
+PASS: The actual bounce creates a new marker for its next landing
+LANDING ERROR weather=2 curve=0.0: 0.044 m
+PASS: The landing marker matches the physical ball in weather 2 with spin 0.0
+PASS: A grounded descending ball clears its old airborne marker
+PASS: The actual bounce creates a new marker for its next landing
+LANDING ERROR weather=2 curve=2.3: 0.059 m
+PASS: The landing marker matches the physical ball in weather 2 with spin 2.3
+PASS: A grounded descending ball clears its old airborne marker
+PASS: The actual bounce creates a new marker for its next landing
+PASS: An out-of-play ball is not falsely marked at the field edge
+PASS: An airborne cross displays its predicted ground landing
+PASS: Showing the guide cannot move the ball or trigger a shot
+PASS: A new touch immediately moves the marker without waiting for the refresh interval
+PASS: Catching or holding the ball removes the landing marker
+PASS: No stale airborne marker during restart
+PASS: No stale airborne marker during set_piece
+PASS: No stale airborne marker during goal
+PASS: No stale airborne marker during replay
+PASS: No stale airborne marker during paused
+PASS: No stale airborne marker during halftime
+PASS: No stale airborne marker during menu
+PASS: A new drill clears the previous trajectory before the ball reset completes
+BALL LANDING CHECK: 25 checks, 0 failures

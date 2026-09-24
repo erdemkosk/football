@@ -1,0 +1,308 @@
+[
+	{
+		"draws": 1084.79120879121,
+		"fps": 90.923188090701,
+		"frames": 455,
+		"gpu_ms": 2.00122857146211,
+		"p50_ms": 9.974,
+		"p95_ms": 14.164,
+		"p99_ms": 15.079,
+		"physics_hz": 119.898709570155,
+		"physics_ms": 5.19208571428571,
+		"render_cpu_ms": 1.17638461629113,
+		"scene": "original-day-0",
+		"states": {
+			"playing": 455
+		},
+		"valid": true
+	},
+	{
+		"draws": 1337.83880597015,
+		"fps": 66.8579535917989,
+		"frames": 335,
+		"gpu_ms": 3.51758506831838,
+		"p50_ms": 15.563,
+		"p95_ms": 16.441,
+		"p99_ms": 16.947,
+		"physics_hz": 119.945164503496,
+		"physics_ms": 4.95451940298506,
+		"render_cpu_ms": 3.13361790785149,
+		"scene": "original-night-0",
+		"states": {
+			"playing": 335
+		},
+		"valid": true
+	},
+	{
+		"draws": 1568.27739726027,
+		"fps": 58.3392921326068,
+		"frames": 292,
+		"gpu_ms": 4.74148629789483,
+		"p50_ms": 16.784,
+		"p95_ms": 22.009,
+		"p99_ms": 23.027,
+		"physics_hz": 119.875257806726,
+		"physics_ms": 5.39705136986304,
+		"render_cpu_ms": 3.41816095375035,
+		"scene": "original-rain-0",
+		"states": {
+			"playing": 292
+		},
+		"valid": true
+	},
+	{
+		"draws": 738.345493562232,
+		"fps": 93.109069682548,
+		"frames": 466,
+		"gpu_ms": 2.09136266027909,
+		"p50_ms": 9.764,
+		"p95_ms": 14.493,
+		"p99_ms": 15.667,
+		"physics_hz": 120.082727208608,
+		"physics_ms": 5.44860085836908,
+		"render_cpu_ms": 1.0975214606191,
+		"scene": "batched-day-0",
+		"states": {
+			"playing": 466
+		},
+		"valid": true
+	},
+	{
+		"draws": 802.49014084507,
+		"fps": 70.9386947799711,
+		"frames": 355,
+		"gpu_ms": 3.36095774274477,
+		"p50_ms": 14.891,
+		"p95_ms": 15.909,
+		"p99_ms": 16.533,
+		"physics_hz": 120.096212852853,
+		"physics_ms": 4.82511830985913,
+		"render_cpu_ms": 2.85091549174886,
+		"scene": "batched-night-0",
+		"states": {
+			"playing": 355
+		},
+		"valid": true
+	},
+	{
+		"draws": 1032.77987421384,
+		"fps": 63.4803395599295,
+		"frames": 318,
+		"gpu_ms": 4.46026729412799,
+		"p50_ms": 16.016,
+		"p95_ms": 17.355,
+		"p99_ms": 19.141,
+		"physics_hz": 119.973849294081,
+		"physics_ms": 5.3276289308176,
+		"render_cpu_ms": 3.06433018498451,
+		"scene": "batched-rain-0",
+		"states": {
+			"playing": 318
+		},
+		"valid": true
+	},
+	{
+		"draws": 746.229166666667,
+		"fps": 95.9374296084094,
+		"frames": 480,
+		"gpu_ms": 1.79808333242933,
+		"p50_ms": 9.604,
+		"p95_ms": 13.47,
+		"p99_ms": 13.893,
+		"physics_hz": 119.921787010512,
+		"physics_ms": 4.99366250000002,
+		"render_cpu_ms": 1.09223750047386,
+		"scene": "batched-day-1",
+		"states": {
+			"playing": 480
+		},
+		"valid": true
+	},
+	{
+		"draws": 801.574229691877,
+		"fps": 71.3754183059354,
+		"frames": 357,
+		"gpu_ms": 3.35344538501665,
+		"p50_ms": 14.834,
+		"p95_ms": 15.918,
+		"p99_ms": 16.539,
+		"physics_hz": 119.958686228463,
+		"physics_ms": 4.76974509803922,
+		"render_cpu_ms": 2.82736134796249,
+		"scene": "batched-night-1",
+		"states": {
+			"playing": 357
+		},
+		"valid": true
+	},
+	{
+		"draws": 904.5,
+		"fps": 64.699457043754,
+		"frames": 324,
+		"gpu_ms": 4.00485801991121,
+		"p50_ms": 15.782,
+		"p95_ms": 16.968,
+		"p99_ms": 21.936,
+		"physics_hz": 120.013499022519,
+		"physics_ms": 5.36163271604939,
+		"render_cpu_ms": 2.98729320220005,
+		"scene": "batched-rain-1",
+		"states": {
+			"playing": 324
+		},
+		"valid": true
+	},
+	{
+		"draws": 1071.96304849885,
+		"fps": 86.5048792347934,
+		"frames": 433,
+		"gpu_ms": 2.11057275010587,
+		"p50_ms": 10.464,
+		"p95_ms": 15.172,
+		"p99_ms": 16.196,
+		"physics_hz": 120.067973256607,
+		"physics_ms": 5.33682909930716,
+		"render_cpu_ms": 1.19311778415984,
+		"scene": "original-day-1",
+		"states": {
+			"playing": 433
+		},
+		"valid": true
+	},
+	{
+		"draws": 1337.00306748466,
+		"fps": 65.093117101719,
+		"frames": 326,
+		"gpu_ms": 3.4915000021092,
+		"p50_ms": 15.793,
+		"p95_ms": 16.875,
+		"p99_ms": 17.459,
+		"physics_hz": 120.002955147648,
+		"physics_ms": 5.00402760736198,
+		"render_cpu_ms": 3.20916871278564,
+		"scene": "original-night-1",
+		"states": {
+			"playing": 326
+		},
+		"valid": true
+	},
+	{
+		"draws": 1444.20202020202,
+		"fps": 59.2437859851144,
+		"frames": 297,
+		"gpu_ms": 3.96646800707486,
+		"p50_ms": 16.654,
+		"p95_ms": 18.5,
+		"p99_ms": 24.279,
+		"physics_hz": 120.083364185316,
+		"physics_ms": 5.28513804713808,
+		"render_cpu_ms": 3.34460943074339,
+		"scene": "original-rain-1",
+		"states": {
+			"playing": 297
+		},
+		"valid": true
+	},
+	{
+		"draws": 1076.11637931034,
+		"fps": 92.6601017783351,
+		"frames": 464,
+		"gpu_ms": 2.15448060066536,
+		"p50_ms": 9.893,
+		"p95_ms": 13.794,
+		"p99_ms": 14.314,
+		"physics_hz": 120.018795622369,
+		"physics_ms": 4.90331465517242,
+		"render_cpu_ms": 1.16536422549137,
+		"scene": "original-day-2",
+		"states": {
+			"playing": 464
+		},
+		"valid": true
+	},
+	{
+		"draws": 1335.80124223602,
+		"fps": 64.3760006269663,
+		"frames": 322,
+		"gpu_ms": 3.63583851156768,
+		"p50_ms": 15.857,
+		"p95_ms": 17.294,
+		"p99_ms": 21.055,
+		"physics_hz": 119.955280671366,
+		"physics_ms": 5.10778881987577,
+		"render_cpu_ms": 3.22021739453262,
+		"scene": "original-night-2",
+		"states": {
+			"playing": 322
+		},
+		"valid": true
+	},
+	{
+		"draws": 1446.51736111111,
+		"fps": 57.495691316813,
+		"frames": 288,
+		"gpu_ms": 3.84420485587584,
+		"p50_ms": 16.88,
+		"p95_ms": 22.331,
+		"p99_ms": 23.816,
+		"physics_hz": 119.982328060433,
+		"physics_ms": 5.31791319444446,
+		"render_cpu_ms": 3.38826388700141,
+		"scene": "original-rain-2",
+		"states": {
+			"playing": 288
+		},
+		"valid": true
+	},
+	{
+		"draws": 751.987124463519,
+		"fps": 93.0836082562364,
+		"frames": 466,
+		"gpu_ms": 2.30722317598408,
+		"p50_ms": 9.706,
+		"p95_ms": 14.23,
+		"p99_ms": 17.803,
+		"physics_hz": 120.049889618022,
+		"physics_ms": 5.15091416309012,
+		"render_cpu_ms": 1.10348927347957,
+		"scene": "batched-day-2",
+		"states": {
+			"playing": 466
+		},
+		"valid": true
+	},
+	{
+		"draws": 797.798295454546,
+		"fps": 70.3978317467822,
+		"frames": 352,
+		"gpu_ms": 3.38194034316323,
+		"p50_ms": 14.961,
+		"p95_ms": 16.383,
+		"p99_ms": 17.608,
+		"physics_hz": 119.996304113833,
+		"physics_ms": 4.86794034090906,
+		"render_cpu_ms": 2.86048864437775,
+		"scene": "batched-night-2",
+		"states": {
+			"playing": 352
+		},
+		"valid": true
+	},
+	{
+		"draws": 933.045871559633,
+		"fps": 65.3044334920278,
+		"frames": 327,
+		"gpu_ms": 4.18352598626315,
+		"p50_ms": 15.736,
+		"p95_ms": 16.672,
+		"p99_ms": 17.242,
+		"physics_hz": 120.024356356907,
+		"physics_ms": 5.0105657492355,
+		"render_cpu_ms": 2.96551681293989,
+		"scene": "batched-rain-2",
+		"states": {
+			"playing": 327
+		},
+		"valid": true
+	}
+]

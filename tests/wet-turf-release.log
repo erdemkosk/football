@@ -1,0 +1,17 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce RTX 3070
+ERROR: Can't create shader cache folder, no shader caching will happen: user://
+   at: RendererCompositorRD (servers/rendering/renderer_rd/renderer_compositor_rd.cpp:337)
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+WET TURF debug=false GPU=NVIDIA GeForce RTX 3070
+{"draws":977.15,"fps":50.1176511861595,"frames":40,"gpu_ms":7.61747498512268,"p50_ms":17.56,"p95_ms":35.172,"p99_ms":40.019,"physics_hz":120.932882250351,"physics_ms":4.877475,"render_cpu_ms":3.6168750166893,"scene":"warmup","states":{"playing":40,"restart":367},"valid":false}
+{"draws":886.067599067599,"fps":85.7551500565204,"frames":429,"gpu_ms":2.37009790199342,"p50_ms":10.398,"p95_ms":15.321,"p99_ms":16.309,"physics_hz":120.137168261,"physics_ms":5.96263636363639,"render_cpu_ms":1.21283682965454,"scene":"original-rain-day-0","states":{"playing":429},"valid":true}
+{"draws":939.237012987013,"fps":61.4984291943426,"frames":308,"gpu_ms":3.96025001035108,"p50_ms":15.94,"p95_ms":21.426,"p99_ms":29.723,"physics_hz":120.001805018831,"physics_ms":5.88373051948052,"render_cpu_ms":3.06705519363478,"scene":"original-rain-night-0","states":{"playing":308},"valid":true}
+{"draws":838.512315270936,"fps":81.1951932445599,"frames":406,"gpu_ms":2.57161083362373,"p50_ms":11.048,"p95_ms":16.354,"p99_ms":17.449,"physics_hz":119.992896420532,"physics_ms":6.25167980295565,"render_cpu_ms":1.21502955426723,"scene":"revised-rain-day-0","states":{"playing":406},"valid":true}
+{"draws":934.34375,"fps":63.9349270312676,"frames":320,"gpu_ms":4.23593438714743,"p50_ms":15.936,"p95_ms":17.791,"p99_ms":21.318,"physics_hz":120.077784830599,"physics_ms":5.40884062499996,"render_cpu_ms":3.05218437090516,"scene":"revised-rain-night-0","states":{"playing":320},"valid":true}
+{"draws":856.995271867612,"fps":84.580935457148,"frames":423,"gpu_ms":2.3515697390757,"p50_ms":10.538,"p95_ms":15.614,"p99_ms":17.111,"physics_hz":119.972958095245,"physics_ms":5.47567848699762,"render_cpu_ms":1.22435933760154,"scene":"revised-rain-day-1","states":{"playing":423},"valid":true}
+{"draws":936.175074183976,"fps":67.3042932949346,"frames":337,"gpu_ms":4.02251038848469,"p50_ms":15.388,"p95_ms":16.999,"p99_ms":17.764,"physics_hz":120.029318309364,"physics_ms":5.296943620178,"render_cpu_ms":2.94964094968507,"scene":"revised-rain-night-1","states":{"playing":337},"valid":true}
+{"draws":839.933628318584,"fps":90.3237125923445,"frames":452,"gpu_ms":2.28342699055123,"p50_ms":10.01,"p95_ms":14.953,"p99_ms":16.468,"physics_hz":119.898733529661,"physics_ms":5.5447101769912,"render_cpu_ms":1.15233628333142,"scene":"original-rain-day-1","states":{"playing":452},"valid":true}
+{"draws":937.165109034268,"fps":64.1116669452828,"frames":321,"gpu_ms":4.10154828475643,"p50_ms":15.706,"p95_ms":18.568,"p99_ms":23.848,"physics_hz":120.034616305654,"physics_ms":5.52294704049842,"render_cpu_ms":3.04004984184218,"scene":"original-rain-night-1","states":{"playing":321},"valid":true}

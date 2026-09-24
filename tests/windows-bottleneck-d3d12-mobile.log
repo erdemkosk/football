@@ -1,0 +1,13 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+D3D12 12_0 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce RTX 3070
+ERROR: Can't create shader cache folder, no shader caching will happen: user://
+   at: RendererCompositorRD (servers/rendering/renderer_rd/renderer_compositor_rd.cpp:337)
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+full fps=53.0954444507875 p95=35.389 physics=6.13484210526317 render=3.32288721808814 gpu=3.85155639433323 draws=1375.09022556391
+no-match-physics fps=129.402376690319 p95=8.447 physics=1.44114814814817 render=3.16042283802857 gpu=3.18464814365646 draws=1241.4475308642
+no-main-process fps=287.211804525004 p95=3.896 physics=0.10087482614743 render=0.72495132208036 gpu=3.27447148921261 draws=842.0
+no-crowd fps=605.188864524893 p95=2.055 physics=0.10322339722406 render=0.4315254458787 gpu=1.40949835031929 draws=502.0
+no-flood-shadows fps=379.36904012837 p95=3.06 physics=0.06822128556375 render=0.64172813591515 gpu=2.42760906254655 draws=842.0
+full-again fps=63.4798960366986 p95=16.743 physics=5.42880503144652 render=3.18631445836721 gpu=3.86982389815948 draws=1250.40880503145

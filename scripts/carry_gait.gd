@@ -37,6 +37,8 @@ func apply(p,delta: float) -> void:
 	var right:=heading.cross(Vector3.UP)
 	var floor_y: float=p.position.y+p.boot_ground_height()
 	p.rig.position.y=lerpf(p.rig.position.y,-.105-.025*sprint+.012*sin(phase*TAU*2),weight)
+	# Both leg solves change children only; the pelvis frame stays fixed here.
+	var rig_inverse: Transform3D=p.rig.global_transform.affine_inverse()
 	for i in range(2):
 		var cycle:=fposmod(phase+i*.5,1)
 		var planted:=cycle<contact_share
@@ -55,4 +57,4 @@ func apply(p,delta: float) -> void:
 		point.y=maxf(floor_y,point.y)
 		var leg: Node3D=p.left_leg if i==0 else p.right_leg
 		var knee: Node3D=p.left_knee if i==0 else p.right_knee
-		p.locomotion.solve_leg(leg,knee,p.rig.to_local(point)-leg.position,1)
+		p.locomotion.solve_leg(leg,knee,rig_inverse*point-leg.position,1)

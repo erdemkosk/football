@@ -1,0 +1,13 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+GAIT sprint=false height=0.22296811762499 grounded=161 touches=6 gap=0.54755401611328
+PASS: Carrying feet follow low arcs and retain alternating ground support
+PASS: Both carrying speeds retain real boot contacts and ball control
+GAIT sprint=true height=0.34241481416393 grounded=96 touches=6 gap=0.78663778305054
+PASS: Carrying feet follow low arcs and retain alternating ground support
+PASS: Both carrying speeds retain real boot contacts and ball control
+STRIDE { "jerk": 0.0294969510287, "step": 0.10876871645451, "gap": 0.82502949237823, "lost": 0 }
+PASS: Cuts and sprint changes preserve continuous toe paths
+CARRY GAIT: 5 checks, 0 failures

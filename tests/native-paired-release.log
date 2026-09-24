@@ -1,0 +1,21 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Vulkan 1.4.341 - Forward Mobile - Using Device #0: NVIDIA - NVIDIA GeForce RTX 3070
+ERROR: Can't create shader cache folder, no shader caching will happen: user://
+   at: RendererCompositorRD (servers/rendering/renderer_rd/renderer_compositor_rd.cpp:337)
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+RELEASE BUILD debug=false native=true
+{"draws":1429.60975609756,"fps":51.7254212783244,"frames":41,"gpu_ms":7.17221952066189,"p50_ms":16.317,"p95_ms":34.922,"p99_ms":37.184,"physics_hz":120.777607831508,"physics_ms":5.756,"render_cpu_ms":3.39460976530866,"scene":"warmup","states":{"playing":41,"restart":347},"valid":false}
+{"draws":1083.80510440835,"fps":86.1049057420984,"frames":431,"gpu_ms":2.07494663611366,"p50_ms":10.432,"p95_ms":15.477,"p99_ms":17.284,"physics_hz":120.067397566128,"physics_ms":5.49377726218097,"render_cpu_ms":1.20640834827158,"scene":"script-day-0","states":{"playing":431},"valid":true}
+{"draws":1340.54925373134,"fps":66.9971057250327,"frames":335,"gpu_ms":3.33571044509091,"p50_ms":15.495,"p95_ms":16.613,"p99_ms":16.887,"physics_hz":119.994816223939,"physics_ms":5.0699104477612,"render_cpu_ms":3.18229552027005,"scene":"script-night-0","states":{"playing":335},"valid":true}
+{"draws":1569.97278911565,"fps":58.6369540854699,"frames":294,"gpu_ms":4.29111904027511,"p50_ms":16.617,"p95_ms":22.527,"p99_ms":24.787,"physics_hz":120.066144079772,"physics_ms":5.53541836734695,"render_cpu_ms":3.42843197965298,"scene":"script-rain-0","states":{"playing":294},"valid":true}
+{"draws":1084.52553191489,"fps":93.9036173271754,"frames":470,"gpu_ms":2.09549361264452,"p50_ms":9.77,"p95_ms":13.616,"p99_ms":14.038,"physics_hz":120.076753220495,"physics_ms":5.14786808510642,"render_cpu_ms":1.17492127634109,"scene":"native-day-0","states":{"playing":470},"valid":true}
+{"draws":1349.41017964072,"fps":66.7553006506843,"frames":334,"gpu_ms":3.51407484951134,"p50_ms":15.513,"p95_ms":16.55,"p99_ms":17.058,"physics_hz":119.919701767696,"physics_ms":5.1110389221557,"render_cpu_ms":3.19913473529016,"scene":"native-night-0","states":{"playing":334},"valid":true}
+{"draws":1481.6095890411,"fps":58.3109940986079,"frames":292,"gpu_ms":4.24047601631243,"p50_ms":16.692,"p95_ms":21.764,"p99_ms":25.194,"physics_hz":120.016806346792,"physics_ms":5.49687328767122,"render_cpu_ms":3.40916781066215,"scene":"native-rain-0","states":{"playing":292},"valid":true}
+{"draws":1083.26012793177,"fps":93.77130598037,"frames":469,"gpu_ms":2.19585074671804,"p50_ms":9.836,"p95_ms":13.68,"p99_ms":14.267,"physics_hz":119.963291232883,"physics_ms":4.93853091684433,"render_cpu_ms":1.18058208933771,"scene":"native-day-1","states":{"playing":469},"valid":true}
+{"draws":1340.71779141104,"fps":65.0241357225249,"frames":326,"gpu_ms":3.59555213656162,"p50_ms":15.762,"p95_ms":17.136,"p99_ms":18.794,"physics_hz":120.075244493742,"physics_ms":5.04062576687115,"render_cpu_ms":3.23673926760083,"scene":"native-night-1","states":{"playing":326},"valid":true}
+{"draws":1485.48727272727,"fps":54.8483005702827,"frames":275,"gpu_ms":4.26356000033292,"p50_ms":17.05,"p95_ms":24.042,"p99_ms":28.255,"physics_hz":119.868467791781,"physics_ms":5.40394545454545,"render_cpu_ms":3.4704036435214,"scene":"native-rain-1","states":{"playing":275},"valid":true}
+{"draws":1072.07439824945,"fps":91.2524265757417,"frames":457,"gpu_ms":2.09786215078909,"p50_ms":9.971,"p95_ms":14.204,"p99_ms":15.267,"physics_hz":120.0059264158,"physics_ms":5.29886870897159,"render_cpu_ms":1.18569146804267,"scene":"script-day-1","states":{"playing":457},"valid":true}
+{"draws":1344.03951367781,"fps":65.797170721659,"frames":329,"gpu_ms":3.57662310136488,"p50_ms":15.587,"p95_ms":17.046,"p99_ms":22.049,"physics_hz":119.99484022187,"physics_ms":5.09328571428574,"render_cpu_ms":3.19736169971594,"scene":"script-night-1","states":{"playing":329},"valid":true}
+{"draws":1482.08974358974,"fps":62.3052835080111,"frames":312,"gpu_ms":4.27036538261634,"p50_ms":16.276,"p95_ms":17.393,"p99_ms":19.376,"physics_hz":119.817852900021,"physics_ms":5.06872115384616,"render_cpu_ms":3.3040865392257,"scene":"script-rain-1","states":{"playing":312},"valid":true}

@@ -1,0 +1,30 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+ROLL mode=0 speed=8.0 rate=120 distance=12.183 stop=3.250s drift=0.00001
+PASS: A free rolling ball slows smoothly to rest without a sudden stop, renewed acceleration or endless creep
+PASS: A ground pass stays on the turf instead of chattering vertically
+ROLL mode=0 speed=16.0 rate=120 distance=39.802 stop=5.592s drift=0.00000
+PASS: A fast ground ball stays on the turf instead of vibrating
+PASS: Kick power changes actual range and stopping time, rather than assigning a fixed travel distance
+PASS: A strong low ball visibly loses pace instead of crossing the pitch at nearly constant speed
+ROLL mode=2 speed=8.0 rate=120 distance=14.280 stop=3.858s drift=0.00004
+PASS: Wet intact grass allows a longer skid but the same ball still comes to rest
+ROLL mode=0 speed=4.0 rate=120 distance=3.440 stop=1.775s drift=0.00002
+ROLL mode=2 speed=4.0 rate=120 distance=1.293 stop=0.667s drift=0.00000
+PASS: The same weak pass loses more energy in a muddy goalmouth and stops much sooner
+ROLL mode=0 speed=8.0 rate=30 distance=12.083 stop=3.200s drift=0.00002
+ROLL mode=0 speed=8.0 rate=60 distance=12.150 stop=3.233s drift=0.00001
+PASS: Actual stopping distance remains consistent at 30, 60 and 120 physics updates
+PASS: Resistance changes at the real mud patch as the ball rolls across it
+PASS: A weather-aware lofted delivery reaches the predicted landing area through real air drag
+CROSS initial=8.275 landing=7.966 rolling=2.554
+PASS: A cross loses speed in flight and continues slowing through bounces and rolling after landing
+PASS: Passing predictions include the slower travel through the current muddy surface
+PASS: Manual kick power stays under player control while weather changes the expected travel
+PASS: A whistle does not replace physical friction with an instant stop
+PASS: The out-of-play ball keeps rolling and slowing naturally before collection
+BALL RESISTANCE CHECK: 0 failures
+WARNING: 22 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

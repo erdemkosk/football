@@ -36,6 +36,10 @@ window/size/window_height_override=900
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/native_match_export/plugin.cfg")
+
 [physics]
 
 common/physics_ticks_per_second=120

@@ -1,0 +1,42 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+PASS: Running head tracks a ball beside the run direction
+PASS: Looking sideways never steers or slows the physics body
+PASS: Head follows a high ball across to the other side
+PASS: Eye tracking stays within small natural limits
+PASS: A ball behind cannot twist the neck around or flip shoulders at the centre
+PASS: Fitted hair follows the skull through every neck rotation
+PASS: An approaching pass triggers a brief pre-reception shoulder check
+PASS: Before close control the player returns attention to the ball
+PASS: An already urgent pass skips the distracting shoulder glance
+PASS: The extended arm points into the actual open support run
+PASS: An automatic space gesture does not create an explicit pass request
+PASS: The gesture lowers naturally and cannot repeat continuously
+PASS: Space on the left uses the left arm without reaching across the body
+PASS: The user's raised-hand pass request takes priority
+PASS: Shot preparation keeps its coiled torso and balancing arms
+PASS: A shot immediately overrides a space gesture
+PASS: A marked destination is not advertised as free space
+PASS: A blocked passing lane suppresses the invitation
+PASS: Losing possession during gesture entry does not pop the arm up
+PASS: An interrupted invitation blends all the way back into the stride
+PASS: Only two teammates can signal at once instead of synchronized team-wide gestures
+PASS: A real capsule collision starts a balance response on both players
+PASS: Contact visibly yields the torso and opens the arms
+PASS: A light bump never inserts an input lock or a tackle/fall state
+PASS: Sustained contact cannot restart the flinch every frame
+PASS: Direction input responds on the next tick during recovery
+PASS: The player recovers into the live running stride
+PASS: A strong tackle falls in the impact direction and cancels the subtle layer
+PASS: Shielding retains its stance while absorbing shoulder contact
+PASS: Throw-in handling has priority over live-play gestures
+PASS: Identical input travels exactly the same physical distance with gaze enabled or disabled
+PASS: Pausing freezes gestures and gaze with the match
+PASS: Replay captures the head and eye joints with the existing skeleton
+PASS: Playback restores the recorded gaze
+PASS: Leaving replay restores the live head pose
+PASS: A new practice clears old gaze, contacts and gestures
+PASS: Normal match simulation supplies the live ball to the animation layer
+BODY LANGUAGE CHECK: 37 checks, 0 failures

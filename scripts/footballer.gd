@@ -21,6 +21,8 @@ const Locomotion = preload("res://scripts/locomotion.gd")
 var locomotion := Locomotion.new()
 var defer_running_pose := false
 var pending_pose_delta := 0.0
+var running_pose_interval := 0.0
+var render_batch: Node3D
 
 func can_defer_running_pose() -> bool:
 	return not keeper and pose=="run" and action_timer<=0 and kick_timer<=0 and receive_timer<=0 and shot_preparation<=0 and not ball_actions.contact_pending and dribble_motion.freshness<=0 and not protecting and not jockeying and not aerial_preparing and skill_move.is_empty() and feint_time<=0 and set_piece_pose=="" and celebration=="" and discipline_pose=="" and contest_weight<=0 and body_language.contest_weight<=0 and locomotion.cut<=0 and locomotion.braking<.02 and locomotion.plant_weight<=0
@@ -250,6 +252,11 @@ func _ready() -> void:
 	run_phase=fmod(shirt_number*2.399+team*.71,TAU)
 	motion_clock=shirt_number*.173+team*.41
 	animate(1.0)
+	# Batch the rigid clothing/skin pieces while keeping all gameplay joints.
+	if DisplayServer.get_name()!="headless":
+		render_batch=preload("res://scripts/rigid_player_batch.gd").new()
+		render_batch.setup(self)
+		if "--unbatched-players" in OS.get_cmdline_user_args(): render_batch.set_active(false)
 
 func build_model() -> void:
 	var kit_color = Color("e5ece5") if team==0 else Color("d34532")
@@ -335,8 +342,11 @@ func build_model() -> void:
 		elbow.position = Vector3(0,-0.24,0)
 		var elbow_cap=G.sphere(elbow,0.077,Vector3.ZERO,skin)
 		var forearm=G.cylinder(elbow,0.072,0.25,Vector3(0,-0.125,0),skin)
-		G.combine_rigid(elbow,[elbow_cap,forearm],"forearm_skin")
 		var hand = G.sphere(elbow,0.103 if keeper else 0.08,Vector3(0,-0.29,0),G.material(Color("ececd7")) if keeper else skin)
+		if keeper:
+			G.combine_rigid(elbow,[elbow_cap,forearm],"forearm_skin")
+		else:
+			G.combine_rigid(elbow,[elbow_cap,forearm,hand],"forearm_hand_skin",[hand])
 		if keeper:
 			hand.scale=Vector3(1.05,1.3,.66)
 			gloves.append(hand); hand.name="KeeperGlove"
@@ -470,11 +480,15 @@ func step(delta: float,stoppage_speed: float=0.0) -> void:
 	ai_think += delta
 	update_stamina(delta)
 	var speed := movement_speed()
+	var sampled_mud := -1.0
 	# Substitution exits remain physical but do not inherit match fatigue.
 	if stamina_free_movement and stoppage_speed>0: speed=stoppage_speed
 	if is_instance_valid(surface):
-		speed*=1.0-surface.mud_at(position)*0.16
-		stain(delta)
+		# Position and weather stay fixed until move_and_slide below. Share the
+		# identical patch evaluation across speed, dirt and traction this step.
+		sampled_mud=surface.mud_at(position)
+		speed*=1.0-sampled_mud*0.16
+		stain(delta,sampled_mud)
 	var target = desired.limit_length(1)*speed
 	if action_timer>0:
 		if pose=="poke": target*=0.2
@@ -507,10 +521,13 @@ func step(delta: float,stoppage_speed: float=0.0) -> void:
 	var driving := Vector2(desired.x,desired.z).length()>0.05
 	var current_speed := Vector2(velocity.x,velocity.z).length()
 	var target_speed := Vector2(target.x,target.z).length()
-	var acceleration: float=lerpf(38,56,smoothstep(0.08,0.4,energy))*Attributes.multiplier(attributes.acceleration,.19)*accel_pace()
-	var sprint_acceleration: float=lerpf(11,16,smoothstep(0.08,0.4,energy))*Attributes.multiplier(attributes.acceleration,.19)*accel_pace()
-	var deceleration := lerpf(8,12,smoothstep(0.08,0.4,energy))*accel_pace()
-	var settle := lerpf(7,10,smoothstep(0.08,0.4,energy))*accel_pace()
+	var energy_blend := smoothstep(0.08,0.4,energy)
+	var acceleration_attribute := Attributes.multiplier(attributes.acceleration,.19)
+	var pace := accel_pace()
+	var acceleration: float=lerpf(38,56,energy_blend)*acceleration_attribute*pace
+	var sprint_acceleration: float=lerpf(11,16,energy_blend)*acceleration_attribute*pace
+	var deceleration := lerpf(8,12,energy_blend)*pace
+	var settle := lerpf(7,10,energy_blend)*pace
 	if stamina_free_movement and stoppage_speed>0:
 		acceleration=56
 		sprint_acceleration=16
@@ -536,7 +553,7 @@ func step(delta: float,stoppage_speed: float=0.0) -> void:
 		rate=maxf(rate,acceleration)
 	if defensive_turn_load>0 and action_timer<=0:
 		rate=minf(rate,lerpf(28,12,defensive_turn_load)*Attributes.multiplier(attributes.get("defending",attributes.balance),.16))
-	if is_instance_valid(surface): rate*=surface.grip_at(position)
+	if is_instance_valid(surface): rate*=surface.grip_at(position,sampled_mud)
 	velocity.x = move_toward(velocity.x,target.x,delta*rate)
 	velocity.z = move_toward(velocity.z,target.z,delta*rate)
 	velocity.y -= 20*delta
@@ -1158,10 +1175,10 @@ func set_captain(value: bool) -> void:
 	captain=value and not official
 	if is_instance_valid(captain_band): captain_band.visible=captain
 
-func stain(delta: float) -> void:
+func stain(delta: float,sampled_mud: float=-1.0) -> void:
 	if official or kit_clean.is_empty() or kit_materials.is_empty(): return
 	if is_instance_valid(surface) and is_instance_valid(surface.game) and surface.game.state not in ["playing","restart","set_piece"]: return
-	var mud: float=surface.mud_at(position) if is_instance_valid(surface) else 0.0
+	var mud: float=sampled_mud if sampled_mud>=0 else (surface.mud_at(position) if is_instance_valid(surface) else 0.0)
 	var wet: float=surface.wetness if is_instance_valid(surface) else 0.0
 	var moving := clampf(Vector2(velocity.x,velocity.z).length()/6.0,0,1)
 	var gain: float=(.00045+moving*(.0013+mud*.004+wet*.0007))*delta

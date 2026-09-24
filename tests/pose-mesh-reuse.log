@@ -1,0 +1,7 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Failed to read the root certificate store.
+   at: get_system_ca_certificates (platform/windows/os_windows.cpp:2582)
+POSE/MESH EQUIVALENCE: 360 running/carrying poses, 0 failures
+MESH INSTANCES old=29 new=27
+POSE CPU paired fixed-input old_us=49.857 new_us=50.129

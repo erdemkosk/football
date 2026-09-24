@@ -2,6 +2,7 @@ extends RefCounted
 ## Shared AI delivery judgement. Reads visible motion, never controller input.
 const Passing = preload("res://scripts/passing.gd")
 const P = preload("res://scripts/pitch_dimensions.gd")
+const Native=preload("res://scripts/native_match.gd")
 var game
 
 func arrival(player,point: Vector3,reaction: float=0.0) -> float:
@@ -55,7 +56,22 @@ func assess(index: int,route: Dictionary,receiver: int,origin: Vector3=Vector3.I
 	var receiver_position: Vector3=recipient.position if recipient!=null else Vector3.ZERO
 	var receiver_motion: Vector3=recipient.velocity*Vector3(1,0,1) if recipient!=null else Vector3.ZERO
 	var receiver_pace: float=recipient.movement_speed() if recipient!=null else 0.0
+	var kernel := Native.get_kernel()
+	if kernel!=null and risk<1.0:
+		var samples := PackedVector3Array()
+		var times := PackedFloat64Array()
+		samples.resize(steps); times.resize(steps)
+		for step in range(1,steps+1):
+			var time := flight*step/steps
+			var point: Vector3=points[step] if airborne else origin+aim*Passing.Motion.distance_at(speed,time,resistance)
+			if not airborne: point.y=Passing.BallSize.GROUND_HEIGHT
+			samples[step-1]=point; times[step-1]=time
+		risk=kernel.interception_risk(positions,motions,paces,interceptors,samples,times,reaction,delay,receiver_position,receiver_motion,receiver_pace,recipient!=null,risk)
+		return {"risk":risk,"lane_risk":lane_risk,"margin":opponent_time-own_time,"reachable":reachable}
 	for step in range(1,steps+1):
+		# Remaining samples only take max(risk, a value clamped to [0, 1]).
+		# Once saturated they cannot change any field of the returned assessment.
+		if risk>=1.0: break
 		var time := flight*step/steps
 		var point: Vector3=points[step] if airborne else origin+aim*Passing.Motion.distance_at(speed,time,resistance)
 		if not airborne: point.y=Passing.BallSize.GROUND_HEIGHT
@@ -65,6 +81,7 @@ func assess(index: int,route: Dictionary,receiver: int,origin: Vector3=Vector3.I
 			var intercept_time := arrival_from(positions[i],motions[i],paces[i],point,reaction)
 			if intercept_time+.10<time+delay and intercept_time+.12<receiver_time:
 				risk=maxf(risk,clampf(.65+(time+delay-intercept_time)*.75,0,1))
+				if risk>=1.0: break
 	return {"risk":risk,"lane_risk":lane_risk,"margin":opponent_time-own_time,"reachable":reachable}
 
 func safe(index: int,route: Dictionary,receiver: int,origin: Vector3=Vector3.INF,delay: float=0.0) -> bool:
