@@ -563,7 +563,7 @@ func step(delta: float,stoppage_speed: float=0.0) -> void:
 	if header_airborne and is_on_floor() and travel_velocity.y< -1:
 		header_airborne=false; landing_age=0
 		landing_strength=clampf(absf(travel_velocity.y)/8,0.2,1)*Attributes.multiplier(144-attributes.balance,.16)
-	body_language.collisions(self,travel_velocity)
+	if body_language.enabled: body_language.collisions(self,travel_velocity)
 	if desired.length()>0.05 and action_timer<=0 and (not keeper or stoppage_speed>0) and not protecting and not jockeying and kick_timer<=0 and shot_preparation<=0 and not aerial_preparing:
 		facing = desired.normalized()
 	if receiving_facing.length_squared()>.1 and action_timer<=0 and kick_timer<=0 and not aerial_preparing:
@@ -576,7 +576,7 @@ func step(delta: float,stoppage_speed: float=0.0) -> void:
 	body_language.update(self,delta)
 	ball_actions.update(delta)
 	dribble_motion.update(self,delta)
-	reaction.update(self,delta)
+	if reaction.kind!="": reaction.update(self,delta)
 	last_horizontal = horizontal
 	# Actual ground displacement keeps the stride from cycling against a body
 	# or advertising a longer step than collision resolution allowed.
@@ -984,12 +984,16 @@ func animate(delta: float) -> void:
 				left_elbow.rotation.x=1.0
 				right_elbow.rotation.x=1.0
 
-	celebration_motion.apply(self,delta)
-	apply_contest_pose()
-	body_language.apply_pose(self)
+	# The guarded overlays below return before touching any joint when their
+	# condition is false; skipping those calls leaves an identical pose.
+	if celebration!="" or celebration_motion.kind!="": celebration_motion.apply(self,delta)
+	else: celebration_motion.age+=delta
+	if contest_weight>0 or landing_age<.32: apply_contest_pose()
+	if body_language.contest_weight>0 or body_language.shielding>0 or body_language.balance_age<BodyLanguage.BALANCE_TIME or body_language.point_age<BodyLanguage.POINT_TIME:
+		body_language.apply_pose(self)
 	locomotion.finish_pose(self)
-	SkillMoves.pose(self)
-	Distribution.pose(self)
+	if not skill_move.is_empty(): SkillMoves.pose(self)
+	if not distribution_move.is_empty(): Distribution.pose(self)
 	if dummy_time>0:
 		left_leg.rotation.z=-.28; right_leg.rotation.z=.28
 		spine.rotation.y=sin(dummy_time*PI/.68)*.7
@@ -1022,12 +1026,15 @@ func animate(delta: float) -> void:
 	if (kick_timer>0 or receive_timer>0 or motion_transition.age<motion_transition.DURATION) and action_timer<=0 and skill_move.is_empty() and set_piece_pose=="" and celebration=="" and not ball_actions.contact_pending and locomotion.plant_weight<=0 and dribble_motion.freshness<=0:
 		var sole_height := minf(left_knee.to_global(ball_actions.BOOT).y,right_knee.to_global(ball_actions.BOOT).y)
 		rig.position.y-=sole_height-global_position.y-boot_ground_height()
-	ball_actions.finish_pose(self)
+	if action_timer>0 or set_piece_pose!="" or celebration!="" or not skill_move.is_empty() or kick_timer>0 or receive_timer>0:
+		ball_actions.finish_pose(self)
 	dribble_motion.gait.apply(self,delta)
-	dribble_motion.apply(self)
-	dribble_motion.finish_pose(self,delta)
-	keeper_motion.apply(self)
-	reaction.apply(self)
+	if dribble_motion.age<dribble_motion.DURATION and dribble_motion.freshness>0: dribble_motion.apply(self)
+	# Its early exit only clears the smoothing buffers, which are already empty.
+	if dribble_motion.freshness>0 or not dribble_motion.pose_feet.is_empty() or not dribble_motion.pose_velocity.is_empty():
+		dribble_motion.finish_pose(self,delta)
+	if action_timer>0: keeper_motion.apply(self)
+	if reaction.kind!="" and reaction.weight>0: reaction.apply(self)
 	if reaction.kind=="": apply_breath(delta)
 	body_language.apply_gaze(self,delta)
 	if breath>0.08 and reaction.kind=="":

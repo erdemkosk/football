@@ -76,11 +76,19 @@ func kicked(index: int) -> void:
 func offside_line(attacking_team: int) -> float:
 	var forward: float = game.attack_sign(attacking_team)
 	var line := 0.0
-	var defensive_line: Array[float]=[]
+	# The second-deepest defender, tracked in one pass instead of sorting a
+	# freshly allocated list on every AI, support and assistant-referee query.
+	var deepest := -INF
+	var second := -INF
+	var defenders := 0
 	for p in game.players:
-		if p.visible and p.team!=attacking_team: defensive_line.append(p.position.z*forward)
-	defensive_line.sort()
-	if defensive_line.size()>=2: line=defensive_line[-2]
+		if p.visible and p.team!=attacking_team:
+			var depth: float=p.position.z*forward
+			defenders+=1
+			if depth>deepest:
+				second=deepest; deepest=depth
+			elif depth>second: second=depth
+	if defenders>=2: line=second
 	line=maxf(line,game.ball.position.z*forward)
 	line=maxf(line,0)
 	return line

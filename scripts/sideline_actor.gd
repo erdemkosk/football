@@ -21,6 +21,7 @@ var travel_phase := 0.0
 var mode := "watch"
 var target_point := Vector3.INF
 var velocity := Vector3.ZERO
+var pending_delta := 0.0
 var substitution_board: Node3D
 
 func _ready() -> void:

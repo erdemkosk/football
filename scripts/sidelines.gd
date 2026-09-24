@@ -18,6 +18,8 @@ var fetch_age := 0.0
 var coach_orders: Array = [{},{}]
 var entries: Dictionary = {}
 var departures: Array=[]
+# Off-camera staff wait to pose until they can be seen (see update()).
+var cull_offscreen := true
 
 func retain_departing(p) -> void:
 	var actor=game.Player.new()
@@ -53,7 +55,8 @@ func step_entry(slot: int,p,delta: float) -> bool:
 	var actor=item.actor
 	actor.target_point=item.gate
 	var near: bool=game.flat_distance(actor.position,item.gate)<.15 and game.flat_distance(p.position,item.gate)<1.12
-	actor.animate_actor(delta,clock,p.position,"handshake" if near else "entry",1)
+	actor.animate_actor(delta+actor.pending_delta,clock,p.position,"handshake" if near else "entry",1)
+	actor.pending_delta=0.0
 	if near:
 		p.facing=Vector3.RIGHT; p.celebration="handshake"
 		if not item.greet:
@@ -138,6 +141,9 @@ func build_dugout(team: int) -> void:
 	for i in range(3):
 		G.cylinder(self,0.055,0.23,Vector3((P.HALF_WIDTH+4.65)+i*0.17,0.835,z+5.75),G.material(Color("b0c8cb")))
 		G.cylinder(self,0.035,0.045,Vector3((P.HALF_WIDTH+4.65)+i*0.17,0.97,z+5.75),trim)
+	# The shelter (seats, frame, trim) never moves: merge its opaque pieces per
+	# material exactly like the stadium. Glass and the label stay separate.
+	preload("res://scripts/static_geometry.gd").batch(shelter,[])
 
 func add_actor(team: int,role: String,number: int,location: Vector3) -> void:
 	var actor = Actor.new()
@@ -166,6 +172,7 @@ func reset() -> void:
 		actor.avoid_people.clear()
 		actor.position = actor.home
 		actor.response = 0
+		actor.pending_delta=0.0
 		actor.target_point=Vector3.INF
 		if actor.role=="fourth": actor.substitution_board.hide()
 		actor.seated = 1.0 if actor.role in ["substitute","physio"] else (0.42 if actor.role=="photographer" else 0.0)
@@ -192,6 +199,9 @@ func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int
 	attention = lerpf(attention,pressure,1-exp(-delta*3))
 	step_fetch(delta,stoppage,restart_point,ball_position)
 	var collector := fetch_boy if fetch_phase!="" else collector_for(stoppage,restart_point)
+	var view: Array[Plane]=[]
+	if is_instance_valid(game) and is_instance_valid(game.camera) and game.camera.is_inside_tree():
+		view.assign(game.camera.get_frustum())
 	for actor in actors:
 		if not actor.visible: continue
 		var entering := false
@@ -247,7 +257,23 @@ func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int
 			actor_mode="tactic_"+coach_orders[actor.team].kind
 			intensity=minf(1,coach_orders[actor.team].time*2)
 			actor.target_point=actor.home+Vector3(-.45,0,-1.0 if actor.team==0 else 1.0)
-		actor.animate_actor(delta,clock,ball_position,actor_mode,intensity)
+		# Ball boys move with the restart, so they always update. Everyone else is
+		# only drawn: off-camera poses wait and resume with the elapsed time.
+		if cull_offscreen and actor.role!="ball_boy" and not in_view(view,actor):
+			actor.mode=actor_mode
+			actor.pending_delta+=delta
+			continue
+		actor.animate_actor(delta+actor.pending_delta,clock,ball_position,actor_mode,intensity)
+		actor.pending_delta=0.0
+
+const VIEW_MARGIN := 5.0
+
+func in_view(planes: Array[Plane],actor: Node3D) -> bool:
+	# The margin covers the person and a low floodlight shadow reaching the frame.
+	var center: Vector3=actor.global_position+Vector3(0,1,0)
+	for plane in planes:
+		if plane.distance_to(center)>VIEW_MARGIN: return false
+	return true
 
 func collector_for(stoppage: String,restart_point: Vector3) -> Node3D:
 	if stoppage not in ["TAÇ","KORNER"]: return null

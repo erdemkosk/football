@@ -16,9 +16,12 @@ func apply(p,delta: float) -> void:
 	if next!=state:
 		origin=previous.duplicate(); age=0; state=next
 	age+=delta
-	if delta<.1 and age<DURATION and origin.size()==p.kick_joints.size():
+	var joints: Array[Node3D]=p.kick_joints
+	var count := joints.size()
+	if delta<.1 and age<DURATION and origin.size()==count:
 		var weight := smoothstep(0,DURATION,age)
-		for i in range(p.kick_joints.size()):
-			p.kick_joints[i].quaternion=origin[i].slerp(p.kick_joints[i].quaternion,weight)
-	if previous.size()!=p.kick_joints.size(): previous.resize(p.kick_joints.size())
-	for i in range(p.kick_joints.size()): previous[i]=p.kick_joints[i].quaternion
+		for i in range(count):
+			var joint: Node3D=joints[i]
+			joint.quaternion=origin[i].slerp(joint.quaternion,weight)
+	if previous.size()!=count: previous.resize(count)
+	for i in range(count): previous[i]=joints[i].quaternion

@@ -43,6 +43,8 @@ func run() -> void:
 	tap(JOY_BUTTON_DPAD_RIGHT)
 	check(game.management.mentality==2 and game.management.pressing==2 and game.management.line_height==2,"RT + right selects the attacking plan including press and line")
 	var coach
+	# The match camera does not frame the home bench; read its pose regardless.
+	game.stadium.sidelines.cull_offscreen=false
 	for actor in game.stadium.sidelines.actors:
 		if actor.role=="coach" and actor.team==0: coach=actor
 	game.stadium.sidelines.update(.2,game.ball.position,Vector3.ZERO,0,true)

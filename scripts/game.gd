@@ -755,10 +755,19 @@ func _physics_process(delta: float) -> void:
 	else: simulate_match(delta)
 
 func simulate_match(delta: float) -> void:
+	var restart_poses: bool=render_running_poses and state in ["restart","set_piece"]
 	if state!="playing":
 		work_budget.reset()
-		flush_running_poses()
-		for p in players: p.defer_running_pose=false
+		# Bodies walking back to their restart marks keep 120 Hz movement; like in
+		# open play, only a plain running stride waits for the next drawn frame.
+		for i in range(players.size()):
+			var p = players[i]
+			var deferred: bool=restart_poses and restart_pose_can_wait(i)
+			if not deferred: p.flush_running_pose()
+			p.defer_running_pose=deferred
+			if deferred: p.running_pose_interval=0.0
+		if not restart_poses:
+			for actor in referees.actors: actor.flush_running_pose()
 	for p in players: p.receiving_facing=Vector3.ZERO
 	if state in ["shootout","trophy"]: finale.update(delta); return
 	broadcast.update(delta)
@@ -775,7 +784,7 @@ func simulate_match(delta: float) -> void:
 		weather.update(delta)
 	if state not in ["paused","replay"]:
 		feedback.update(delta)
-		for actor in referees.actors: actor.defer_running_pose=render_running_poses and state=="playing"
+		for actor in referees.actors: actor.defer_running_pose=render_running_poses and (state=="playing" or restart_poses)
 		referees.update(delta)
 	management.update_clock(delta)
 	if send_off.update(delta): return
@@ -889,6 +898,16 @@ func simulate_match(delta: float) -> void:
 		else:
 			celebration.update(delta)
 			if state=="goal" and not menu_match.running: replay.capture_goal(delta)
+
+func restart_pose_can_wait(index: int) -> bool:
+	# Anyone fetching, carrying, taking or walling the restart, the goalkeepers
+	# and bodies near the ball keep their pose on every physics tick.
+	var p = players[index]
+	if not p.visible or p.keeper or is_user_player(index): return false
+	if index==set_pieces.taker or index in set_pieces.wall: return false
+	var recovery = set_pieces.recovery
+	if index==recovery.worker or index==recovery.collector or recovery.helpers.has(index): return false
+	return p.position.distance_squared_to(ball.position)>12.0*12.0
 
 func is_user_player(index: int) -> bool:
 	return index==controlled and not menu_match.running
@@ -1523,6 +1542,13 @@ func update_ai(_delta: float) -> void:
 	var owner: int=dribbler if dribbler>=0 else carrier
 	var nearest = [-1,-1]
 	var distances = [INF,INF]
+	# Nothing below moves a player or changes who is on the pitch, so the
+	# separation pass can read one snapshot instead of 22 bodies per player.
+	var spacing_positions := PackedVector3Array()
+	var spacing_visible := PackedByteArray()
+	for q in players:
+		spacing_positions.append(q.position)
+		spacing_visible.append(1 if q.visible else 0)
 	for i in range(players.size()):
 		var p = players[i]
 		if not p.visible or p.dismissed or p.keeper or is_user_player(i): continue
@@ -1638,9 +1664,13 @@ func update_ai(_delta: float) -> void:
 		else: ai_attack.positioning.erase(i)
 		if p.protecting: p.desired*=0.45
 		# Local separation keeps formations open and avoids stacks of bodies.
-		for other in players:
-			if other==p or not other.visible: continue
-			var gap: Vector3 = p.position-other.position
+		# A 1.2 m axis gap already makes the planar length at least 1.2 m, so
+		# those pairs are skipped before the identical length test.
+		var here: Vector3=spacing_positions[i]
+		for j in range(spacing_positions.size()):
+			if j==i or spacing_visible[j]==0: continue
+			var gap: Vector3 = here-spacing_positions[j]
+			if absf(gap.x)>=1.2 or absf(gap.z)>=1.2: continue
 			gap.y = 0
 			if gap.length()<1.2 and gap.length()>0.01: p.desired += gap.normalized()*(1.2-gap.length())*0.55
 		p.desired = p.desired.limit_length(1)

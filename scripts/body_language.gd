@@ -59,10 +59,18 @@ func available(p) -> bool:
 	return enabled and not p.official and not p.prematch and not p.dismissed and p.action_timer<=0 and p.set_piece_pose=="" and p.celebration=="" and p.discipline_pose=="" and not p.saluting
 
 func free_arms(p) -> bool:
-	return available(p) and not p.keeper and p.reaction.kind=="" and p.kick_timer<=0 and p.receive_timer<=0 and p.shot_preparation<=0 and p.shot_ready_blend<0.01 and p.call_timer<=0 and not p.protecting and not p.jockeying and p.feint_time<=0
+	return available(p) and arms_clear(p)
 
 func can_balance(p) -> bool:
-	return available(p) and not p.keeper and p.kick_timer<=0 and p.shot_preparation<=0 and p.shot_ready_blend<0.01 and p.feint_time<=0
+	return available(p) and balance_clear(p)
+
+# The remainder of free_arms()/can_balance() for callers that already hold
+# available(p) for the same, unchanged player state within one update.
+func arms_clear(p) -> bool:
+	return not p.keeper and p.reaction.kind=="" and p.kick_timer<=0 and p.receive_timer<=0 and p.shot_preparation<=0 and p.shot_ready_blend<0.01 and p.call_timer<=0 and not p.protecting and not p.jockeying and p.feint_time<=0
+
+func balance_clear(p) -> bool:
+	return not p.keeper and p.kick_timer<=0 and p.shot_preparation<=0 and p.shot_ready_blend<0.01 and p.feint_time<=0
 
 func observe(game,index: int) -> void:
 	var p=game.players[index]
@@ -73,7 +81,7 @@ func observe(game,index: int) -> void:
 	if not available(p): return
 	# Read an actual nearby opponent in the ball contest. Both participants
 	# independently brace toward one another; spectators and teammates do not.
-	if can_balance(p) and p.receive_timer<=0 and game.flat_distance(p.position,game.ball.position)<3.2:
+	if balance_clear(p) and p.receive_timer<=0 and game.flat_distance(p.position,game.ball.position)<3.2:
 		var closest := 1.10
 		for other in game.players:
 			if not other.visible or other.team==p.team or other.dismissed or other.keeper or other.action_timer>0: continue
@@ -117,7 +125,7 @@ func observe(game,index: int) -> void:
 		point_cancelled=true
 		return
 	if point_age<POINT_TIME and (point_target-p.position).normalized().dot(p.facing)<-0.35: point_cancelled=true
-	if not free_arms(p) or point_cooldown>0 or point_age<POINT_TIME or balance_age<BALANCE_TIME or distance<4 or distance>32: return
+	if not arms_clear(p) or point_cooldown>0 or point_age<POINT_TIME or balance_age<BALANCE_TIME or distance<4 or distance>32: return
 	var target: Vector3=game.support.targets[index]
 	var route: Vector3=(target-p.position)*Vector3(1,0,1)
 	if route.length()<2.5 or route.length()>18 or route.normalized().dot(p.facing)<-0.35: return
@@ -140,8 +148,10 @@ func observe(game,index: int) -> void:
 	point_cooldown=2.15+fmod(p.number*0.53+p.team*0.7,1.8)
 
 func update(p,delta: float) -> void:
-	contest_weight=move_toward(contest_weight,contest_pressure if contest_seen and can_balance(p) and p.receive_timer<=0 else 0.0,delta*(7 if contest_seen else 5))
-	shielding=move_toward(shielding,1.0 if shield_seen and can_balance(p) and p.receive_timer<=0 else 0.0,delta*6)
+	var ready: bool=available(p)
+	var balance: bool=ready and balance_clear(p)
+	contest_weight=move_toward(contest_weight,contest_pressure if contest_seen and balance and p.receive_timer<=0 else 0.0,delta*(7 if contest_seen else 5))
+	shielding=move_toward(shielding,1.0 if shield_seen and balance and p.receive_timer<=0 else 0.0,delta*6)
 	scan_age=minf(SCAN_TIME,scan_age+delta)
 	point_age=minf(POINT_TIME,point_age+delta)
 	balance_age=minf(BALANCE_TIME,balance_age+delta)
@@ -151,12 +161,12 @@ func update(p,delta: float) -> void:
 	var point_envelope := 0.0 if point_cancelled else smoothstep(0,0.12,point_age)*(1-smoothstep(0.34,POINT_TIME,point_age))
 	point_weight=move_toward(point_weight,point_envelope,delta*5.0)
 	if point_cancelled and point_weight<=0: point_age=POINT_TIME
-	if not available(p):
+	if not ready:
 		scan_age=SCAN_TIME
 		point_age=POINT_TIME
 		point_weight=0
 		balance_age=BALANCE_TIME
-	elif not free_arms(p):
+	elif not arms_clear(p):
 		point_age=POINT_TIME
 		point_weight=0
 
@@ -185,7 +195,7 @@ func collisions(p,travel_velocity: Vector3) -> void:
 		other.body_language.contact(other,-normal,closing/9.0)
 
 func apply_pose(p) -> void:
-	if not can_balance(p): return
+	if not available(p) or not balance_clear(p): return
 	if contest_weight>0:
 		var weight := contest_weight
 		var arm: Node3D=p.left_arm if contest_side<0 else p.right_arm
@@ -232,7 +242,7 @@ func apply_pose(p) -> void:
 		p.left_knee.rotation.x-=hit*0.15
 		p.right_knee.rotation.x-=hit*0.15
 		return
-	if not free_arms(p) or point_age>=POINT_TIME: return
+	if not arms_clear(p) or point_age>=POINT_TIME: return
 	var weight := point_weight
 	var arm: Node3D=p.left_arm if point_left else p.right_arm
 	var elbow: Node3D=p.left_elbow if point_left else p.right_elbow
@@ -245,7 +255,8 @@ func apply_pose(p) -> void:
 func apply_gaze(p,delta: float) -> void:
 	var yaw := 0.0
 	var pitch := 0.0
-	if available(p):
+	var ready: bool=available(p)
+	if ready:
 		var local: Vector3=p.spine.to_local(ball_target)-p.head_joint.position
 		yaw=atan2(-local.x,-local.z)
 		# Keep the same shoulder when a ball directly behind crosses the centre.
@@ -271,7 +282,7 @@ func apply_gaze(p,delta: float) -> void:
 	p.head_joint.rotation.y=move_toward(p.head_joint.rotation.y,yaw,delta*5.4)
 	p.head_joint.rotation.x=lerpf(p.head_joint.rotation.x,pitch,1-exp(-delta*13))
 	var eye_rotation := Vector3.ZERO
-	if available(p):
+	if ready:
 		var direction: Vector3=p.head_joint.to_local(ball_target)-Vector3(0,0.19,-0.17)
 		eye_rotation=Vector3(clampf(atan2(direction.y,Vector2(direction.x,direction.z).length()),-0.18,0.18),clampf(atan2(-direction.x,-direction.z),-0.24,0.24),0)
 		if scan_age<SCAN_TIME and not urgent: eye_rotation*=0.2

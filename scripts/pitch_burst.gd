@@ -17,6 +17,9 @@ var flare_batch: MultiMeshInstance3D
 var smoke_batch: MultiMeshInstance3D
 var cursor := 0
 var rng := RandomNumberGenerator.new()
+# True once every piece is hidden and every flare lamp is dark. Until the next
+# goal, further updates would only repeat those identical writes each tick.
+var idle := true
 
 func _ready() -> void:
 	rng.randomize()
@@ -42,6 +45,7 @@ func _ready() -> void:
 		lights.append(lamp)
 	for i in range(BANNER_COUNT):
 		banners.append(make_banner())
+	show_effects(false)
 
 func make_batch(label: String,size: Vector3,glow: bool,haze: bool=false) -> MultiMeshInstance3D:
 	var scrap := BoxMesh.new()
@@ -85,6 +89,13 @@ func make_banner() -> Dictionary:
 	node.add_child(title)
 	return {"node":node,"cloth":sheet,"label":title,"age":0.0,"life":0.0}
 
+func show_effects(value: bool) -> void:
+	# Hidden pieces are already collapsed below the turf and the flare lamps are
+	# dark. Leaving the nodes out also stops six zero-energy lamps at the centre
+	# spot from being paired with and looped over by the nearby turf and players.
+	for node in [batch,flare_batch,smoke_batch]: node.visible=value
+	for lamp in lights: lamp.visible=value
+
 func hide_instance(node: MultiMeshInstance3D,index: int) -> void:
 	node.multimesh.set_instance_transform(index,Transform3D(Basis.IDENTITY.scaled(Vector3.ONE*0.001),Vector3(0,-4,0)))
 
@@ -105,6 +116,8 @@ func reset() -> void:
 		banner.age=0
 		banner.node.visible=false
 		banner.node.scale=Vector3(1,0.08,1)
+	idle=true
+	show_effects(false)
 
 func terrace(team: int) -> Vector3:
 	if team==1:
@@ -122,6 +135,8 @@ func terrace(team: int) -> Vector3:
 
 func begin(team: int,_at: Vector3) -> void:
 	if game==null or game.training or game.menu_match.running: return
+	idle=false
+	show_effects(true)
 	var kit: Dictionary=game.clubs.kit(team)
 	var club: Dictionary=game.clubs.data(team)
 	var palette: Array=[kit.primary,kit.accent,Color("e9ce87"),Color("f5f0df")]
@@ -182,6 +197,8 @@ func place_banners(team: int,club: Dictionary,kit: Dictionary) -> void:
 		banner.label.modulate=kit.accent if kit.accent.get_luminance()>0.28 else Color("f2eee0")
 
 func update(delta: float) -> void:
+	if idle: return
+	var alive := false
 	for i in range(LIMIT):
 		var flake: Dictionary=flakes[i]
 		if flake.life<=0: continue
@@ -194,6 +211,7 @@ func update(delta: float) -> void:
 			flake.life=0
 			hide_instance(batch,i)
 			continue
+		alive=true
 		var size: Vector3=Vector3(0.42,0.08,1.85) if flake.scarf else Vector3(0.85,0.12,0.55)
 		batch.multimesh.set_instance_transform(i,Transform3D(Basis(Vector3.UP,flake.yaw)*Basis.from_scale(size),flake.position))
 	for i in range(FLARE_LIMIT):
@@ -202,6 +220,7 @@ func update(delta: float) -> void:
 			hide_instance(flare_batch,i)
 			if i<lights.size(): lights[i].light_energy=0
 			continue
+		alive=true
 		flare.life-=delta
 		var pulse: float=0.72+0.28*sin(flare.phase+flare.life*11.0)
 		var basis := Basis.from_scale(Vector3(1.0,1.0+0.08*pulse,1.0))
@@ -214,6 +233,7 @@ func update(delta: float) -> void:
 		if puff.life<=0:
 			hide_instance(smoke_batch,i)
 			continue
+		alive=true
 		puff.life-=delta
 		puff.position+=puff.velocity*delta
 		puff.velocity.y+=0.12*delta
@@ -225,6 +245,7 @@ func update(delta: float) -> void:
 		if banner.life<=0:
 			banner.node.visible=false
 			continue
+		alive=true
 		banner.age+=delta
 		banner.life-=delta
 		var open: float=smoothstep(0.0,1.15,banner.age)
@@ -234,3 +255,6 @@ func update(delta: float) -> void:
 		var ink: Color=banner.label.modulate
 		ink.a=hold
 		banner.label.modulate=ink
+	# Everything took the hidden branch above, so the scene is already final.
+	idle=not alive
+	if idle: show_effects(false)

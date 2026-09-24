@@ -62,7 +62,8 @@ func run() -> void:
 		if not str(node.name).begins_with("Fans_skin_"): continue
 		var multi: MultiMesh=node.multimesh
 		var bounds: AABB=multi.get_aabb()
-		local_bounds=local_bounds and bounds.size.x<23 and bounds.size.z<23
+		# 40 m blocks since the crowd gained mesh LODs (fewer draws per pass).
+		local_bounds=local_bounds and bounds.size.x<43 and bounds.size.z<43
 		for i in range(multi.instance_count):
 			var transform := multi.get_instance_transform(i)
 			var fan: Dictionary=expected.get(transform.origin,{})

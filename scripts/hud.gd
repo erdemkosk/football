@@ -423,11 +423,14 @@ func minimap() -> void:
 	draw_arc(Vector2(1337,750.5),14,0,TAU,32,Color(1,1,1,0.22),1,true)
 	var box_size := Vector2(40.32/P.WIDTH*112,16.5/P.LENGTH*155)
 	for side in [-1,1]: draw_rect(Rect2(1337-box_size.x*.5,673 if side<0 else 828-box_size.y,box_size.x,box_size.y),Color(1,1,1,0.22),false,1)
+	# Dots only need each strip's primary colour; the full kit also solves both
+	# goalkeeper palettes, which used to run once per dot on every drawn frame.
+	var team_colors: Array[Color]=[game.clubs.strip(0).primary,game.clubs.strip(1).primary]
 	for i in range(game.players.size()):
 		var p = game.players[i]
 		if not p.visible: continue
 		var pos = Vector2(1337+p.position.x/P.WIDTH*112,750.5+p.position.z/P.LENGTH*155)
-		draw_circle(pos,3 if i==game.controlled else 2.2,GOLD if i==game.controlled else game.clubs.kit(p.team).primary)
+		draw_circle(pos,3 if i==game.controlled else 2.2,GOLD if i==game.controlled else team_colors[p.team])
 	var ball_pos: Vector3 = game.ball.position
 	draw_circle(Vector2(1337+ball_pos.x/P.WIDTH*112,750.5+ball_pos.z/P.LENGTH*155),2.3,Color.WHITE)
 	center("↑  HÜCUM",Vector2(1337,643),10,Color(1,1,1,0.7))

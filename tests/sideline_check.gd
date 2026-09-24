@@ -27,6 +27,8 @@ func run() -> void:
 	game.ball.freeze=true
 	game.hud.visible=false
 	sidelines=game.stadium.sidelines
+	# These checks read poses of staff outside the close-up frame.
+	sidelines.cull_offscreen=false
 	game.camera.position=Vector3(24,8,-4)
 	game.camera.look_at(Vector3(36,1,-12))
 	game.camera.size=13.5

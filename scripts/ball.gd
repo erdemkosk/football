@@ -113,6 +113,7 @@ func _ready() -> void:
 			directions.append(Vector3(0,a,b*phi).normalized())
 			directions.append(Vector3(a,b*phi,0).normalized())
 			directions.append(Vector3(b*phi,0,a).normalized())
+	var panels: Array[MeshInstance3D] = []
 	for d in directions:
 		var panel = CylinderMesh.new()
 		panel.top_radius = RADIUS*0.29545
@@ -122,6 +123,10 @@ func _ready() -> void:
 		var node = G.mesh(skin,panel,panel_material,d*RADIUS)
 		var axis = Vector3.UP.cross(d)
 		if axis.length()>0.001: node.quaternion = Quaternion(axis.normalized(),acos(Vector3.UP.dot(d)))
+		panels.append(node)
+	# The panels share one material and never move relative to the skin: one
+	# instance draws the same seams instead of twelve per pass (main + shadows).
+	G.combine_rigid(skin,panels,"ball_panels")
 
 func place(p: Vector3, v: Vector3 = Vector3.ZERO) -> void:
 	release_hold()

@@ -150,12 +150,20 @@ func build(parent: Node3D) -> void:
 				z.append(Vector2(offset.z,0))
 			arrays[Mesh.ARRAY_TEX_UV] = xy
 			arrays[Mesh.ARRAY_TEX_UV2] = z
-			var animated := ArrayMesh.new()
-			animated.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
-			instances(parent,"Fans_%s_%d" % [part,pose],animated,transforms,colors[part],phases,cloth_material if part=="cloth" else material)
+			instances(parent,"Fans_%s_%d" % [part,pose],lod_mesh(arrays),transforms,colors[part],phases,cloth_material if part=="cloth" else material)
 	build_supporter_props(parent)
 	reset()
 	set_session(false)
+
+static func lod_mesh(arrays: Array) -> ArrayMesh:
+	# The full-detail level keeps exactly the same triangles and UV animation
+	# channels. A fan is only a few pixels tall from the match cameras, so the
+	# renderer switches to a simplified index list only while its error stays
+	# under the one-pixel mesh LOD threshold, and returns to full detail up close.
+	var importer := ImporterMesh.new()
+	importer.add_surface(Mesh.PRIMITIVE_TRIANGLES,arrays)
+	importer.generate_lods(25,60,[])
+	return importer.get_mesh()
 
 func build_supporter_props(parent: Node3D) -> void:
 	# Sparse, spatially separated holders; no per-fan processing or dynamic lights.
@@ -351,10 +359,13 @@ func follow_weight(perimeter: float) -> float:
 func instances(parent: Node3D,label: String,mesh: Mesh,transforms: Array,colors: Array,phases: Array,mat: Material) -> void:
 	# A stadium-wide MultiMesh draws every fan even when only one stand is visible.
 	# Local batches keep every seat and animation, while enabling frustum culling.
+	# 40 m blocks (formerly 20 m) cut the per-pass draw and cull work; with mesh
+	# LODs the extra fans at a block's hidden edge cost little, and a close
+	# perspective camera still only refines the nearby blocks.
 	var sections: Dictionary = {}
 	for i in range(transforms.size()):
 		var at: Vector3=transforms[i].origin
-		var cell := Vector2i(floori(at.x/20.0),floori(at.z/20.0))
+		var cell := Vector2i(floori(at.x/40.0),floori(at.z/40.0))
 		if not sections.has(cell): sections[cell]=[]
 		sections[cell].append(i)
 	mesh.surface_set_material(0,mat)
