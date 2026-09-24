@@ -28,7 +28,7 @@ func _ready() -> void:
 	rng.seed=8201
 	rain_material.shader=load("res://shaders/rain.gdshader")
 	var drop := BoxMesh.new()
-	drop.size=Vector3(0.018,0.52,0.018)
+	drop.size=Vector3(0.028,0.72,0.028)
 	rain_mesh=instances(drop,rain_material,2200)
 	for i in range(2200):
 		rain_mesh.multimesh.set_instance_transform(i,Transform3D(Basis.IDENTITY,Vector3(rng.randf_range(-P.HALF_WIDTH-3,P.HALF_WIDTH+3),rng.randf_range(0,18),rng.randf_range(-54,54))))
@@ -162,11 +162,12 @@ func update(delta: float) -> void:
 		game.stadium.pitch_burst.update(delta)
 
 func apply_look() -> void:
-	if not is_instance_valid(rain_mesh): return
-	rain_mesh.visible=rain>0.01
-	rain_mesh.multimesh.visible_instance_count=int(2200*rain)
-	rain_material.set_shader_parameter("clock",clock)
-	rain_material.set_shader_parameter("intensity",rain)
+	if not is_instance_valid(marks): return
+	if is_instance_valid(rain_mesh):
+		rain_mesh.visible=rain>0.01
+		rain_mesh.multimesh.visible_instance_count=int(2200*rain)
+		rain_material.set_shader_parameter("clock",clock)
+		rain_material.set_shader_parameter("intensity",rain)
 	mark_material.set_shader_parameter("clock",clock)
 	game.stadium.grass.set_shader_parameter("wetness",wetness)
 	game.stadium.grass.set_shader_parameter("weather_clock",clock)

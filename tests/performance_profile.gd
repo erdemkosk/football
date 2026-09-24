@@ -6,7 +6,7 @@ func run() -> void:
 	source=source.replace('const Player = preload("res://scripts/footballer.gd")','var Player = preload("res://scripts/footballer.gd")')
 	var player_source := FileAccess.get_file_as_string("res://scripts/footballer.gd")
 	player_source+="\nvar probe: Dictionary={}\nvar probe_last: int=0\nfunc probe_mark(label: String) -> void:\n\tvar now := Time.get_ticks_usec()\n\tif label!=\"start\":\n\t\tif not probe.has(label): probe[label]=[0,0]\n\t\tprobe[label][0]+=now-probe_last; probe[label][1]+=1\n\tprobe_last=now\n"
-	var player_marks := {"func step(delta: float,stoppage_speed: float=0.0) -> void:\n":"start","\t\tstain(delta)\n":"timers-weather","\tvar travel_velocity := velocity\n":"steering","\tmove_and_slide()\n":"body-physics","\tlocomotion.update(self,delta,last_horizontal)\n":"facing-locomotion","\tbody_language.update(self,delta)\n":"body-language","\treaction.update(self,delta)\n":"ball-actions","\tanimate(delta)\n":"animation","\tif is_instance_valid(surface): surface.player_step(self,delta)\n":"footprints"}
+	var player_marks := {"func step(delta: float,stoppage_speed: float=0.0) -> void:\n":"start","\t\tstain(delta)\n":"timers-weather","\tvar travel_velocity := velocity\n":"steering","\tmove_and_slide()\n":"body-physics","\tlocomotion.update(self,delta,last_horizontal)\n":"facing-locomotion","\tbody_language.update(self,delta)\n":"body-language","\treaction.update(self,delta)\n":"ball-actions","\t\tanimate(pose_delta)\n":"animation","\tif is_instance_valid(surface): surface.player_step(self,delta)\n":"footprints"}
 	for needle in player_marks:
 		assert(player_source.contains(needle))
 		player_source=player_source.replace(needle,needle+"\tprobe_mark(\""+player_marks[needle]+"\")\n")
@@ -31,6 +31,7 @@ func run() -> void:
 	assert(script.reload()==OK)
 	var game=script.new(); game.Player=player_script; root.add_child(game); await physics_frame
 	game.start_match(false,false); game.set_process(false); game.set_physics_process(false)
+	game.render_running_poses=false # This probe measures complete synchronous physics ticks.
 	game.menu_match.running=true; game.management.difficulty=2; game.weather.select(0,true)
 	for tick in range(1200):
 		game.simulate_match(1.0/120); game._process(1.0/120); await physics_frame

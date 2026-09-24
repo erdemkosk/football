@@ -33,7 +33,7 @@ zemin yerleşme farkı ayrıca referans modunda doğrulandı.
 
 AI hücumu, hücum kararları, animasyon sürekliliği, top sürme/vuruş, ikili
 mücadele, tekrar, hakem, hava topu yardımı, kafa, vole ve performans güvenliği
-regresyonları geçti. Yeni regresyon 10, poz testi 3 kontrol içerir.
+regresyonları geçti. Yeni regresyon 10, poz testi 4 kontrol içerir.
 
 ## FPS ölçüm yöntemi
 
@@ -44,7 +44,25 @@ zamanlamasını değiştirir; ikinci turda sıra ters çevrilir. Isınmadan sonr
 gündüz, gece ve yağmur sahnelerinde beşer saniyelik örnek alınır. Duran oyun
 kareleri FPS hesabına dahil edilmez. 120 aktif kareden az örnek geçersiz işaretlenir.
 
-Son tur sırasında başka Godot testlerinin başlatıldığı gözlendi; bu eşzamanlı
-yük, fizik hızını da düşürdüğü için o tur karşılaştırma kanıtı sayılmaz.
-Ham kayıt: `fps-paired-final.log`; süreç çakışması olmayan son turun kaydı
-`fps-paired-clean.log`, ek süreç denetimi `fps-clean-interference.log`.
+Ara turlarda başka Godot testlerinin başlatıldığı gözlendi; bu eşzamanlı yük
+fizik hızını da düşürdüğü için bu turlar teslim karşılaştırmasına alınmadı.
+Teslim ölçümü tek karşılaştırma turudur (`-- --single`). Süreç denetimi bu
+çalıştırmada başka Godot testi başlatılmadığını doğruladı; mevcut editör süreci
+açık kaldı. Isınma örneği hariç altı örneğin tamamı aktif oyun ve geçerlidir.
+
+| Sahne | Önce FPS | Sonra FPS | Artış | Önce p95 kare | Sonra p95 kare |
+|---|---:|---:|---:|---:|---:|
+| Gündüz | 56,26 | 69,49 | %23,5 | 25,47 ms | 17,04 ms |
+| Gece | 32,05 | 50,58 | %57,8 | 46,56 ms | 23,90 ms |
+| Gece + yağmur | 31,33 | 47,07 | %50,2 | 41,42 ms | 25,19 ms |
+
+Fizik 119,95–120,43 Hz aralığında kaldı; maç yavaşlatılarak FPS kazanılmadı.
+Bu ölçüm gece/yağmurda sabit 60 FPS sağlandığı anlamına gelmez. Farklı
+çözünürlük, maç pozisyonu ve eşzamanlı uygulama yükü sonucu değiştirebilir.
+Önceki yol, bu değişiklikteki AI planlama ve poz zamanlama iyileştirmelerini
+geri alan test referansıdır; top uçuşu önbelleği iki varyantta da etkindir.
+
+Ham veri: `performance-paired-fps.json`; çıktı: `fps-delivery.log`;
+süreç denetimi: `fps-delivery-interference.log` (boş, çakışma yok).
+Poz doğrulaması: `fps-pose-verified.log`; karar/önbellek doğrulaması:
+`fps-confirmed-fps_regression_check.log`.

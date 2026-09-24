@@ -12,6 +12,6 @@ void vertex() {
  VERTEX.z += (18.0-drop)*0.035;
 }
 void fragment() {
- ALBEDO = palette_color(vec3(0.71,0.81,0.84));
- ALPHA = intensity * 0.25;
+ ALBEDO = palette_color(vec3(0.78,0.86,0.90));
+ ALPHA = intensity * 0.42;
 }

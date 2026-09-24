@@ -136,36 +136,21 @@ func apply_weather(rain: float) -> void:
 	sky_material.set_shader_parameter("cloud_shade",cloud_shade)
 	sky_material.set_shader_parameter("coverage",lerpf(.38,.94,rainfall))
 	sky_material.set_shader_parameter("sky_brightness",.36 if night else .72)
-	# HDR sources bloom; the pitch and broadcast graphics retain their sharpness.
-	env.glow_enabled=night
-	env.glow_bloom=0.0
-	env.glow_intensity=lerpf(.28,.38,rainfall)
-	env.glow_hdr_threshold=1.35
-	env.glow_hdr_scale=1.0
-	env.glow_blend_mode=Environment.GLOW_BLEND_MODE_SCREEN
-	for level in range(7): env.set_glow_level(level,[0.0,.65,.35,.12,0.0,0.0,0.0][level])
-	stadium.grass.set_shader_parameter("flood_glint",1.0 if night else 0.0)
+	env.glow_enabled=false
+	stadium.grass.set_shader_parameter("flood_glint",0.0)
 	for light in floodlights:
 		light.visible=night
 		light.light_energy=lerpf(4.8,5.3,rainfall) if night else 0.0
-	var env_fog := night
-	env.fog_enabled=env_fog
-	env.fog_light_color=Color("8eabcc").lerp(Color("6d8498"),rainfall)
-	env.fog_light_energy=lerpf(0.55,0.72,rainfall)
-	env.fog_density=lerpf(0.0034,0.0086,rainfall) if env_fog else 0.0
-	env.fog_aerial_perspective=0.32 if env_fog else 0.0
-	env.fog_sky_affect=0.035 if env_fog else 0.0
-	env.fog_sun_scatter=0.12 if env_fog else 0.0
-	env.fog_height=-2.0
-	env.fog_height_density=0.018 if env_fog else 0.0
+	env.fog_enabled=false
+	env.fog_density=0.0
+	env.fog_aerial_perspective=0.0
+	env.fog_sky_affect=0.0
+	env.fog_sun_scatter=0.0
+	env.fog_height_density=0.0
 	if RenderingServer.get_current_rendering_method()=="forward_plus":
-		env.volumetric_fog_enabled=env_fog and rainfall>0.08
-		env.volumetric_fog_density=0.008+rainfall*0.014
-		env.volumetric_fog_albedo=Color("9bb0c4")
-		env.volumetric_fog_emission=Color("1a2433")
-		env.volumetric_fog_emission_energy=0.18
-	shaft_material.set_shader_parameter("strength",lerpf(0.07,0.20,rainfall) if night else 0.0)
-	for shaft in shafts: shaft.visible=night
+		env.volumetric_fog_enabled=false
+	shaft_material.set_shader_parameter("strength",0.0)
+	for shaft in shafts: shaft.visible=false
 	var glass: StandardMaterial3D=stadium.architecture.lamp_glass
 	glass.emission_enabled=night
 	glass.emission=Color("c3ddff")

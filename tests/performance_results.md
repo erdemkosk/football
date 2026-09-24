@@ -1,5 +1,8 @@
 # Performans incelemesi — 23 Eylül 2026
 
+Sonraki CPU ve animasyon düzeltmeleri ile çakışmasız FPS karşılaştırması:
+[24 Eylül sonuçları](fps_results_2026_09_24.md).
+
 Maçın tekrarlanan CPU hesapları azaltıldı. Fizik 120 Hz; oyuncu ölçeği, hız,
 şut/pas kuvveti, AI zorluğu, çözünürlük, gölgeler, tribün ve yağmur kalitesi korunuyor.
 

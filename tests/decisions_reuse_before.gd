@@ -40,11 +40,8 @@ func value(index: int,choice: Dictionary,context: Dictionary={}) -> float:
 		# Keep carry_target's cache update even when the option has its own exit.
 		var at: Vector3=choice.get("exit",brain.carry_target(index))
 		var room: float=minf(8,brain.clearance(at,p.team))
-		if isolated and not context.has("outfield_pressure"):
-			context.outfield_pressure=brain.clearance(p.position,p.team,false)
-			context.outfield_danger=brain.pressure_read(index,false)
-		var crowd: float=context.outfield_pressure if isolated else pressure
-		var threat: Dictionary=context.outfield_danger if isolated else danger
+		var crowd: float=brain.clearance(p.position,p.team,false) if isolated else pressure
+		var threat: Dictionary=brain.pressure_read(index,false) if isolated else danger
 		var score: float=20+room*1.3+(at.z-p.position.z)*forward*.6-maxf(0,3-crowd)*8
 		if kind=="push": score+=5+(float(p.attributes.pace)-72)*.10
 		elif kind!="carry": score+=7+(float(p.attributes.control)-72)*.16-maxf(0,.4-p.energy)*12
@@ -80,25 +77,24 @@ func value(index: int,choice: Dictionary,context: Dictionary={}) -> float:
 	var destination: Vector3=route.target
 	var progress: float=(destination.z-game.ball.position.z)*forward
 	var free_space := receiving_space(receiver,destination,float(route.flight))
-	var destination_quality: float=brain.shot_quality(destination,p.team)
 	var own_third: float=clampf((-p.position.z*forward-15)/30,0,1)
 	var risk_cost: float=40+own_third*16-(mentality-1)*5
 	var score: float=25+clampf(progress,-20,24)*(.65+(mentality-1)*.12)+minf(8,free_space)*1.3-risk*risk_cost-float(route.flight)*3
-	if isolated and progress<2.0 and destination_quality+.18<brain.shot_quality(p.position,p.team):
+	if isolated and progress<2.0 and brain.shot_quality(destination,p.team)+.18<brain.shot_quality(p.position,p.team):
 		return -INF
 	if not isolated:
 		score+=danger.urgency*clampf(danger.closing,0,8)*(1-risk)*1.8
 		score+=maxf(0,4-pressure)*3
 	score+=(float(p.attributes.get("passing",p.attributes.control))-72)*.07
 	score+=(float(q.attributes.control)-72)*.06
-	score+=destination_quality*24
+	score+=brain.shot_quality(destination,p.team)*24
 	# A nominally open destination is useless if the receiver cannot reach it.
 	var arrival: float=game.flat_distance(q.position,destination)
 	var pace: float=minf(6.2,q.movement_speed())
 	var reach: float=maxf(0,pace*float(route.flight)-1.2)+1.1
 	score-=maxf(0,arrival-reach)*5+maxf(0,2.0-free_space)*8
 	if kind in ["cross","driven_cross"]:
-		score+=10+destination_quality*15
+		score+=10+brain.shot_quality(destination,p.team)*15
 		if kind=="cross": score+=(float(q.attributes.heading)-72)*.15
 	elif kind in ["through","lob_through"]: score+=7
 	elif kind=="one_two": score+=7

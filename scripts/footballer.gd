@@ -440,7 +440,9 @@ func step(delta: float,stoppage_speed: float=0.0) -> void:
 		# A cut/brake needs the last real world-space foot anchors before the
 		# body moves, even when it begins between two rendered frames.
 		var old_request: Vector3=locomotion.previous_request
-		if desired.length_squared()<.0025 or old_request.length_squared()<.0025 or desired.normalized().dot(old_request.normalized())<.64:
+		var moving := desired.length_squared()>=.0025
+		var was_moving := old_request.length_squared()>=.0025
+		if moving!=was_moving or (moving and was_moving and desired.normalized().dot(old_request.normalized())<.64):
 			flush_running_pose()
 	landing_age+=delta
 	feint_time=maxf(0,feint_time-delta)

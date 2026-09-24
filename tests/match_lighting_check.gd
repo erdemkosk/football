@@ -35,9 +35,9 @@ func run() -> void:
 	rig.select(1)
 	game.weather.select(2,true)
 	game.weather.update(8)
-	check(game.stadium.env.fog_enabled and game.stadium.env.fog_density>0.004 and rig.shafts.size()==4 and rig.shafts.all(func(shaft): return shaft.visible),"A rainy night adds pitch fog and four floodlight shafts")
+	check(not game.stadium.env.fog_enabled and rig.shafts.size()==4 and rig.shafts.all(func(shaft): return not shaft.visible),"A rainy night stays clear without pitch fog or floodlight shafts")
 	rig.select(0)
-	check(not game.stadium.env.fog_enabled and rig.shafts.all(func(shaft): return not shaft.visible),"Daylight clears fog and hides the floodlight volumes")
+	check(not game.stadium.env.fog_enabled and rig.shafts.all(func(shaft): return not shaft.visible),"Daylight also keeps fog and floodlight volumes off")
 	game.weather.select(0,true)
 	game.frontend.open_selection(); await settle()
 	# Finish both current team-pick animations before navigating the match options.

@@ -34,5 +34,8 @@ func run() -> void:
 	check(body_error<.002 and energy_error<.00001,"20 FPS pose scheduling preserves 120 Hz movement, turning, braking and stamina")
 	check(foot_error<.02,"Scheduled running feet stay within 2 cm of the full-frequency reference through sprint and cuts")
 	check(penetration>-.065,"Scheduled feet retain ground contact without sinking through the pitch")
+	if scheduled.defer_running_pose:
+		for tick in range(3): scheduled.step(DT)
+		check(scheduled.pending_pose_delta>DT*2,"An already-idle player does not flush the same idle pose every physics tick")
 	print("RENDER POSE: ",checks," checks, ",failures," failures")
 	world.free(); quit(1 if failures>0 else 0)

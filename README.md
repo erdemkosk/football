@@ -627,3 +627,11 @@ Top sürme ve sprintte ayrı basma/salınım döngüsü, alçak ayak yayı ve yu
 Gelen topun yüksekliği, geliş yönü, son sekmesi ve oyuncunun duruşu yarım vole, yan vole veya uygun durumda röveşata seçimini etkiler. Röveşata yeterli enerji, bitiricilik ve çevrede boşluk ister; temas gerçek krampon mesafesinde gerçekleşir. Yapay zekâ da uygun pozisyonda kullanabilir. Normal/zor AI, açık alan ve yeterli enerjide power shot; öne çıkan kaleciye karşı aşırtma değerlendirebilir. Gol tekrarında çizgi geçişi çevresinde hız yumuşakça 0,38× olur; diğer kısımlar 0,8× kalır. Kısa kamera geçişleri gol anını kapatmaz.
 
 Yeni doğrulamalar: `tests/contextual_finish_check.gd`, `tests/carry_gait_check.gd`, `tests/duel_animation_check.gd`, `tests/presentation_refresh_check.gd`. Grafik ortamında `tests/ball_render_check.gd` hızlı yer/hava topunun gerçek ara karelerini kontrol eder. `tests/performance_safety_check.gd` birleşen model parçalarının köşe ve UV verilerini, malzemelerini ve mevcut fizik davranışını doğrular. Rijit baş, diz ve önkol parçalarını birleştirmek oyuncu başına beş çizim nesnesini kaldırır; geometri, forma ve gölge ayrıntısı azaltılmaz.
+
+24 Eylül FPS düzeltmesi: destek ve hücum yerleşimi aynı konum/pas koridoru
+hesaplarını tekrar kullanır; top uçuşu yalnızca aynı fizik girdilerinde önbelleğe
+alınır. Uzak normal koşu pozları çizim karesinde, vuruşlar ve fiziksel temaslar
+120 Hz fizik adımında hazırlanır. Fren/dönüş ayak basışı ve tekrar kaydı korunur.
+Doğrulama: `tests/fps_regression_check.gd`, `tests/render_pose_check.gd`.
+Grafik karşılaştırması: `tests/fps_compare_benchmark.gd` (diğer ağır testlerle
+aynı anda çalıştırılmamalı). [Ölçüm ve ayrıntılar](tests/fps_results_2026_09_24.md).

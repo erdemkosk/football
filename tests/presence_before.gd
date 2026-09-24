@@ -5,12 +5,6 @@ var game
 var shadows: MultiMeshInstance3D
 var reflections: MultiMeshInstance3D
 var reflection_material := ShaderMaterial.new()
-var reflection_parts: Array[Node3D]=[]
-var reflection_local: Array[Transform3D]=[]
-var reflection_colors := PackedColorArray()
-var shadow_colors := PackedColorArray()
-var shown_wetness := -1.0
-var shown_clock := -1.0
 
 func _ready() -> void:
 	name="PitchPresence"
@@ -21,12 +15,6 @@ func _ready() -> void:
 	reflection_material.shader=load("res://shaders/wet_reflection.gdshader")
 	reflection_material.set_shader_parameter("half_pitch",Vector2(P.HALF_WIDTH,P.HALF_LENGTH))
 	reflections=batch(shape,reflection_material,256)
-	reflection_parts.resize(8)
-	reflection_colors.resize(256); reflection_colors.fill(Color(-1,-1,-1,-1))
-	shadow_colors.resize(96); shadow_colors.fill(Color(-1,-1,-1,-1))
-	var offsets := [Vector3(0,.27,0),Vector3(0,.15,0),Vector3(0,-.14,0),Vector3(0,-.14,0),Vector3(0,-.22,0),Vector3(0,-.22,0),Vector3(0,-.14,0),Vector3(0,-.14,0)]
-	var sizes := [Vector3(.28,.29,.19),Vector3(.17,.21,.17),Vector3(.11,.2,.11),Vector3(.11,.2,.11),Vector3(.08,.22,.09),Vector3(.08,.22,.09),Vector3(.095,.24,.09),Vector3(.095,.24,.09)]
-	for i in range(8): reflection_local.append(Transform3D(Basis.from_scale(sizes[i]),offsets[i]))
 
 func batch(mesh: Mesh,material: Material,count: int) -> MultiMeshInstance3D:
 	var node := MultiMeshInstance3D.new(); var multi := MultiMesh.new()
@@ -39,10 +27,7 @@ func batch(mesh: Mesh,material: Material,count: int) -> MultiMeshInstance3D:
 
 func shadow(index: int,at: Vector3,size: Vector2,opacity: float,yaw: float=0) -> void:
 	shadows.multimesh.set_instance_transform(index,Transform3D(Basis(Vector3.UP,yaw).scaled(Vector3(size.x,1,size.y)),Vector3(at.x,.025,at.z)))
-	var color := Color(0,0,0,opacity)
-	if shadow_colors[index]!=color:
-		shadows.multimesh.set_instance_color(index,color)
-		shadow_colors[index]=color
+	shadows.multimesh.set_instance_color(index,Color(0,0,0,opacity))
 
 func _process(_delta: float) -> void: update_visuals()
 
@@ -55,36 +40,31 @@ func update_visuals() -> void:
 		var radius := .36+minf(height,12)*.045
 		shadow(count,ball.global_position,Vector2.ONE*radius,.50/(1+height*.12)); count+=1
 	var wet: float=game.weather.wetness
-	var show_reflections := wet>.25
-	if reflections.visible!=show_reflections: reflections.visible=show_reflections
-	if shown_wetness!=wet:
-		reflection_material.set_shader_parameter("wetness",wet); shown_wetness=wet
-	if shown_clock!=game.weather.clock:
-		reflection_material.set_shader_parameter("clock",game.weather.clock); shown_clock=game.weather.clock
-	# Iterate both collections without concatenating a new actor array each frame.
-	for actor_index in range(game.players.size()+game.referees.actors.size()):
-		var p=game.players[actor_index] if actor_index<game.players.size() else game.referees.actors[actor_index-game.players.size()]
+	reflections.visible=wet>.25
+	reflection_material.set_shader_parameter("wetness",wet)
+	reflection_material.set_shader_parameter("clock",game.weather.clock)
+	for p in game.players+game.referees.actors:
 		if not p.is_visible_in_tree() or absf(p.position.x)>P.HALF_WIDTH+4 or absf(p.position.z)>55: continue
 		var height: float=maxf(0,p.position.y)
 		shadow(count,p.position,Vector2(.9,1.05)*(1+height*.15),.22/(1+height*2)); count+=1
-		for side in range(2):
-			var knee: Node3D=p.left_knee if side==0 else p.right_knee
+		for knee in [p.left_knee,p.right_knee]:
 			var foot: Vector3=knee.to_global(Vector3(0,-.42,-.05))
 			shadow(count,foot,Vector2(.27,.43),.42*(1-smoothstep(.10,.65,foot.y)),p.rig.rotation.y); count+=1
 		if not reflections.visible: continue
 		var kit: Color=p.kit_materials.jersey.albedo_color
 		var shorts: Color=p.kit_materials.shorts.albedo_color
 		var skin: Color=p.kit_materials.skin.albedo_color
-		reflection_parts[0]=p.spine; reflection_parts[1]=p.head_joint
-		reflection_parts[2]=p.left_leg; reflection_parts[3]=p.right_leg
-		reflection_parts[4]=p.left_knee; reflection_parts[5]=p.right_knee
-		reflection_parts[6]=p.left_arm; reflection_parts[7]=p.right_arm
-		for i in range(8):
-			var color: Color=skin if i==1 else (shorts if i==2 or i==3 else kit)
-			reflections.multimesh.set_instance_transform(reflected,reflection_parts[i].global_transform*reflection_local[i])
-			if reflection_colors[reflected]!=color:
-				reflections.multimesh.set_instance_color(reflected,color)
-				reflection_colors[reflected]=color
-			reflected+=1
-	if shadows.multimesh.visible_instance_count!=count: shadows.multimesh.visible_instance_count=count
-	if reflections.multimesh.visible_instance_count!=reflected: reflections.multimesh.visible_instance_count=reflected
+		var parts := [[p.spine,Vector3(0,.27,0),Vector3(.28,.29,.19),kit],
+			[p.head_joint,Vector3(0,.15,0),Vector3(.17,.21,.17),skin],
+			[p.left_leg,Vector3(0,-.14,0),Vector3(.11,.2,.11),shorts],
+			[p.right_leg,Vector3(0,-.14,0),Vector3(.11,.2,.11),shorts],
+			[p.left_knee,Vector3(0,-.22,0),Vector3(.08,.22,.09),kit],
+			[p.right_knee,Vector3(0,-.22,0),Vector3(.08,.22,.09),kit],
+			[p.left_arm,Vector3(0,-.14,0),Vector3(.095,.24,.09),kit],
+			[p.right_arm,Vector3(0,-.14,0),Vector3(.095,.24,.09),kit]]
+		for part in parts:
+			var node: Node3D=part[0]
+			reflections.multimesh.set_instance_transform(reflected,node.global_transform*Transform3D(Basis.from_scale(part[2]),part[1]))
+			reflections.multimesh.set_instance_color(reflected,part[3]); reflected+=1
+	shadows.multimesh.visible_instance_count=count
+	reflections.multimesh.visible_instance_count=reflected
