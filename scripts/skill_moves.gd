@@ -13,7 +13,7 @@ func explain(index: int,message: String) -> void:
 func interrupt_preparation(index: int) -> bool:
 	if not active.has(index): return true
 	var s: Dictionary=active[index]
-	if s.kind not in Ground.KINDS or s.age>=Ground.PREPARE: return false
+	if s.kind not in Ground.KINDS or Ground.phase_age(s)>=Ground.PREPARE: return false
 	cancel(index); game.players[index].skill_cooldown=.12
 	return true
 
@@ -28,13 +28,12 @@ func reset() -> void:
 
 func start(index: int,kind: String,side: float=1) -> bool:
 	var p=game.players[index]
-	if not NAMES.has(kind) or p.keeper: return false
+	if not NAMES.has(kind) or not p.Attributes.can_perform(p,kind): return false
 	var reason := ""
 	if active.has(index) or p.action_timer>0 or p.skill_cooldown>0: reason="ÖNCE DENGENİ TOPLA"
 	elif p.energy<.07: reason="KONDİSYON DÜŞÜK"
 	elif game.ball.position.y>.6: reason="TOPU ÖNCE YERE İNDİR"
 	elif not game.has_ball_control(index): reason="TOP ÖNCE AYAĞINA GELSİN"
-	elif not p.Attributes.can_perform(p,kind): reason="%d★ ÇALIM YETENEĞİ GEREKİR" % int(p.Attributes.MOVE_STARS.get(kind,1))
 	if reason!="": explain(index,reason); return false
 	if not game.rules.before_touch(index): return false
 	if game.is_user_player(index):
@@ -45,16 +44,18 @@ func start(index: int,kind: String,side: float=1) -> bool:
 	if kind=="roll": duration=lerpf(.62,.44,clampf((float(p.attributes.control)-50)/45,0,1))
 	if kind in ["fake_shot","fake_pass"]:
 		duration=lerpf(.62,.44,clampf((float(p.attributes.control)-50)/45,0,1))
-	# More skill stars finish a flourish a little sooner; the contact itself
-	# still decides whether the ball stays with the carrier.
-	if kind not in Ground.KINDS: duration*=lerpf(1.06,.94,float(p.Attributes.stars(p)-1)/4.0)
+	var quality: float=p.Attributes.skill_quality(p)
+	var timing_scale: float=p.Attributes.skill_time_scale(p)
+	# Preparation, contact, pose and recovery all follow the same tempo.
+	# A lower rating slows a real attempt without randomly rejecting it.
+	duration*=timing_scale
 	var direction: Vector3=p.facing.normalized()
-	var state := {"kind":kind,"age":0.0,"duration":duration,"side":side,"direction":direction,"lifted":false,"yaw":p.rig.rotation.y}
+	var state := {"kind":kind,"age":0.0,"duration":duration,"timing_scale":timing_scale,"quality":quality,"side":side,"direction":direction,"lifted":false,"yaw":p.rig.rotation.y}
 	active[index]=state; p.skill_move=state
 	if kind in Ground.KINDS: Ground.setup(game,p,state)
 	if kind=="nutmeg": open_legs(index,state)
-	p.skill_cooldown=duration+.40; p.energy-=.035 if kind=="roll" else (.07 if kind=="rainbow" else .055)
-	p.recovery_delay=maxf(p.recovery_delay,duration+.35)
+	p.skill_cooldown=duration+lerpf(.48,.28,quality); p.energy-=.035 if kind=="roll" else (.07 if kind=="rainbow" else .055)
+	p.recovery_delay=maxf(p.recovery_delay,duration+.35*timing_scale)
 	p.receive_timer=0; p.kick_timer=0; p.feint_time=0
 	game.dribbler=index; game.carrier=index; game.last_kicker=index; game.last_touch=p.team
 	p.dribble_motion.control_collision(p,game.ball)
@@ -74,7 +75,7 @@ func update(delta: float) -> void:
 		if lost or not p.visible or p.dismissed or p.action_timer>0 or game.ball.held_by!=null or game.flat_distance(p.position,game.ball.position)>reach or (game.last_kicker!=i and game.last_touch!=p.team):
 			if s.kind in Ground.KINDS: explain(i,"TOP AÇILDI · YENİDEN KAZAN")
 			cancel(i); continue
-		if s.kind in Ground.KINDS and s.contacts==0 and s.age>Ground.CONTACT_END:
+		if s.kind in Ground.KINDS and s.contacts==0 and Ground.phase_age(s)>Ground.CONTACT_END:
 			explain(i,"TOPA UZAK KALDIN"); cancel(i); continue
 		if s.age>=s.duration:
 			var ground_move: bool=not s.lifted or s.kind=="scoop"
@@ -109,13 +110,16 @@ func update(delta: float) -> void:
 			"nutmeg": offset=forward*lerpf(.55,2.9,smoothstep(0,.45,t))
 			# McGeady spin: body spins while the ball is flicked across and on.
 			"spin": offset=(forward*.9+right*.55).normalized()*lerpf(.45,1.15,smoothstep(.2,1,t))
+		var quality: float=s.quality
+		if s.kind in ["roulette","elastico","scoop","heel_to_heel","ball_roll_cut","spin"]:
+			offset*=lerpf(1.08,.94,quality)
 		var target: Vector3=p.position+offset
-		var velocity: Vector3=p.velocity*Vector3(1,0,1)+((target-game.ball.position)*Vector3(1,0,1)*17).limit_length(7)
+		var velocity: Vector3=p.velocity*Vector3(1,0,1)+((target-game.ball.position)*Vector3(1,0,1)*lerpf(15,21,quality)).limit_length(lerpf(6.5,8,quality))
 		velocity.y=game.ball.linear_velocity.y
 		# Horizontal guidance leaves vertical physics alone. Only an actual
 		# lifting touch may add height; gravity then finishes a low scoop.
 		var vertical_touch := false
-		var impulse: float=game.ball.mass*55*delta
+		var impulse: float=game.ball.mass*lerpf(48,64,quality)*delta
 		if s.kind=="scoop" and not s.lifted and t>.3:
 			velocity.y=2.6; impulse=game.ball.mass*4.8; s.lifted=true; vertical_touch=true
 		elif s.kind=="rainbow" and t<.5:
@@ -194,6 +198,7 @@ static func pose(p) -> void:
 	var t: float=s.age/s.duration
 	var weight := sin(PI*t)
 	var side: float=s.side
+	var balance: float=lerpf(1.18,.82,float(s.quality))
 	if s.kind=="roulette": p.rig.rotation.y=s.yaw-side*TAU*smoothstep(0,1,t)
 	elif s.kind=="spin": p.rig.rotation.y=s.yaw-side*TAU*smoothstep(.05,.8,t)
 	elif s.kind=="ball_roll_cut": p.rig.rotation.y=s.yaw-side*1.6*smoothstep(.4,1,t)
@@ -205,11 +210,11 @@ static func pose(p) -> void:
 	elif s.kind=="flick": p.rig.rotation.x=-.18*sin(t*PI)
 	# Spine pose persists between frames; blend toward a bounded lean rather
 	# than adding the same rotation every tick.
-	p.spine.rotation.z=lerpf(p.spine.rotation.z,side*.18,weight*.85)
+	p.spine.rotation.z=lerpf(p.spine.rotation.z,side*.18*balance,weight*.85)
 	p.spine.rotation.y=lerpf(p.spine.rotation.y,side*(.38 if s.kind=="elastico" else .22),weight*.85)
 	if s.kind=="rainbow" or s.kind=="flick":
 		p.spine.rotation.x=lerpf(p.spine.rotation.x,.28 if s.kind=="rainbow" else .16,weight*.8)
-	p.left_arm.rotation.z-=weight*.5; p.right_arm.rotation.z+=weight*.5
+	p.left_arm.rotation.z-=weight*.5*balance; p.right_arm.rotation.z+=weight*.5*balance
 	var leg=p.left_leg if side<0 else p.right_leg
 	var knee=p.left_knee if side<0 else p.right_knee
 	var point := Vector3(side*lerpf(.12,.53,t),.26,-.55)

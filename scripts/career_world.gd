@@ -33,12 +33,24 @@ static func plan() -> Dictionary:
 static func ovr(p: Dictionary) -> int:
 	return Talent.overall(p)
 
-static func value(p: Dictionary) -> int:
-	var age_factor := 1.25 if p.age<24 else (.65 if p.age>30 else 1.0)
-	return roundi(maxf(80000,pow(maxf(1,ovr(p)-38),2.7)*26*age_factor)/10000)*10000
+static func value(p: Dictionary,owner: Dictionary={},year: int=0) -> int:
+	# Scarce elite ability must cost several seasons of a small club's budget.
+	# Youth resale potential and a veteran's shorter career affect the fee,
+	# while the actual owner and remaining contract affect its bargaining power.
+	var age: int=int(p.age)
+	var age_factor := 1.12 if age<=26 else maxf(.18,1.12-(age-26)*.10)
+	var growth := clampf(float(p.get("potential",ovr(p)))-ovr(p),0,20)
+	var potential_factor := 1.0+growth*(.035 if age<=21 else .018 if age<=25 else 0.0)
+	var club_factor := clampf(.82+(float(owner.get("reputation",65))-45)*.012,.82,1.45)
+	var contract_factor := 1.0
+	if year>0 and p.get("club","")!="":
+		contract_factor=[.55,.72,.90,1.0,1.08][clampi(int(p.contract)-year,0,4)]
+	var amount := 120000.0*pow(1.15,ovr(p)-45)*age_factor*potential_factor*club_factor*contract_factor
+	return maxi(40000,roundi(amount/10000.0)*10000)
 
 static func wage(p: Dictionary) -> int:
-	return maxi(1500,roundi(value(p)*.008/500)*500)
+	# Salary rewards current ability, independently of youth resale premiums.
+	return maxi(1500,roundi(2000.0*pow(1.085,ovr(p)-45)/500.0)*500)
 
 static func kit(c: Dictionary) -> Dictionary:
 	return {"primary":Color(c.primary),"accent":Color(c.accent),"shorts":Color(c.shorts),"pattern":c.pattern,"club_id":c.badge_id,"badge_primary":Color(c.primary),"badge_accent":Color(c.accent)}

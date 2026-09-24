@@ -1441,7 +1441,10 @@ func commit_strike(index: int,velocity: Vector3,curve: float=0,is_save: bool=fal
 	if is_shot: replay.mark_shot(index)
 	if is_shot and not is_save:
 		if kind=="header": broadcast_event("header",{"index":index})
+		elif kind in ["volley","half_volley"]: broadcast_event("volley",{"index":index})
 		elif flat_distance(ball.position,Vector3(0,0,attack_sign(players[index].team)*50))>24: broadcast_event("long_shot",{"index":index})
+		else: broadcast_event("shot",{"index":index})
+	elif kind=="cross" and not is_save: broadcast_event("cross",{"index":index})
 	var is_header := kind.begins_with("header")
 	if not is_save and not is_header and kind!="ball_tackle": weather.kick_turf(players[index],ball.position,velocity)
 	if is_header or kind in ["volley","half_volley","finish","punt","distribution"]:
@@ -1852,6 +1855,11 @@ func update_ai(_delta: float) -> void:
 		if training_drills.manages(i):
 			training_drills.actor(i)
 			continue
+		if ball.held_by==p and p.keeper:
+			if not try_requested_pass(i): goalkeeping.update(i,_delta)
+			p.desired=Vector3.ZERO
+			p.sprinting=false
+			continue
 		if ball.held_by!=null and not p.keeper:
 			# A protected ball is neither a loose-ball chase nor a pressing job.
 			p.sprinting=false
@@ -1898,6 +1906,12 @@ func update_ai(_delta: float) -> void:
 		p.sprinting = false
 		if p.keeper:
 			target=goalkeeping.update(i,_delta)
+			if goalkeeping.modes.get(i,"") in ["hold","feet"]:
+				# Possession must survive the catch frame and pass wind-up.
+				# Teammates make space; generic separation must not retreat the keeper.
+				p.desired=Vector3.ZERO
+				p.sprinting=false
+				continue
 		else:
 			if p.pose in ["header","volley","finish","intercept"] and p.action_timer>0: continue
 			if not ai_attack.try_header(i): ai_attack.try_volley(i)

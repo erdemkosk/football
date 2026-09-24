@@ -37,9 +37,8 @@ static func turning(p) -> float:
 ## still moves the related techniques. An explicit stored value always wins.
 const DETAILS := ["agility","reactions","composure","vision","crossing","curve","long_shots","shot_power","volleys","jumping","tackling","interceptions","kicking"]
 const DETAIL_LABELS := ["ÇEVİKLİK","REAKSİYON","SOĞUKKANLILIK","VİZYON","ORTA","FALSO","UZAKTAN ŞUT","ŞUT GÜCÜ","VOLE","SIÇRAMA","TOP KAPMA","ARAYA GİRME","DEGAJ"]
-## Minimum skill-move stars for each move; the body feint and the basic
-## ground moves stay available to everyone.
-const MOVE_STARS := {"roll":1,"stop_go":1,"knock_around":1,"feint":1,"fake_shot":1,"fake_pass":1,"heel":2,"ball_roll_cut":2,"heel_to_heel":3,"flick":3,"roulette":3,"nutmeg":3,"scoop":4,"spin":4,"elastico":4,"rainbow":4}
+## Stars describe execution quality, never which moves an outfielder may try.
+const MOVES := ["roll","stop_go","knock_around","feint","fake_shot","fake_pass","heel","ball_roll_cut","heel_to_heel","flick","roulette","nutmeg","scoop","spin","elastico","rainbow"]
 const STYLES := ["finesse","power_shot","chip","first_touch","rapid","quick_step","incisive","whipped","press_proven","anticipate","intercept","aerial","bruiser","far_reach","footwork"]
 const STYLE_LABELS := {"finesse":"PLASE ŞUT","power_shot":"SERT ŞUT","chip":"AŞIRTMA","first_touch":"İLK DOKUNUŞ","rapid":"SÜRAT","quick_step":"ÇABUK ADIM","incisive":"KESKİN PAS","whipped":"KAVİSLİ ORTA","press_proven":"BASKIYA DAYANIKLI","anticipate":"SEZGİ","intercept":"ARAYA GİRME","aerial":"HAVA HAKİMİ","bruiser":"GÜÇLÜ","far_reach":"UZUN KOL","footwork":"AYAK OYUNU"}
 const MAX_STYLES := 4
@@ -130,7 +129,14 @@ static func has_style(p,key: String) -> bool:
 	return key in traits(p).styles
 
 static func can_perform(p,move: String) -> bool:
-	return stars(p)>=int(MOVE_STARS.get(move,1))
+	return not p.keeper and move in MOVES
+
+static func skill_quality(p) -> float:
+	return float(stars(p)-1)/4.0
+
+static func skill_time_scale(p) -> float:
+	# Five-star execution takes about two thirds of the one-star time.
+	return lerpf(1.28,.84,skill_quality(p))
 
 static func execution_direction(p,direction: Vector3,attribute: String,challenge: float) -> Vector3:
 	# A stable, bounded contact error: ordinary unpressured passes stay exact.
@@ -162,8 +168,18 @@ static func club_profile(club: int,member: int,keeper: bool=false) -> Dictionary
 	preload("res://scripts/player_talent.gd").rebalance(identity)
 	return stats
 
-static func kick_factor(p,point: Vector3) -> float:
-	var foot: int=p.ball_actions.choose_foot(p,point)
+static func shot_speed_factor(p) -> float:
+	# The visible ŞUT rating governs launch pace, even for a physically strong
+	# defender. Keep 72 near the established baseline and elite speeds bounded;
+	# the wider difference comes mainly from weaker finishers hitting softer.
+	var finishing := clampf(float(p.attributes.finishing),35,95)
+	var power: float=finishing*.55+value(p,"shot_power")*.45
+	var technique := lerpf(.62,1.0,clampf((finishing-35)/37.0,0,1))
+	return multiplier(power,.13)*technique
+
+static func kick_factor(p,point: Vector3,foot: int=-1,distribution: bool=false) -> float:
+	if foot<0: foot=p.ball_actions.choose_foot(p,point)
 	var weak: float=1.0 if foot==p.attributes.preferred_foot else lerpf(.88,.99,(p.attributes.weak_foot-1)/4.0)
 	var power: float=float(p.attributes.finishing)*.55+value(p,"shot_power")*.45
-	return weak*multiplier(power,.13)*(1.04 if has_style(p,"power_shot") else 1.0)*(1-p.contest_weight*.045)
+	var pace := multiplier(power,.13) if distribution else shot_speed_factor(p)
+	return weak*pace*(1.04 if has_style(p,"power_shot") else 1.0)*(1-p.contest_weight*.045)

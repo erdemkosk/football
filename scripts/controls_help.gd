@@ -183,11 +183,11 @@ func rows() -> Array:
 			advanced_entry("Rainbow","Topuğuyla topu arkadan üzerinden atar.","LT + RS ↓","6"),
 			advanced_entry("Heel flick","Topukla topu arkaya bırakır; savunmayı keser.","LT + RS ↑","7"),
 			advanced_entry("Flick up","Topu önünde havaya kaldırır; vole veya kafa için.","LT + RS ← / →","8"),
-			advanced_entry("Topuktan topuğa","3★ · Topu duran bacağın arkasından diğer topuğa alıp çaprazdan çık.","LB + LT + RS","SHIFT + 1"),
-			advanced_entry("Çek ve kes","2★ · Tabanla topu çek, gövdenin arkasından keserek yön değiştir.","LB + RS ↓","SHIFT + 2"),
-			advanced_entry("Bacak arası","3★ · Önündeki rakibin açık bacaklarından topu geçir; topu önce kapan alır.","LB + RS ↑","SHIFT + 3"),
-			advanced_entry("McGeady dönüşü","4★ · Dönerek topu çapraz öne al; boş çıkış alanı gerekir.","LB + RS ← / →","SHIFT + 4"),
-			entry("Çalım yıldızı","Her oyuncunun 1–5 çalım yıldızı var. Yetmeyen hareket denenmez; oyuncu kartında gösterilir.","★"),
+			advanced_entry("Topuktan topuğa","Topu duran bacağın arkasından diğer topuğa alıp çaprazdan çık.","LB + LT + RS","SHIFT + 1"),
+			advanced_entry("Çek ve kes","Tabanla topu çek, gövdenin arkasından keserek yön değiştir.","LB + RS ↓","SHIFT + 2"),
+			advanced_entry("Bacak arası","Önündeki rakibin açık bacaklarından topu geçir; topu önce kapan alır.","LB + RS ↑","SHIFT + 3"),
+			advanced_entry("McGeady dönüşü","Dönerek topu çapraz öne al; boş çıkış alanı gerekir.","LB + RS ← / →","SHIFT + 4"),
+			entry("Çalım yıldızı","Tüm hareketler açık. Yıldız yükseldikçe hareket, top kontrolü ve toparlanma daha seri olur.","★"),
 			entry("Kısa vücut çalımı","Yakın kontrolde kısa aldatma; koşuya devam edebilirsin.",binding(KEY_Z)),
 			entry("Topu ileri aç","Topu öne it; boş alanda arkasından hızlan. Rakip topu alabilir.",binding(KEY_V))]
 	if page==5:

@@ -30,7 +30,7 @@ func timing_press() -> void:
 
 func velocity(index: int,aim: Vector3,power: float,kind: String,quality: float=1) -> Vector3:
 	var p=game.players[index]
-	var ability: float=p.Attributes.kick_factor(p,game.ball.position)
+	var ability: float=p.Attributes.kick_factor(p,game.ball.position,-1,kind=="punt")
 	var speed := lerpf(19,32,power)
 	var lift := lerpf(1.6,5.1,power)
 	match kind:
@@ -53,6 +53,7 @@ func release_charged(index: int,aim: Vector3,power: float) -> bool:
 	var contact := .39 if kind=="power" else .22
 	p.strike_effort=power
 	if not game.commit_strike(index,velocity(index,aim,power,kind),curve(index,kind),false,"finish"): return false
+	if kind=="power": game.ball.power_trail.begin()
 	p.volley_motion.begin(p,{"point":game.ball.position,"time":contact,"kind":kind},aim)
 	p.volley_motion.contact_time=contact
 	p.volley_motion.duration=contact+(.42 if kind=="power" else .33)
@@ -118,6 +119,7 @@ func resolve() -> void:
 		output=game.Passing.Motion.lob_velocity(game.ball.position,route.target,route.flight,game.weather)
 	p.strike_effort=shot.power; p.strike_timing=shot.quality
 	if game.strike(shot.index,output,curve(shot.index,shot.kind),false,"punt" if shot.kind=="punt" else "finish"):
+		if shot.kind=="power": game.ball.power_trail.begin()
 		p.volley_motion.hit=true; p.volley_motion.target=game.ball.position
 		if shot.kind=="punt":
 			game.passes[p.team]+=1

@@ -147,11 +147,20 @@ func build_terms(s) -> void:
 	for n in range(6):
 		var key: String=["signing","appearance","goal","title","release","sell_on"][n]
 		var step: int=[10000,500,500,10000,100000,5][n]
+		if key=="release": step=maxi(100000,roundi(s.game.career.market.value(s.game.career.player(d.player))*.05/100000.0)*100000)
 		for dir in [-1,1]:
-			s.button_at(Rect2(78 if dir<0 else 645,266+n*76,61,43),"−" if dir<0 else "+",func(): d.terms[key]=clampi(int(d.terms[key])+dir*step,0,30 if key=="sell_on" else 100000000); s.queue_redraw())
+			s.button_at(Rect2(78 if dir<0 else 645,266+n*76,61,43),"−" if dir<0 else "+",adjust_term.bind(s,key,dir*step))
 	s.button_at(Rect2(798,707,568,54),"ŞARTLARI KAYDET & GÖRÜŞMEYE DÖN",func():
 		if d.stage=="sign": d.stage="contract"; d.response="Güncel primlerle maaş teklifini yeniden sunabilirsin."
 		s.page="talks"; s.build(),true)
+
+func adjust_term(s,key: String,amount: int) -> void:
+	var c=s.game.career; var d: Dictionary=c.deal
+	var minimum: int=c.market.value(c.player(d.player))
+	var limit: int=30 if key=="sell_on" else maxi(100000000,minimum*5) if key=="release" else 100000000
+	var next: int=clampi(int(d.terms[key])+amount,0,limit)
+	if key=="release" and next<minimum: next=minimum if amount>0 else 0
+	d.terms[key]=next; s.queue_redraw()
 
 func draw_terms(s) -> void:
 	var c=s.game.career; var d: Dictionary=c.deal

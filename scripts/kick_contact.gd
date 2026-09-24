@@ -15,6 +15,14 @@ func reset() -> void:
 		game.players[pending.index].dribble_motion.release_collision()
 	pending.clear()
 
+func cancel_preparation() -> void:
+	# Only an unstruck restart may be restored. A new whistle or another
+	# player's actual touch must keep its own state and possession.
+	var restart: Dictionary=pending.get("restart",{})
+	var restore: bool=not restart.is_empty() and game.state=="playing" and game.rules.first_kick and game.rules.restart_taker==pending.index and game.last_kicker==pending.last_touch and game.ball.held_by==null and not game.ball.pending_kick
+	reset()
+	if restore: game.set_pieces.restore_cancelled(restart)
+
 func queue(index: int,velocity: Vector3,curve: float,kind: String) -> bool:
 	if not pending.is_empty(): return false
 	var p=game.players[index]
@@ -38,21 +46,27 @@ func prepare(delta: float) -> void:
 	if pending.is_empty(): return
 	var p=game.players[pending.index]
 	if game.state!="playing" or not p.visible or p.dismissed or p.action_timer>0 or p.kick_timer<=0 or game.ball.held_by!=null or game.last_kicker!=pending.last_touch:
-		reset(); return
+		cancel_preparation(); return
 	pending.age+=delta
 	p.ball_actions.contact_age=pending.age
 	p.ball_actions.contact_target=game.ball.position
-	if not p.dribble_motion.settle_preparation(p,game.ball,delta): reset()
+	if not p.dribble_motion.settle_preparation(p,game.ball,delta): cancel_preparation()
 
 func resolve() -> void:
 	if pending.is_empty(): return
 	var p=game.players[pending.index]
 	if p.action_timer>0 or game.last_kicker!=pending.last_touch or game.ball.held_by!=null:
-		reset(); return
+		cancel_preparation(); return
 	var boot: Node3D=p.left_knee if p.ball_actions.foot==0 else p.right_knee
 	last_gap=boot.to_global(p.ball_actions.BOOT).distance_to(game.ball.position)
 	if pending.age>=pending.windup and last_gap<=RADIUS and not game.ball.pending_kick:
 		var request := pending.duplicate()
+		var delivery: Dictionary=request.get("restart",{}).get("choice",{})
+		if delivery.has("route") and delivery.kind!="clearance" and not game.ai_attack.delivery.safe(request.index,delivery.route,delivery.receiver):
+			# Recheck the restart at the boot as well as before the run-up.
+			p.ball_actions.finish_contact(p)
+			cancel_preparation()
+			return
 		if request.has("ai_choice") and request.ai_choice.has("route") and request.ai_choice.kind!="clearance":
 			if not game.ai_attack.delivery.safe(request.index,request.ai_choice.route,request.ai_choice.receiver):
 				# The lane closed during the approach. Keep the reachable ball and
@@ -76,4 +90,5 @@ func resolve() -> void:
 		misses+=1
 		p.ball_actions.finish_contact(p)
 		p.dribble_motion.release_collision()
-		pending.clear()
+		if pending.has("restart"): cancel_preparation()
+		else: pending.clear()

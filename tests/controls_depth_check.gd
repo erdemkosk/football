@@ -65,7 +65,7 @@ func run() -> void:
 		check(started and close,"%s starts and keeps the ball within reach" % move)
 	await reset()
 	p.attributes["skill_moves"]=2
-	check(not game.skills.start(9,"spin",1.0),"A two-star player cannot attempt the McGeady spin")
+	check(game.skills.start(9,"spin",1.0),"A two-star player can attempt the McGeady spin")
 	# Nutmeg: the touch passes the square defender's stance.
 	await reset()
 	p.attributes["skill_moves"]=5

@@ -278,7 +278,7 @@ func update_substitutions(delta: float) -> bool:
 				game.career.remember_player(p)
 				game.stadium.sidelines.retain_departing(p,index)
 				game.match_report.substitution(p,b)
-				game.broadcast_event("substitution")
+				game.broadcast_event("substitution",{"out":p.display_name.capitalize(),"incoming":String(b.name).capitalize(),"team":p.team})
 				p.apply_identity(b)
 				p.apply_kit(game.clubs.kit(p.team))
 				refresh_captains()

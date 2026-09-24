@@ -43,6 +43,7 @@ var roll_dir := Vector3.FORWARD
 var ghosts: Array[MeshInstance3D] = []
 var surface_materials: Array[StandardMaterial3D] = []
 var shown_surface_wetness := -1.0
+var power_trail := preload("res://scripts/power_shot_trail.gd").new()
 
 func update_surface_wetness(wet: float) -> void:
 	if absf(wet-shown_surface_wetness)<.002: return
@@ -54,6 +55,7 @@ func update_surface_wetness(wet: float) -> void:
 
 func hold(player: Node3D) -> void:
 	if held_by==player: return
+	power_trail.stop_emitting()
 	release_hold()
 	held_by=player
 	pending_grip=true
@@ -134,8 +136,10 @@ func _ready() -> void:
 	# The panels share one material and never move relative to the skin: one
 	# instance draws the same seams instead of twelve per pass (main + shadows).
 	G.combine_rigid(skin,panels,"ball_panels")
+	power_trail.setup(self)
 
 func place(p: Vector3, v: Vector3 = Vector3.ZERO) -> void:
+	power_trail.clear()
 	release_hold()
 	for net in goal_nets: net.release_ball()
 	reset_position = p
@@ -179,6 +183,7 @@ func deform_basis(axis: Vector3,along: float,side: float) -> Basis:
 		Vector3(k*n.z*n.x,k*n.z*n.y,side+k*n.z*n.z))
 
 func _process(delta: float) -> void:
+	power_trail.update(delta)
 	streak=maxf(0,streak-delta*4.2)
 	var travel: Vector3=linear_velocity*Vector3(1,0,1)
 	if pending_kick: travel=kick_velocity*Vector3(1,0,1)
@@ -215,6 +220,7 @@ func _process(delta: float) -> void:
 	for ghost in ghosts: ghost.visible=false
 
 func strike(v: Vector3, curve: float = 0) -> void:
+	power_trail.stop_emitting()
 	ground_bounce_age=INF; previous_vertical_speed=v.y
 	release_hold()
 	pending_touch = false
@@ -227,6 +233,7 @@ func strike(v: Vector3, curve: float = 0) -> void:
 
 func touch(v: Vector3,max_impulse: float,affect_vertical: bool=true) -> void:
 	if pending_kick: return
+	power_trail.stop_emitting()
 	touch_velocity = v
 	touch_impulse_limit = max_impulse
 	touch_vertical = affect_vertical
@@ -236,6 +243,7 @@ func touch(v: Vector3,max_impulse: float,affect_vertical: bool=true) -> void:
 func guide(acceleration: Vector3) -> void:
 	# One physics step of close-control assistance, never a transform lock.
 	if pending_kick or held_by!=null: return
+	power_trail.stop_emitting()
 	control_acceleration=acceleration*Vector3(1,0,1)
 	pending_control=true
 

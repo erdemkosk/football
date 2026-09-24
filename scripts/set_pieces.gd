@@ -451,6 +451,7 @@ func preview(delta: float=0.0) -> void:
 	if kind()=="shot":
 		var lift := lerpf(1.6,4.2,strength) if game.restart_type=="PENALTI" else lerpf(1.8,11.0,strength)
 		var speed := lerpf(18,29,strength)
+		if taker>=0: speed*=game.players[taker].Attributes.kick_factor(game.players[taker],game.ball.position)
 		pending_velocity=direction*speed+Vector3.UP*lift
 		target=point+direction*25
 		receiver=-1
@@ -483,6 +484,7 @@ func launch() -> void:
 	var restart: String=game.restart_type
 	var action: String=kind()
 	var team: int=game.restart_team
+	var request := {"shot":action=="shot","team":team,"counted":false,"choice":ai_choice.duplicate(true)}
 	game.state="playing"
 	game.ball.release_hold()
 	game.ball.active=true
@@ -494,9 +496,13 @@ func launch() -> void:
 	game.players[taker].strike_effort=power
 	# A penalty is struck under the stadium's full attention.
 	if restart=="PENALTI": game.strike_quality.extra_pressure[taker]=.45
-	game.strike(taker,pending_velocity,pending_curve,false,"shot" if action=="shot" else "kick")
+	if not game.strike(taker,pending_velocity,pending_curve,false,"shot" if action=="shot" else "kick"):
+		# A rejected preparation has not put the stationary ball into play.
+		restore_cancelled(request)
+		return
 	if game.kick_contact.pending.get("index",-1)==taker:
-		game.kick_contact.pending.restart={"shot":action=="shot","team":team}
+		request.counted=true
+		game.kick_contact.pending.restart=request
 	if action=="shot": game.shots[team]+=1
 	else: game.passes[team]+=1
 	var heading: Vector3=(pending_velocity*Vector3(1,0,1)).normalized()
@@ -529,13 +535,22 @@ func cancel_input() -> bool:
 	return true
 
 func restore_cancelled(request: Dictionary) -> void:
-	if request.shot: game.shots[request.team]=maxi(0,game.shots[request.team]-1)
-	else: game.passes[request.team]=maxi(0,game.passes[request.team]-1)
+	if request.get("counted",true):
+		if request.shot: game.shots[request.team]=maxi(0,game.shots[request.team]-1)
+		else: game.passes[request.team]=maxi(0,game.passes[request.team]-1)
 	game.state="set_piece"; game.kick_lock=0; game.dribbler=-1; game.carrier=-1
 	game.ai_receivers[request.team]=-1; game.ai_pass_time[request.team]=0
 	game.support.reset(); game.rules.reset()
 	for i in wall:
 		game.players[i].wall_hold=0; game.players[i].wall_jump_delay=-1
 	game.players[taker].touch_cooldown=0
+	game.players[taker].kick_timer=0
+	game.players[taker].ball_actions.contact_pending=false
+	game.strike_quality.extra_pressure.erase(taker)
+	if game.flat_distance(game.ball.position,game.restart_point)>.35 or game.ball.position.y>.6 or game.ball.linear_velocity.length()>1:
+		# A bumped ball must be retrieved and placed again, not chased as a
+		# live pass or repeatedly kicked from an unreachable old spot.
+		game.begin_restart(game.restart_type,request.team,game.restart_point)
+		return
 	button=KEY_D if request.shot else KEY_A
 	cancel_input()

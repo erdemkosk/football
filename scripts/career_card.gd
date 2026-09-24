@@ -47,7 +47,7 @@ func _draw() -> void:
 		draw_rect(Rect2(1,119,size.x-2,size.y-120),Color("0d1b25"))
 		label(p.name,Vector2(16,137),15,screen.PAPER,null,size.x-27)
 		var info: String=("İLK 11" if identity in screen.game.career.club().lineup else "KADRO")+"  ·  %d YAŞ" % p.age
-		if screen.page=="market": info=screen.game.career.money(0 if p.club=="" else screen.World.value(p))+"  ·  %d YAŞ" % p.age
+		if screen.page=="market": info=screen.game.career.money(0 if p.club=="" else screen.game.career.market.value(p))+"  ·  %d YAŞ" % p.age
 		if p.get("retirement_year",0)>0: info="SEZON SONUNDA EMEKLİ"
 		elif not p.get("loan",{}).is_empty(): info="KİRALIK  ·  %d YAŞ" % p.age
 		info+="  ·  "+str(p.get("nationality","TR"))

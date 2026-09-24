@@ -146,17 +146,42 @@ func update(index: int,delta: float) -> Vector3:
 	target.x=clampf(target.x,-3.3,3.3)
 	modes[index]="angle"
 	if index==0 and returning and game.flat_distance(p.position,target)<1.2: returning=false
-	if holding==index:
-		if game.ball.held_by!=p: reset(); return target
+	if game.ball.held_by==p:
+		# The actual grip owns possession, even if a previous return/rush mode
+		# or a stale cached holder survived the catch.
+		if holding!=index: holding=index; hold_age=0
+		if index==rush_team*11:
+			rush_requested=false; returning=false
+		if not game.is_user_player(index): p.sprinting=false
+		modes[index]="hold"
 		hold_age+=delta
 		if game.keeper_distribution.active(index): return p.position
 		p.set_piece_pose="" if p.pose.begins_with("keeper_") and p.action_timer>0 else "carry"
 		if not game.is_user_player(index) or (not game.charging and not game.pass_charging and p.desired.length()<0.05):
 			p.facing=Vector3(0,0,forward)
 		game.ball.hold_target=p.hand_center()
-		modes[index]="hold"
 		if hold_age>1.15+game.management.reaction(p.team)*.35 and game.autonomous_kicks(p.team):
 			game.ai_attack.distribute(index)
+		return p.position
+	if holding==index:
+		reset()
+		modes[index]="angle"
+	# A back pass belongs at the feet, including outside the penalty area.
+	# Stay with a reachable ball while recovering or choosing a delivery;
+	# returning to the goal line here abandons it before the boot can strike.
+	var rebound: bool=game.last_kicker==index and p.motion_clock-p.keeper_motion.saved_at<2.2
+	var at_feet: bool=game.ball.held_by==null and not game.ball.pending_kick and bv.length()<9 and game.can_touch(index,1.15) and (game.dribbler<0 or game.dribbler==index)
+	if at_feet and (not in_box or (game.last_touch==p.team and not rebound)):
+		modes[index]="feet"
+		p.sprinting=false
+		p.facing=Vector3(0,0,forward)
+		if p.touch_cooldown<=0 and game.kick_lock<=0:
+			if game.autonomous_kicks(p.team): game.ai_attack.keeper_foot_pass(index)
+			elif not in_box and (called or (index==rush_team*11 and returning)):
+				game.strike(index,Vector3(6 if ball.x>=0 else -6,2.5,forward*20))
+			elif not game.player_lock and game.training_drills.team_play(): game.team_control.select(index)
+		if index==rush_team*11:
+			rush_requested=false; returning=false
 		return p.position
 	var read := shot_read(index,delta)
 	var reacting: bool=not read.is_empty() and read.age<read.delay
@@ -212,10 +237,11 @@ func update(index: int,delta: float) -> Vector3:
 	if not in_box and (called or (index==0 and returning)) and game.can_touch(index,1.15) and p.touch_cooldown<=0 and game.kick_lock<=0:
 		if game.strike(index,Vector3(6 if ball.x>=0 else -6,2.5,forward*20)):
 			stop_rush()
+			modes[index]="feet"
+			return p.position
 		return target
 	# Every hand save requires proximity and the ball inside the penalty area.
 	var at_gloves: bool=minf(p.left_hand.global_position.distance_to(ball),p.right_hand.global_position.distance_to(ball))<.43
-	var rebound: bool=game.last_kicker==index and p.motion_clock-p.keeper_motion.saved_at<2.2
 	if rebound and in_box and game.flat_distance(p.position,ball)<4:
 		# Recover where the first save landed, then attack the loose ball. An
 		# automatic retreat to the goal line would abandon every second attempt.
@@ -254,9 +280,13 @@ func update(index: int,delta: float) -> Vector3:
 			p.keeper_motion.target=ball
 			holding=index
 			hold_age=0
-			if index==0: stop_rush()
+			if index==rush_team*11:
+				rush_requested=false; returning=false
+			p.sprinting=false
+			modes[index]="hold"
 			p.set_piece_pose="" if p.pose.begins_with("keeper_") and p.action_timer>0 else "carry"
 			game.hint("KALECİ TOPU KONTROL ETTİ")
+			return p.position
 		elif opponent:
 			if not game.strike(index,loose_parry(index) if spill else safe_parry(index),0,true): return target
 			game.feedback.contact("glove",index,ball,bv.normalized(),clampf(bv.length()/25,.18,1))
@@ -266,8 +296,4 @@ func update(index: int,delta: float) -> Vector3:
 			game.reactions.saved(index,was_on_target)
 			p.keeper_motion.saved(p)
 			game.hint("KALECİDEN SEKTİ · TOP OYUNDA" if spill else "KALECİ TOPU YANA ÇELDİ")
-		elif bv.length()<9:
-			if game.autonomous_kicks(p.team): game.ai_attack.keeper_foot_pass(index)
-			elif not game.player_lock and game.training_drills.team_play():
-				game.team_control.select(index)
 	return target

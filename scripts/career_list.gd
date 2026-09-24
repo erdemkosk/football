@@ -15,7 +15,7 @@ static func value(s,p: Dictionary) -> float:
 		1: return p.attributes.pace
 		2: return p.fitness
 		3: return p.form
-		4: return 0 if p.club=="" else s.World.value(p)
+		4: return 0 if p.club=="" else s.game.career.market.value(p)
 	return s.World.ovr(p)
 
 static func toolbar(s) -> void:
@@ -37,4 +37,4 @@ static func row(card,p: Dictionary) -> void:
 	card.label("%+.0f" % (p.form*100),Vector2(502,32),14,UI.BLUE if p.form>=0 else UI.RED)
 	var status: String="+ SAKAT" if p.injury>c.world.date else ("! CEZALI" if p.banned>0 else ("↓ YORGUN" if p.fitness<.6 else ("11 · HAZIR" if p.id in c.club().lineup else "✓ HAZIR")))
 	card.label(status,Vector2(574,32),12,UI.RED if p.injury>c.world.date or p.banned>0 else UI.MUTE,null,122)
-	card.label(c.money(0 if p.club=="" else s.World.value(p)),Vector2(705,32),13,UI.PAPER,null,91)
+	card.label(c.money(0 if p.club=="" else s.game.career.market.value(p)),Vector2(705,32),13,UI.PAPER,null,91)

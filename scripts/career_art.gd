@@ -154,8 +154,10 @@ func players(s) -> void:
 		var reason: String=c.contracts.transfer_lock(s.selected)
 		if reason!="": s.wrapped(reason,Vector2(916,659),440,14,Color("e8bb99"),3)
 		else:
-			s.text("BONSERVİS  "+c.money(0 if p.club=="" else s.World.value(p)),Vector2(916,656),23,WHITE,true)
+			s.text("PİYASA DEĞERİ  "+c.money(0 if p.club=="" else c.market.value(p)),Vector2(916,656),23,WHITE,true)
 			s.text("TRANSFER DÖNEMİ AÇIK" if c.window_open() else "TRANSFER DÖNEMİ KAPALI",Vector2(916,688),12,LIME)
+			var interest: Dictionary=c.market.interest(p,c.world.user)
+			s.text(interest.label,Vector2(916,713),11,Color("e8bb99") if interest.gap>4 else MUTED)
 	elif not loan.is_empty(): s.text("OPSİYON  "+c.money(loan.option) if loan.option>0 else "SATIN ALMA OPSİYONU YOK",Vector2(916,709),12,MUTED)
 
 func entry(s) -> void:

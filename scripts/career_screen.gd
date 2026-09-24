@@ -421,7 +421,7 @@ func build_players() -> void:
 			var p: Dictionary=c.player(pid)
 			if p.club==c.world.user or p.get("retired",false) or p.get("academy_owner","")!="": continue
 			if p.get("loan",{}).get("owner","")==c.world.user: continue
-			if market_filter==1 and (World.value(p)>minf(c.club().budget,c.club().cash-c.payroll(c.world.user)*2) and p.club!=""): continue
+			if market_filter==1 and (c.market.asking_price(p)>minf(c.club().budget,c.club().cash-c.payroll(c.world.user)*2) and p.club!=""): continue
 			if market_filter==2 and not p.listed: continue
 			if market_filter==3 and p.club!="": continue
 			if market_filter==4 and (not p.get("loan_listed",false) or c.contracts.transfer_lock(pid)!=""): continue
@@ -588,20 +588,20 @@ func build_talks() -> void:
 	office=Office.new(); office.position=Vector2(52,181); office.size=Vector2(822,463)
 	office.club_data=c.club(); office.guest_data=c.player(d.player); controls.add_child(office)
 	if d.stage=="signed": office.react("signed")
-	if not d.renewal: button_at(Rect2(934,666,404,44),"KADRONLA KARŞILAŞTIR",func(): comparison.open(self,d.player,"talks"))
+	if not d.renewal: button_at(Rect2(934,761,404,38),"KADRONLA KARŞILAŞTIR",func(): comparison.open(self,d.player,"talks"))
 	if d.stage=="loan":
-		number_control(Vector2(934,295),"fee",10000)
+		number_control(Vector2(934,295),"fee",maxi(1000,roundi(c.contracts.minimum_fee(d.player,loan_term)*.1/1000.0)*1000))
 		option_at(Rect2(934,368,404,42),["YARIM SEZON","SEZON SONUNA KADAR","İKİ SEZON"],loan_term,func(v): loan_term=v; queue_redraw())
 		option_at(Rect2(934,447,404,42),["MAAŞIN %50'Sİ","MAAŞIN %75'İ","MAAŞIN %100'Ü"],[50,75,100].find(loan_share),func(v): loan_share=[50,75,100][v]; queue_redraw())
 		button_at(Rect2(934,504,404,40),"SATIN ALMA OPSİYONU: AÇIK" if loan_option else "SATIN ALMA OPSİYONU: KAPALI",func(): loan_option=not loan_option; build())
 	elif d.stage=="club":
-		number_control(Vector2(934,327),"fee",100000)
+		number_control(Vector2(934,327),"fee",maxi(10000,roundi(c.market.value(c.player(d.player))*.05/10000.0)*10000))
 		var items: Array=["Takas yok"]; var ids: Array=[""]
 		for pid in c.club().roster:
 			if c.player(pid).keeper==c.player(d.player).keeper and c.contracts.transfer_lock(pid)=="": items.append(c.player(pid).name); ids.append(pid)
 		option_at(Rect2(934,426,404,43),items,maxi(0,ids.find(swap)),func(v): swap=ids[v])
 	elif d.stage=="contract":
-		number_control(Vector2(934,295),"wage",500)
+		number_control(Vector2(934,295),"wage",maxi(500,roundi(c.terms.salary_floor(c.player(d.player),d,years)*.1/500.0)*500))
 		number_control(Vector2(934,383),"years",1)
 		option_at(Rect2(934,474,404,43),["Gelişim oyuncusu","Rotasyon","İlk 11"],promised,func(v): promised=v)
 	if d.stage in ["club","contract","loan"]:
@@ -839,7 +839,7 @@ func draw_talks() -> void:
 		center(c.money(fee),Vector2(1136,323),24,PAPER,true)
 		text("SÜRE · BİTİŞ "+World.date_label(c.contracts.end_day(loan_term)),Vector2(934,358),10,MUTE)
 		text("AYLIK PAYIN  "+c.money(roundi(p.wage*loan_share/100.0)),Vector2(934,436),11,GOLD)
-		text("OPSİYON BEDELİ  "+c.money(roundi(World.value(p)*1.2)) if loan_option else "Bonservis oyuncunun kulübünde kalır.",Vector2(934,553),11,MUTE)
+		text("OPSİYON BEDELİ  "+c.money(roundi(c.market.value(p)*1.2)) if loan_option else "Bonservis oyuncunun kulübünde kalır.",Vector2(934,553),11,MUTE)
 	elif d.stage=="club":
 		text("BONSERVİS TEKLİFİ",Vector2(934,311),11,MUTE)
 		center(c.money(fee),Vector2(1136,356),24,PAPER,true)
@@ -856,7 +856,7 @@ func draw_talks() -> void:
 	wrapped(d.response,Vector2(934,662),400,16,GOLD,4)
 	box(Rect2(52,714,822,69),Color("1a3343"),8)
 	text("OVR %d  ·  %s  ·  %d YAŞ" % [World.ovr(p),World.ROLES[p.role],p.age],Vector2(77,744),17,PAPER,true)
-	text("Her anlaşma kulüp bütçene ve aylık maaş giderine yansır.",Vector2(77,769),13,MUTE)
+	text("Bedel: güç, yaş, potansiyel, kulüp ve kalan sözleşme süresi.",Vector2(77,769),13,MUTE)
 
 func wrapped(value: String,at: Vector2,width: float,size_value: int,color: Color,limit: int) -> void:
 	var line := ""; var row:=0

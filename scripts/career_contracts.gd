@@ -66,7 +66,7 @@ func end_day(term: int) -> int:
 	return World.day(w.year+(2 if term==2 else 1),6,30)
 
 func minimum_fee(pid: String,term: int) -> int:
-	return maxi(1000,roundi(World.value(career.player(pid))*[.035,.06,.11][clampi(term,0,2)]/1000.0)*1000)
+	return maxi(1000,roundi(career.market.value(career.player(pid))*[.035,.06,.11][clampi(term,0,2)]/1000.0)*1000)
 
 func loan_reason(pid: String,borrower: String,term: int=1) -> String:
 	var blocked:=transfer_lock(pid)
@@ -76,6 +76,8 @@ func loan_reason(pid: String,borrower: String,term: int=1) -> String:
 	if not career.window_open(): return "Kiralık oyuncu kaydı transfer döneminde yapılır."
 	if career.in_match: return "Önce devam eden maçı tamamla."
 	if not career.world.clubs.has(borrower) or borrower==p.club: return "Kiralayan kulüp uygun değil."
+	var refusal: String=career.market.loan_refusal(p,borrower)
+	if refusal!="": return refusal
 	if term<0 or term>2: return "Kiralık süresi uygun değil."
 	if World.day(p.contract,6,30)<end_day(term): return "Oyuncunun kulübüyle sözleşmesi bu kiralık süresini karşılamıyor."
 	if incoming(borrower).size()>=6 or outgoing(p.club).size()>=6: return "Bir kulüp aynı anda en fazla altı oyuncu kiralar veya kiraya verir."
@@ -109,11 +111,10 @@ func offer(fee: int,share: int,term: int,with_option: bool) -> String:
 		d.response="Karşı teklif: "+career.money(d.fee)+" kiralama bedeli ve maaşın %"+str(required_share)+" kısmı."
 		if d.attempts>=4: d.stage="rejected"; d.response="Kulüp kiralık görüşmesinden çekildi."
 		return d.response
-	if World.ovr(p)>career.club().reputation+20: d.response="Oyuncu daha yüksek seviyede bir kulüpte oynamak istiyor."; return d.response
 	var future_wages: int=career.payroll(career.world.user)+roundi(p.wage*share/100.0)
 	if fee>career.club().budget or career.club().cash-fee<future_wages*2:
 		d.response="Kiralama bedeli ve iki aylık maaş rezervi için bütçe yetersiz."; return d.response
-	d.fee=fee; d.share=share; d.option=roundi(World.value(p)*1.2) if with_option else 0
+	d.fee=fee; d.share=share; d.option=roundi(career.market.value(p)*1.2) if with_option else 0
 	d.stage="sign"; d.response="Oyuncu ve kulüp şartları kabul etti. İmzadan önce kiralık koşullarını incele."
 	return d.response
 

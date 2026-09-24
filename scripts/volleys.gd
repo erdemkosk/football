@@ -131,8 +131,7 @@ func launch_velocity(index: int,aim: Vector3,power: float,quality: float=1.0) ->
 	var direction := (aim*Vector3(1,0,1)).normalized()
 	if direction.length()<0.1: direction=Vector3(0,0,game.attack_sign(p.team))
 	var foot: int=p.volley_motion.foot if p.pose=="volley" and p.action_timer>0 else p.ball_actions.choose_foot(p,game.ball.position)
-	var weak: float=1.0 if foot==p.attributes.preferred_foot else lerpf(.88,.99,(p.attributes.weak_foot-1)/4.0)
-	var ability: float=weak*p.Attributes.multiplier(p.attributes.finishing,.055)*(1-p.contest_weight*.045)
+	var ability: float=p.Attributes.kick_factor(p,game.ball.position,foot)
 	var speed := (lerpf(18,30,power)+minf(game.ball.linear_velocity.length()*0.16,3))*ability*lerpf(0.78,1,quality)
 	# A raised foot drives through the ball; it does not add a ground-shot lob.
 	var height: float=game.ball.position.y

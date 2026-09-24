@@ -417,20 +417,21 @@ func skill_choice(index: int,read: Dictionary) -> Dictionary:
 	var best := -INF
 	var result: Dictionary={}
 	for kind in kinds:
-		# The same skill-star limits apply to both teams.
+		# Both teams may try every move; read the space at this player's tempo.
 		if not p.Attributes.can_perform(p,kind): continue
+		var timing_scale: float=p.Attributes.skill_time_scale(p)
 		for side in [-1.0,1.0]:
 			var aim: Vector3=game.skills.exit_direction(kind,p.facing,side)
 			# A nutmeg's first space is behind the defender it goes through.
 			var near: Vector3=p.position+aim*(2.8 if kind=="nutmeg" else 1.1)
 			var exit: Vector3=p.position+aim*2.5
 			if absf(exit.x)>P.HALF_WIDTH-1.5 or absf(exit.z)>48: continue
-			var near_room := future_clearance(near,p.team,.22)
-			var exit_room := future_clearance(exit,p.team,.5)
+			var near_room := future_clearance(near,p.team,.22*timing_scale)
+			var exit_room := future_clearance(exit,p.team,.5*timing_scale)
 			if near_room<1.05 or exit_room<1.8: continue
 			if kind=="knock_around":
 				var ball_exit: Vector3=p.position+p.facing*3.5+p.facing.cross(Vector3.UP)*side*1.1
-				if future_clearance(ball_exit,p.team,.5)<1.5 or absf(ball_exit.x)>P.HALF_WIDTH-1: continue
+				if future_clearance(ball_exit,p.team,.5*timing_scale)<1.5 or absf(ball_exit.x)>P.HALF_WIDTH-1: continue
 			var value: float=minf(5,exit_room)+minf(3,near_room)*.6+aim.z*game.attack_sign(p.team)*.35
 			if kind=="rainbow": value-=1.5
 			if value>best:

@@ -114,11 +114,12 @@ func run() -> void:
 	game.management.difficulty=2
 	check(game.management.pass_error(1)==0.0 and game.management.pass_error(1,9)==0.0,"Hard AI aim adds no extra handicap; the shared contact model decides")
 	game.management.difficulty=1
-	# Skill stars gate the moves for both teams.
-	p.attributes=profile(72); p.attributes.skill_moves=3; Attributes.refresh(p)
-	check(Attributes.can_perform(p,"roulette") and not Attributes.can_perform(p,"elastico") and Attributes.can_perform(p,"roll"),"Three skill stars allow the roulette but not the elastico")
+	# Skill stars improve execution without locking moves.
+	p.attributes=profile(72); p.attributes.skill_moves=1; Attributes.refresh(p)
+	check(Attributes.can_perform(p,"roulette") and Attributes.can_perform(p,"elastico") and Attributes.can_perform(p,"rainbow"),"One skill star can attempt every advanced move")
+	var slower: float=Attributes.skill_time_scale(p)
 	p.attributes.skill_moves=5
-	check(Attributes.can_perform(p,"rainbow"),"Five skill stars unlock every move")
+	check(Attributes.can_perform(p,"rainbow") and Attributes.skill_time_scale(p)<slower*.7,"Five skill stars provide substantially quicker execution")
 	# Derived techniques, styles and separate strength.
 	var elite_profile := profile(92)
 	var details := Attributes.details_for(elite_profile,77)
