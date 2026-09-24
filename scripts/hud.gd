@@ -248,7 +248,7 @@ func shot_warning(route: Dictionary) -> String:
 	return ""
 
 func draw_aim_guide(route: Dictionary,power: float,color: Color,lob: bool=false) -> void:
-	if game.state=="set_piece":
+	if game.state=="set_piece" and game.restart_type!="SANTRA":
 		aim_indicator.draw_set_piece(self,route,color,lob)
 	else:
 		aim_indicator.draw_arrow(self,route.points,power,color)

@@ -20,6 +20,7 @@ var possession_team := -1
 var counter_time := [0.0,0.0]
 var score_fixture := ""
 var aggregate_offset := [0,0]
+var held_keeper := -1
 
 func reset() -> void:
 	targets.clear(); roles.clear(); pressers=[-1,-1]; age=0; last_opponent_plan=-1
@@ -27,6 +28,7 @@ func reset() -> void:
 	support_time=0; support_rest=0; support_owner=-1; support_player=-1
 	clear_transition()
 	score_fixture=""; aggregate_offset=[0,0]
+	held_keeper=-1
 
 func clear_transition() -> void:
 	possession_team=-1; counter_time=[0.0,0.0]
@@ -79,6 +81,13 @@ func press_level(team: int) -> int:
 	return intent+1 if intent!=0 else game.management.pressing
 
 func update(delta: float) -> void:
+	if game.state=="playing" and game.ball.held_by!=null:
+		keeper_shape(game.ball.held_by)
+		return
+	if held_keeper>=0:
+		# A throw, punt or deliberate drop immediately restores ordinary duties.
+		held_keeper=-1; age=0; observed_owner=-2
+		targets.clear(); roles.clear(); pressers=[-1,-1]
 	if game.training or game.state!="playing": return
 	observe_possession(delta)
 	support_rest=maxf(0,support_rest-delta)
@@ -214,6 +223,41 @@ func update(delta: float) -> void:
 	for i in targets:
 		targets[i].x=clampf(targets[i].x,-(P.HALF_WIDTH-1),(P.HALF_WIDTH-1))
 		targets[i].z=clampf(targets[i].z,-48,48)
+
+func keeper_target(index: int,keeper) -> Vector3:
+	var p=game.players[index]
+	var forward: float=game.attack_sign(p.team)
+	var own: bool=p.team==keeper.team
+	var group: int=game.management.slot_role(index)
+	var target: Vector3=p.home
+	var depth: float=target.z*forward
+	var plan: int=plan_for(p.team)
+	if own:
+		# Centre backs split for distribution; midfield and forwards regain
+		# their formation slots instead of supporting at the keeper's feet.
+		target.x*=1.12 if group==1 else 1.04
+		depth+=float(plan-1)*(3 if group==1 else 5)
+		depth=maxf(depth,keeper.position.z*forward+10)
+		depth=minf(depth,maxf(0,game.rules.offside_line(p.team)-1))
+	else:
+		# Opponents recover a compact block. Pressing resumes after release.
+		target.x*=.9
+		depth+=float(plan-1)*5
+		depth=minf(depth,keeper.position.z*forward-12)
+	return Vector3(clampf(target.x,-P.HALF_WIDTH+3,P.HALF_WIDTH-3),0,forward*clampf(depth,-43,35))
+
+func keeper_shape(keeper) -> void:
+	held_keeper=game.players.find(keeper)
+	possession_team=keeper.team
+	counter_time=[0.0,0.0]
+	observed_owner=held_keeper; observed_ball=keeper.position; observed_velocity=Vector3.ZERO; observation_age=0
+	support_time=0; support_player=-1; support_owner=held_keeper
+	pressers=[-1,-1]; targets.clear(); roles.clear()
+	for i in range(game.players.size()):
+		var p=game.players[i]
+		if p.keeper or not p.visible or p.dismissed: continue
+		targets[i]=keeper_target(i,keeper)
+		roles[i]="keeper_outlet" if p.team==keeper.team else "regroup"
 
 func incoming_delivery() -> bool:
 	if game.training or game.state!="playing": return false

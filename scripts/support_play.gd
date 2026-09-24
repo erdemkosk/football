@@ -82,6 +82,11 @@ func assign_run(index: int,point: Vector3,kind: String,duration: float) -> void:
 	plan_age=0
 
 func update(delta: float) -> void:
+	if game.ball.held_by!=null:
+		# Securing a save ends the preceding attack, including requested runs.
+		for i in runs.keys(): end_run(i)
+		reset()
+		return
 	for i in runs.keys():
 		runs[i].time-=delta
 		var p=game.players[i]

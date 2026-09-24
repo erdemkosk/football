@@ -1819,6 +1819,9 @@ func tackle() -> void:
 
 func update_ai(_delta: float) -> void:
 	work_budget.game=self
+	if ball.held_by!=null:
+		carrier=players.find(ball.held_by); dribbler=-1
+		ai_receivers=[-1,-1]; ai_pass_time=[0.0,0.0]
 	opponent_coach.update(_delta)
 	team_tactics.update(_delta)
 	support.update(_delta)
@@ -1848,6 +1851,15 @@ func update_ai(_delta: float) -> void:
 		if state!="playing": return
 		if training_drills.manages(i):
 			training_drills.actor(i)
+			continue
+		if ball.held_by!=null and not p.keeper:
+			# A protected ball is neither a loose-ball chase nor a pressing job.
+			p.sprinting=false
+			if p.action_timer>0 and p.pose in ["stumble","fall","poke"]:
+				p.desired=Vector3.ZERO
+			else:
+				p.desired=ai_attack.positional_movement(i,team_tactics.keeper_target(i,ball.held_by),decision_delta)
+				separate_ai_player(i,spacing_positions,spacing_visible)
 			continue
 		if p.ball_actions.contact_pending:
 			# Follow the real ball through the short backswing; tactical runs
@@ -1947,17 +1959,19 @@ func update_ai(_delta: float) -> void:
 		if shape_only: p.desired=ai_attack.positional_movement(i,target,decision_delta)
 		else: ai_attack.positioning.erase(i)
 		if p.protecting: p.desired*=0.45
-		# Local separation keeps formations open and avoids stacks of bodies.
-		# A 1.2 m axis gap already makes the planar length at least 1.2 m, so
-		# those pairs are skipped before the identical length test.
-		var here: Vector3=spacing_positions[i]
-		for j in range(spacing_positions.size()):
-			if j==i or spacing_visible[j]==0: continue
-			var gap: Vector3 = here-spacing_positions[j]
-			if absf(gap.x)>=1.2 or absf(gap.z)>=1.2: continue
-			gap.y = 0
-			if gap.length()<1.2 and gap.length()>0.01: p.desired += gap.normalized()*(1.2-gap.length())*0.55
-		p.desired = p.desired.limit_length(1)
+		separate_ai_player(i,spacing_positions,spacing_visible)
+
+func separate_ai_player(index: int,positions: PackedVector3Array,visible: PackedByteArray) -> void:
+	# Keep the same physical spacing during both open play and a keeper's hold.
+	var p=players[index]
+	var here: Vector3=positions[index]
+	for j in range(positions.size()):
+		if j==index or visible[j]==0: continue
+		var gap: Vector3=here-positions[j]
+		if absf(gap.x)>=1.2 or absf(gap.z)>=1.2: continue
+		gap.y=0
+		if gap.length()<1.2 and gap.length()>0.01: p.desired+=gap.normalized()*(1.2-gap.length())*.55
+	p.desired=p.desired.limit_length(1)
 
 func update_contacts(delta: float) -> void:
 	for i in range(players.size()):
