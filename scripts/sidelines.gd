@@ -2,6 +2,7 @@ extends Node3D
 const P = preload("res://scripts/pitch_dimensions.gd")
 const G = preload("res://scripts/geometry.gd")
 const Actor = preload("res://scripts/sideline_actor.gd")
+const SubVisual = preload("res://scripts/substitution_visual.gd")
 var actors: Array[Node3D] = []
 var team_labels: Array[Label3D] = []
 var clock := 0.0
@@ -21,53 +22,89 @@ var departures: Array=[]
 # Off-camera staff wait to pose until they can be seen (see update()).
 var cull_offscreen := true
 
-func retain_departing(p) -> void:
+func substitution_player(team: int,number: int,identity: Dictionary):
 	var actor=game.Player.new()
-	actor.team=p.team; actor.number=p.number; actor.keeper=p.keeper
+	actor.team=team; actor.number=number; actor.keeper=identity.keeper
 	add_child(actor)
-	actor.apply_identity(p.identity()); actor.apply_kit(game.clubs.kit(p.team))
-	actor.position=p.position; actor.facing=p.facing; actor.rig.transform=p.rig.transform
-	for i in range(p.kick_joints.size()): actor.kick_joints[i].transform=p.kick_joints[i].transform
-	actor.head_joint.transform=p.head_joint.transform
-	actor.collision_layer=0; actor.collision_mask=1; actor.marker.hide()
-	var target:=Vector3(P.HALF_WIDTH+5.5,0,-12 if p.team==0 else 12)
-	departures.append({"player":actor,"target":target})
+	actor.apply_identity(identity); actor.apply_kit(game.clubs.kit(team))
+	actor.collision_layer=0; actor.collision_mask=1
+	actor.stamina_free_movement=true; actor.prematch=true
+	actor.body_language.enabled=false; actor.marker.hide(); actor.call_label.hide()
+	return actor
+
+func retain_departing(p,slot: int) -> void:
+	var actor=substitution_player(p.team,p.number,p.identity())
+	actor.energy=p.energy; actor.kit_soil=p.kit_soil
+	actor.update_soil(maxf(0,p.shown_wetness)); actor.set_captain(p.captain)
+	SubVisual.copy_pose(p,actor)
+	var seat: Vector3=entries[slot].seat.home
+	# First run along the open front aisle, then approach only the vacated chair.
+	var aisle:=Vector3(P.HALF_WIDTH+3.6,0,seat.z)
+	departures.append({"player":actor,"target":seat,"aisle":aisle,"phase":"aisle","seat_age":0.0})
+	if game.broadcast.partner==entries[slot].actor: game.broadcast.partner=actor
 
 func _physics_process(delta: float) -> void:
 	if not is_instance_valid(game) or game.state in ["paused","replay","career"]: return
 	for item in departures:
 		var p=item.player
-		var offset: Vector3=(item.target-p.position)*Vector3(1,0,1)
+		if item.phase=="seated": continue
+		if item.phase=="sit":
+			item.seat_age=minf(.45,item.seat_age+delta)
+			p.animate(delta)
+			SubVisual.sit(p,smoothstep(0,.45,item.seat_age))
+			if item.seat_age>=.45: item.phase="seated"
+			continue
+		var destination: Vector3=item.aisle if item.phase=="aisle" else item.target
+		var offset: Vector3=(destination-p.position)*Vector3(1,0,1)
 		p.desired=offset.normalized()*minf(1,offset.length())
-		p.stamina_free_movement=true; p.step(delta,3.2); p.marker.hide()
+		p.step(delta,SubVisual.RUN_SPEED if item.phase=="aisle" else 3.6); p.marker.hide()
+		if offset.length()<.12:
+			if item.phase=="aisle": item.phase="chair"
+			else:
+				item.phase="sit"; p.velocity=Vector3.ZERO; p.desired=Vector3.ZERO
 
 func start_entry(slot: int,reserve: int,gate: Vector3) -> void:
 	var team: int=game.players[slot].team
 	for actor in actors:
 		if actor.role=="substitute" and actor.team==team and actor.number==12+reserve:
-			entries[slot]={"actor":actor,"gate":gate+Vector3(.85,0,0),"age":0.0,"greet":false}
-			actor.visible=true
+			var player=substitution_player(team,game.players[slot].number,game.management.bench[team][reserve])
+			player.position=actor.position; player.facing=Vector3.LEFT; player.rig.rotation.y=PI*.5
+			SubVisual.sit(player,1.0); player.reset_physics_interpolation()
+			entries[slot]={"actor":player,"seat":actor,"gate":gate+Vector3(.85,0,0),"age":0.0,"greet":false,"rise":0.0,"aisle":false}
+			actor.visible=false
 			break
 
 func step_entry(slot: int,p,delta: float) -> bool:
 	if not entries.has(slot): return true
 	var item: Dictionary=entries[slot]
 	var actor=item.actor
-	actor.target_point=item.gate
-	var near: bool=game.flat_distance(actor.position,item.gate)<.15 and game.flat_distance(p.position,item.gate)<1.12
-	actor.animate_actor(delta+actor.pending_delta,clock,p.position,"handshake" if near else "entry",1)
-	actor.pending_delta=0.0
+	item.rise=minf(.22,item.rise+delta)
+	if item.rise<.22:
+		actor.animate(delta); SubVisual.sit(actor,1-smoothstep(0,.22,item.rise))
+		return false
+	var aisle:=Vector3(P.HALF_WIDTH+3.6,0,item.seat.home.z)
+	if game.flat_distance(actor.position,aisle)<.18 or game.flat_distance(actor.position,item.gate)<.18: item.aisle=true
+	var destination: Vector3=item.gate if item.aisle else aisle
+	var offset: Vector3=(destination-actor.position)*Vector3(1,0,1)
+	var near: bool=game.flat_distance(actor.position,item.gate)<.18 and game.flat_distance(p.position,item.gate)<1.12
+	actor.desired=Vector3.ZERO if near else offset.normalized()*minf(1,offset.length())
+	actor.celebration="handshake" if near else ""
+	if near: actor.facing=Vector3.LEFT
+	actor.step(delta,SubVisual.RUN_SPEED); actor.marker.hide()
 	if near:
 		p.facing=Vector3.RIGHT; p.celebration="handshake"
 		if not item.greet:
 			item.greet=true
 			game.broadcast.offer("substitution",slot,actor)
 		item.age+=delta
-	return item.age>.7
+	return item.age>.35
 
-func finish_entry(slot: int) -> void:
+func finish_entry(slot: int,p) -> void:
 	if not entries.has(slot): return
-	entries[slot].actor.visible=false
+	var actor=entries[slot].actor
+	# Hand the exact visible body pose to the stable gameplay slot in one tick.
+	SubVisual.copy_pose(actor,p)
+	actor.hide(); actor.queue_free()
 	entries.erase(slot)
 
 func instruct(team: int,order: String) -> void:
@@ -159,6 +196,7 @@ func add_actor(team: int,role: String,number: int,location: Vector3) -> void:
 func reset() -> void:
 	for item in departures: item.player.queue_free()
 	departures.clear()
+	for item in entries.values(): item.actor.queue_free()
 	clock = 0
 	event_kind = ""
 	event_age = 100
@@ -202,12 +240,12 @@ func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int
 	var view: Array[Plane]=[]
 	if is_instance_valid(game) and is_instance_valid(game.camera) and game.camera.is_inside_tree():
 		view.assign(game.camera.get_frustum())
+	for item in departures:
+		if item.phase=="seated":
+			var p=item.player
+			p.spine.rotation.z=sin(clock*1.5+p.shirt_number)*.009
 	for actor in actors:
 		if not actor.visible: continue
-		var entering := false
-		for entry in entries.values():
-			if entry.actor==actor: entering=true; break
-		if entering: continue
 		var actor_mode := "encourage" if attention>0.35 else "watch"
 		var intensity := attention*0.75
 		actor.target_point=Vector3.INF

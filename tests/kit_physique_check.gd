@@ -80,7 +80,7 @@ func run() -> void:
 	game.state="playing"; game.match_time=0
 	p.kit_soil=.7
 	game.management.queue_sub(9,2); game.management.prepare_substitutions()
-	p.position=Vector3(preload("res://scripts/pitch_dimensions.gd").HALF_WIDTH+.8,0,-3+9*1.2)
+	p.position=game.management.transit[9].gate
 	game.management.update_substitutions(0)
 	check(p.identity()==identity,"The outgoing player's build is retained until the touchline greeting finishes")
 	if game.stadium.sidelines.entries.has(9):

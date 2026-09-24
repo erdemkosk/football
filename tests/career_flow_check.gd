@@ -138,7 +138,7 @@ func run() -> void:
 	var incoming: String=game.management.bench[0][1].career_id; c.player(incoming).fitness=.61
 	game.management.queue_sub(9,1); game.management.prepare_substitutions()
 	# Put both actors at the exchange gate, then let the normal greeting and identity exchange run.
-	p.position=Vector3(game.P.HALF_WIDTH+.8,0,7.8)
+	p.position=game.management.transit[9].gate
 	if game.stadium.sidelines.entries.has(9):
 		var entry: Dictionary=game.stadium.sidelines.entries[9]; entry.actor.position=entry.gate
 	for frame in range(130):

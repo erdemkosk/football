@@ -90,22 +90,27 @@ func run() -> void:
 	var min_outgoing_energy := .22; var maximum_step := 0.0; var hand_gap := INF
 	var actor=game.stadium.sidelines.entries[9].actor
 	var started: Vector3=actor.position
+	var incoming_travel := 0.0
 	var clock_start: float=game.match_time
 	for frame in range(2600):
 		var previous: Vector3=game.players[9].position
+		var previous_name: String=game.players[9].display_name
 		await tick()
-		maximum_step=maxf(maximum_step,previous.distance_to(game.players[9].position))
+		# The stable roster slot adopts the incoming actor at handoff. The separate
+		# substitution_flow_check tracks both visible identities across that transfer.
+		if previous_name==game.players[9].display_name: maximum_step=maxf(maximum_step,previous.distance_to(game.players[9].position))
+		if is_instance_valid(actor): incoming_travel=maxf(incoming_travel,actor.position.distance_to(started))
 		if game.players[9].display_name==old: min_outgoing_energy=minf(min_outgoing_energy,game.players[9].energy)
 		seen_handshake=seen_handshake or game.players[9].celebration=="handshake"
-		if game.players[9].celebration=="handshake":
-			hand_gap=minf(hand_gap,game.players[9].right_hand.global_position.distance_to(actor.elbows[1].to_global(Vector3(0,-.285,0))))
+		if game.players[9].celebration=="handshake" and is_instance_valid(actor):
+			hand_gap=minf(hand_gap,game.players[9].right_hand.global_position.distance_to(actor.right_hand.global_position))
 		if game.broadcast.active and game.broadcast.kind=="substitution" and not seen_insert:
 			seen_insert=true
 			for n in range(25): await tick()
 			await capture("substitution")
-		seen_hidden=seen_hidden or not actor.visible
+		seen_hidden=seen_hidden or not is_instance_valid(actor) or not actor.visible
 		if game.management.transit.is_empty(): break
-	check(actor.position.distance_to(started)>5 and seen_handshake,"The incoming substitute walks from the bench and greets the outgoing player")
+	check(incoming_travel>5 and seen_handshake,"The incoming substitute runs from the bench and greets the outgoing player")
 	check(hand_gap<.4,"The two greeting hands approach each other instead of gesturing across an empty gap")
 	check(seen_insert and seen_hidden,"The substitution receives a brief camera insert and does not leave a duplicate reserve on the bench")
 	check(game.players[9].display_name==incoming.name and game.players[9].attributes==incoming.attributes and game.management.used[0]==1,"One completed handoff transfers the incoming identity and attributes exactly once")

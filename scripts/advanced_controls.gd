@@ -212,9 +212,7 @@ func draw(hud) -> void:
 			var selected=game.players[game.controlled]
 			var selected_at: Vector2=game.screen_position(selected.position+Vector3.UP*(selected.height_cm/100.0+.30))
 			if absf(at.x-selected_at.x)<80 and absf(at.y-selected_at.y)<40:
-				var anchor := at
 				at.x=selected_at.x+(-90 if at.x<selected_at.x else 90)
-				hud.draw_line(anchor,at,Color("9fcbe2",.55),1,true)
 			# A hollow arrow previews the same candidate used by LB/L1/Q.
 			hud.draw_polyline(PackedVector2Array([at+Vector2(-5,-4),at+Vector2(5,-4),at+Vector2(0,3),at+Vector2(-5,-4)]),Color("101c22"),4.5,true)
 			hud.draw_polyline(PackedVector2Array([at+Vector2(-5,-4),at+Vector2(5,-4),at+Vector2(0,3),at+Vector2(-5,-4)]),Color("9fcbe2",.8),1.5,true)

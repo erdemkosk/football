@@ -193,9 +193,10 @@ func prepare_substitutions() -> void:
 		for index in transit:
 			if game.players[index].team==p.team and transit[index].phase=="out": reserved+=1
 		if reserved>=MAX_SUBS: continue
-		transit[item.slot]={"reserve":item.reserve,"phase":"out","target":p.position,"old":p.display_name}
+		var gate:=Vector3(P.HALF_WIDTH+.8,0,(-1 if p.team==0 else 1)*(1.6+reserved*1.4))
+		transit[item.slot]={"reserve":item.reserve,"phase":"out","target":p.position,"old":p.display_name,"gate":gate}
 		game.broadcast.substitution(p.identity(),bench[p.team][item.reserve],p.team)
-		game.stadium.sidelines.start_entry(item.slot,item.reserve,Vector3(P.HALF_WIDTH+.8,0,(-3 if p.team==0 else 3)+(item.slot%11)*1.2))
+		game.stadium.sidelines.start_entry(item.slot,item.reserve,gate)
 	pending.clear()
 
 func update_substitutions(delta: float) -> bool:
@@ -206,7 +207,7 @@ func update_substitutions(delta: float) -> bool:
 	for index in transit.keys():
 		var item: Dictionary=transit[index]
 		var p=game.players[index]
-		var gate := Vector3(P.HALF_WIDTH+.8,0,(-3 if p.team==0 else 3)+(index%11)*1.2)
+		var gate: Vector3=item.gate
 		var destination: Vector3=gate if item.phase=="out" else item.target
 		destination=game.set_pieces.recovery.around_goal(p.position,destination)
 		var offset: Vector3=(destination-p.position)*Vector3(1,0,1)
@@ -234,7 +235,7 @@ func update_substitutions(delta: float) -> bool:
 				b.used=true
 				used[p.team]+=1
 				game.career.remember_player(p)
-				game.stadium.sidelines.retain_departing(p)
+				game.stadium.sidelines.retain_departing(p,index)
 				p.apply_identity(b)
 				p.apply_kit(game.clubs.kit(p.team))
 				refresh_captains()
@@ -252,7 +253,7 @@ func update_substitutions(delta: float) -> bool:
 				# Keep the last greeting pose as the visual blend's origin while the
 				# replacement's own running cycle begins on the next physics tick.
 				p.body_language.reset(p)
-				game.stadium.sidelines.finish_entry(index)
+				game.stadium.sidelines.finish_entry(index,p)
 				item.phase="in"
 				game.announce("DEĞİŞİKLİK · "+item.old+" → "+p.display_name)
 			else: transit.erase(index)
@@ -260,8 +261,11 @@ func update_substitutions(delta: float) -> bool:
 		var p=game.players[index]
 		if not p.visible: continue
 		p.stamina_free_movement=true
-		var exiting: bool=transit.has(index) and transit[index].phase=="out"
-		p.step(delta,10.4 if exiting else 0.0)
+		var changing: bool=transit.has(index)
+		var was_prematch: bool=p.prematch
+		if changing: p.prematch=true
+		p.step(delta,9.2 if changing else 0.0)
+		p.prematch=was_prematch
 		p.stamina_free_movement=false
 	return true
 
