@@ -1,6 +1,6 @@
 extends RefCounted
-## A short ground ribbon communicates direction and charge, never the full
-## predicted flight or an exact goal/landing target. Rendering is read-only.
+## Open play uses a short direction ribbon. Set pieces show the full estimated
+## flight and its target so the taker can place the delivery. Rendering is read-only.
 const INK := Color("10272b")
 const PAPER := Color("fff5dc")
 
@@ -101,7 +101,41 @@ func draw_arrow(hud,points: PackedVector3Array,power: float,color: Color) -> voi
 	var tick := start+Vector2.from_angle(angle+PI)*19
 	hud.draw_line(tick-Vector2.from_angle(angle)*2,tick+Vector2.from_angle(angle)*2,Color(PAPER,color.a*.8),1.4,true)
 
-func draw_meter(hud,power: float,label: String,color: Color,warning: String="",lob: bool=false) -> void:
+func draw_set_piece(hud,route: Dictionary,color: Color,lob: bool) -> void:
+	var arc := PackedVector2Array()
+	var ground := PackedVector2Array()
+	for point in route.points:
+		if hud.game.camera.is_position_behind(point): break
+		arc.append(hud.game.screen_position(point))
+		ground.append(hud.game.screen_position(Vector3(point.x,.03,point.z)))
+	if arc.size()<2: return
+	# Restore the long flight arrow, including lift and curl, for dead balls only.
+	for i in range(1,ground.size(),2):
+		hud.draw_line(ground[i-1],ground[i],Color(color,color.a*.32),1.2,true)
+	hud.draw_polyline(arc,Color(INK,color.a*.85),5,true)
+	hud.draw_polyline(arc,color,2.3,true)
+	for i in range(6,arc.size(),10):
+		var tangent := (arc[i]-arc[i-1]).normalized()
+		var side := tangent.orthogonal()*3.5
+		hud.draw_colored_polygon(PackedVector2Array([arc[i]+tangent*5,arc[i]-tangent*4+side,arc[i]-tangent*4-side]),color)
+	var point: Vector3=route.target
+	if hud.game.camera.is_position_behind(point): return
+	var ring := PackedVector2Array()
+	var radius := .85 if lob else .58
+	for i in range(33):
+		var angle := TAU*i/32.0
+		ring.append(hud.game.screen_position(Vector3(point.x,.04,point.z)+Vector3(cos(angle),0,sin(angle))*radius))
+	hud.draw_colored_polygon(ring,Color(color,color.a*.16))
+	hud.draw_polyline(ring,Color(color,color.a*.55),1.5,true)
+	var target: Vector2=hud.game.screen_position(point)
+	if not hud.game.ui.bounds().grow(-26).has_point(target): return
+	# The crosshair sits at the predicted height in goal; the disc marks the turf.
+	hud.draw_circle(target,8,Color(INK,color.a*.8))
+	hud.draw_arc(target,9,0,TAU,32,color,2,true)
+	hud.draw_line(target-Vector2(4,0),target+Vector2(4,0),color,1.5,true)
+	hud.draw_line(target-Vector2(0,4),target+Vector2(0,4),color,1.5,true)
+
+func draw_meter(hud,power: float,label: String,color: Color,warning: String="",lob: bool=false,risk_from: float=-1.0) -> void:
 	hud.draw_set_transform(hud.game.ui.edge_offset(0,1))
 	var rect := Rect2(598,803,244,60)
 	hud.panel(Rect2(rect.position+Vector2(0,2),rect.size),Color(0,0,0,.15),8)
@@ -126,6 +160,10 @@ func draw_meter(hud,power: float,label: String,color: Color,warning: String="",l
 	for t in [.25,.5,.75]:
 		var x: float=track.position.x+track.size.x*t
 		hud.draw_line(Vector2(x,track.end.y+3),Vector2(x,track.end.y+5),Color(color,.3),1)
+	if risk_from>0:
+		# Beyond this charge the strike trades accuracy for pace.
+		var risk_x: float=track.position.x+track.size.x*risk_from
+		hud.draw_line(Vector2(risk_x,track.position.y-3),Vector2(risk_x,track.end.y+3),Color("efc09b",.9),1.5)
 	if warning!="":
 		hud.panel(Rect2(600,775,240,21),Color("10272b",.92),5)
 		hud.center(warning,Vector2(720,790),10,Color("efc09b"))

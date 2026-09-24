@@ -36,6 +36,11 @@ void fragment() {
 	float damp=wetness*(.75+.25*patch);
 	cloth*=1.0-damp*.11;
 	ALBEDO = palette_color(cloth);
+	// A restrained fabric rim separates the shoulders/legs in the match view.
+	// Keep team pigments in shadow, without turning skin or wet kits luminous.
+	RIM = .16*fabric;
+	RIM_TINT = .72;
+	EMISSION = palette_color(cloth)*.025*fabric;
 	ROUGHNESS = clamp(mix(.88,.54,damp)+weave*.045*fabric,.45,.95);
 	SPECULAR = mix(.22,.40,damp);
 }

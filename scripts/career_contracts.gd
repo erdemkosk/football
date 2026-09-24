@@ -128,6 +128,7 @@ func sign_loan(pid: String,borrower: String,fee: int,share: int,term: int,option
 	p.loan={"owner":owner,"start":career.world.date,"end":end_day(term),"share":share,"fee":fee,"option":option,"shirt":p.shirt,"role":p.squad_role}
 	career.world.clubs[owner].roster.erase(pid); career.world.clubs[owner].lineup.erase(pid)
 	taking.roster.append(pid); p.club=borrower; p.listed=false; p.loan_listed=false
+	p.arrival={"club":borrower,"day":career.world.date,"debut":false}
 	career.assign_shirt(pid); close_offers(pid)
 	career.transaction(borrower,-fee,"Kiralama bedeli: "+p.name); taking.budget-=fee
 	career.transaction(owner,fee,"Kiralama geliri: "+p.name); career.world.clubs[owner].budget+=fee

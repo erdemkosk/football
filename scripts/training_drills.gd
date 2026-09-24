@@ -1,9 +1,11 @@
 extends RefCounted
 const P = preload("res://scripts/pitch_dimensions.gd")
 ## Script only the exercise partner; every delivery, shot and save uses live physics.
-const MODES := ["free","cross","free_kick","duel"]
-const TITLES := ["SERBEST ANTRENMAN","ORTA & KAFA","SERBEST VURUŞ","BİRE BİR ATÖLYESİ"]
+const Catalog=preload("res://scripts/training_catalog.gd")
+const MODES := Catalog.MODES
+const TITLES := Catalog.TITLES
 var duel := preload("res://scripts/duel_training.gd").new()
+var challenges := preload("res://scripts/training_challenges.gd").new()
 var game
 var mode := "free"
 var attempt := 0
@@ -18,6 +20,7 @@ var place_point := Vector3(0,0,-26)
 var wall: Array[int] = []
 
 func begin(value: String) -> void:
+	challenges.game=game; challenges.begin(value)
 	duel.game=game; duel.reset()
 	mode=value if value in MODES else "free"
 	attempt=0; phase=""; age=0; held_age=0; finish_wait=-1; wall.clear()
@@ -39,6 +42,7 @@ func station_for(p) -> Vector3:
 
 func setup() -> void:
 	attempt+=1; age=0; held_age=0; finish_wait=-1; wall.clear()
+	if mode in Catalog.SCORED: challenges.setup(); return
 	if mode=="duel": duel.setup(); return
 	phase="free" if mode=="free" else "waiting"
 	if mode=="free":
@@ -82,10 +86,12 @@ func setup() -> void:
 	game.match_camera.snap=true
 
 func manages(index: int) -> bool:
+	if game.training and mode in Catalog.SCORED: return challenges.manages(index)
 	if game.training and mode=="duel": return index==14 and (duel.stage<2 or duel.wait>=0)
 	return game.training and ((mode=="cross" and index==feeder) or (mode=="free_kick" and index in wall))
 
 func actor(index: int) -> void:
+	if mode in Catalog.SCORED: challenges.actor(index); return
 	if mode=="duel": duel.actor(index); return
 	var p=game.players[index]
 	p.desired=Vector3.ZERO; p.sprinting=false
@@ -170,6 +176,7 @@ func confirm_place() -> void:
 	game.match_camera.snap=true
 
 func update(delta: float) -> void:
+	if game.training and mode in Catalog.SCORED: challenges.update(delta); return
 	if not game.training or mode=="free" or game.state not in ["playing","restart","set_piece"]: return
 	if mode=="duel":
 		if game.state=="playing": duel.update(delta)

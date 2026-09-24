@@ -7,9 +7,11 @@ func check(ok: bool,message: String) -> void:
 	checks+=1
 	if ok: print("PASS: "+message)
 	else: failures+=1; push_error("FAIL: "+message)
-func shot(distance: float,speed: float,corner: float,height: float,offset: float,seed_value: int=-1,team: int=1) -> Dictionary:
+func shot(distance: float,speed: float,corner: float,height: float,offset: float,seed_value: int=-1,team: int=1,weather_preset: int=0,keeper_energy: float=1.0) -> Dictionary:
 	game.start_match(false,false); game.set_physics_process(false); game.set_process(false)
-	game.management.difficulty=1; game.weather.select(0,true)
+	game.management.difficulty=1; game.weather.select(weather_preset,true)
+	# The shooter's contact error is measured elsewhere; the keeper faces exact trajectories.
+	game.strike_quality.shot_error_scale=[0.0,0.0]
 	game.rng.seed=520+roundi(offset*10+corner*10)
 	game.goalkeeping.variation.seed=520+roundi(offset*10+corner*10)
 	if seed_value>=0: game.goalkeeping.variation.seed=seed_value
@@ -18,6 +20,7 @@ func shot(distance: float,speed: float,corner: float,height: float,offset: float
 	var shooter_index := 9 if team==1 else 20
 	var forward: float=game.attack_sign(team)
 	var keeper=game.players[keeper_index]
+	keeper.energy=keeper_energy
 	keeper.visible=true; keeper.collision_layer=2; keeper.position=Vector3(0,0,-forward*47.5); keeper.facing=Vector3(0,0,forward)
 	game.players[shooter_index].visible=true; game.players[shooter_index].position=Vector3(offset,0,forward*(-49+distance))
 	game.ball.freeze=true

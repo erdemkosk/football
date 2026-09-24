@@ -98,16 +98,19 @@ func run() -> void:
 	check(game.controlled!=9,"Tapping LB alone still switches players on release")
 	setup(); button(JOY_BUTTON_A); game.update_control(0.1); button(JOY_BUTTON_LEFT_SHOULDER)
 	check(game.passes[0]==1 and game.shots[0]==0 and not game.charging,"Near-simultaneous A then LB also resolves as a one-two")
+	check(game.support.runs.has(9) and game.support.runs[9].get("explicit",false),"A then LB upgrades the pending normal pass into an explicit one-two run")
 	button(JOY_BUTTON_A,false); button(JOY_BUTTON_LEFT_SHOULDER,false)
 	setup(); button(JOY_BUTTON_LEFT_SHOULDER); button(JOY_BUTTON_X); game.update_control(0.16)
 	check(game.charging and game.shot_chip and game.passes[0]==0 and game.shots[0]==0,"LB + X prepares a chip shot instead of a one-two")
 	var chip_aim: Vector3=game.shot_direction
 	game.charge=0.55
+	var chip_preview: Vector3=game.shot_velocity(chip_aim,.55,false,true)
 	button(JOY_BUTTON_X,false)
 	contact()
 	var chip: Vector3=game.ball.kick_velocity
 	check(game.shots[0]==1 and chip.y>6.5 and chip.length()<24 and is_zero_approx(game.ball.spin),"Releasing X chips the ball over the keeper line without curl")
-	check((chip*Vector3(1,0,1)).normalized().distance_to(chip_aim)<0.0001,"The chip keeps the aimed heading")
+	var chip_outcome: Dictionary=game.strike_quality.last
+	check(chip_outcome.get("intended",Vector3.INF).distance_to(chip_preview)<.001 and chip.distance_to(chip_outcome.velocity)<.001 and absf(chip_outcome.yaw)<=chip_outcome.limit+.0001,"The chip matches its preview with a bounded, recorded contact error")
 	button(JOY_BUTTON_LEFT_SHOULDER,false)
 	setup(); button(JOY_BUTTON_LEFT_SHOULDER); button(JOY_BUTTON_X); axis(JOY_AXIS_TRIGGER_RIGHT,1); game.update_control(0.08)
 	check(game.charging and game.finishing.style=="power" and not game.shot_chip,"LB + RT + X waits for all three and selects power instead of a chip")

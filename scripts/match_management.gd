@@ -14,7 +14,22 @@ var tempo := 1
 var runs := 1
 var fullbacks := 1
 var anchor := true
-var difficulty := 1
+## Six visible opponent levels over the three tuned AI tables. `difficulty`
+## stays the 0..2 tier that the tables index; `pick` interpolates between them
+## (and a little beyond Hard for Efsane) so every level is distinct.
+const Settings = preload("res://scripts/match_settings.gd")
+const LEVEL_SCALE := [0.0,.5,1.0,1.5,2.0,2.35]
+var level := 2:
+	set(value): level=clampi(value,0,Settings.LEVELS.size()-1)
+var difficulty: int:
+	get: return Settings.LEVEL_TIER[level]
+	set(value): level=Settings.TIER_LEVEL[clampi(value,0,2)]
+var manual_plan := false
+## Individual instructions for the user's side, keyed by roster slot number:
+## attack 0 hold / 1 balanced / 2 join the attack; width 0 inside / 1 / 2 wide.
+var instructions: Dictionary = {}
+const ATTACK_ORDERS := ["GERİDE KAL","DENGELİ","HÜCUMA KATIL"]
+const WIDTH_ORDERS := ["İÇE KAT ET","DENGELİ","GENİŞ KAL"]
 var bench: Array = [[],[]]
 var used := [0,0]
 var pending: Array = []
@@ -23,11 +38,30 @@ var reserve_originals: Array = [[],[]]
 var transit: Dictionary = {}
 var lost_time := [0.0,0.0]
 var added := [-1.0,-1.0]
-const FORMATIONS := ["4-4-2","4-3-3","3-5-2"]
+const FORMATIONS := ["4-4-2","4-3-3","3-5-2","4-2-3-1","4-1-2-1-2","5-3-2","3-4-3","4-1-4-1","4-4-1-1"]
 const SHAPES := [
 	[Vector2(0,46),Vector2(-23,28),Vector2(-8,31),Vector2(8,31),Vector2(23,28),Vector2(-20,7),Vector2(-6,13),Vector2(9,10),Vector2(22,5),Vector2(-5,-1),Vector2(9,-7)],
 	[Vector2(0,46),Vector2(-23,28),Vector2(-8,31),Vector2(8,31),Vector2(23,28),Vector2(-13,12),Vector2(0,18),Vector2(13,12),Vector2(-23,-5),Vector2(0,-10),Vector2(23,-5)],
-	[Vector2(0,46),Vector2(-16,31),Vector2(0,33),Vector2(16,31),Vector2(-26,9),Vector2(-12,13),Vector2(0,20),Vector2(12,13),Vector2(26,9),Vector2(-7,-7),Vector2(7,-7)]]
+	[Vector2(0,46),Vector2(-16,31),Vector2(0,33),Vector2(16,31),Vector2(-26,9),Vector2(-12,13),Vector2(0,20),Vector2(12,13),Vector2(26,9),Vector2(-7,-7),Vector2(7,-7)],
+	[Vector2(0,46),Vector2(-23,28),Vector2(-8,31),Vector2(8,31),Vector2(23,28),Vector2(-7,18),Vector2(7,18),Vector2(-20,3),Vector2(0,4),Vector2(20,3),Vector2(0,-9)],
+	[Vector2(0,46),Vector2(-22,28),Vector2(-8,31),Vector2(8,31),Vector2(22,28),Vector2(0,19),Vector2(-11,11),Vector2(11,11),Vector2(0,3),Vector2(-6,-8),Vector2(6,-8)],
+	[Vector2(0,46),Vector2(-26,24),Vector2(-12,32),Vector2(0,34),Vector2(12,32),Vector2(26,24),Vector2(-11,13),Vector2(0,17),Vector2(11,13),Vector2(-7,-7),Vector2(7,-7)],
+	[Vector2(0,46),Vector2(-15,31),Vector2(0,33),Vector2(15,31),Vector2(-25,10),Vector2(-8,15),Vector2(8,15),Vector2(25,10),Vector2(-20,-5),Vector2(0,-10),Vector2(20,-5)],
+	[Vector2(0,46),Vector2(-23,28),Vector2(-8,31),Vector2(8,31),Vector2(23,28),Vector2(0,19),Vector2(-22,6),Vector2(-8,10),Vector2(8,10),Vector2(22,6),Vector2(0,-9)],
+	[Vector2(0,46),Vector2(-23,28),Vector2(-8,31),Vector2(8,31),Vector2(23,28),Vector2(-21,7),Vector2(-7,13),Vector2(7,13),Vector2(21,7),Vector2(0,1),Vector2(0,-8)]]
+## Defenders, midfielders and forwards per formation, in slot order.
+const LINE_COUNTS := [[4,4,2],[4,3,3],[3,5,2],[4,5,1],[4,4,2],[5,3,2],[3,4,3],[4,5,1],[4,4,2]]
+## Shirt numbers of the wide players who overlap as full backs or wing backs.
+const WIDE_BACKS := [[2,5],[2,5],[5,9],[2,5],[2,5],[2,6],[5,8],[2,5],[2,5]]
+
+static func lines(shape: int) -> Array:
+	var counts: Array=LINE_COUNTS[clampi(shape,0,LINE_COUNTS.size()-1)]
+	var result: Array=[[0],[],[],[]]
+	var slot := 1
+	for group in range(3):
+		for n in range(int(counts[group])):
+			result[group+1].append(slot); slot+=1
+	return result
 
 func setup() -> void:
 	identity.game=game
@@ -37,6 +71,7 @@ func setup() -> void:
 	reset()
 
 func reset() -> void:
+	manual_plan=false
 	opponent_formation=int(game.clubs.tactical_plan(1).formation)
 	bench=[[],[]]
 	used=[0,0]
@@ -108,8 +143,9 @@ func slot_role(index: int) -> int:
 	if p.keeper: return 0
 	var slot: int=p.number-1
 	var shape: int=formation if p.team==0 else opponent_formation
-	if slot<=(3 if shape==2 else 4): return 1
-	if slot>=(8 if shape==1 else 9): return 3
+	var counts: Array=LINE_COUNTS[clampi(shape,0,LINE_COUNTS.size()-1)]
+	if slot<=int(counts[0]): return 1
+	if slot>=11-int(counts[2]): return 3
 	return 2
 
 func actor_at_slot(slot: int,team: int=0) -> int:
@@ -120,7 +156,7 @@ func actor_at_slot(slot: int,team: int=0) -> int:
 func wide_defender(index: int) -> bool:
 	var p=game.players[index]
 	var shape: int=formation if p.team==0 else opponent_formation
-	return p.number in ([5,9] if shape==2 else [2,5])
+	return p.number in WIDE_BACKS[clampi(shape,0,WIDE_BACKS.size()-1)]
 
 func position_swap_reason(a: int,b: int) -> String:
 	if a<0 or b<0 or a>=game.players.size() or b>=game.players.size() or a==b: return "İki farklı oyuncu seç."
@@ -158,16 +194,18 @@ func suggestion(team: int,threshold: float=0.40,excluded: Array=[]) -> Dictionar
 	var lowest := threshold
 	for slot in range(team*11+1,team*11+11):
 		var p=game.players[slot]
-		if not p.visible or p.dismissed or p.energy>=lowest or p.shirt_number in excluded: continue
+		if not p.visible or p.dismissed or p.readiness()>=lowest or p.shirt_number in excluded: continue
 		for reserve in range(1,7):
 			var b: Dictionary=bench[team][reserve]
 			if int(b.get("role",natural_role(b.shirt,b.keeper)))!=slot_role(slot) or substitution_reason(slot,reserve)!="": continue
-			lowest=p.energy
+			if float(b.get("fitness",1.0))<=p.readiness()+.08: continue
+			lowest=p.readiness()
 			best={"slot":slot,"reserve":reserve,"shirt":p.shirt_number,"incoming":b.shirt}
 			break
 	return best
 
 func live_plan(value: int) -> void:
+	manual_plan=true
 	value=clampi(value,0,2)
 	if game.career.in_match:
 		game.career.club().plan=game.career.club().plans[value].duplicate(true)
@@ -201,6 +239,9 @@ func prepare_substitutions() -> void:
 
 func update_substitutions(delta: float) -> bool:
 	if transit.is_empty(): return false
+	for item in transit.values(): item.presentation_age=float(item.get("presentation_age",0))+delta
+	if game.experience.short_presentation and transit.values().any(func(item): return item.presentation_age>2.5):
+		game.pace.request(game.pace.substitutions_ready)
 	for p in game.players:
 		p.desired=Vector3.ZERO
 		p.sprinting=false
@@ -217,7 +258,7 @@ func update_substitutions(delta: float) -> bool:
 		if not item.has("waypoint") and offset.length()>0.8:
 			var ahead := offset.normalized()
 			for other in game.players:
-				if other==p or not other.visible: continue
+				if other==p or not other.visible or not other.rig.visible: continue
 				var obstacle: Vector3=(other.position-p.position)*Vector3(1,0,1)
 				var along := obstacle.dot(ahead)
 				if along> -0.15 and along<2.0 and (obstacle-ahead*along).length()<0.95:
@@ -236,6 +277,8 @@ func update_substitutions(delta: float) -> bool:
 				used[p.team]+=1
 				game.career.remember_player(p)
 				game.stadium.sidelines.retain_departing(p,index)
+				game.match_report.substitution(p,b)
+				game.broadcast_event("substitution")
 				p.apply_identity(b)
 				p.apply_kit(game.clubs.kit(p.team))
 				refresh_captains()
@@ -249,13 +292,13 @@ func update_substitutions(delta: float) -> bool:
 				p.kick_timer=0; p.receive_timer=0; p.shot_preparation=0; p.shot_ready_blend=0
 				p.set_piece_pose=""; p.discipline_pose=""; p.saluting=false
 				p.skill_move.clear(); p.feint_time=0; p.dummy_time=0
+				p.tackle_cooldown=0; p.tackle_recovery=0
 				p.dribble_motion.reset(); p.locomotion.reset(); p.reaction.reset()
 				# Keep the last greeting pose as the visual blend's origin while the
 				# replacement's own running cycle begins on the next physics tick.
 				p.body_language.reset(p)
 				game.stadium.sidelines.finish_entry(index,p)
 				item.phase="in"
-				game.announce("DEĞİŞİKLİK · "+item.old+" → "+p.display_name)
 			else: transit.erase(index)
 	for index in range(game.players.size()):
 		var p=game.players[index]
@@ -269,16 +312,22 @@ func update_substitutions(delta: float) -> bool:
 		p.stamina_free_movement=false
 	return true
 
+func pick(values: Array,low: float=-INF,high: float=INF) -> float:
+	# values = [easy, normal, hard] at scale 0, 1 and 2.
+	var s: float=LEVEL_SCALE[level]
+	var result: float=lerpf(float(values[0]),float(values[1]),s) if s<=1.0 else float(values[1])+(float(values[2])-float(values[1]))*(s-1.0)
+	return clampf(result,low,high)
+
 func reaction(team: int,index: int=-1,defense: bool=false) -> float:
 	var ability: float=identity.quality(index,defense) if index>=0 else identity.team_quality(team,defense)
-	return ([1.7,1.05,0.58][difficulty] if team==1 else 1.05)*lerpf(1.30,.72,ability)
+	return (pick([1.7,1.05,0.58],.34) if team==1 else 1.05)*lerpf(1.30,.72,ability)
 
-func pass_error(team: int,index: int=-1,shot: bool=false) -> float:
-	var base: float=[0.065,0.025,0.008][difficulty] if team==1 else 0.015
+func pass_error(team: int,index: int=-1,_shot: bool=false) -> float:
+	# Difficulty handicap only: technique, body and pressure errors come from
+	# the shared contact model that both teams use (strike_quality.gd).
+	var base: float=pick([0.045,0.012,0.0],0.0) if team==1 else 0.004
 	if index<0: return base
-	var p=game.players[index]
-	var ability: float=p.attributes.get("finishing" if shot else "passing",p.attributes.control)
-	return base*lerpf(1.8,.55,clampf((ability-48)/46,0,1))*(1+(1-p.energy)*.3)
+	return base*(1+(1-game.players[index].energy)*.3)
 
 func adjust_target(index: int,target: Vector3) -> Vector3:
 	var p=game.players[index]
@@ -294,7 +343,7 @@ func adjust_target(index: int,target: Vector3) -> Vector3:
 				p.sprinting=pressing==2 and p.energy>0.35
 	elif game.carrier>=0 and game.players[game.carrier].team==0:
 		var gap: float=game.flat_distance(p.position,game.ball.position)
-		if gap<[4.0,6.5,10.0][difficulty]: target=target.lerp(game.ball.position,[0.12,0.28,0.48][difficulty])
+		if gap<pick([4.0,6.5,10.0],3.0,12.0): target=target.lerp(game.ball.position,pick([0.12,0.28,0.48],.08,.56))
 	elif p.team==1 and game.carrier>=0 and game.players[game.carrier].team==1:
 		# Late chasing teams commit runners; a leading team keeps more cover.
 		target.z+=forward*(game.team_tactics.plan_for(1)-1)*(4 if slot_role(index)==1 else 6)
@@ -302,9 +351,28 @@ func adjust_target(index: int,target: Vector3) -> Vector3:
 	target.z=clampf(target.z,-45,45)
 	return target
 
+func instruction(index: int) -> Dictionary:
+	var p=game.players[index]
+	if p.team!=0 or p.keeper or game.menu_match.running: return {}
+	return instructions.get(p.number,{})
+
+func cycle_instruction(slot_number: int,key: String) -> Dictionary:
+	var order: Dictionary=instructions.get(slot_number,{"attack":1,"width":1}).duplicate()
+	order[key]=(int(order.get(key,1))+1)%3
+	if int(order.attack)==1 and int(order.width)==1: instructions.erase(slot_number)
+	else: instructions[slot_number]=order
+	# A career keeps its instructions in the club's plan.
+	if game.career.in_match:
+		game.career.club().plan.instructions=instructions.duplicate(true)
+		game.career.save()
+	return order
+
 func detail(team: int,key: String) -> int:
-	if team==0: return int(get(key))
-	return identity.setting(game.clubs.data(team),key)
+	var value: int=int(get(key)) if team==0 else identity.setting(game.clubs.data(team),key)
+	# The run-frequency slider moves the attacking-run instruction one step at
+	# its extremes; the underlying support logic stays the same.
+	if key=="runs": value=clampi(value+roundi(game.sliders.offset(team,"runs",1.0)),0,2)
+	return value
 
 func update_clock(delta: float) -> void:
 	if game.career.cups.extra_active(): return
@@ -316,8 +384,8 @@ func update_clock(delta: float) -> void:
 	if game.state in ["restart","set_piece","goal"] and added[half_index]<0:
 		lost_time[half_index]+=delta*0.08
 	if game.state=="playing" and game.match_time>=game.LENGTH*game.half*0.5-10 and added[half_index]<0:
-		added[half_index]=clampf(ceilf(lost_time[half_index]/2.6667)*2.6667,0,16)
-		if added[half_index]>0: game.announce("HAKEM · EN AZ +%d DAKİKA" % roundi(added[half_index]*90/game.LENGTH))
+		var minute: float=game.LENGTH/90.0
+		added[half_index]=clampf(ceilf(lost_time[half_index]/minute)*minute,0,minute*6)
 
 func half_end() -> float:
 	return game.LENGTH*game.half*0.5+maxf(0,added[game.half-1])

@@ -19,7 +19,7 @@ func update(delta: float) -> void:
 
 func kicked(index: int,kind: String) -> void:
 	if kind=="shot": shooter=index; shot_age=0; passer=-1; shot_counted=false
-	elif kind=="kick": passer=index; pass_age=0; shooter=-1
+	elif kind in ["kick","cross"]: passer=index; pass_age=0; shooter=-1
 
 func received(index: int) -> void:
 	if shooter>=0 and index!=shooter: shooter=-1
@@ -86,6 +86,7 @@ func save_on_target(index: int,incoming: Vector3) -> bool:
 	return route.on_target
 
 func saved(index: int,was_on_target: bool=false) -> void:
+	game.match_report.saved(index)
 	var keeper=game.players[index]
 	if was_on_target: on_target(1-keeper.team)
 	var candidates: Array[int]=[]

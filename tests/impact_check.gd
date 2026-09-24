@@ -29,10 +29,11 @@ func run() -> void:
 	p.animate(1.0/120)
 	check(absf(p.right_leg.rotation.x-p.left_leg.rotation.x)<0.01 and p.shot_preparation>0.5,"Standing charge keeps both feet in a grounded stance")
 	var heading: Vector3=game.shot_direction
-	var prepared_leg: Vector3=p.right_leg.rotation
 	game.shoot()
+	var contact_leg=p.left_leg if p.ball_actions.foot==0 else p.right_leg
+	var released_pose: Quaternion=contact_leg.quaternion
 	p.animate(1.0/120)
-	check(p.kick_timer>0.4 and p.right_leg.rotation.distance_to(prepared_leg)<0.001,"Ball release starts the kick without snapping the leg to full extension")
+	check(p.kick_timer>0 and p.ball_actions.release_age==0 and released_pose.angle_to(contact_leg.quaternion)<.001,"The first follow-through frame preserves the actual contact pose without another leg snap")
 	check(game.feedback.last_kind=="shot" and game.feedback.event_count==1 and game.ball.pending_kick,"The shot sound and camera cue are triggered by the actual strike")
 	await frames(3)
 	check(Vector3(game.ball.linear_velocity.x,0,game.ball.linear_velocity.z).normalized().dot(heading)>0.999,"Impact feedback preserves the player's chosen shot heading")
@@ -90,6 +91,8 @@ func run() -> void:
 	check(p.volley_motion.kind=="power" and p.volley_motion.duration>0.75,"Power follow-through lasts longer than a normal finish")
 	await arrange()
 	game.charging=true
+	# A running victim creates the high closing speed required for a hard fall.
+	game.players[9].velocity=Vector3.BACK*6
 	game.rules.start_tackle(12,Vector3.FORWARD)
 	game.rules.resolve_tackles()
 	check(game.players[9].pose=="fall" and game.players[9].action_timer>0,"A hard opponent tackle makes the controlled player fall")
@@ -108,6 +111,7 @@ func run() -> void:
 	await arrange()
 	game.players[9].position=Vector3.ZERO
 	game.players[12].position=Vector3(0,0,-0.8)
+	game.players[12].velocity=Vector3.BACK*6
 	game.rules.start_tackle(9,Vector3.FORWARD)
 	game.rules.resolve_tackles()
 	check(game.players[12].pose=="fall" and game.feedback.last_kind=="body_hit","The user's tackle gives the opponent the same physical reaction")

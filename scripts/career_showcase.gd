@@ -6,6 +6,23 @@ var actor
 var scene: Node3D
 var elapsed:=0.0
 var identity:=""
+var hero_label:="KAPTAN"
+var hero_name:=""
+
+func hero(s) -> String:
+	var c=s.game.career; var ids: Array=c.club().roster
+	var newcomers: Array=ids.filter(func(id): return c.player(id).get("arrival",{}).get("club","")==c.world.user and not c.player(id).arrival.get("debut",true))
+	var chosen: String=""
+	if not newcomers.is_empty():
+		newcomers.sort_custom(func(a,b): return c.player(a).arrival.day>c.player(b).arrival.day)
+		chosen=newcomers[0]; hero_label="YENİ TRANSFER"
+	else:
+		chosen=c.club().lineup[0]
+		for id in c.club().lineup:
+			if c.player(id).shirt==6: chosen=id; break
+		hero_label="KAPTAN"
+	hero_name=c.player(chosen).name
+	return chosen
 
 func configure(data: Dictionary) -> void:
 	var key: String=data.name+str(data.get("club",""))
@@ -15,6 +32,9 @@ func configure(data: Dictionary) -> void:
 	if actor!=null: actor.free()
 	actor=Footballer.new(); actor.number=data.get("appearance_number",data.shirt); actor.keeper=data.keeper
 	scene.add_child(actor); actor.apply_identity(data); actor.apply_kit(data.kit)
+	var tint: Color=preload("res://scripts/ui_style.gd").club_tint(data.kit)
+	for light in scene.get_children():
+		if light is DirectionalLight3D and light.light_energy<1: light.light_color=tint.lightened(.45)
 	actor.physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_OFF
 	actor.collision_layer=0; actor.collision_mask=0; actor.marker.hide(); actor.call_label.hide()
 	actor.position=Vector3(-1.35,0,0); actor.rotation.y=.15; actor.animate(0)
@@ -66,6 +86,7 @@ func _process(delta: float) -> void:
 	viewport.render_target_update_mode=SubViewport.UPDATE_ALWAYS if active else SubViewport.UPDATE_DISABLED
 	if not active or actor==null: return
 	elapsed+=delta
+	if get_parent().game.experience.reduce_motion: return
 	actor.rig.rotation.z=sin(elapsed*.85)*.014
 	actor.head_joint.rotation.y=sin(elapsed*.45)*.13
 	actor.left_arm.rotation.z=-.12+sin(elapsed)*.015

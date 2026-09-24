@@ -10,6 +10,8 @@ var return_focus: Control
 var paused_match := false
 var tabs: Array[Button] = []
 var device_buttons: Array[Button] = []
+var row_scroll: ScrollContainer
+var row_content: VBoxContainer
 var close_button: Button
 const TITLES := ["PAS & ŞUT","SAVUNMA","TOP KONTROLÜ","MAÇ & MENÜ","ÇALIMLAR","BİTİRİCİLİK","ÖZEL PAS","KALECİ"]
 const CARD := Rect2(390,84,1010,744)
@@ -36,12 +38,20 @@ func _ready() -> void:
 		buttons[i].focus_neighbor_left=previous; buttons[i].focus_neighbor_top=previous
 		buttons[i].focus_neighbor_right=next; buttons[i].focus_neighbor_bottom=next
 		buttons[i].focus_previous=previous; buttons[i].focus_next=next
+	row_scroll=ScrollContainer.new()
+	row_scroll.position=Vector2(422,282); row_scroll.size=Vector2(946,458)
+	row_scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED
+	row_scroll.follow_focus=true
+	add_child(row_scroll)
+	row_content=VBoxContainer.new(); row_content.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+	row_content.add_theme_constant_override("separation",6); row_scroll.add_child(row_content)
 	select_page(0)
 	select_device(false)
 	game.controller.prompts_changed.connect(refresh_prompts)
 
 func refresh_prompts() -> void:
 	device_buttons[0].text=game.controller.family_label()
+	rebuild_rows()
 	queue_redraw()
 
 func open_panel() -> void:
@@ -80,16 +90,57 @@ func close_panel() -> void:
 	if is_instance_valid(return_focus) and return_focus.is_visible_in_tree(): return_focus.grab_focus()
 	game.hud.queue_redraw()
 
+func rebuild_rows() -> void:
+	if not is_instance_valid(row_content): return
+	for child in row_content.get_children(): row_content.remove_child(child); child.queue_free()
+	row_scroll.scroll_vertical=0
+	var factor: float=game.experience.scale_factor()
+	var cards: Array[Control]=[]
+	for item in rows():
+		var card := PanelContainer.new()
+		card.focus_mode=Control.FOCUS_ALL
+		var style := StyleBoxFlat.new(); style.bg_color=Color("18333a")
+		style.content_margin_left=14; style.content_margin_right=14; style.content_margin_top=10; style.content_margin_bottom=10
+		style.set_corner_radius_all(5); card.add_theme_stylebox_override("panel",style)
+		var focus_style := style.duplicate(); focus_style.border_color=GOLD; focus_style.set_border_width_all(2)
+		card.focus_entered.connect(func(): card.add_theme_stylebox_override("panel",focus_style); row_scroll.ensure_control_visible(card))
+		card.focus_exited.connect(func(): card.add_theme_stylebox_override("panel",style))
+		row_content.add_child(card); cards.append(card)
+		var row := HBoxContainer.new(); row.add_theme_constant_override("separation",18); card.add_child(row)
+		var body := VBoxContainer.new(); body.size_flags_horizontal=Control.SIZE_EXPAND_FILL; row.add_child(body)
+		for value in [item.title,item.detail]:
+			var caption := Label.new(); caption.text=value; caption.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+			caption.add_theme_font_size_override("font_size",roundi((17 if value==item.title else 14)*factor))
+			caption.add_theme_color_override("font_color",PAPER if value==item.title else MUTE)
+			body.add_child(caption)
+		var keys := VBoxContainer.new(); keys.custom_minimum_size.x=260; keys.size_flags_vertical=Control.SIZE_SHRINK_CENTER; row.add_child(keys)
+		if item.pad_keys and item.keys!="ATAMA GEREKLİ":
+			var hint=preload("res://scripts/controller_hint.gd").new(); hint.controller=game.controller; hint.items=[[item.keys,""]]; keys.add_child(hint)
+		else:
+			var caption := Label.new(); caption.text=item.keys; caption.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+			caption.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER; caption.add_theme_color_override("font_color",GOLD)
+			caption.add_theme_font_size_override("font_size",roundi(16*factor)); keys.add_child(caption)
+	for i in range(cards.size()):
+		cards[i].focus_neighbor_top=cards[i].get_path_to(cards[i-1] if i>0 else tabs[page])
+		cards[i].focus_neighbor_bottom=cards[i].get_path_to(cards[i+1] if i+1<cards.size() else close_button)
+		cards[i].focus_neighbor_left=cards[i].get_path_to(tabs[page])
+		cards[i].focus_neighbor_right=cards[i].get_path_to(close_button)
+	if not cards.is_empty():
+		for tab in tabs: tab.focus_neighbor_bottom=tab.get_path_to(cards[0])
+		close_button.focus_neighbor_top=close_button.get_path_to(cards.back())
+
 func select_page(value: int) -> void:
 	page=posmod(value,TITLES.size())
 	for i in range(tabs.size()):
 		tabs[i].add_theme_color_override("font_color",GOLD if i==page else MUTE)
+	rebuild_rows()
 	queue_redraw()
 
 func select_device(pad: bool) -> void:
 	use_pad=pad
 	for i in range(device_buttons.size()):
 		device_buttons[i].add_theme_color_override("font_color",GOLD if (i==0)==use_pad else MUTE)
+	rebuild_rows()
 	queue_redraw()
 
 func handle(event: InputEvent) -> void:
@@ -122,15 +173,21 @@ func advanced_entry(title: String,detail: String,pad_keys: String,keyboard_keys:
 func rows() -> Array:
 	if page==4:
 		return [
+			entry("Şut / pas aldatması","Şut, orta veya ara pası hazırla; top çıkmadan kısa pasa basıp yön seç. Bekleyen savunmacı yolu kapatabilir.",binding(KEY_D)+" / "+binding(KEY_A)+" → "+binding(KEY_S)),
 			advanced_entry("Roulette","Topu saklayarak tam dönüş. Analog yönleri oyuncunun baktığı yöne göredir.","RS ↓","1"),
-			advanced_entry("Yana çek","Uzanan müdahale ayağından kaç. Rakip beklerse otomatik geçemezsin.","RS ← / →","2 + YÖN"),
+			advanced_entry("Yana çek","Sprint basılıyken de yana çekersin. Boş tarafa çık; rakip yolu kapatabilir.","RS ← / →","2 + YÖN"),
 			advanced_entry("Dur–kalk","Topu durdur, rakip akarken hızlan. Hazırlıkta pasla vazgeçebilirsin.","RB + RS ↓","9"),
-			advanced_entry("Aç ve dolaş","Topu seçtiğin yana aç, rakibin diğer yanından koş. Top serbesttir.","RB + RS ← / →","0 + YÖN"),
+			advanced_entry("Aç ve dolaş","Topu seçtiğin yana aç, rakibin diğer yanından koş. Top serbesttir.","RB + RS ↑","0 + YÖN"),
 			advanced_entry("Elastico","Dışa göster, içe çek. Sağ analogu hızla bir yandan diğerine çevir.","RS → ←","3 + YÖN"),
 			advanced_entry("Scoop turn","Topu hafif kaldırarak çapraz dön. Düşük hızda daha kontrollüdür.","RS ↑","4 + YÖN"),
 			advanced_entry("Rainbow","Topuğuyla topu arkadan üzerinden atar.","LT + RS ↓","6"),
 			advanced_entry("Heel flick","Topukla topu arkaya bırakır; savunmayı keser.","LT + RS ↑","7"),
 			advanced_entry("Flick up","Topu önünde havaya kaldırır; vole veya kafa için.","LT + RS ← / →","8"),
+			advanced_entry("Topuktan topuğa","3★ · Topu duran bacağın arkasından diğer topuğa alıp çaprazdan çık.","LB + LT + RS","SHIFT + 1"),
+			advanced_entry("Çek ve kes","2★ · Tabanla topu çek, gövdenin arkasından keserek yön değiştir.","LB + RS ↓","SHIFT + 2"),
+			advanced_entry("Bacak arası","3★ · Önündeki rakibin açık bacaklarından topu geçir; topu önce kapan alır.","LB + RS ↑","SHIFT + 3"),
+			advanced_entry("McGeady dönüşü","4★ · Dönerek topu çapraz öne al; boş çıkış alanı gerekir.","LB + RS ← / →","SHIFT + 4"),
+			entry("Çalım yıldızı","Her oyuncunun 1–5 çalım yıldızı var. Yetmeyen hareket denenmez; oyuncu kartında gösterilir.","★"),
 			entry("Kısa vücut çalımı","Yakın kontrolde kısa aldatma; koşuya devam edebilirsin.",binding(KEY_Z)),
 			entry("Topu ileri aç","Topu öne it; boş alanda arkasından hızlan. Rakip topu alabilir.",binding(KEY_V))]
 	if page==5:
@@ -144,10 +201,12 @@ func rows() -> Array:
 			entry("Vole / kafa","Top gelmeden şutu hazırla. Kısa adım, uzanma ve gerekirse küçük sıçramayla uygun vuruş seçilir.",binding(KEY_D))]
 	if page==6:
 		return [
-			advanced_entry("Sert düz pas","Yön ver, gücü ayarla ve bırak. Daha hızlı gider; kontrolü daha zordur.","RB + "+binding(KEY_S),"CTRL + "+binding(KEY_S)),
+			advanced_entry("Koşuya gönder","Yönündeki arkadaşına ileri koşu yaptır. Pasın yönü ve zamanlaması sende.","LB + R3","N"),
+			advanced_entry("Ayağına çağır","Yönündeki arkadaşın kısa pas mesafesine yaklaşır.","LB + L3","I"),
+			advanced_entry("Sert düz pas","Yön ver ve bir kez bas. Mesafeye göre sert pas; kontrolü daha zordur.","RB + "+binding(KEY_S),"CTRL + "+binding(KEY_S)),
 			advanced_entry("Yerden sert ara pas","Savunma arasına hızlı yerden pas. Mesafeyi basılı tutarak ayarla.","RB + "+binding(KEY_Y),"CTRL + "+binding(KEY_Y)),
 			advanced_entry("Dummy / bırak geç","Takım arkadaşının alçak pasını kontrol etmeden arkandaki oyuncuya bırak.","L3","U"),
-			entry("Ara pas","Yönündeki koşu alanına yarı yardımlı pas; boşluğa da oynayabilirsin.",binding(KEY_Y)),
+			entry("Ara pas","Yönü serbestçe seç; gücü basılı tutup bırak. Ok oyuncuya kilitlenmez.",binding(KEY_Y)),
 			advanced_entry("Verkaç","Pas veren oyuncu sınırlı bir koşu yapar; dönüş pasını sen verirsin.","LB + "+binding(KEY_S),"KONTROLCÜ: LB + A")]
 	if page==7:
 		return [
@@ -161,16 +220,18 @@ func rows() -> Array:
 	match page:
 		0:
 			return [
-				entry("Pas","Kısa dokun: yakın pas. Basılı tut → bırak: daha uzak hedef.",binding(KEY_S)),
-				entry("Ara pas","Yönünü seç; basılı tutup bırak. Top koşu yoluna gider.",binding(KEY_Y)),
+				entry("Pas","Yön ver, bir kez bas. Mesafe otomatik; top gelmeden hemen önce de basabilirsin.",binding(KEY_S)),
+				entry("Ara pas","Yönü serbestçe seç; gücü tutup bırak. Daha fazla güç topu aynı yönde ileri gönderir.",binding(KEY_Y)),
 				combo("Aşırtma şut","Şutu kalecinin üzerinden yumuşak bir kavisle gönder.","LB + X",lb),
 				combo("Havadan uzun pas","Sol omuz tuşunu tut; pas tuşuyla gücü ayarla, bırakarak gönder.","LB + Y",lb),
 				entry("Orta","Basılı tut: yön ve güç ayarla. Bırak: ortayı gönder.",binding(KEY_A)),
 				entry("Yerden sert orta","Hızlı koş tuşunu tutarken ortayı hazırla; orta tuşunu bırakarak gönder.",binding(KEY_W)+" + "+binding(KEY_A)),
 				entry("Şut","Sol analogla nişan; koşudan bağımsız yön: D-pad / sağ analog." if use_pad else "Basılı tut → bırak. Yönle küçük nişan düzeltmeleri yap.",binding(KEY_D)),
-				entry("Vole / kafa","Top gelirken şuta erken basabilirsin. Oyuncu yerleşir; uygun ayak/kafa vuruşunu seçer. Yön ver → bırak.",binding(KEY_D)),
+				entry("Vole / kafa","Top gelirken şuta bas, vuruş yönünü seç. Tuşu erken bıraksan da temasa kadar yönü değiştirebilirsin; yönü bırakınca son seçim korunur.",binding(KEY_D)),
 				entry("Falsolu şut","Şutu hazırlarken top koruma tuşunu da basılı tut.",binding(KEY_E)+" + "+binding(KEY_D)),
-				combo("Verkaç","Pası ver; pası atan oyuncu kısa bir ileri koşu yapsın.","LB + A",lb)]
+				combo("Verkaç","Pası ver; pası atan oyuncu kısa bir ileri koşu yapsın.","LB + A",lb),
+				advanced_entry("Vuruştan vazgeç","Şut, pas, orta veya gelişine vuruş hazırlığını topa temas etmeden iptal et. Çıkan top geri alınmaz.","LB + RB","B"),
+				advanced_entry("Duran top organizasyonu","Korner / frikikte ön direk, arka direk, ceza yayı veya kısa pas seç. Nişan ve güç değişmez.","LB + D-PAD ↑ → ↓ ←","1 / 2 / 3 / 4")]
 		1:
 			return [
 				entry("Ayakta müdahale","Topsuzken ayağını uzatıp topu almaya çalış.",binding(KEY_D) if use_pad else binding(KEY_G)),
@@ -178,6 +239,7 @@ func rows() -> Array:
 				entry("Kaleciyi çıkar","Savunmada basılı tut; bırakınca kaleci yerine döner.",binding(KEY_Y)),
 				entry("Oyuncu değiştir","Topa yakın uygun oyuncuya geç. Sonraki hedef içi boş okla gösterilir; koşu yönün seçimi değiştirmez.",binding(KEY_Q)),
 				entry("Rakibi karşıla","Basılı tut; topa dönük kısa, kontrollü adımlarla savun.",binding(KEY_E)),
+				entry("Kapat (contain)","Hızlı koşla birlikte tut: oyuncun kale tarafındaki boşluğa koşar ve mesafeyi korur. Müdahale ayrı tuştur.",binding(KEY_E)+" + "+binding(KEY_W)),
 				advanced_entry("İkinci adam baskısı","Rakipteyken tut: yeşil PRES oyuncusu basar. En fazla 4 sn; kondisyon harcar.",binding(KEY_S)+" TUT","SPACE TUT"),
 				advanced_entry("Omuz mücadelesi","Rakibin yanında omuz koy. Arkadan veya topsuz itiş faul olabilir.","L3","J"),
 				advanced_entry("Pas arası","Ayağını pas yoluna uzat. Doğru zamanlamayla topu keser; ıskalayabilir.","LT + "+binding(KEY_D),"L"),
@@ -187,6 +249,9 @@ func rows() -> Array:
 				entry("Hareket","Oyuncuyu yönlendir; son hareket yönün pas ve şuta temel olur.","SOL ANALOG" if use_pad else "↑  ↓  ←  →"),
 				entry("Hızlı koş","Basılı tut: sprint. Hızlıca iki bas: topu ileri açıp peşinden koş. Kondisyon harcar.",binding(KEY_W)),
 				entry("Topu sakla","Basılı tut; vücudunu rakiple topun arasına koy.",binding(KEY_E)),
+				entry("Yan adımla sür","Top sendeyken hızlı koşla birlikte tut: gövde aynı yöne bakar, kısa yan adımlarla topu taşırsın.",binding(KEY_E)+" + "+binding(KEY_W)),
+				advanced_entry("Kontrollü sprint","Sprintte kısa dokunuşlar; biraz daha yavaş ama top ayağa yakın.","RB + RT",binding(KEY_W)+" + SHIFT"),
+				entry("İlk dokunuşta aç","Top gelmeden hemen önce bas ve yön ver: ilk dokunuş topu boşluğa iter.",binding(KEY_V)+" + YÖN"),
 				entry("Kısa çalım","Vücut çalımıyla topu yana al." if not use_pad or binding(KEY_Z)!="Atanmamış" else "Ayarlar → Tuş atama bölümünden bir tuş seç.",binding(KEY_Z)),
 				entry("Topu ileri aç","Topu önüne bırak, ardından hızlanarak yetiş.",binding(KEY_V)),
 				entry("Pas iste","Top takım arkadaşındayken bas; boşluğa koş.",binding(KEY_S)),
@@ -214,23 +279,6 @@ func _draw() -> void:
 	draw_line(Vector2(422,247),Vector2(1368,247),Color("365359"),1)
 	text(TITLES[page],Vector2(438,272),11,GOLD,true)
 	text(game.controller.family_label()+" KONTROLCÜSÜ" if use_pad else "KLAVYE & FARE",Vector2(1090,272),11,MUTE,true)
-	var items := rows()
-	var row_height := minf(56,448.0/items.size())
-	var compact := row_height<48
-	for i in range(items.size()):
-		var item: Dictionary=items[i]
-		var y := 286.0+i*row_height
-		box(Rect2(422,y,946,row_height-4),Color("18333a") if i%2==0 else Color("132c33"),5)
-		text(item.title,Vector2(438,y+(18 if compact else 22)),15 if compact else 17,PAPER,true)
-		text(item.detail,Vector2(438,y+(35 if compact else 42)),11 if compact else 12,MUTE)
-		box(Rect2(1080,y+(5 if compact else 9),270,34),Color("203d44"),6,Color(GOLD,0.3))
-		if item.pad_keys:
-			var width: float=game.controller.Glyphs.width(item.keys,bold,30,12)
-			game.controller.Glyphs.draw_sequence(self,Vector2(1215-width*0.5,y+(22 if compact else 26)),item.keys,game.controller.family,bold,30,12)
-		else:
-			var key_size := 17
-			while key_size>11 and bold.get_string_size(item.keys,HORIZONTAL_ALIGNMENT_LEFT,-1,key_size).x>246: key_size-=1
-			center(item.keys,Vector2(1215,y+(28 if compact else 32)),key_size,GOLD,true)
 	draw_line(Vector2(422,750),Vector2(1368,750),Color("365359"),1)
 	if game.controller.using_gamepad:
 		game.controller.Glyphs.draw_hints(self,Vector2(423,779),[["LB / RB","Bölüm değiştir"],["A","Seç"],["B / Y","Kapat"]],game.controller.family,font,25,12)

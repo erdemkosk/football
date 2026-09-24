@@ -1,11 +1,12 @@
 extends RefCounted
+const Style=preload("res://scripts/ui_style.gd")
 ## Native canvas artwork; two existing kit studios provide the live heroes.
-const INK := Color("081019")
-const PANEL := Color("10202b")
-const LINE := Color("29404c")
-const PAPER := Color("f4f5ed")
-const MUTE := Color("91a7b5")
-const GOLD := Color("d6f77a")
+const INK := Style.INK
+const PANEL := Style.PANEL
+const LINE := Style.LINE
+const PAPER := Style.PAPER
+const MUTE := Style.MUTE
+const GOLD := Style.ACCENT
 const MINT := Color("7fe4c2")
 
 static func fitted(front,value: String,at: Vector2,px: int,width: float,color: Color=PAPER) -> void:
@@ -36,7 +37,7 @@ static func draw(front) -> void:
 	front.draw_line(Vector2(1300,55),Vector2(1352,55),LINE,2)
 	front.text("03",Vector2(1365,63),22,MUTE,true)
 	front.text("TARAFINI SEÇ." if front.pick_step==0 else ("RAKİBİN KİM?" if front.pick_step==1 else "SAHAYA HAZIR."),Vector2(48,164),43,PAPER,true)
-	front.text("KIYI ARENA  /  İSTANBUL",Vector2(1144,165),12,MUTE,true)
+	front.text("SEFC ARENA",Vector2(1144,165),12,MUTE,true)
 	for side in range(2):
 		var x := 48.0 if side==0 else 758.0
 		var data: Dictionary=front.game.clubs.data(side)
@@ -74,6 +75,7 @@ static func draw(front) -> void:
 	if front.game.controller.using_gamepad:
 		front.game.controller.Glyphs.draw_hints(front,Vector2(52,765),[["LS / D-PAD","Takım"],["LB / RB","Lig"],["X","Forma"],["A","Seç"],["B","Geri"]],front.game.controller.family,front.font,25,11,26)
 	else: front.text("← →  TAKIM      Q / E  LİG      ENTER  SEÇ      ESC  GERİ",Vector2(52,777),11,MUTE)
+	front.text("2 × %d DK  ·  %d DK MAÇ" % [front.game.quick_half_minutes,front.game.quick_half_minutes*2],Vector2(1170,777),12,GOLD,true)
 
 static func overlay(front) -> void:
 	var focus: Control=front.get_viewport().gui_get_focus_owner()

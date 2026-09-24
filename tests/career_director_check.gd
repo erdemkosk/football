@@ -94,7 +94,10 @@ func run() -> void:
 	q.terms.release=World.value(q); c.begin_deal(target); c.deal.rival_fee=0
 	c.offer_deal(q.terms.release,50000,3,2)
 	check(c.deal.stage=="contract","A release-price offer is accepted without the seller's normal markup")
-	fresh(); target=c.world.clubs.c01.roster[9]; c.player(target).age=22
+	fresh()
+	# The scarce-talent squads no longer guarantee that shirt 10 is a star.
+	target=c.world.clubs.c01.roster.filter(func(pid): return World.ovr(c.player(pid))>=75 and c.sale_allowed(pid))[0]
+	c.player(target).age=22
 	c.begin_deal(target)
 	check(c.deal.rival!="" and c.deal.rival_fee>0,"A desirable player attracts a funded rival offer with a deadline")
 	var rival: String=c.deal.rival; var deadline: int=c.deal.deadline

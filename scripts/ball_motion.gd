@@ -67,6 +67,16 @@ static func air_drag(surface) -> float:
 static func air_velocity(velocity: Vector3,delta: float,drag: float) -> Vector3:
 	return velocity/(1+drag*velocity.length()*delta)
 
+static func ground_rebound(incoming: Vector3,surface,point: Vector3) -> Vector3:
+	var impact := maxf(0,-incoming.y)
+	var bounce: float=surface.ball_bounce(point) if is_instance_valid(surface) else .56
+	# The turf contributes .05 restitution. Wet ground also absorbs forward
+	# speed on every landing, using the same surface loss as rolling/prediction.
+	var resistance := profile(surface,point)
+	var water_loss := maxf(0,resistance.y-DRY_DAMPING)*.9
+	var retention := clampf(.985-impact*.005-resistance.x*.005-water_loss,maxf(.48,.82-water_loss),.98)
+	return Vector3(incoming.x*retention,impact*clampf(bounce+.05,0,.85) if impact>1.2 else 0.0,incoming.z*retention)
+
 static func apply_spin(velocity: Vector3,spin: float,delta: float) -> Vector3:
 	# Magnus deflection changes heading without adding artificial kinetic energy.
 	if absf(spin)<0.001: return velocity

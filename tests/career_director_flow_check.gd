@@ -79,7 +79,7 @@ func run() -> void:
 	check(finale.shootout_winner()==0,"A complete sudden-death pair determines the winner")
 	finale.phase="result"; finale.age=3; finale.update(.01); game._process(0)
 	check(f.played and f.live_penalties and f.penalties==[6,5],"The played shootout result is persisted without re-simulation")
-	check(game.state=="trophy" and is_instance_valid(finale.trophy) and finale.medals.size()==11,"Winning the cup enters a 3D trophy and medal ceremony")
+	check(game.state=="trophy" and is_instance_valid(finale.trophy) and finale.medals.size()==18,"Winning the cup enters a 3D trophy and medal ceremony including the bench")
 	finale.update(4); game.update_camera(0)
 	await capture("director-trophy-lift")
 	var cash: int=c.club().cash; tap(JOY_BUTTON_A)

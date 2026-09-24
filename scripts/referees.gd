@@ -172,6 +172,9 @@ func update(delta: float) -> void:
 	clock+=delta
 	decision_age+=delta
 	signal_time=maxf(0,signal_time-delta)
+	if game.state=="halftime" and ready_for_restart() and decision_age>2.5:
+		game.interval.walk_officials(delta)
+		return
 	var ball: Vector3=game.ball.position
 	var forward: float = game.attack_sign(game.last_touch)
 	var follow := Vector3(clampf(ball.x*0.4-7,-24,24),0,clampf(ball.z-forward*9,-42,42))

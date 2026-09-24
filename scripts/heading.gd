@@ -37,7 +37,7 @@ func window(index: int) -> Dictionary:
 	var velocity: Vector3=ball.kick_velocity if ball.pending_kick else ball.linear_velocity
 	if head.distance_to(ball.position)<0.65: return {"time":0.0,"jump":0.0}
 	var travel: Vector3=p.velocity*Vector3(1,0,1)
-	var jump_limit: float=lerpf(4.4,6.2,p.energy)*p.Attributes.multiplier(p.attributes.heading,.07)
+	var jump_limit: float=lerpf(4.4,6.2,p.energy)*p.Attributes.multiplier(float(p.attributes.heading)*.4+p.Attributes.value(p,"jumping")*.6,.09)*(1.04 if p.Attributes.has_style(p,"aerial") else 1.0)
 	for sample in range(1,14):
 		var time := sample*0.05
 		var point: Vector3=ball.position+velocity*time+Vector3.DOWN*4.905*time*time
@@ -132,6 +132,7 @@ func resolve() -> void:
 	cancel(best,true)
 	if request.user:
 		game.charging=false; game.charge=0; game.shot_chip=false; game.shot_finesse=false
+	p.strike_effort=float(request.power)
 	if game.strike(best,velocity,0,false,"header" if intent=="shot" else "header_"+intent):
 		p.header_hit_age=0
 		if intent=="shot": game.shots[p.team]+=1

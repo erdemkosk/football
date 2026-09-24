@@ -66,7 +66,8 @@ func run() -> void:
 		game.return_menu(); game.set_physics_process(false); game.hud.sync_navigation(); game.hud.queue_redraw()
 		verify_layout(label)
 		await capture("menu-"+label)
-		click(game.ui.transform*Vector2(240,774)); await settle()
+		var settings_rect: Rect2=game.hud.home_menu.RECTS[2]
+		click(game.ui.transform*settings_rect.get_center()); await settle()
 		check(game.match_menu.visible,"Mouse clicks the centered Settings button: "+label)
 		if game.match_menu.visible:
 			game.match_menu.show_page(3); game.match_menu.queue_redraw()

@@ -3,7 +3,13 @@ const Card=preload("res://scripts/career_tactics_card.gd")
 const LINES := [
 	[[0],[1,2,3,4],[5,6,7,8],[9,10]],
 	[[0],[1,2,3,4],[5,6,7],[8,9,10]],
-	[[0],[1,2,3],[4,5,6,7,8],[9,10]]]
+	[[0],[1,2,3],[4,5,6,7,8],[9,10]],
+	[[0],[1,2,3,4],[5,6,7,8,9],[10]],
+	[[0],[1,2,3,4],[5,6,7,8],[9,10]],
+	[[0],[1,2,3,4,5],[6,7,8],[9,10]],
+	[[0],[1,2,3],[4,5,6,7],[8,9,10]],
+	[[0],[1,2,3,4],[5,6,7,8,9],[10]],
+	[[0],[1,2,3,4],[5,6,7,8],[9,10]]]
 var settings_open := false
 var selected := ""
 var focused := ""
@@ -212,7 +218,7 @@ func build(s) -> void:
 
 func build_settings(s) -> void:
 	var plan: Dictionary=s.game.career.club().plan
-	var rows := [["Diziliş",["4-4-2","4-3-3","3-5-2"],"formation"],["Oyun anlayışı",["Savunmacı","Dengeli","Hücumcu"],"mentality"],["Savunma çizgisi",["Derin","Normal","Önde"],"line_height"],["Pres",["Geri çekil","Dengeli","Yoğun"],"pressing"],["Genişlik",["Dar","Dengeli","Geniş"],"width"],["Tempo",["Sabırlı","Dengeli","Hızlı"],"tempo"],["Koşular",["Ayağa gel","Dengeli","Arkaya koş"],"runs"],["Bekler",["Geride kal","Dengeli","Bindir"],"fullbacks"]]
+	var rows := [["Diziliş",Array(s.game.management.FORMATIONS),"formation"],["Oyun anlayışı",["Savunmacı","Dengeli","Hücumcu"],"mentality"],["Savunma çizgisi",["Derin","Normal","Önde"],"line_height"],["Pres",["Geri çekil","Dengeli","Yoğun"],"pressing"],["Genişlik",["Dar","Dengeli","Geniş"],"width"],["Tempo",["Sabırlı","Dengeli","Hızlı"],"tempo"],["Koşular",["Ayağa gel","Dengeli","Arkaya koş"],"runs"],["Bekler",["Geride kal","Dengeli","Bindir"],"fullbacks"]]
 	for n in range(rows.size()):
 		var row: Array=rows[n]
 		var option: OptionButton=s.option_at(Rect2(1100,228+n*57,266,39),row[1],int(plan.get(row[2],1)),func(v): plan[row[2]]=v; apply_plan(s); s.build())
@@ -225,6 +231,7 @@ func build_settings(s) -> void:
 	use_plan.focus_neighbor_left=use_plan.get_path_to(save_plan)
 
 func apply_plan(s) -> void:
+	if s.live: s.game.management.manual_plan=true
 	s.game.career.apply_plan(s.game.career.club().plan); s.game.management.apply_formation(); s.game.career.save()
 
 func neighbor(button: Control,side: int,target: Control) -> void:

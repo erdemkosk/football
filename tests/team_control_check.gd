@@ -48,10 +48,10 @@ func run() -> void:
 	await physics_frame
 	setup()
 	check(not game.player_lock,"New matches start with whole-team control")
-	button(JOY_BUTTON_A); var preview: Dictionary=game.pass_preview.duplicate()
+	button(JOY_BUTTON_A); var velocity: Vector3=game.kick_contact.pending.velocity
 	button(JOY_BUTTON_A,false)
 	contact()
-	check(game.controlled==9 and game.last_kicker==9 and game.ball.kick_velocity.is_equal_approx(preview.velocity),"A passes physically and leaves the passer selected")
+	check(game.controlled==9 and game.last_kicker==9 and game.ball.kick_velocity.is_equal_approx(velocity),"A passes physically and leaves the passer selected")
 	game.players[9].touch_cooldown=0; game.ball.linear_velocity=game.ball.kick_velocity
 	game.team_control.update(0.1)
 	check(game.controlled==6,"Outgoing pass selects the teammate who can receive its physical trajectory")
@@ -66,6 +66,7 @@ func run() -> void:
 	setup()
 	game.players[6].visible=false; game.players[7].visible=false; game.players[0].visible=true
 	game.players[0].position=Vector3(0,0,8); game.last_direction=Vector3.BACK
+	game.players[9].facing=Vector3.BACK
 	button(JOY_BUTTON_A); button(JOY_BUTTON_A,false)
 	contact()
 	check(game.controlled==9 and game.ball.kick_velocity.z>0,"A backpass follows the aimed heading without taking control away from the passer")
@@ -116,13 +117,14 @@ func run() -> void:
 	check(game.controlled==9,"Optional single-player mode still preserves the selected player")
 
 	setup()
-	game.players[9].position=Vector3(0,0,1.2)
+	game.players[9].position=Vector3(0,0,.9)
 	game.players[17].visible=true; game.players[17].position=Vector3(0,0,-0.5); game.dribbler=17
 	button(JOY_BUTTON_X)
 	check(game.players[9].pose=="poke" and game.duels.attempts.has(9) and not game.rules.tackles.has(9) and not game.charging,"Off-ball Xbox X begins a standing foot challenge, never a slide")
 	var tackle_time: float=game.players[9].action_timer
 	button(JOY_BUTTON_X)
 	check(game.players[9].action_timer==tackle_time,"Holding X cannot repeatedly restart a challenge")
+	game.players[9].step(.13)
 	game.duels.resolve(0.13)
 	check(game.ball.pending_kick and game.ball.kick_velocity.length()<6 and game.last_kicker==9,"A clean standing challenge physically pokes the ball away")
 	game.dribbler=9; game.ball.position=game.players[9].position+Vector3(0,0.23,-0.7)
@@ -147,11 +149,11 @@ func run() -> void:
 	button(JOY_BUTTON_Y)
 	check(game.pass_charging and game.pass_through and game.players[9].feint_time==0,"Y prepares a through ball without triggering a feint")
 	var short_target: Vector3=game.pass_preview.target
-	check(game.pass_preview.receiver==-1 and short_target.z<game.players[6].position.z-3,"A short Y pass goes into forward space along the aimed heading")
+	check(game.pass_preview.receiver==-1 and absf(short_target.x-game.ball.position.x)<.001 and short_target.z<game.players[6].position.z-3,"A short Y pass targets free space along the chosen direction")
 	button(JOY_BUTTON_A,false)
 	check(game.pass_charging,"Releasing A cannot accidentally release a held Y pass")
 	hold(0.65)
-	check(game.pass_preview.target.distance_to(game.players[6].position)>short_target.distance_to(game.players[6].position)+4,"Holding Y sends the ball farther into the runner's path")
+	check(game.pass_preview.target.distance_to(game.players[6].position)>short_target.distance_to(game.players[6].position)+4,"Holding Y sends the ball farther along the chosen ray")
 	await capture("through")
 	var through: Dictionary=game.pass_preview.duplicate(); var origin: Vector3=game.ball.position
 	button(JOY_BUTTON_Y,false)
@@ -162,13 +164,14 @@ func run() -> void:
 	check(game.ball.kick_velocity==original_kick,"Changing the runner's direction after the kick cannot steer the ball in flight")
 	setup()
 	game.half=2; game.last_direction=Vector3.BACK; game.players[6].position=Vector3(1,0,8)
+	game.players[9].facing=Vector3.BACK
 	game.players[7].visible=false; game.players[14].position.z=40; game.players[11].position.z=48
 	button(JOY_BUTTON_Y)
-	check(game.pass_preview.receiver==-1 and game.pass_preview.target.z>12,"Through balls follow the reversed attack direction in the second half")
+	check(game.pass_preview.receiver==-1 and absf(game.pass_preview.velocity.x)<.001 and game.pass_preview.target.z>game.players[6].position.z,"Through balls preserve the chosen backward heading in the second half")
 	setup()
 	game.players[6].position=Vector3(0,0,-44); game.players[7].visible=false
 	button(JOY_BUTTON_Y)
-	check(game.pass_preview.receiver==-1 and absf(game.pass_preview.velocity.x)<0.001,"An offside runner is not targeted by through-ball assistance")
+	check(game.pass_preview.receiver==-1 and absf(game.pass_preview.velocity.x)<0.001,"An offside runner cannot redirect a freely aimed through ball")
 	setup()
 	game.players[9].position=Vector3(0,0,-14); game.players[6].position=Vector3(0,0,0.8)
 	game.players[7].visible=false
@@ -180,12 +183,12 @@ func run() -> void:
 
 	setup()
 	game.players[6].position=Vector3(6,0,-8); game.players[7].visible=false
-	game.pass_assistance=0; game.begin_pass(); var manual_pass: Dictionary=game.pass_preview.duplicate(); game.cancel_pass()
-	game.pass_assistance=1; game.begin_pass(); var assisted: Dictionary=game.pass_preview.duplicate(); game.cancel_pass()
-	check(manual_pass.receiver==-1 and manual_pass.velocity.x==0 and assisted.receiver==-1,"A teammate well off the aimed line does not steal the pass in either assistance mode")
-	check(absf(assisted.velocity.x)<0.35,"Semi assistance only nudges a near-line teammate and never snaps onto a wide runner")
+	var manual_pass := Passing.quick_plan(game.ball.position,Vector3.FORWARD,0,9,game.players,0,-1,100,game.weather)
+	var assisted := Passing.quick_plan(game.ball.position,Vector3.FORWARD,0,9,game.players,.65,-1,100,game.weather)
+	check(manual_pass.receiver==-1 and manual_pass.velocity.x==0 and assisted.receiver==6,"Manual mode keeps the heading while assisted normal passing selects the teammate in its cone")
+	check(assisted.velocity.x>0,"Automatic normal passing aims at the selected teammate")
 	game.players[6].position=Vector3(0,0,8); game.begin_pass()
-	check(game.pass_preview.receiver==-1 and game.pass_preview.velocity.z<0,"Assistance never redirects a forward pass behind the user")
+	check(game.ai_receivers[0]<0 and game.kick_contact.pending.velocity.z<0,"Assistance never redirects a forward pass behind the user")
 
 	setup()
 	game.match_menu.config_path="res://tests/flow-team-controls.cfg"

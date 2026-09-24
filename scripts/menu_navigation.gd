@@ -103,7 +103,7 @@ func handle(event: InputEvent) -> bool:
 		game.career_screen.handle(event)
 	elif game.match_menu.visible:
 		if event.button_index in [JOY_BUTTON_LEFT_SHOULDER,JOY_BUTTON_RIGHT_SHOULDER]:
-			game.match_menu.show_page(posmod(game.match_menu.page+(-1 if event.button_index==JOY_BUTTON_LEFT_SHOULDER else 1),4))
+			game.match_menu.show_page(posmod(game.match_menu.page+(-1 if event.button_index==JOY_BUTTON_LEFT_SHOULDER else 1),game.match_menu.navigation.size()))
 		else: game.match_menu.handle(event)
 	elif game.frontend.visible:
 		game.frontend.handle(event)
@@ -149,6 +149,8 @@ func activate() -> void:
 		popup_option=focus
 		focus.show_popup()
 		focus.get_popup().set_focused_item(focus.selected)
+	elif focus is BaseButton and focus.disabled:
+		game.hud.ui_feedback.cue("error")
 	elif focus is BaseButton and not focus.disabled:
 		if game.training_menu.visible and focus in game.training_menu.cards: game.training_menu.start()
 		else: focus.pressed.emit()

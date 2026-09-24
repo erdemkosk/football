@@ -1,6 +1,6 @@
 extends RefCounted
 const World=preload("res://scripts/career_world.gd")
-const TITLES:={"domestic":"SEFC ÜLKE KUPASI","champions":"SEFC ŞAMPİYONLAR KUPASI","super":"SEFC SÜPER KUPA"}
+const TITLES:={"domestic":"SEFC LİG KUPASI","champions":"SEFC ŞAMPİYONLAR KUPASI","super":"SEFC SÜPER KUPA"}
 const CHAMPION_PRIZES:={"domestic":1800000,"champions":25000000,"super":650000}
 const ROUNDS:=["ÖN ELEME","SON 32","SON 16","ÇEYREK FİNAL","YARI FİNAL","FİNAL"]
 var career_ref: WeakRef
@@ -204,5 +204,5 @@ func period_end() -> bool:
 	game.stadium.crowd.home_attack=game.attack_sign(0)
 	game.charging=false; game.cancel_pass(); game.replay.frames.clear(); game.rules.reset()
 	game.begin_restart("SANTRA",extra_phase-1,Vector3.ZERO)
-	game.referees.whistle(); game.announce("UZATMA · "+("İLK 15 DAKİKA" if extra_phase==1 else "İKİNCİ 15 DAKİKA"))
+	game.referees.whistle()
 	return true

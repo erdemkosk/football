@@ -39,10 +39,11 @@ func run() -> void:
 		var key := InputEventKey.new(); key.keycode=entry[0]; key.pressed=true
 		game.advanced_controls.handle(key)
 		check(game.skills.active.get(9,{}).get("kind","")==entry[1],"Keyboard maps the new intent: "+entry[1])
-	for entry in [[Vector3.BACK,"stop_go"],[Vector3.RIGHT,"knock_around"]]:
+	for entry in [[Vector3.BACK,"stop_go"],[Vector3.FORWARD,"knock_around"],[Vector3.RIGHT,"roll"]]:
 		await setup()
 		game.controller.held[JOY_BUTTON_RIGHT_SHOULDER]=KEY_W
 		game.advanced_controls.skill_gesture(entry[0])
+		game.advanced_controls.update(.19)
 		check(game.skills.active.get(9,{}).get("kind","")==entry[1],"Sprint and right-stick map the new intent: "+entry[1])
 	for kind in ["roll","stop_go","knock_around"]:
 		for side in [-1.0,1.0]:
@@ -67,7 +68,7 @@ func run() -> void:
 	await setup()
 	game.skills.start(9,"roll",1)
 	game.begin_pass()
-	check(game.pass_charging and not game.skills.active.has(9),"Pass cancels preparation before the foot commits")
+	check(not game.kick_contact.pending.is_empty() and not game.skills.active.has(9),"An immediate normal pass cancels preparation before the foot commits")
 	await setup()
 	game.skills.start(9,"roll",1)
 	game.ball.place(game.players[9].position+Vector3(5,.22,0))
@@ -109,7 +110,7 @@ func run() -> void:
 	check(not game.skills.active.has(9) and game.ball.position==paused_ball,"Pause cancels preparation without striking the ball")
 	game.state="playing"
 	game.training_menu.open_menu(); game.training_menu.choose(3)
-	check(game.training_menu.cards.size()==4,"Training menu exposes the new workshop")
+	check(game.training_menu.selected==3 and game.training_menu.Catalog.MODES[3]=="duel" and game.training_menu.cards[3].visible,"Training menu exposes and selects the duel workshop")
 	await capture("workshop-menu")
 	game.training_menu.start(); game.set_process(false); game.set_physics_process(false)
 	game.hud.sync_navigation(); game.hud.bug_age=2

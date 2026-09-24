@@ -1,11 +1,12 @@
 extends Control
+const UI=preload("res://scripts/ui_style.gd")
 const Brand = preload("res://scripts/branding.gd")
 ## Shared typography and restrained stadium-broadcast styling.
-const INK := Color("081019")
-const PANEL := Color("10202b")
-const PAPER := Color("f4f5ed")
-const GOLD := Color("d6f77a")
-const MUTE := Color("91a7b5")
+const INK := UI.INK
+const PANEL := UI.PANEL
+const PAPER := UI.PAPER
+const GOLD := UI.ACCENT
+const MUTE := UI.MUTE
 var font := SystemFont.new()
 var bold := SystemFont.new()
 var prompt_controller
@@ -81,6 +82,7 @@ func box(rect: Rect2,color: Color=PANEL,radius: int=8,border: Color=Color.TRANSP
 	draw_style_box(style,rect)
 
 func text(value: String,at: Vector2,size: int=16,color: Color=PAPER,strong: bool=false) -> void:
+	size=maxi(12,size)
 	draw_string(bold if strong else font,at,value,HORIZONTAL_ALIGNMENT_LEFT,-1,size,color)
 
 func center(value: String,at: Vector2,size: int=16,color: Color=PAPER,strong: bool=false) -> void:
@@ -114,7 +116,7 @@ func make_button(parent: Node,rect: Rect2,value: String,callback: Callable,prima
 		for state in ["normal","hover","pressed"]:
 			var style := StyleBoxFlat.new()
 			style.bg_color=GOLD.lightened(0.12) if state=="hover" else GOLD
-			style.set_corner_radius_all(6)
+			style.set_corner_radius_all(UI.RADIUS)
 			button.add_theme_stylebox_override(state,style)
 		button.add_theme_color_override("font_color",INK)
 		button.add_theme_color_override("font_hover_color",INK)

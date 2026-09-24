@@ -1,5 +1,8 @@
 extends "res://scripts/menu_screen.gd"
 var game
+var inspector
+var scroll_memory: Dictionary={}
+var field_memory: Dictionary={}
 var content: VBoxContainer
 var status: Label
 var capture_action := -1
@@ -32,7 +35,7 @@ var last_career_division := 0
 func _ready() -> void:
 	setup_style()
 	visible=false
-	var sections := [["SES","sound"],["KONTROLÇÜ","pad"],["TUŞ ATAMA","keys"],["GÖRÜNTÜ","view"]]
+	var sections := [["SES","sound"],["KONTROLÇÜ","pad"],["TUŞ ATAMA","keys"],["GÖRÜNTÜ","view"],["ERİŞİLEBİLİRLİK","keys"],["OYNANIŞ","pitch"]]
 	for i in range(sections.size()):
 		var button := make_button(self,Rect2(54,251+i*80,258,64),sections[i][0],show_page.bind(i))
 		button.alignment=HORIZONTAL_ALIGNMENT_LEFT
@@ -44,15 +47,7 @@ func _ready() -> void:
 		button.add_theme_constant_override("icon_max_width",28)
 		navigation.append(button)
 	style_nav()
-	scroll=ScrollContainer.new()
-	scroll.position=Vector2(379,322)
-	scroll.size=Vector2(969,409)
-	scroll.follow_focus=true
-	add_child(scroll)
-	content=VBoxContainer.new()
-	content.size_flags_horizontal=Control.SIZE_EXPAND_FILL
-	content.add_theme_constant_override("separation",16)
-	scroll.add_child(content)
+	create_scroller()
 	status=Label.new()
 	status.position=Vector2(55,816)
 	status.size=Vector2(915,65)
@@ -63,8 +58,23 @@ func _ready() -> void:
 	save_button=make_button(self,Rect2(1060,817,326,62),"KAYDET & DÖN  →",close_menu,true)
 	add_child(display)
 	display.changed.connect(refresh_display)
+	inspector=preload("res://scripts/settings_preview.gd").new(); inspector.game=game; inspector.menu=self
+	inspector.position=Vector2(1002,322); inspector.size=Vector2(346,409); add_child(inspector)
 	load_settings()
 	game.controller.prompts_changed.connect(refresh_prompts)
+
+func create_scroller() -> void:
+	scroll=ScrollContainer.new()
+	scroll.position=Vector2(379,322)
+	scroll.size=Vector2(969,409)
+	scroll.follow_focus=true
+	scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode=ScrollContainer.SCROLL_MODE_SHOW_ALWAYS
+	add_child(scroll)
+	content=VBoxContainer.new()
+	content.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+	content.add_theme_constant_override("separation",16)
+	scroll.add_child(content)
 
 func refresh_prompts() -> void:
 	if page==2:
@@ -74,6 +84,7 @@ func refresh_prompts() -> void:
 	queue_redraw()
 
 func binding_icon(button: Button,action: int) -> void:
+	button.set_meta("binding_action",game.controller.label_for(action))
 	button.icon=game.controller.icon_for(action)
 	button.text="Atanmamış" if button.icon==null else ""
 	button.icon_alignment=HORIZONTAL_ALIGNMENT_CENTER
@@ -90,8 +101,8 @@ func pad_hint(items: Array) -> void:
 func _draw() -> void:
 	backdrop("TAM SANA GÖRE.","Sesini, hissini ve kontrolünü kendine göre ayarla.",Brand.SHORT+"  /  AYARLAR")
 	box(Rect2(341,231,1045,533),PANEL,10,Color("29464c"))
-	text(["STADYUMUN SESİ","TOP SENİN KONTROLÜNDE","HER HAREKETİN BİR TUŞU VAR","SENİN MAÇ DENEYİMİN"][page],Vector2(379,280),24,PAPER,true)
-	text(["Her katmanı ayrı ayarla.","Analog hareketini eline göre ayarla.","Bir hareket seç, ardından yeni tuşa bas.","Sahaya nasıl bakacağını seç."][page],Vector2(380,306),14,MUTE)
+	text(["STADYUMUN SESİ","TOP SENİN KONTROLÜNDE","HER HAREKETİN BİR TUŞU VAR","SENİN MAÇ DENEYİMİN","OKU, ÖĞREN, DEĞERLENDİR"][page],Vector2(379,280),24,PAPER,true)
+	text(["Her katmanı ayrı ayarla.","Analog hareketini eline göre ayarla.","Bir hareket seç, ardından yeni tuşa bas.","Sahaya nasıl bakacağını seç.","Yazılar, takım işaretleri ve yerel maç raporları."][page],Vector2(380,306),14,MUTE)
 	text("SAHADA SEN VARSIN.",Vector2(55,704),16,GOLD,true)
 	text("Her dokunuşu kendin belirle.",Vector2(55,730),13,MUTE)
 	if status.text=="":
@@ -110,6 +121,8 @@ func nav_icon(kind: String) -> Texture2D:
 			art='<rect x="6" y="11" width="10" height="9" rx="2"/><rect x="18" y="11" width="10" height="9" rx="2"/><rect x="30" y="11" width="5" height="9" rx="2"/><rect x="10" y="22" width="20" height="8" rx="2"/>'
 		"view":
 			art='<rect x="7" y="10" width="26" height="16" rx="2"/><path d="M14 32L20 26L26 32"/><path d="M16 16H24M20 12V20"/>'
+		"pitch":
+			art='<rect x="7" y="9" width="26" height="22" rx="2"/><path d="M7 20H33"/><circle cx="20" cy="20" r="4"/><path d="M15 9V13H25V9M15 31V27H25V31"/>'
 	var svg := '<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><rect x="1.5" y="1.5" width="37" height="37" rx="8" fill="#142d35" stroke="#526c72" stroke-width="1.4"/><g fill="none" stroke="#f4f0df" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">%s</g></svg>' % art
 	var bitmap := Image.new()
 	bitmap.load_svg_from_string(svg,2.0)
@@ -152,6 +165,7 @@ func option(title: String,values: Array,current: int,changed: Callable) -> Optio
 	row.add_child(text)
 	var field := OptionButton.new()
 	field.set_meta("setting",title)
+	field.fit_to_longest_item=false; field.clip_text=true
 	field.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	for value in values: field.add_item(str(value))
 	field.select(current)
@@ -187,12 +201,16 @@ func slider(title: String,value: float,low: float,high: float,changed: Callable)
 	field.value_changed.connect(func(v): number.text="%d%%" % roundi(v*100); changed.call(v))
 
 func show_page(index: int) -> void:
-	page=clampi(index,0,3)
+	scroll_memory[page]=scroll.scroll_vertical
+	page=clampi(index,0,navigation.size()-1)
 	capture_action=-1
 	display_mode_field=null; resolution_field=null; display_description=null
 	fields.clear()
 	style_nav()
-	for child in content.get_children(): content.remove_child(child); child.queue_free()
+	# Recreate the scroll range with the page so stale layout work cannot reset it.
+	remove_child(scroll); scroll.queue_free()
+	create_scroller()
+	scroll.size.x=597 if page in [1,2,3] else 969
 	scroll.scroll_vertical=0
 	match page:
 		0:
@@ -201,6 +219,13 @@ func show_page(index: int) -> void:
 			slider("Tribün davulları",game.audio.drum_volume,0,1,func(v): game.audio.drum_volume=v)
 			option("Tüm sesler",["Kapalı","Açık"],int(not game.audio.muted),func(v):
 				if game.audio.muted==(v==1): game.audio.toggle())
+			option("Menü geri bildirim sesleri",["Kapalı","Açık"],int(game.experience.ui_sounds),func(v): game.experience.ui_sounds=v==1)
+			option("Spiker",["Kapalı","Açık"],int(game.commentary.enabled),func(v):
+				game.commentary.enabled=v==1
+				if v==0: game.commentary.stop())
+			slider("Spiker sesi",game.commentary.volume,0,1,func(v): game.commentary.volume=v)
+			option("Spiker altyazısı",["Kapalı","Açık"],int(game.commentary.subtitles),func(v): game.commentary.subtitles=v==1)
+			label("Spiker, işletim sisteminin Türkçe konuşma sesini kullanır; ses kaydı indirilmez. Türkçe ses yoksa altyazıyı açabilirsin.")
 			label("Stadyum, alkış ve davul birbirinden bağımsız çalar. Maça döndüğünde yeni ses dengesi uygulanır.")
 		1:
 			slider("Analog hassasiyeti",game.controller.sensitivity,0.6,1.8,func(v): game.controller.sensitivity=v)
@@ -235,6 +260,7 @@ func show_page(index: int) -> void:
 					if pad: binding_icon(button,ACTIONS[i])
 					else: button.text=OS.get_keycode_string(key_for(ACTIONS[i]))
 					button.pressed.connect(func(): capture_action=ACTIONS[i]; capture_pad=pad; status.text="Yeni kontrolcü tuşuna bas…  ·  Menü / geri tuşu veya Esc: iptal" if pad else "Yeni klavye tuşuna bas…  ·  Geri tuşu veya Esc: iptal"; queue_redraw())
+					button.set_meta("binding_action",game.controller.label_for(ACTIONS[i]))
 					row.add_child(button)
 					buttons.append(button)
 				fields.append(buttons)
@@ -252,7 +278,9 @@ func show_page(index: int) -> void:
 			refresh_display()
 			option("FPS göstergesi",["Kapalı","Açık"],int(game.performance_hud.visible),func(v): game.performance_hud.visible=v==1)
 			option("Gol tekrarları",["Kapalı","Açık"],int(game.replay.enabled),func(v): game.replay.enabled=v==1)
-			option("Rakip zorluğu",["Kolay","Normal","Zor"],game.management.difficulty,func(v): game.management.difficulty=v)
+			option("Maç sunumu",["Tam · tüm törenler","Kısa · hızlı hazırlık"],int(game.experience.short_presentation),func(v): game.experience.short_presentation=v==1)
+			label("Kısa sunum: kısa giriş ve gol sevinci, hızlı değişiklik ve duran top hazırlığı. Maç süresi ve oyun hızı aynı kalır.")
+			option("Kariyer rakip zorluğu" if game.career.in_match else "Rakip zorluğu",game.MatchSettings.LEVELS,game.management.level,change_difficulty)
 			option("Pas yardımı",["Manuel","Yarı yardımlı","Yardımlı"],game.pass_assistance,func(v): game.pass_assistance=v)
 			option("Başlangıç kamerası",Array(game.match_camera.LABELS),game.match_camera.IDS.find(game.match_camera.preferred),func(v): game.match_camera.preference(game.match_camera.IDS[v]))
 			slider("Kamera uzaklığı",game.match_camera.distance,.70,1.50,game.match_camera.set_distance)
@@ -261,12 +289,68 @@ func show_page(index: int) -> void:
 			reset_camera.text="KAMERA AYARLARINI SIFIRLA"
 			reset_camera.custom_minimum_size.y=44
 			content.add_child(reset_camera); fields.append([reset_camera])
-			reset_camera.pressed.connect(func(): game.match_camera.defaults(); show_page(3); fields[6][0].grab_focus())
+			reset_camera.pressed.connect(func(): game.match_camera.defaults(); show_page(3); fields[7][0].grab_focus())
 			label("Uzaklık azalınca oyuncular büyür; yükseklik arttıkça sahayı daha tepeden görürsün. Maçta fare tekerleği uzaklığı, C kamera türünü değiştirir. Ayarlar sonraki maçlarda da korunur.")
-			label("Pas yardımı nişanı hafifçe düzeltir, oyuncu seçmez. Yönü sen verirsin; top boşluğa da gidebilir ve rakipler de müdahale eder.")
+			label("Normal pasta yardım, verdiğin yöndeki arkadaşı seçer. Ara pas ve havadan uzun pasta yön tamamen sende; ok oyunculara kilitlenmez.")
 			pad_hint([["A","Gol tekrarını geç (klavye: Space / Enter)"]])
+		4:
+			option("Maç ve rehber yazıları",["Normal · %100","Büyük · %115","Çok büyük · %130"],game.experience.text_size,func(v): game.experience.text_size=v; apply_readability())
+			option("Arayüz hareketlerini azalt",["Kapalı","Açık"],int(game.experience.reduce_motion),func(v): game.experience.reduce_motion=v==1)
+			for part in [["Skor tabelası boyutu","score_scale"],["Oyuncu kartı boyutu","player_scale"],["Mini harita boyutu","map_scale"]]:
+				var key: String=part[1]
+				slider(part[0],game.experience.get(key),.75,1.15,func(v): game.experience.set(key,v))
+			option("Takım şekilleri",["Kapalı","Açık · daire / kare"],int(game.experience.team_symbols),func(v): game.experience.team_symbols=v==1)
+			label("Dolu ok: senin oyuncun. Daire: takımın. Kare: rakip. Saha ve mini harita aynı şekilleri kullanır.")
+			option("Yerel maç raporları",["Kapalı","Açık"],int(game.playtest.enabled),func(v): game.playtest.enabled=v==1)
+			label("Yeni maçlardan şut açısı, yağmur, yorgunluk ve kontrol olayları kaydedilir. Raporlar bu cihazda kalır; otomatik gönderilmez.")
+			if not game.playtest.report.is_empty() and not game.playtest.active:
+				label("SON MAÇ · 1 zayıf, 5 çok iyi. İstersen kısa bir yorum ekle.")
+				var ratings: Dictionary=game.playtest.report.get("feedback",{})
+				var controls := option("Kontroller istediğin gibi mi?",["1","2","3","4","5"],int(ratings.get("controls",3))-1,func(_v): pass)
+				var balance := option("Maç dengesi adil mi?",["1","2","3","4","5"],int(ratings.get("balance",3))-1,func(_v): pass)
+				var animation := option("Hareketler doğal mı?",["1","2","3","4","5"],int(ratings.get("animation",3))-1,func(_v): pass)
+				var note := LineEdit.new(); note.placeholder_text="Hangi pozisyonda ne oldu? (isteğe bağlı)"; note.max_length=500; note.text=ratings.get("note","")
+				content.add_child(note); fields.append([note])
+				var save_report := Button.new(); save_report.text="DEĞERLENDİRMEYİ YEREL RAPORA KAYDET"
+				content.add_child(save_report); fields.append([save_report])
+				save_report.pressed.connect(func():
+					if game.playtest.feedback(controls.selected+1,balance.selected+1,animation.selected+1,note.text): status.text="Kaydedildi: "+game.playtest.last_file
+					else: status.text="Rapor kaydedilemedi. Yeniden deneyebilirsin.")
+			var folder := Button.new(); folder.text="RAPOR KLASÖRÜNÜ AÇ"
+			content.add_child(folder); fields.append([folder])
+			folder.pressed.connect(func():
+				var path := ProjectSettings.globalize_path(game.playtest.output_dir)
+				DirAccess.make_dir_recursive_absolute(path)
+				OS.shell_show_in_file_manager(path))
+		5:
+			option("Kariyer rakip zorluğu" if game.career.in_match else "Rakip zorluğu",game.MatchSettings.LEVELS,game.management.level,change_difficulty)
+			label("Başlangıç, Yarı Profesyonel ve Dünya Klası ayarlanmış Kolay / Normal / Zor seviyeleridir; aradakiler bu tablolardan hesaplanır, Efsane daha da keskindir. Hiçbir seviye gizli hız veya garantili sonuç vermez.")
+			for side_index in range(2):
+				var side_copy: int=side_index
+				label(("SENİN TAKIMIN" if side_index==0 else "CPU TAKIMI")+"  ·  %50 varsayılan")
+				for k in range(game.sliders.KEYS.size()):
+					var key: String=game.sliders.KEYS[k]
+					slider(game.sliders.LABELS[k],float(game.sliders.values[side_index][key]),0,1,func(v): game.sliders.set_value(side_copy,key,v))
+			label("Hata sliderları temas kalitesi modelinin sapmasını, hız sliderları gerçek koşu ve top hızını ölçekler. Savunma sliderları çizginin yüksekliğini ve genişliğini, koşu sliderı hücum koşusu talimatını değiştirir.")
+			var reset_sliders := Button.new(); reset_sliders.text="OYNANIŞ AYARLARINI SIFIRLA"; reset_sliders.custom_minimum_size.y=44
+			content.add_child(reset_sliders); fields.append([reset_sliders])
+			reset_sliders.pressed.connect(func(): game.sliders.reset(); game.sliders.apply(); show_page(5); fields.back()[0].grab_focus())
+	apply_readability()
 	wire_navigation()
-	navigation[page].grab_focus()
+	var remembered: Vector2i=field_memory.get(page,Vector2i(-1,-1))
+	if remembered.x>=0 and remembered.x<fields.size() and remembered.y<fields[remembered.x].size(): fields[remembered.x][remembered.y].grab_focus()
+	else: navigation[page].grab_focus()
+	var restore: int=scroll_memory.get(page,0)
+	scroll.set_deferred("scroll_vertical",restore)
+	queue_redraw()
+
+func apply_readability() -> void:
+	theme.default_font_size=roundi(17*game.experience.scale_factor())
+	for row in content.get_children():
+		for child in row.get_children():
+			if child is Label and child.custom_minimum_size.x in [180,300,330]:
+				child.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
+				child.custom_minimum_size.x=180 if page in [1,2,3] else 330
 	queue_redraw()
 
 func refresh_display() -> void:
@@ -284,12 +368,12 @@ func wire_navigation() -> void:
 	for i in range(navigation.size()):
 		var button := navigation[i]
 		button.focus_neighbor_top=button.get_path_to(navigation[i-1] if i>0 else save_button)
-		button.focus_neighbor_bottom=button.get_path_to(navigation[i+1] if i<3 else save_button)
+		button.focus_neighbor_bottom=button.get_path_to(navigation[i+1] if i<navigation.size()-1 else save_button)
 		button.focus_neighbor_right=button.get_path_to(fields[0][0])
 	for i in range(fields.size()):
 		for j in range(fields[i].size()):
 			var field: Control=fields[i][j]
-			field.focus_entered.connect(func(): reveal_field.call_deferred(field))
+			field.focus_entered.connect(func(): field_memory[page]=Vector2i(i,j); reveal_field.call_deferred(field))
 			field.focus_neighbor_top=field.get_path_to(fields[i-1][mini(j,fields[i-1].size()-1)] if i>0 else navigation[page])
 			field.focus_neighbor_bottom=field.get_path_to(fields[i+1][mini(j,fields[i+1].size()-1)] if i<fields.size()-1 else save_button)
 			field.focus_neighbor_left=field.get_path_to(fields[i][j-1] if j>0 else navigation[page])
@@ -305,6 +389,7 @@ func reveal_field(field: Control) -> void:
 
 func open_menu() -> void:
 	if visible: close_menu(); return
+	if game.state=="finished" and game.playtest.active: game.playtest.finish("completed")
 	return_state=game.state
 	return_before_pause=game.before_pause
 	previous_freeze=game.ball.freeze
@@ -351,9 +436,9 @@ func handle(event: InputEvent) -> void:
 		elif capture_pad and event is InputEventJoypadMotion and event.axis in [JOY_AXIS_TRIGGER_LEFT,JOY_AXIS_TRIGGER_RIGHT] and event.axis_value>0.65: code=100+event.axis
 		if code<0: return
 		if capture_pad and code==100+JOY_AXIS_TRIGGER_RIGHT:
-			status.text="RT / R2 maç içi taktiklere ayrılmıştır. Başka bir tuş seç."; get_viewport().set_input_as_handled(); return
+			game.hud.ui_feedback.cue("error"); status.text="RT / R2 maç içi taktiklere ayrılmıştır. Başka bir tuş seç."; get_viewport().set_input_as_handled(); return
 		if (not capture_pad and (code not in range(KEY_A,KEY_Z+1) or code in [KEY_P,KEY_K,KEY_C,KEY_M,KEY_H,KEY_F,KEY_T,KEY_R])) or (capture_pad and code in [JOY_BUTTON_START,JOY_BUTTON_BACK,JOY_BUTTON_DPAD_UP,JOY_BUTTON_DPAD_DOWN,JOY_BUTTON_DPAD_LEFT,JOY_BUTTON_DPAD_RIGHT]):
-			status.text="Klavye için A–Z seç; menü, geri ve yön tuşları menüye ayrılmıştır."; get_viewport().set_input_as_handled(); return
+			game.hud.ui_feedback.cue("error"); status.text="Klavye için A–Z seç; menü, geri ve yön tuşları menüye ayrılmıştır."; get_viewport().set_input_as_handled(); return
 		if capture_pad: game.controller.rebind(capture_action,code)
 		else:
 			var previous := key_for(capture_action)
@@ -369,6 +454,13 @@ func handle(event: InputEvent) -> void:
 		return
 	if (event is InputEventKey and event.pressed and event.keycode in [KEY_ESCAPE,KEY_P]) or (event is InputEventJoypadButton and event.pressed and event.button_index in [JOY_BUTTON_BACK,JOY_BUTTON_START,JOY_BUTTON_B]):
 		close_menu(); get_viewport().set_input_as_handled()
+
+func change_difficulty(value: int) -> void:
+	game.management.level=value
+	if game.career.in_match:
+		game.career.world.match_settings.difficulty=game.management.difficulty
+		game.career.world.match_settings.level=game.management.level
+		if not game.career.save(): status.text=game.career.error
 
 func persist_session() -> void:
 	if DisplayServer.get_name()=="headless" or "--disable-render-loop" in OS.get_cmdline_args(): return
@@ -400,7 +492,13 @@ func restore_clubs() -> void:
 func save_settings() -> void:
 	var cfg := ConfigFile.new()
 	remember_clubs()
-	for name in ["formation","mentality","pressing","line_height","difficulty"]: cfg.set_value("tactics",name,game.management.get(name))
+	game.experience.save(cfg)
+	for name in ["formation","mentality","pressing","line_height","difficulty","level"]: cfg.set_value("tactics",name,game.management.get(name))
+	if not game.career.quick_state.is_empty():
+		cfg.set_value("tactics","difficulty",game.career.quick_state.get("difficulty",1))
+		cfg.set_value("tactics","level",game.career.quick_state.get("level",game.MatchSettings.TIER_LEVEL[clampi(int(game.career.quick_state.get("difficulty",1)),0,2)]))
+	cfg.set_value("match","half_minutes",game.MatchSettings.half_minutes(game.quick_half_minutes))
+	cfg.set_value("tactics","instructions",game.management.instructions if game.career.quick_state.is_empty() else game.career.quick_state.plan.get("instructions",{}))
 	for name in ["stadium_volume","cheer_volume","drum_volume"]: cfg.set_value("audio",name,game.audio.get(name))
 	for name in ["sensitivity","deadzone","vibration","bindings"]: cfg.set_value("pad",name,game.controller.get(name))
 	cfg.set_value("pad","bindings_version",3)
@@ -419,6 +517,9 @@ func save_settings() -> void:
 	cfg.set_value("career","club",last_career_club)
 	cfg.set_value("career","division",last_career_division)
 	cfg.set_value("audio","muted",game.audio.muted)
+	game.sliders.save(cfg)
+	cfg.set_value("match","players",game.humans.preferred)
+	for name in ["enabled","volume","subtitles"]: cfg.set_value("commentary",name,game.commentary.get(name))
 	var error := cfg.save(config_path)
 	if error!=OK: game.announce("Ayarlar bu oturumda uygulandı; diske kaydedilemedi.")
 
@@ -433,7 +534,17 @@ func load_settings() -> void:
 		if loaded!=OK:
 			display.load_config(ConfigFile.new())
 			return
-	for name in ["formation","mentality","pressing","line_height","difficulty"]: game.management.set(name,clampi(int(cfg.get_value("tactics",name,game.management.get(name))),0,2))
+	game.experience.load_config(cfg)
+	apply_readability()
+	for name in ["formation","mentality","pressing","line_height","difficulty"]: game.management.set(name,clampi(int(cfg.get_value("tactics",name,game.management.get(name))),0,game.management.FORMATIONS.size()-1 if name=="formation" else 2))
+	if cfg.has_section_key("tactics","level"): game.management.level=int(cfg.get_value("tactics","level",game.management.level))
+	var orders: Variant=cfg.get_value("tactics","instructions",{})
+	if orders is Dictionary:
+		game.management.instructions={}
+		for slot in orders:
+			var order: Variant=orders[slot]
+			if order is Dictionary and int(slot)>=2 and int(slot)<=11: game.management.instructions[int(slot)]={"attack":clampi(int(order.get("attack",1)),0,2),"width":clampi(int(order.get("width",1)),0,2)}
+	game.quick_half_minutes=game.MatchSettings.half_minutes(cfg.get_value("match","half_minutes",2))
 	for name in ["stadium_volume","cheer_volume","drum_volume"]: game.audio.set(name,clampf(float(cfg.get_value("audio",name,1.0)),0,1))
 	game.controller.sensitivity=clampf(float(cfg.get_value("pad","sensitivity",1.0)),0.6,1.8)
 	game.controller.deadzone=clampf(float(cfg.get_value("pad","deadzone",0.18)),0.08,0.35)
@@ -478,5 +589,10 @@ func load_settings() -> void:
 	restore_clubs()
 	game.performance_hud.visible=bool(cfg.get_value("display","fps",false))
 	if bool(cfg.get_value("audio","muted",false))!=game.audio.muted: game.audio.toggle()
+	game.sliders.load_config(cfg)
+	game.humans.preferred=clampi(int(cfg.get_value("match","players",0)),0,game.humans.MODES.size()-1)
+	game.commentary.enabled=bool(cfg.get_value("commentary","enabled",true))
+	game.commentary.volume=clampf(float(cfg.get_value("commentary","volume",.8)),0,1)
+	game.commentary.subtitles=bool(cfg.get_value("commentary","subtitles",false))
 	display.load_config(cfg)
 	game.management.apply_formation()

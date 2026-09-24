@@ -1,6 +1,7 @@
 extends RefCounted
 const Physique = preload("res://scripts/player_physique.gd")
 const World = preload("res://scripts/career_world.gd")
+const SEFC = preload("res://scripts/sefc_identity.gd")
 var game
 var selected := [0,1]
 var league := [0,0]
@@ -12,14 +13,14 @@ var exhibition: Dictionary={}
 var lineups: Array = [range(11),range(11)]
 var reserves: Array = [range(11,18),range(11,18)]
 const CLUBS := [
-	{"name":"KIYI SPOR","short":"KIY","city":"İSTANBUL","year":"1967","primary":"e5ece5","accent":"193d39","shorts":"133933","alt":"193d39","alt_trim":"e5ece5","pattern":0,"style":"KANATLARDAN OYUN","squad":"DENİZ,KAAN,DEMİR,CAN,EMİR,ARAS,MERT,ALP,KEREM,EGE,BORA,EFE,UMUT,TUNA,OZAN,BARAN,YİĞİT,ATA"},
-	{"name":"ATLAS FC","short":"ATL","city":"İZMİR","year":"1924","primary":"d34532","accent":"f1d7bd","shorts":"eee3d2","alt":"202f48","alt_trim":"e4ae79","pattern":1,"style":"ÖN ALAN BASKISI","squad":"MARC,LUCA,IVAN,ALEX,THEO,RAFA,OMAR,LEO,NICO,ENZO,SAM,JOEL,MIRO,NOAH,LARS,LUIS,ADAM,FINN"},
-	{"name":"DEMİRSPOR","short":"DEM","city":"ANKARA","year":"1938","primary":"2463a3","accent":"b8e6f2","shorts":"102d50","alt":"e7edf2","alt_trim":"235282","pattern":2,"style":"DİSİPLİNLİ SAVUNMA","squad":"VOLKAN,EREN,BERK,ONUR,SERHAT,CEM,SELİM,ERDEM,HAKAN,TOLGA,BATU,SİNAN,AYAZ,DORUK,UFUK,TAYLAN,KORAY,ERAY"},
-	{"name":"GÜNEŞ FK","short":"GÜN","city":"ANTALYA","year":"1972","primary":"f2be49","accent":"54253b","shorts":"54253b","alt":"58223d","alt_trim":"f3cc66","pattern":1,"style":"HIZLI GEÇİŞLER","squad":"ARDA,ALPER,İLKER,FIRAT,ENGİN,OKAN,BURAK,DOĞAN,SARP,YAMAN,RÜZGAR,UTKU,ÖMER,İSMAİL,HAMZA,TARIK,ERSEL,CEYHUN"},
-	{"name":"ORMAN BİRLİĞİ","short":"ORM","city":"BURSA","year":"1963","primary":"24715b","accent":"eee5ce","shorts":"173c34","alt":"f0e7cf","alt_trim":"24694f","pattern":2,"style":"SABIRLI PAS OYUNU","squad":"YUSUF,ÖZGÜR,MURAT,EMRE,MESUT,SEZER,ORÇUN,CİHAN,İLHAN,HALİL,FATİH,MEHMET,KAHRAMAN,SONER,ŞAHİN,GÖKHAN,ŞENER,İSA"},
-	{"name":"KUZEY YILDIZI","short":"KUZ","city":"TRABZON","year":"1955","primary":"7d324c","accent":"77bed6","shorts":"20334a","alt":"79bed3","alt_trim":"733047","pattern":1,"style":"CESUR HÜCUM","squad":"KIVANÇ,ADİL,AYKUT,MUZAFFER,YAVUZ,LEVENT,ENGİNCAN,TAMER,ORHAN,TUNCAY,HAKAN,ERGİN,AZİZ,İRFAN,KEMAL,BİLAL,ZAFER,MELİH"},
-	{"name":"LİMAN ATHLETIC","short":"LİM","city":"MERSİN","year":"1981","primary":"243346","accent":"f1f0df","shorts":"1a2636","alt":"f0eee3","alt_trim":"29384f","pattern":0,"style":"KOMPAKT BLOK","squad":"DIEGO,BRUNO,HUGO,TIAGO,ANDRE,MATEO,OSCAR,PABLO,ELIAS,MARCO,FELIX,RENE,LOREN,JORGE,DARIO,INES,TONI,VICTOR"},
-	{"name":"KAPADOKYA SK","short":"KAP","city":"NEVŞEHİR","year":"1969","primary":"8d629d","accent":"f0ded1","shorts":"422d58","alt":"eee0cf","alt_trim":"705180","pattern":2,"style":"YARATICI ORTA SAHA","squad":"CANER,BARIŞ,BERAT,BULUT,İHSAN,ENES,İBRAHİM,FERHAT,SEFA,FURKAN,BATUHAN,RECEP,SALİH,AHMET,MAHMUT,NECATİ,KAĞAN,SERDAR"}]
+	{"name":SEFC.CLUBS[0][0],"short":SEFC.CLUBS[0][1],"city":SEFC.CLUBS[0][2],"year":"1967","primary":"e5ece5","accent":"193d39","shorts":"133933","alt":"193d39","alt_trim":"e5ece5","pattern":0,"style":"KANATLARDAN OYUN","nation":SEFC.NATION},
+	{"name":SEFC.CLUBS[1][0],"short":SEFC.CLUBS[1][1],"city":SEFC.CLUBS[1][2],"year":"1924","primary":"d34532","accent":"f1d7bd","shorts":"eee3d2","alt":"202f48","alt_trim":"e4ae79","pattern":1,"style":"ÖN ALAN BASKISI","nation":SEFC.NATION},
+	{"name":SEFC.CLUBS[2][0],"short":SEFC.CLUBS[2][1],"city":SEFC.CLUBS[2][2],"year":"1938","primary":"2463a3","accent":"b8e6f2","shorts":"102d50","alt":"e7edf2","alt_trim":"235282","pattern":2,"style":"DİSİPLİNLİ SAVUNMA","nation":SEFC.NATION},
+	{"name":SEFC.CLUBS[3][0],"short":SEFC.CLUBS[3][1],"city":SEFC.CLUBS[3][2],"year":"1972","primary":"f2be49","accent":"54253b","shorts":"54253b","alt":"58223d","alt_trim":"f3cc66","pattern":1,"style":"HIZLI GEÇİŞLER","nation":SEFC.NATION},
+	{"name":SEFC.CLUBS[4][0],"short":SEFC.CLUBS[4][1],"city":SEFC.CLUBS[4][2],"year":"1963","primary":"24715b","accent":"eee5ce","shorts":"173c34","alt":"f0e7cf","alt_trim":"24694f","pattern":2,"style":"SABIRLI PAS OYUNU","nation":SEFC.NATION},
+	{"name":SEFC.CLUBS[5][0],"short":SEFC.CLUBS[5][1],"city":SEFC.CLUBS[5][2],"year":"1955","primary":"7d324c","accent":"77bed6","shorts":"20334a","alt":"79bed3","alt_trim":"733047","pattern":1,"style":"CESUR HÜCUM","nation":SEFC.NATION},
+	{"name":SEFC.CLUBS[6][0],"short":SEFC.CLUBS[6][1],"city":SEFC.CLUBS[6][2],"year":"1981","primary":"243346","accent":"f1f0df","shorts":"1a2636","alt":"f0eee3","alt_trim":"29384f","pattern":0,"style":"KOMPAKT BLOK","nation":SEFC.NATION},
+	{"name":SEFC.CLUBS[7][0],"short":SEFC.CLUBS[7][1],"city":SEFC.CLUBS[7][2],"year":"1969","primary":"8d629d","accent":"f0ded1","shorts":"422d58","alt":"eee0cf","alt_trim":"705180","pattern":2,"style":"YARATICI ORTA SAHA","nation":SEFC.NATION}]
 
 func ensure_world() -> void:
 	if exhibition.is_empty(): exhibition=World.create()
@@ -147,8 +148,8 @@ func member(side: int,id: int) -> Dictionary:
 	if not career_rosters.is_empty(): return career_rosters[side][id].duplicate(true)
 	var cat := catalog_index(side)
 	if cat>=0:
-		var names: PackedStringArray=CLUBS[cat].squad.split(",")
-		var result := {"name":names[id],"shirt":id+1,"keeper":id in [0,11],"used":false,"appearance_id":cat*24+id}
+		var result := SEFC.player(cat*24+id)
+		result.merge({"shirt":id+1,"keeper":id in [0,11],"used":false,"appearance_id":cat*24+id})
 		result.role=game.management.natural_role(result.shirt,result.keeper)
 		result.merge(Physique.profile(cat,id,result.keeper))
 		result.attributes=preload("res://scripts/player_attributes.gd").club_profile(cat,id,result.keeper)

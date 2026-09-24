@@ -90,6 +90,8 @@ func move_actor(p,destination: Vector3,delta: float,speed: float) -> bool:
 func update(delta: float) -> void:
 	age+=delta
 	elapsed+=delta
+	if game.experience.short_presentation and elapsed>2.4:
+		game.pace.request(func(): finish(true))
 	if phase=="walkout":
 		var ready := true
 		for i in range(22):
@@ -157,7 +159,6 @@ func finish(skipped: bool) -> void:
 	game.set_pieces.recovery.enter("arrange")
 	game.referees.restart("SANTRA",0,Vector3.ZERO)
 	if skipped: game.set_pieces.snap_ready()
-	else: game.announce("İLK YARI · SANTRA HAZIRLIĞI")
 	game.match_camera.apply_projection()
 	game.camera.size=game.match_camera.play_size(game.zoom)
 	game.update_camera(0)
@@ -189,4 +190,4 @@ func update_camera(delta: float) -> void:
 	game.camera.look_at(camera_at)
 
 func caption() -> String:
-	return "TAKIMLAR SAHAYA ÇIKIYOR" if phase=="walkout" else ("KIYI ARENA'YA HOŞ GELDİNİZ" if phase=="presentation" else "İLK DÜDÜĞE HAZIR")
+	return "TAKIMLAR SAHAYA ÇIKIYOR" if phase=="walkout" else ("SEFC ARENA'YA HOŞ GELDİNİZ" if phase=="presentation" else "İLK DÜDÜĞE HAZIR")

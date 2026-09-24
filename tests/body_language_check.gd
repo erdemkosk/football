@@ -245,7 +245,7 @@ func run() -> void:
 	for frame in range(20):
 		game.simulate_match(DT)
 		await physics_frame
-	check(player.body_language.enabled and absf(player.head_joint.rotation.y)>0.3,"Normal match simulation supplies the live ball to the animation layer")
+	check(player.body_language.enabled and player.body_language.ball_target.distance_to(game.ball.position)<.1 and gaze_alignment()>.97,"Normal match simulation directs the gaze at the live ball, including when the body already faces it")
 	print("BODY LANGUAGE CHECK: %d checks, %d failures" % [assertions,failures])
 	game.free()
 	quit(0 if failures==0 else 1)

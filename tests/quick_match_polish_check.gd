@@ -28,9 +28,9 @@ func run() -> void:
 	var selected: Array=game.clubs.selected.duplicate()
 	tap(JOY_BUTTON_DPAD_RIGHT)
 	check(game.clubs.selected==selected and focus()==front.difficulty_button,"Footer navigation moves focus instead of cycling a team")
-	var difficulty: int=game.management.difficulty
+	var level: int=game.management.level
 	tap(JOY_BUTTON_A)
-	check(game.management.difficulty==(difficulty+1)%3 and not front.picked[0],"Difficulty has its own A action")
+	check(game.management.level==(level+1)%game.MatchSettings.LEVELS.size() and not front.picked[0],"Difficulty has its own A action")
 	front.kit_buttons[0].grab_focus()
 	var alternate: bool=game.clubs.alternate[0]
 	tap(JOY_BUTTON_A)

@@ -19,11 +19,16 @@ var graphic_duration := 1.0
 var substitution_queue: Array[Dictionary] = []
 var substitution_card: Dictionary = {}
 var substitution_age := 0.0
+var debut_queue: Array[Dictionary]=[]
+var debut_card: Dictionary={}
+var debut_seen: Dictionary={}
+var debut_age:=0.0
 
 func reset() -> void:
 	finish(); queued.clear(); consumed.clear(); cooldown=0
 	graphic=""; graphic_caption=""; graphic_age=0
 	substitution_queue.clear(); substitution_card.clear(); substitution_age=0
+	debut_queue.clear(); debut_card.clear(); debut_seen.clear(); debut_age=0
 	for actor in game.stadium.sidelines.actors:
 		if actor.role=="fourth": actor.substitution_board.hide(); actor.target_point=Vector3.INF
 
@@ -31,7 +36,35 @@ func substitution(outgoing: Dictionary,incoming: Dictionary,team: int) -> void:
 	if game.training or game.menu_match.running: return
 	substitution_queue.append({"out":outgoing.duplicate(),"in":incoming.duplicate(),"team":team})
 
+func debut(p) -> void:
+	var c=game.career
+	if not c.in_match or p.career_id=="" or debut_seen.has(p.career_id): return
+	var data: Dictionary=c.player(p.career_id)
+	var arrival: Dictionary=data.get("arrival",{})
+	if arrival.get("club","")!=data.club or arrival.get("debut",true): return
+	debut_seen[p.career_id]=true
+	debut_queue.append({"id":p.career_id,"name":data.name,"team":p.team,"shirt":data.shirt,"detail":("REFLEKS %d · TUTUŞ %d" % [data.attributes.reflexes,data.attributes.handling]) if p.keeper else ("HIZ %d · TEKNİK %d · KONDİSYON %%%d" % [data.attributes.pace,data.attributes.control,roundi(data.fitness*100)])})
+
+func notification_owner() -> String:
+	if game.state in ["goal","replay","trophy","shootout"]: return "goal"
+	if game.state not in ["playing","restart","set_piece","halftime"]: return ""
+	if game.rules.card_time>0 or game.send_off.blocks_restart(): return "card"
+	if active: return "camera"
+	if not substitution_card.is_empty() or not substitution_queue.is_empty(): return "substitution"
+	if not debut_card.is_empty() or not debut_queue.is_empty(): return "debut"
+	return ""
+
+func update_debut(delta: float) -> void:
+	if notification_owner() not in ["","debut"]: return
+	if game.state not in ["playing","restart","set_piece"]: return
+	if not debut_card.is_empty():
+		debut_age+=delta
+		if debut_age>=4.5: debut_card.clear()
+	if debut_card.is_empty() and not debut_queue.is_empty() and game.state=="playing":
+		debut_card=debut_queue.pop_front(); debut_age=0
+
 func update_substitution(delta: float) -> void:
+	if game.state not in ["playing","restart","set_piece","halftime"] or notification_owner() not in ["","substitution","debut"]: return
 	substitution_age+=delta
 	if not substitution_card.is_empty() and substitution_age>=5.5:
 		substitution_card.clear()
@@ -78,6 +111,7 @@ func finish() -> void:
 
 func update(delta: float) -> void:
 	if game.state=="paused": return
+	update_debut(delta)
 	update_substitution(delta)
 	if graphic!="":
 		graphic_age+=delta
@@ -154,11 +188,14 @@ func draw(hud) -> void:
 	hud.draw_set_transform(Vector2.ZERO)
 
 func draw_graphic(hud) -> void:
-	draw_substitution(hud)
+	var owner:=notification_owner()
+	if owner=="substitution": draw_substitution(hud); return
+	if owner=="debut": draw_debut(hud); return
+	if owner in ["card","camera"] or game.state=="goal": return
 	var weight := graphic_weight()
 	if weight<=0: return
 	hud.draw_set_transform(game.ui.edge_offset(0,1))
-	var y := lerpf(918,758,weight)
+	var y := 758.0 if game.experience.reduce_motion else lerpf(918,758,weight)
 	hud.panel(Rect2(412,y,616,54),Color(.035,.085,.075,.92),8)
 	hud.draw_rect(Rect2(412,y,5,54),hud.GOLD)
 	hud.text("GOL" if graphic=="goal" else "SAHADAN",Vector2(430,y+22),10,hud.GOLD,true)
@@ -166,11 +203,20 @@ func draw_graphic(hud) -> void:
 	hud.center("%d  –  %d" % game.score,Vector2(948,y+36),22,hud.PAPER)
 	hud.draw_set_transform(Vector2.ZERO)
 
+func draw_debut(hud) -> void:
+	if debut_card.is_empty() or game.state not in ["playing","restart","set_piece"]: return
+	var weight:=smoothstep(0,.2,debut_age)*(1-smoothstep(4.1,4.5,debut_age))
+	var x: float=(32.0 if game.experience.reduce_motion else lerpf(-420,32,weight))+game.ui.edge_offset(-1,0).x
+	hud.panel(Rect2(x,185,406,89),Color(.035,.085,.075,.94),8)
+	hud.text("YENİ TRANSFER · İLK MAÇ",Vector2(x+16,208),11,hud.GOLD,true)
+	hud.draw_string(hud.bold,Vector2(x+16,234),"%02d  %s" % [debut_card.shirt,debut_card.name],HORIZONTAL_ALIGNMENT_LEFT,374,18,hud.PAPER)
+	hud.text(debut_card.detail,Vector2(x+16,257),11,hud.MUTE)
+
 func draw_substitution(hud) -> void:
 	if substitution_card.is_empty(): return
 	hud.draw_set_transform(game.ui.edge_offset(0,1))
 	var entry := smoothstep(0,.22,substitution_age)*(1-smoothstep(5.15,5.5,substitution_age))
-	var y := lerpf(920,725,entry)
+	var y := 725.0 if game.experience.reduce_motion else lerpf(920,725,entry)
 	var red := Color("ef8074"); var green := Color("93d6ac")
 	hud.panel(Rect2(402,y,636,94),Color(.025,.055,.062,.96),7)
 	hud.draw_rect(Rect2(402,y,4,94),hud.GOLD)

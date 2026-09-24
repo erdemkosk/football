@@ -63,6 +63,7 @@ static func expand(w: Dictionary,base_plan: Dictionary) -> Array:
 				name=names[0][(i+j)%4]+" "+names[1][(i+j/4)%4]
 			var member:={"id":pid,"career_id":pid,"club":id,"name":name,"nationality":country,"shirt":j+1,"role":role,"keeper":role==0,"attributes":stats,"appearance_id":serial,"age":rng.randi_range(18,33),"potential":mini(96,strength+rng.randi_range(3,12)),"contract":w.year+rng.randi_range(1,4),"wage":0,"squad_role":1,"fitness":1.0,"form":0.0,"morale":.7,"banned":0,"yellow":0,"injury":0,"listed":false,"loan_listed":false,"goals":0,"appearances":0,"used":false}
 			member.merge(Physique.profile(92+i,j,role==0)); member.loan_listed=j>=18 and member.age<=25
+			member.talent_club=id; member.talent_slot=j
 			w.players[pid]=member; c.roster.append(pid); added.append(pid)
 			if j<11: c.lineup.append(pid)
 		w.clubs[id]=c

@@ -7,7 +7,7 @@ const STYLES := {
 	"KANATLARDAN OYUN":[1,1,1,1,2,1,2,2,1],
 	"ÖN ALAN BASKISI":[1,2,2,2,1,2,2,1,1],
 	"DİSİPLİNLİ SAVUNMA":[0,0,0,0,1,1,1,0,1],
-	"HIZLI GEÇİŞLER":[0,1,1,0,2,2,2,1,1],
+	"HIZLI GEÇİŞLER":[0,1,0,0,2,2,1,0,1],
 	"SABIRLI PAS OYUNU":[2,1,1,1,1,0,0,1,1],
 	"CESUR HÜCUM":[1,2,1,2,2,2,2,2,0],
 	"KOMPAKT BLOK":[0,0,0,0,0,0,0,0,1],
@@ -33,7 +33,10 @@ static func setting(club: Dictionary,key: String) -> int:
 func quality(index: int,defense: bool=false) -> float:
 	var p=game.players[index]
 	var stats: Dictionary=p.attributes
-	var rating: float=float(stats.get("defending",stats.balance))*.55+float(stats.balance)*.25+float(stats.control)*.20 if defense else float(stats.get("passing",stats.control))*.50+float(stats.control)*.35+float(stats.get("positioning",stats.balance))*.15
+	# Reading the game: interceptions and reactions for the defensive read,
+	# vision and reactions for the next pass.
+	var A=p.Attributes
+	var rating: float=float(stats.get("defending",stats.balance))*.45+A.value(p,"interceptions")*.10+float(stats.balance)*.20+float(stats.control)*.15+A.value(p,"reactions")*.10 if defense else float(stats.get("passing",stats.control))*.40+A.value(p,"vision")*.12+float(stats.control)*.30+float(stats.get("positioning",stats.balance))*.08+A.value(p,"reactions")*.10
 	var result := clampf((rating-48)/46,0,1)
 	# Fatigue and a player deployed outside his natural line slow the read.
 	result*=lerpf(.78,1,smoothstep(.15,.65,p.energy))
@@ -48,6 +51,13 @@ func team_quality(team: int,defense: bool=false) -> float:
 		total+=quality(i,defense); count+=1
 	return total/maxi(1,count) if count>0 else .52
 
+func counter_style(team: int) -> bool:
+	if team==0:
+		return game.management.line_height==0 and game.management.pressing<=1 and game.management.tempo==2
+	var club: Dictionary=game.clubs.data(team)
+	# Explicit saved tactics override the default transition identity too.
+	return setting(club,"line_height")==0 and setting(club,"pressing")<=1 and setting(club,"tempo")==2
+
 func decision_bias(index: int,choice: Dictionary) -> float:
 	var p=game.players[index]
 	var style: String=game.clubs.data(p.team).get("style","")
@@ -60,6 +70,9 @@ func decision_bias(index: int,choice: Dictionary) -> float:
 	var distance: float=game.flat_distance(game.ball.position,route.target)
 	var progress: float=(route.target.z-game.ball.position.z)*game.attack_sign(p.team)
 	var bias: float=(game.management.detail(p.team,"tempo")-1)*clampf(progress/4,-3,4)
+	if game.team_tactics.countering(p.team):
+		bias+=clampf(progress*.5,-4,9)
+		if kind in ["through","lob_through","driven_pass"]: bias+=4
 	if style=="KANATLARDAN OYUN":
 		bias+=7 if kind in ["cross","driven_cross","switch"] else (4 if absf(route.target.x)>18 else 0)
 	elif style=="SABIRLI PAS OYUNU":

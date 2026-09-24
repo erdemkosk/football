@@ -4,6 +4,8 @@ const Catalog = preload("res://scripts/club_catalog.gd")
 const Physique = preload("res://scripts/player_physique.gd")
 const International = preload("res://scripts/career_international.gd")
 const Turkey = preload("res://scripts/career_turkey.gd")
+const Talent = preload("res://scripts/player_talent.gd")
+const SEFC = preload("res://scripts/sefc_identity.gd")
 const VERSION:=5
 const CLUB_COUNT:=110
 const ROLES := ["KL","DEF","OS","FV"]
@@ -12,7 +14,6 @@ const LEAGUES := ["SEFC Premier Lig","SEFC Birinci Lig","İspanya Ligi","Porteki
 const CHAMPIONS_PLACES:=[4,0,2,2,2,2,1,1,1,1]
 # Game-economy rewards, independent of the number of clubs in each calendar.
 const LEAGUE_CHAMPION_PRIZES:=[8000000,2000000,14000000,5000000,12000000,13000000,10000000,18000000,4000000,6000000]
-const CITIES := ["ESKİŞEHİR","SAMSUN","KONYA","ADANA","KAYSERİ","SAKARYA","DENİZLİ","GAZİANTEP","BALIKESİR","MALATYA","BOLU","EDİRNE","SİVAS","MANİSA","AYDIN","ÇORUM","ERZURUM","MARDİN","ORDU","TEKİRDAĞ","ISPARTA","KÜTAHYA","ÇANAKKALE","RİZE","AMASYA","KARABÜK","TOKAT","VAN"]
 const NAMES := ["ADA","ÇINAR","YALIN","KAYA","ATEŞ","TOPRAK","DORUK","POYRAZ","MERT","ALP","EMİR","CAN","EREN","BERK","ARDA","EFE","KAAN","ONUR","DENİZ","BORA","TUNA","UMUT","BARAN","AYAZ","MARC","LEO","NOAH","OMAR","ENZO","RAFA","LUKA","DIEGO"]
 const SURNAMES := ["AKSOY","YILMAZ","DEMİR","KAYA","ŞEN","ARSLAN","AYDIN","KILIÇ","ÇELİK","ÖZTÜRK","GÜNEŞ","YALÇIN","MARTIN","COSTA","SILVA","MORENO"]
 
@@ -30,11 +31,7 @@ static func plan() -> Dictionary:
 	return {"formation":0,"mentality":1,"pressing":1,"line_height":1,"width":1,"tempo":1,"runs":1,"fullbacks":1,"anchor":true}
 
 static func ovr(p: Dictionary) -> int:
-	var a: Dictionary=p.attributes
-	var weights: Dictionary=[{"reflexes":.4,"handling":.35,"positioning":.25},{"defending":.35,"strength":.18,"pace":.12,"passing":.15,"heading":.2},{"passing":.30,"control":.25,"stamina":.15,"pace":.15,"finishing":.15},{"finishing":.4,"control":.20,"pace":.20,"heading":.2}][int(p.role)]
-	var value := 0.0
-	for key in weights: value+=a.get(key,72)*float(weights[key])
-	return roundi(value)
+	return Talent.overall(p)
 
 static func value(p: Dictionary) -> int:
 	var age_factor := 1.25 if p.age<24 else (.65 if p.age>30 else 1.0)
@@ -55,12 +52,16 @@ static func contract_fields(p: Dictionary) -> void:
 	if not p.has("loan_listed"): p.loan_listed=false
 
 static func upgrade(w: Dictionary) -> void:
+	w.match_settings=preload("res://scripts/match_settings.gd").normalized(w.get("match_settings",{}))
 	if not w.has("league_prizes"): w.league_prizes={}
 	for p in w.players.values(): contract_fields(p)
+	SEFC.upgrade(w)
 	International.expand(w)
 	for pid in Turkey.expand(w,plan()):
 		contract_fields(w.players[pid]); w.players[pid].wage=wage(w.players[pid])
-	for p in w.players.values(): p.potential=maxi(int(p.potential),ovr(p))
+	for p in w.players.values():
+		Talent.rebalance(p)
+		p.potential=maxi(int(p.potential),ovr(p))
 	w.version=VERSION
 
 static func create(year: int=2026) -> Dictionary:
@@ -71,9 +72,10 @@ static func create(year: int=2026) -> Dictionary:
 		var c: Dictionary
 		if i<8: c=Catalog.CLUBS[i].duplicate(true)
 		else:
-			var city: String=CITIES[i-8]
+			var city: String=SEFC.CLUBS[i][2]
 			var hue := fmod(i*.137,1.0)
-			c={"name":city+([" FK"," SPOR"," BİRLİĞİ"," ATHLETIC"][i%4]),"short":city.left(3),"city":city,"year":str(1920+i*2),"primary":Color.from_hsv(hue,.64,.66).to_html(false),"accent":"eee5ce","shorts":Color.from_hsv(hue,.6,.22).to_html(false),"alt":"eee5ce","alt_trim":Color.from_hsv(hue,.64,.66).to_html(false),"pattern":i%3,"style":["KANATLARDAN OYUN","ÖN ALAN BASKISI","DİSİPLİNLİ SAVUNMA","SABIRLI PAS OYUNU"][i%4]}
+			c={"name":SEFC.CLUBS[i][0],"short":city.left(3),"city":city,"year":str(1920+i*2),"primary":Color.from_hsv(hue,.64,.66).to_html(false),"accent":"eee5ce","shorts":Color.from_hsv(hue,.6,.22).to_html(false),"alt":"eee5ce","alt_trim":Color.from_hsv(hue,.64,.66).to_html(false),"pattern":i%3,"style":["KANATLARDAN OYUN","ÖN ALAN BASKISI","DİSİPLİNLİ SAVUNMA","SABIRLI PAS OYUNU"][i%4]}
+		c.merge(SEFC.club(i),true)
 		var strength: int=(83-i%18 if i<18 else 67-i%18)
 		c.merge({"id":id,"badge_id":i,"league":i/18,"cash":int(1800000+pow(strength-40,2)*13500),"budget":int(900000+pow(strength-40,2)*8000),"roster":[],"lineup":[],"plan":plan(),"plans":[plan(),plan(),plan()],"objective":"Şampiyonluk" if i%18<4 else ("İlk yarı" if i%18<10 else "Ligde kal"),"reputation":strength})
 		c.plans[0].mentality=0; c.plans[0].pressing=0; c.plans[0].line_height=0
@@ -90,15 +92,18 @@ static func create(year: int=2026) -> Dictionary:
 			for key in ["passing","defending","strength","stamina","reflexes","handling","positioning"]:
 				var bonus: int=7 if (key=="passing" and role==2) or (key=="defending" and role==1) or (key in ["reflexes","handling","positioning"] and role==0) else 0
 				stats[key]=clampi(strength+rng.randi_range(-8,6)+bonus-(8 if key=="defending" and role==3 else 0),35,95)
-			var title: String=NAMES[(i*7+j)%NAMES.size()]+" "+SURNAMES[(i+j*3)%SURNAMES.size()]
-			if i<8 and j<18: title=c.squad.split(",")[j]+" "+SURNAMES[(i+j*3)%SURNAMES.size()]
+			var title: String=SEFC.player(i*24+j).name
 			var p := {"id":pid,"career_id":pid,"club":id,"name":title,"shirt":j+1,"role":role,"keeper":role==0,"attributes":stats,"appearance_id":i*24+j,"age":rng.randi_range(18,33),"potential":mini(96,strength+rng.randi_range(2,12)),"contract":year+rng.randi_range(1,4),"wage":0,"squad_role":1,"fitness":1.0,"form":0.0,"morale":.7,"banned":0,"yellow":0,"injury":0,"listed":false,"goals":0,"appearances":0,"used":false}
 			p.merge(Physique.profile(i,j,role==0)); p.wage=wage(p)
-			contract_fields(p); International.nationality(p,"TR",true); p.loan_listed=j>=18 and p.age<=25
+			p.talent_club=id; p.talent_slot=j
+			p.merge(SEFC.player(i*24+j),true)
+			contract_fields(p); p.loan_listed=j>=18 and p.age<=25
 			w.players[pid]=p; c.roster.append(pid)
 			if j<11: c.lineup.append(pid)
 		w.clubs[id]=c
 	upgrade(w)
+	# Existing saves keep signed salaries; a new world prices its actual ratings.
+	for p in w.players.values(): p.wage=wage(p)
 	fixtures(w)
 	return w
 
@@ -112,9 +117,12 @@ static func academy_player(w: Dictionary,c: Dictionary,role: int) -> Dictionary:
 	var pid:="p%04d" % serial
 	var p:={"id":pid,"career_id":pid,"club":c.id,"name":NAMES[serial%NAMES.size()]+" "+SURNAMES[(serial/7)%SURNAMES.size()],"shirt":serial%99+1,"role":role,"keeper":role==0,"attributes":stats,"appearance_id":serial,"age":rng.randi_range(17,19),"potential":mini(95,quality+rng.randi_range(10,22)),"contract":w.year+3,"wage":1500,"squad_role":0,"fitness":1.0,"form":0.0,"morale":.7,"banned":0,"yellow":0,"injury":0,"listed":false,"goals":0,"appearances":0,"used":false}
 	p.merge(Physique.profile(serial%36,serial%24,role==0))
+	p.talent_club=""; p.talent_slot=-1
 	contract_fields(p)
 	if c.league==Turkey.LEAGUE: p.name=Turkey.NAMES[serial%Turkey.NAMES.size()]+" "+Turkey.SURNAMES[(serial/7)%Turkey.SURNAMES.size()]
-	International.nationality(p,c.get("nation","TR"),true)
+	if c.get("nation","")==SEFC.NATION: p.merge(SEFC.player(serial),true)
+	else: International.nationality(p,c.get("nation","TR"),true)
+	Talent.rebalance(p)
 	return p
 
 static func day(year: int,month: int,date: int) -> int:

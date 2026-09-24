@@ -34,7 +34,7 @@ static func draw(front) -> void:
 				front.box(Rect2(x+j*19,708+(2-j)*9,11,20+j*9),Art.GOLD if j<=level else Art.LINE,3)
 			front.text([management.FORMATIONS[level],["SAVUNMA","DENGE","HÜCUM"][level],["BLOK","DENGE","BASKI"][level],["DERİN","ORTA","ÖNDE"][level]][i],Vector2(x+77,739),23,Art.PAPER,true)
 	if front.game.controller.using_gamepad:
-		front.game.controller.Glyphs.draw_hints(front,Vector2(42,818),[["LS / D-PAD","Gez"],["A",front.tactics_action_label()],["B","Geri"],["LB / RB","Sekme"],["X","Geri al"]],front.game.controller.family,front.font,23,10,22)
-	else: front.text("YÖNLER  GEZ      ENTER  SEÇ      ESC  GERİ      Z  GERİ AL",Vector2(42,819),10,Art.MUTE)
+		front.game.controller.Glyphs.draw_hints(front,Vector2(42,818),[["LS / D-PAD","Gez"],["A",front.tactics_action_label()],["B","Geri"],["LB / RB","Sekme"],["X","Geri al"]]+([["Y / R3","Talimat"]] if front.pane==0 else []),front.game.controller.family,front.font,23,10,22)
+	else: front.text("YÖNLER  GEZ      ENTER  SEÇ      ESC  GERİ      Z  GERİ AL"+("      T / Y  TALİMAT" if front.pane==0 else ""),Vector2(42,819),10,Art.MUTE)
 	if front.status!="": front.text(front.status.left(65),Vector2(283,863),11,Art.MINT)
 	elif front.swap_stage!="browse": front.text("İkinci oyuncuyu seç, değişikliği onayla.",Vector2(283,863),12,Art.GOLD)

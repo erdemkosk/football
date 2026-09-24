@@ -38,7 +38,7 @@ func velocity(index: int,aim: Vector3,power: float,kind: String,quality: float=1
 		"power": speed=lerpf(33,45,power); lift=lerpf(1.5,4.2,power)
 		"outside": speed=lerpf(19,30,power); lift=lerpf(1.2,3.2,power)
 		"punt": speed=lerpf(24,36,power); lift=lerpf(7,10,power)
-	var direction := aim
+	var direction: Vector3=game.finishing_direction(index,aim,power) if kind!="punt" else aim
 	if quality<.9: direction=direction.rotated(Vector3.UP,.055*(-1 if p.ball_actions.foot==0 else 1))
 	return direction*speed*ability*quality+Vector3.UP*(lift+(1-minf(quality,1))*2.2)
 
@@ -51,6 +51,7 @@ func release_charged(index: int,aim: Vector3,power: float) -> bool:
 	var p=game.players[index]
 	p.ball_actions.foot=p.ball_actions.choose_foot(p,game.ball.position)
 	var contact := .39 if kind=="power" else .22
+	p.strike_effort=power
 	if not game.commit_strike(index,velocity(index,aim,power,kind),curve(index,kind),false,"finish"): return false
 	p.volley_motion.begin(p,{"point":game.ball.position,"time":contact,"kind":kind},aim)
 	p.volley_motion.contact_time=contact
@@ -115,6 +116,7 @@ func resolve() -> void:
 	if shot.kind=="punt" and shot.has("ai_delivery"):
 		var route: Dictionary=shot.ai_delivery.route
 		output=game.Passing.Motion.lob_velocity(game.ball.position,route.target,route.flight,game.weather)
+	p.strike_effort=shot.power; p.strike_timing=shot.quality
 	if game.strike(shot.index,output,curve(shot.index,shot.kind),false,"punt" if shot.kind=="punt" else "finish"):
 		p.volley_motion.hit=true; p.volley_motion.target=game.ball.position
 		if shot.kind=="punt":

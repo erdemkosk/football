@@ -58,13 +58,13 @@ func run() -> void:
 	check(game.match_camera.id()=="broadcast","A new match uses the saved starting camera")
 	game.controller.device=0; game.controller.held.clear()
 	game.match_menu.open_menu(); game.match_menu.show_page(3)
-	check(game.match_menu.navigation.all(func(b): return b.icon!=null and b.text in ["SES","KONTROLÇÜ","TUŞ ATAMA","GÖRÜNTÜ"]),"Settings sections use drawn icons and clean labels")
+	check(game.match_menu.navigation.all(func(b): return b.icon!=null and b.text in ["SES","KONTROLÇÜ","TUŞ ATAMA","GÖRÜNTÜ","ERİŞİLEBİLİRLİK","OYNANIŞ"]),"Settings sections use drawn icons and clean labels")
 	await process_frame; await process_frame
-	game.match_menu.fields[7][0].grab_focus()
+	game.match_menu.fields[8][0].grab_focus()
 	var before: float=game.match_camera.distance
 	pad(JOY_BUTTON_DPAD_RIGHT)
 	check(game.match_camera.distance>before and game.state=="paused" and game.ball.freeze,"The controller adjusts camera distance safely in Settings")
-	game.match_menu.fields[8][0].grab_focus()
+	game.match_menu.fields[9][0].grab_focus()
 	before=game.match_camera.height; pad(JOY_BUTTON_DPAD_LEFT)
 	check(game.match_camera.height<before,"The controller adjusts camera elevation")
 	if "--visual" in OS.get_cmdline_user_args():

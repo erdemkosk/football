@@ -118,7 +118,7 @@ func run() -> void:
 	var landing: Vector3=game.second_balls.landing()
 	check(game.flat_distance(landing,game.ball.position)>2,"A rising low rebound is followed to its landing rather than its launch point")
 	game.second_balls.alert("save",0); game.second_balls.update(.01)
-	check(game.second_balls.targets.size()==4 and game.second_balls.roles.values().count("contest")==2 and "finish" in game.second_balls.roles.values() and "protect_goal" in game.second_balls.roles.values(),"Both teams contest a parry with separate finishing and goal-protection support")
+	check(game.second_balls.targets.size()==6 and game.second_balls.roles.values().count("contest")==2 and "finish" in game.second_balls.roles.values() and "protect_goal" in game.second_balls.roles.values() and "collect" in game.second_balls.roles.values() and "screen_landing" in game.second_balls.roles.values(),"Both teams contest a parry with separate finishing, knockdown and goal-protection support")
 	check(game.shots==[0,0] and game.passes==[0,0] and not game.ball.pending_kick,"Rebound assignments move players without automatically shooting or passing for the user")
 	game.dribbler=9; game.second_balls.update(.01)
 	check(game.second_balls.targets.is_empty() and game.second_balls.remaining==0,"Confirmed possession immediately ends the loose-ball chase")

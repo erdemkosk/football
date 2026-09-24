@@ -44,8 +44,8 @@ func run() -> void:
 	game.match_menu.config_path="/tmp/sefc-training-check.cfg"
 	game.controller.device=0
 	key(KEY_T); key(KEY_T,false)
-	check(game.training_menu.visible and game.training_menu.selected==0 and game.ball.freeze,"T opens three training choices with free practice selected")
-	check(game.training_menu.DESCRIPTIONS[0][1].contains("oto seçim") and game.training_menu.DESCRIPTIONS[0][0].contains("ON BİR"),"Free practice copy describes the full team and automatic selection")
+	check(game.training_menu.visible and game.training_menu.selected==0 and game.ball.freeze and game.training_menu.cards.size()==12,"T opens twelve training choices with free practice selected")
+	check(game.training_menu.Catalog.DETAILS[0].contains("11 oyuncu"),"Free practice copy describes the full team")
 	key(KEY_F1); key(KEY_F1,false)
 	check(game.controls_help.visible and game.controls_help.get_index()>game.training_menu.get_index(),"The control guide opens above the training selector")
 	key(KEY_ESCAPE); key(KEY_ESCAPE,false)
@@ -96,7 +96,8 @@ func run() -> void:
 	check(game.training_drills.attempt==3 and game.state=="playing","The pause menu offers a controller-accessible new attempt")
 	tap(JOY_BUTTON_BACK)
 	check(game.training_menu.visible and game.training_menu.selected==1,"View opens training choices during an exercise")
-	tap(JOY_BUTTON_DPAD_RIGHT); tap(JOY_BUTTON_A)
+	# The exercise chooser has two columns beside the demonstration panel.
+	tap(JOY_BUTTON_DPAD_LEFT); tap(JOY_BUTTON_DPAD_DOWN); tap(JOY_BUTTON_A)
 	check(game.training_drills.mode=="free_kick" and not game.training_menu.visible,"The controller switches directly to free-kick practice")
 	await tick(20)
 	check(game.training_drills.placing() and game.state=="restart" and game.players.filter(func(p): return p.visible).is_empty(),"Free-kick practice waits for the user to place only the ball")

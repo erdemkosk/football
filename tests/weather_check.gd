@@ -47,7 +47,7 @@ func run() -> void:
 	var wet=await roll(2,Vector3(15,0,0))
 	var mud=await roll(2,Vector3(0,0,47))
 	print("ROLL distance dry=%.3f wet=%.3f mud=%.3f" % [dry,wet,mud])
-	check(wet>dry+0.04,"A physical ball skids farther on wet intact grass")
+	check(wet<dry*.65,"A physical ball loses pace much faster on wet intact grass")
 	check(mud<dry-0.2,"Mud slows the same physical pass more than dry grass")
 	var dry_bounce=await bounce(0)
 	var mud_bounce=await bounce(2)
@@ -73,7 +73,8 @@ func run() -> void:
 	player.velocity=Vector3.ZERO
 	player.desired=Vector3.RIGHT
 	player.facing=Vector3.RIGHT
-	for i in range(150):
+	# Marks follow actual animated landings, including the initial acceleration.
+	for i in range(240):
 		player.step(1.0/120)
 		game.weather.update(1.0/120)
 		await physics_frame

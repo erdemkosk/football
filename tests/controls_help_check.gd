@@ -77,7 +77,7 @@ func run() -> void:
 	game.start_match(true)
 	game.update_camera(1)
 	await capture("playing")
-	game.begin_pass()
+	game.begin_pass(true)
 	key(KEY_F1); key(KEY_F1,false)
 	check(guide.visible and game.state=="paused" and game.ball.freeze and not game.pass_charging,"Opening help during play pauses physics and cancels the prepared pass")
 	var time_before: float=game.match_time

@@ -9,11 +9,30 @@ func expected(index: int) -> bool:
 func assigned(index: int) -> bool:
 	return expected(index) or game.incoming_receiver==index
 
-func prepare() -> void:
+## First touch into space: V / R3 just before the ball arrives turns the
+## receiving touch into a push along the chosen direction. It is still one
+## physical contact; the ball runs free and must be chased.
+var knocks: Dictionary = {}
+
+func request_knock(index: int) -> bool:
+	var p=game.players[index]
+	var gap: float=game.flat_distance(p.position,game.ball.position)
+	var incoming: Vector3=game.ball.linear_velocity*Vector3(1,0,1)
+	if game.ball.held_by!=null or game.dribbler==index or gap<.9 or gap>16 or incoming.length()<3: return false
+	if incoming.normalized().dot(((p.position-game.ball.position)*Vector3(1,0,1)).normalized())<.6: return false
+	knocks[index]=.55
+	game.skills.explain(index,"İLK DOKUNUŞTA AÇ · YÖN VER")
+	return true
+
+func prepare(delta: float=1.0/120.0) -> void:
+	for i in knocks.keys():
+		knocks[i]-=delta
+		if knocks[i]<=0: knocks.erase(i)
 	# Assigned receivers open toward the ball like a broadcast receive, not a
 	# wait-and-hope stance. Manual steering still owns facing.
 	for i in range(game.players.size()):
 		var p=game.players[i]
+		prepare_intent(i,delta)
 		p.receiving_facing=Vector3.ZERO
 		if game.ball.held_by!=null or game.ball.pending_reset: continue
 		if not p.visible or p.keeper or p.action_timer>0 or p.kick_timer>0 or game.aerial_shot_active(i) or game.dribbler>=0: continue
@@ -31,6 +50,21 @@ func prepare() -> void:
 				var cover: Vector3=game.duels.shield_direction(i)
 				if cover.length()>0.1: p.receiving_facing=cover.lerp(p.receiving_facing,0.55).normalized()
 
+func prepare_intent(index: int,delta: float) -> void:
+	var p=game.players[index]
+	var action=p.ball_actions
+	var offset: Vector3=(game.ball.position-p.position)*Vector3(1,0,1)
+	var relative: Vector3=(game.ball.linear_velocity-p.velocity)*Vector3(1,0,1)
+	if not p.visible or p.dismissed or p.action_timer>0 or game.ball.held_by!=null or game.last_kicker==index or game.dribbler>=0 or offset.length()>12 or offset.dot(relative)>=0:
+		action.intent_age=0; action.intent_direction=Vector3.ZERO
+		return
+	var direction := control_intent(index)
+	if direction.length()<.1:
+		action.intent_age=0; action.intent_direction=Vector3.ZERO
+		return
+	action.intent_age=minf(.3,action.intent_age+delta) if direction.dot(action.intent_direction)>.92 else 0.0
+	action.intent_direction=direction
+
 func pressure(index: int) -> float:
 	var p=game.players[index]
 	var nearest := 3.0
@@ -47,7 +81,7 @@ func airborne() -> bool:
 		var p=game.players[i]
 		if game.dribbler==i and settling(i): continue
 		if game.kick_lock>0 and i==game.last_kicker: continue
-		if game.aerial_shot_active(i) or p.dummy_time>0: continue
+		if game.aerial_shot_active(i) or p.dummy_time>0 or p.nutmeg_time>0: continue
 		if not p.visible or p.keeper or p.action_timer>0 or p.kick_timer>0 or p.touch_cooldown>0 or p.ball_actions.contact_cooldown>0: continue
 		var offset: Vector3=(ball.position-p.position)*Vector3(1,0,1)
 		if offset.length()>gap or ball.position.y>p.body_scale.y*1.75: continue
@@ -97,8 +131,18 @@ func receive(index: int,extended: bool) -> bool:
 	var reach := smoothstep(0.91,1.34,distance) if style=="foot" else 0.0
 	var difficulty := clampf(reach*0.55+pressure(index)*0.22+(1-p.energy)*0.20+maxf(0,speed-12)*0.023,0,1)
 	var stability: float=p.Attributes.multiplier(p.attributes.balance,.2)
-	difficulty=clampf(difficulty+(72-float(p.attributes.control))*.003+p.contest_weight*.16/stability,0,1)
+	difficulty=clampf(difficulty+(72-float(p.attributes.control))*.0045+p.contest_weight*.16/stability,0,1)
 	var technique := clampf((float(p.attributes.control)-45)/50,0,1)
+	var foot: int=p.ball_actions.choose_foot(p,ball.position)
+	var weaker: float=1.0-p.Attributes.foot_quality(p,foot)
+	var preparation: float=smoothstep(.03,.16,p.ball_actions.intent_age)*technique
+	# A prepared opening uses the instep with less recovery. A weak-foot,
+	# sprinting reception remains playable but gives the defender more ball.
+	difficulty=clampf(difficulty+weaker*.45-preparation*.14,0,1)
+	# Reactions read the late bounce; composure keeps the touch under pressure.
+	difficulty=clampf(difficulty+(72-p.Attributes.value(p,"reactions"))*.0018+pressure(index)*(.5-p.Attributes.skill(p,"composure"))*.12,0,1)
+	if p.Attributes.has_style(p,"first_touch"): difficulty*=.75
+	difficulty=clampf(difficulty*game.sliders.scale(p.team,"first_touch",.5,1.6),0,1)
 	var offset: Vector3=(ball.position-p.position)*Vector3(1,0,1)
 	var facing: Vector3=-p.rig.global_basis.z.normalized()
 	var behind: bool=distance>.55 and offset.normalized().dot(facing)<-.55
@@ -119,30 +163,36 @@ func receive(index: int,extended: bool) -> bool:
 	p.ball_actions.settle_time=0 if spill else (.5 if style=="foot" else .8)
 	# One bounded impulse cushions the real rigid body. Hard, stretched touches
 	# retain more incoming momentum; no transform snap or guaranteed possession.
-	var retain := lerpf(0.025,0.10,difficulty)
+	var retain := lerpf(0.025,0.14,difficulty)
 	if spill: retain=maxf(retain,0.40)
 	var output: Vector3=p.velocity*Vector3(1,0,1)+relative*retain
 	var intent := control_intent(index)
+	var knock: bool=knocks.has(index) and not spill and style=="foot" and intent.length_squared()>.1
+	knocks.erase(index)
 	if intent.length_squared()>.1:
-		var opening := lerpf(1.8,1.05,technique)+(.50 if p.active_sprint else 0.0)+difficulty*.40
+		var opening: float=(lerpf(2.25,.95,technique)+(.50 if p.active_sprint else 0.0)+difficulty*.40+weaker*.9)*(1-preparation*.22)
+		if knock: opening=maxf(opening*2.6,6.2)
 		# Turn the incoming momentum with one limited impulse. A good technician
 		# takes a compact touch; sprinting and poor control expose more ball.
 		var directed: Vector3=p.velocity*Vector3(1,0,1)+intent*opening
-		output=output.lerp(directed,lerpf(.55,.90,technique)*(0.45 if spill else 1.0))
+		output=output.lerp(directed,1.0 if knock else lerpf(.55,.90,technique)*(0.45 if spill else 1.0))
 		p.ball_actions.receive_direction=intent
-		p.ball_actions.receive_distance=clampf(opening*.42,.45,1.65)
+		p.ball_actions.receive_distance=clampf(opening*.42,.45,3.0 if knock else 1.65)
+		p.receive_duration*=1-preparation*.18
+		p.receive_timer=p.receive_duration
 	if spill:
 		var side := -1.0 if p.ball_actions.receive_foot==0 else 1.0
 		output+=p.rig.global_basis.x.normalized()*side*(0.8+difficulty*1.2)
 	if style!="foot": output.y=clampf(relative.y*.2,-2,-.8)
 	else: output.y=clampf(ball.linear_velocity.y*.15,-.6,.15)
-	if not spill:
+	if not spill and not knock:
 		# During the receive-to-dribble handover, the coarse torso capsule must
 		# not strike a ball already cushioned by the foot. Other players still collide.
 		p.dribble_motion.control_collision(p,ball)
 		p.dribble_motion.freshness=p.ball_actions.control_grace+.02
 	var cushion := lerpf(28,34,technique) if not spill else 17.0
 	ball.touch(output,ball.mass*minf(cushion,maxf(2.5,speed*(1.08 if not spill else 0.60))))
+	game.playtest.event("receive",index,{"spill":spill,"pressure":pressure(index),"speed":speed,"reason":p.ball_actions.receive_reason})
 	game.reactions.received(index)
 	game.last_touch=p.team
 	game.last_kicker=index
@@ -150,13 +200,20 @@ func receive(index: int,extended: bool) -> bool:
 	# it; otherwise the next tick drops possession and restores torso collision.
 	game.kick_lock=0
 	if spill: p.touch_cooldown=maxf(p.touch_cooldown,0.25)
+	# A knock into space leaves the ball free until the runner reaches it.
+	if knock:
+		p.touch_cooldown=maxf(p.touch_cooldown,0.45)
+		return false
 	return not spill
 
 func control_intent(index: int) -> Vector3:
 	var p=game.players[index]
 	var input: Vector3=p.desired*Vector3(1,0,1)
 	if p.protecting: return game.duels.shield_direction(index)
-	if game.is_user_player(index): return input.normalized() if input.length()>.2 else Vector3.ZERO
+	if game.is_user_player(index):
+		# The automatic meeting run is not a request for a directional touch.
+		if game.team_control.awaiting_delivery(): input=game.movement_input()
+		return input.normalized() if input.length()>.2 else Vector3.ZERO
 	if game.ai_attack.pressure_read(index).urgency>.2:
 		return ((game.ai_attack.carry_target(index)-p.position)*Vector3(1,0,1)).normalized()
 	# AI receivers use the same touch, opening away from the closest pressure.

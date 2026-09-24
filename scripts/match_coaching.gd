@@ -36,7 +36,7 @@ func proposal_valid() -> bool:
 	if proposal.is_empty(): return false
 	var p=game.players[proposal.slot]
 	var b: Dictionary=game.management.bench[0][proposal.reserve]
-	return p.shirt_number==proposal.shirt and b.shirt==proposal.incoming and p.energy<.48 and game.management.substitution_reason(proposal.slot,proposal.reserve)==""
+	return p.shirt_number==proposal.shirt and b.shirt==proposal.incoming and p.readiness()<.48 and game.management.substitution_reason(proposal.slot,proposal.reserve)==""
 
 func refresh() -> void:
 	if proposal_valid(): return
@@ -103,6 +103,8 @@ func power_shot_held() -> bool:
 	return pad.action_held(KEY_Q) or game.advanced_controls.shoulder_held() or pad.combos.consumed.has(JOY_BUTTON_LEFT_SHOULDER)
 
 func handle(event: InputEvent) -> bool:
+	# Quick tactics and substitutions manage the home side's plan (P1).
+	if game.humans.multiple() and game.humans.active!=0: return false
 	if event is InputEventJoypadButton or event is InputEventJoypadMotion:
 		var pad=game.controller
 		if pad.device!=event.device: pad.claim_device(event.device,true)

@@ -1,5 +1,6 @@
 extends RefCounted
 const P = preload("res://scripts/pitch_dimensions.gd")
+const Motion = preload("res://scripts/ball_motion.gd")
 ## Named match cameras. Play starts on the sideline; C cycles the rest.
 const IDS: PackedStringArray = ["pitch","broadcast","sideline","end","tactical"]
 const LABELS: PackedStringArray = ["SAHA","YAYIN","KENAR","KALE","TAKTİK"]
@@ -214,6 +215,8 @@ func orient(raw: Vector3) -> Vector3:
 	return (ground_right()*planar.x-ground_forward()*planar.z).normalized()*planar.length()
 
 func apply(focus: Vector3,zoom: float,delta: float) -> Dictionary:
+	if game.state=="paused" and has_pose and not snap:
+		return {eye=current_eye,look=current_look,projection=game.camera.projection,size=game.camera.size,fov=game.camera.fov}
 	# Follow sustained movement, not every dribble bounce or deflection.
 	var wanted := Vector3.ZERO
 	var width := 0.0
@@ -222,9 +225,33 @@ func apply(focus: Vector3,zoom: float,delta: float) -> Dictionary:
 		if game.dribbler>=0: velocity=game.players[game.dribbler].velocity*Vector3(1,0,1)
 		wanted=velocity.limit_length(12)*.32
 		width=smoothstep(5,17,velocity.length())
-	var anticipation_blend := 1-exp(-maxf(0,delta)*2.2)
+		if game.dribbler<0 and game.ball.held_by==null and velocity.length()>10:
+			# Read the ball already in flight, never an uncommitted aim/target.
+			# Bias towards its next playable region without abandoning the ball.
+			var travel := Vector3.ZERO
+			if game.ball.position.y>.45 or game.ball.linear_velocity.y>1:
+				var vertical: float=game.ball.linear_velocity.y
+				var landing := (vertical+sqrt(vertical*vertical+19.62*maxf(0,game.ball.position.y-.23)))/9.81
+				var horizon := clampf(landing,.35,.9)
+				var points := Motion.sample_flight(game.ball.position,game.ball.linear_velocity,game.ball.spin,horizon,12,game.weather)
+				travel=(points[-1]-game.ball.position)*Vector3(1,0,1)
+			else:
+				travel=velocity.normalized()*Motion.distance_at(velocity.length(),.65,Motion.profile(game.weather,game.ball.position))
+			wanted=wanted.lerp((travel*.65).limit_length(9.0),smoothstep(10,20,velocity.length()))
+		elif game.dribbler>=0 and velocity.length()>5:
+			var carrier=game.players[game.dribbler]
+			var forward := velocity.normalized()
+			var space := 0.0
+			for runner in game.players:
+				if runner==carrier or runner.team!=carrier.team or not runner.visible: continue
+				var offset: Vector3=(runner.position-carrier.position)*Vector3(1,0,1)
+				if offset.length()>26 or offset.dot(forward)<3 or runner.velocity.dot(forward)<3: continue
+				space=maxf(space,clampf(offset.dot(forward)*.10,0,2.0))
+			wanted+=forward*space
+	var anticipation_blend := 1-exp(-maxf(0,delta)*3.2)
 	attack_lead=attack_lead.lerp(wanted,anticipation_blend)
-	attack_width=lerpf(attack_width,width,anticipation_blend)
+	# Framing leads first; lens breathing remains slower and very small.
+	attack_width=lerpf(attack_width,width,1-exp(-maxf(0,delta)*1.5))
 	var ahead := focus+attack_lead
 	ahead.x=clampf(ahead.x,-P.HALF_WIDTH,P.HALF_WIDTH)
 	ahead.z=clampf(ahead.z,-48,48)

@@ -39,16 +39,20 @@ func run() -> void:
  check(absf(at_30-at_120)<.001 and absf(at_60-at_120)<.001,"Aiming speed agrees at 30, 60 and 120 updates per second")
  setup(); stick(1,0); hold(.1)
  check(game.players[9].desired.x>.99,"Uncharged left-stick running keeps its full movement response")
- # Ordinary, through and lofted passes share the gentler direction control.
- for mode in [[false,false],[true,false],[false,true]]:
+ setup(); game.dribbler=9; game.carrier=9; game.last_touch=0
+ stick(1,0); game.begin_pass()
+ check(not game.pass_charging and not game.kick_contact.pending.is_empty() and game.kick_contact.pending.velocity.x>0,"Normal pass is immediate and follows the current stick direction")
+ # Charged through and lofted passes can change direction without adding power.
+ for mode in [[true,false],[false,true]]:
   setup(); game.dribbler=9; game.carrier=9; game.last_touch=0
   game.begin_pass(mode[0],mode[1]); stick(1,0)
   var before: Vector3=game.pass_direction
   hold(.1)
   var degrees := rad_to_deg(before.angle_to(game.pass_direction))
-  check(game.pass_charging and degrees>5 and degrees<7,"Charged pass direction moves 5–7 degrees per 100 ms, mode "+str(mode))
+  check(game.pass_charging and degrees>89 and game.pass_power<.16,"Charged pass direction responds immediately without reaching full power, mode "+str(mode))
+  before=game.pass_direction
   stick(0,0); hold(.2)
-  check(game.pass_direction.angle_to(before)<deg_to_rad(7),"Centering the stick holds pass heading while power continues charging")
+  check(game.pass_direction.is_equal_approx(before),"Centering the stick holds pass heading while power continues charging")
   var shown: Vector3=game.pass_preview.velocity
   game.release_pass()
   check(not game.kick_contact.pending.is_empty() and game.kick_contact.pending.velocity.is_equal_approx(shown),"A pass still commits exactly the previewed launch velocity")

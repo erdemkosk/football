@@ -16,13 +16,18 @@ var previous_position := Vector3.ZERO
 var rolling_angle := 0.0
 var ground_bounce_age := INF
 var previous_vertical_speed := 0.0
+var previous_velocity := Vector3.ZERO
+var previous_motion_valid := false
 var goal_nets: Array[Node3D] = []
 var pending_touch := false
+var touch_vertical := true
+var low_lift_airborne := false
 var touch_velocity := Vector3.ZERO
 var touch_impulse_limit := 0.0
 var control_acceleration := Vector3.ZERO
 var pending_control := false
 var held_by: Node3D
+var pending_grip := false
 var hold_target := Vector3.ZERO
 var held_collision_mask := 11
 var surface: Node3D
@@ -51,7 +56,8 @@ func hold(player: Node3D) -> void:
 	if held_by==player: return
 	release_hold()
 	held_by=player
-	hold_target=global_position
+	pending_grip=true
+	hold_target=player.hand_center()
 	held_collision_mask=collision_mask
 	collision_mask=0
 	pending_touch=false
@@ -63,6 +69,7 @@ func hold(player: Node3D) -> void:
 func release_hold() -> void:
 	if held_by!=null: collision_mask=held_collision_mask
 	held_by=null
+	pending_grip=false
 
 func _ready() -> void:
 	physics_interpolation_mode=Node.PHYSICS_INTERPOLATION_MODE_ON
@@ -135,6 +142,7 @@ func place(p: Vector3, v: Vector3 = Vector3.ZERO) -> void:
 	pending_velocity = v
 	pending_reset = true
 	ground_bounce_age=INF; previous_vertical_speed=0
+	previous_motion_valid=false
 	pending_kick = false
 	pending_touch = false
 	pending_control = false
@@ -217,10 +225,11 @@ func strike(v: Vector3, curve: float = 0) -> void:
 	sleeping = false
 	ping(v,clampf(v.length()/28.0,0.32,1.3))
 
-func touch(v: Vector3,max_impulse: float) -> void:
+func touch(v: Vector3,max_impulse: float,affect_vertical: bool=true) -> void:
 	if pending_kick: return
 	touch_velocity = v
 	touch_impulse_limit = max_impulse
+	touch_vertical = affect_vertical
 	pending_touch = true
 	sleeping = false
 
@@ -231,7 +240,10 @@ func guide(acceleration: Vector3) -> void:
 	pending_control=true
 
 func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
+	var external_impulse := pending_reset or pending_kick or pending_touch or pending_control
+	var lifting := (pending_reset and pending_velocity.y>.4) or (pending_kick and kick_velocity.y>.4) or (pending_touch and touch_vertical and touch_velocity.y>.4)
 	if pending_reset:
+		low_lift_airborne=false
 		state.transform = Transform3D(Basis.IDENTITY,reset_position)
 		reset_physics_interpolation.call_deferred()
 		state.linear_velocity = pending_velocity
@@ -239,11 +251,23 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		pending_reset = false
 		previous_position = reset_position
 	if not active:
+		low_lift_airborne=false
+		previous_motion_valid=false
 		pending_control=false
 		state.linear_velocity = Vector3.ZERO
 		state.angular_velocity = Vector3.ZERO
 		return
 	if is_instance_valid(held_by):
+		low_lift_airborne=false
+		previous_motion_valid=false
+		if pending_grip:
+			# Catch contact absorbs the incoming shot before carrying begins.
+			# Leaving its full momentum here sent a secured ball through the
+			# gloves while the slower hand constraint tried to pull it back.
+			state.linear_velocity=held_by.velocity+(state.linear_velocity-held_by.velocity).limit_length(1.2)
+			state.angular_velocity=Vector3.ZERO
+			spin=0
+			pending_grip=false
 		# A damped hand constraint carries the existing rigid body without moving
 		# its transform. Acquisition, lifting and lowering all remain continuous.
 		var relative: Vector3=state.linear_velocity-held_by.velocity
@@ -256,28 +280,42 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		state.angular_velocity = Vector3(kick_velocity.z/RADIUS,spin*6,-kick_velocity.x/RADIUS)
 		pending_kick = false
 	if pending_touch:
-		var impulse := ((touch_velocity-state.linear_velocity)*mass).limit_length(touch_impulse_limit)
+		var change := touch_velocity-state.linear_velocity
+		if not touch_vertical: change.y=0
+		var impulse := (change*mass).limit_length(touch_impulse_limit)
 		state.apply_central_impulse(impulse)
 		pending_touch = false
 	if pending_control:
 		state.apply_central_impulse(control_acceleration*mass*state.step)
 		pending_control=false
 	var v = state.linear_velocity
+	if lifting and v.y>.4: low_lift_airborne=true
+	# A deliberate scoop/heel lift must clear the turf under gravity. The
+	# rolling anti-chatter rule otherwise erases a small hop on its way up.
+	if not lifting and state.transform.origin.y<=GROUND_HEIGHT+.02 and (v.y<=0 or (previous_vertical_speed<0 and v.y>=0)):
+		low_lift_airborne=false
 	ground_bounce_age+=state.step
 	var last_vertical := previous_vertical_speed
-	if last_vertical< -1 and v.y>0.65 and state.transform.origin.y<RADIUS+0.18:
+	var rebounded := false
+	if not external_impulse and previous_motion_valid and last_vertical< -1 and v.y>0.1 and state.transform.origin.y<RADIUS+0.18:
 		for contact in range(state.get_contact_count()):
 			if state.get_contact_local_normal(contact).y>0.55:
+				# Contact friction can transfer the launch's remaining topspin
+				# back into translation. A free turf bounce must lose pace instead.
+				var limit := Motion.ground_rebound(previous_velocity+state.total_gravity*state.step,surface,state.transform.origin)
+				var horizontal := Vector2(v.x,v.z).limit_length(Vector2(limit.x,limit.z).length())
+				v=Vector3(horizontal.x,minf(v.y,limit.y),horizontal.y)
+				rebounded=true
 				ground_bounce_age=0
 				if last_vertical< -1.2: ping(Vector3.UP,clampf(-last_vertical/10.0,0.22,1.05))
-	previous_vertical_speed=v.y
+				break
 	var resistance := Motion.profile(surface,state.transform.origin)
 	if is_instance_valid(surface): physics_material_override.bounce=surface.ball_bounce(state.transform.origin)
 	var speed := Vector2(v.x,v.z).length()
 	var grounded: bool=state.transform.origin.y<RADIUS+0.10
 	# Fast ground travel otherwise chatters: gravity + turf bounce inject a few
 	# millimetres of vertical hop every step. Keep a real descending bounce.
-	var rolling: bool=grounded and (absf(v.y)<1.2 or (absf(v.y)<2.4 and last_vertical>-3.0))
+	var rolling: bool=grounded and not low_lift_airborne and (absf(v.y)<1.2 or (absf(v.y)<2.4 and last_vertical>-3.0))
 	if rolling:
 		physics_material_override.bounce=0.0
 		var remaining := Motion.rolling_speed(speed,state.step,resistance)
@@ -305,7 +343,15 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		state.transform=corrected
 		if v.y<0:
 			if v.y< -1.2: ping(Vector3.UP,clampf(-v.y/10.0,0.22,1.05))
-			v.y=-v.y*physics_material_override.bounce if v.y< -1.2 else 0.0
+			v=Motion.ground_rebound(v,surface,point)
+			rebounded=true
 			ground_bounce_age=0
+	if rebounded:
+		# Remove the surplus rolling spin as well, so the next contact cannot
+		# accelerate the ball again. Explicit kicks and player impulses remain free.
+		state.angular_velocity=Vector3(v.z/RADIUS,state.angular_velocity.y,-v.x/RADIUS)
 	state.linear_velocity = v
 	for net in goal_nets: net.contact(state,RADIUS,mass)
+	previous_velocity=state.linear_velocity
+	previous_vertical_speed=previous_velocity.y
+	previous_motion_valid=true

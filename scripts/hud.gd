@@ -1,4 +1,5 @@
 extends Control
+const UI=preload("res://scripts/ui_style.gd")
 const P = preload("res://scripts/pitch_dimensions.gd")
 const Brand = preload("res://scripts/branding.gd")
 var shot_guide := preload("res://scripts/shot_guide.gd").new()
@@ -11,16 +12,19 @@ var pass_trail_kicker := -1
 var nav_state := ""
 var nav_buttons: Array[Button] = []
 var nav_index := 0
+var ui_feedback
+var home_menu := preload("res://scripts/home_menu.gd").new()
 var help_launcher: Button
 var help_glyphs: Control
+const Report=preload("res://scripts/match_report_art.gd")
 var game: Node3D
 var font: Font = SystemFont.new()
 var bold: Font = SystemFont.new()
 var display: Font = SystemFont.new()
-const INK := Color("101c22")
-const PAPER := Color("f5f0df")
-const GOLD := Color("e9ce87")
-const MUTE := Color("b4c5bd")
+const INK := UI.INK
+const PAPER := UI.PAPER
+const GOLD := UI.ACCENT
+const MUTE := UI.MUTE
 const LIVE := Rect2(1177,28,229,38)
 var bug_age := 0.0
 var toast_overlay: Control
@@ -39,10 +43,10 @@ func _process(delta: float) -> void:
 	if game.state!="playing" or game.last_kicker!=pass_trail_kicker: pass_trail_time=0
 
 func bug_slide() -> float:
-	return (1.0-smoothstep(0.0,0.55,bug_age))*-510.0
+	return 0.0 if game.experience.reduce_motion else (1.0-smoothstep(0.0,0.55,bug_age))*-510.0
 
 func live_slide() -> float:
-	return (1.0-smoothstep(0.0,0.55,bug_age))*250.0
+	return 0.0 if game.experience.reduce_motion else (1.0-smoothstep(0.0,0.55,bug_age))*250.0
 
 func remember_pass(_plan: Dictionary,_passer: int) -> void:
 	last_pass={}
@@ -50,6 +54,7 @@ func remember_pass(_plan: Dictionary,_passer: int) -> void:
 	pass_trail_time=0
 
 func _ready() -> void:
+	home_menu.game=game
 	texture_filter=CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	font.font_names = PackedStringArray(["Avenir Next","DejaVu Sans"])
@@ -90,6 +95,10 @@ func mount_toast(canvas: CanvasLayer) -> void:
 	toast_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	toast_overlay.draw.connect(func(): draw_toast(toast_overlay))
 	canvas.add_child(toast_overlay)
+	ui_feedback=preload("res://scripts/ui_feedback.gd").new()
+	ui_feedback.game=game; canvas.add_child(ui_feedback)
+	var fade:=preload("res://scripts/presentation_fade.gd").new()
+	fade.game=game; canvas.add_child(fade)
 
 func panel(rect: Rect2,color: Color=Color(0.04,0.09,0.11,0.90),radius: int=4,border: Color=Color.TRANSPARENT) -> void:
 	var style = StyleBoxFlat.new()
@@ -119,11 +128,12 @@ func _draw() -> void:
 		var full: Rect2=game.ui.bounds()
 		var y: float=full.position.y+32
 		draw_circle(Vector2(full.position.x+30,y-5),3,GOLD)
-		text("GOL TEKRARI  ·  %.1f×" % game.replay.playback_speed(),Vector2(full.position.x+43,y),16,GOLD,true)
+		text(("ANLIK TEKRAR" if game.replay.instant else "GOL TEKRARI")+"  ·  %.1f×" % game.replay.playback_speed(),Vector2(full.position.x+43,y),16,GOLD,true)
 		if game.controller.using_gamepad: pad_hints(Vector2(full.end.x-170,y-5),[["A","Geç"]],25,14)
 		else: text("SPACE / ENTER · GEÇ",Vector2(full.end.x-207,y),14,PAPER)
 		game.broadcast.draw_graphic(self)
 		return
+	if game.state=="finished": Report.draw(self); return
 	# Thin broadcast overlays leave the entire playing surface visible.
 	if game.state=="menu":
 		menu()
@@ -156,7 +166,11 @@ func _draw() -> void:
 	player_info()
 	minimap()
 	if game.training and game.training_drills.mode=="duel": game.training_drills.duel.draw(self)
+	if game.training: game.training_drills.challenges.draw(self)
 	game.advanced_controls.draw(self)
+	game.commentary.draw(self)
+	draw_other_people()
+	if game.experience.team_symbols: team_symbols()
 	var p = game.players[game.controlled]
 	var marker: Vector2 = game.screen_position(p.position+Vector3.UP*(p.height_cm/100.0+0.30))
 	if not game.camera.is_position_behind(p.position) and game.ui.bounds().grow(-36).has_point(marker):
@@ -164,19 +178,21 @@ func _draw() -> void:
 		if pulse>0: draw_arc(marker,11+(1-pulse)*14,0,TAU,32,Color(GOLD,pulse*.85),2,true)
 		draw_colored_polygon(PackedVector2Array([marker+Vector2(-9,-7),marker+Vector2(9,-7),marker+Vector2(0,7)]),INK)
 		draw_colored_polygon(PackedVector2Array([marker+Vector2(-6,-5),marker+Vector2(6,-5),marker+Vector2(0,4)]),GOLD)
-		var name_width := bold.get_string_size(p.display_name,HORIZONTAL_ALIGNMENT_LEFT,-1,11).x
-		panel(Rect2(marker+Vector2(-name_width*.5-6,-28),Vector2(name_width+12,19)),Color(INK,.88),3)
-		center(p.display_name,marker+Vector2(0,-13),11,GOLD)
-	if game.charging:
+		var name_size := roundi(11*game.experience.scale_factor())
+		var name_width := bold.get_string_size(p.display_name,HORIZONTAL_ALIGNMENT_LEFT,-1,name_size).x
+		panel(Rect2(marker+Vector2(-name_width*.5-6,-17-name_size),Vector2(name_width+12,name_size+8)),Color(INK,.88),3)
+		center(p.display_name,marker+Vector2(0,-13),name_size,GOLD)
+	if game.charging or (game.is_user_player(game.controlled) and game.aerial_shot_active(game.controlled)):
+		var power: float=game.charge if game.charging else game.aerial_shot_power(game.controlled)
 		var chip: bool = game.shot_chip
 		var curl: bool = game.shot_finesse and not chip
-		var launch: Vector3=game.shot_velocity(game.aim_direction(),game.charge,curl,chip)
+		var launch: Vector3=game.shot_velocity(game.aim_direction(),power,curl,chip)
 		var curve: float = game.finesse_curve(game.aim_direction()) if curl else 0.0
 		if game.heading.active(game.controlled):
-			launch=game.heading.launch_velocity(game.controlled,game.aim_direction(),game.charge)
+			launch=game.heading.launch_velocity(game.controlled,game.aim_direction(),power)
 			curve=0
 		elif game.volleys.active(game.controlled):
-			launch=game.volleys.launch_velocity(game.controlled,game.aim_direction(),game.charge)
+			launch=game.volleys.launch_velocity(game.controlled,game.aim_direction(),power)
 			curve=0
 		if game.finishing.style!="":
 			curve=game.finishing.curve(game.controlled,game.finishing.style)
@@ -184,8 +200,9 @@ func _draw() -> void:
 		var label := "AŞIRTMA" if chip else ("FALSO ŞUT" if curl else "ŞUT")
 		if game.heading.active(game.controlled): label="KAFA"
 		elif game.volleys.active(game.controlled): label=game.volleys.label(game.controlled).to_upper()
+		elif game.aerial_assist.active(game.controlled): label="GELİŞİNE VURUŞ"
 		elif game.finishing.style!="": label=game.finishing.LABELS.get(game.finishing.style,label)
-		draw_shot_guide(launch,curve,color,game.charge,label)
+		draw_shot_guide(launch,curve,color,power,label)
 	if game.pass_charging and not game.pass_preview.is_empty():
 		var route: Dictionary = game.pass_preview
 		var color := Color("a0cfe7") if route.get("lob",false) else Color("a7d9bb")
@@ -197,17 +214,11 @@ func _draw() -> void:
 	elif game.state=="playing" and pass_trail_time>0 and not game.charging:
 		draw_pass_guide(last_pass.plan,last_pass.route,Color("8ec6e8") if last_pass.plan.get("lob",false) else Color("a7d9bb"),clampf(pass_trail_time/0.3,0,1)*0.85)
 	if game.state in ["restart","set_piece"]: set_piece_overlay()
-	if game.rules.card_time>0:
-		draw_set_transform(game.ui.edge_offset(0,-1))
-		panel(Rect2(475,153,490,42),Color(0.035,0.08,0.1,0.94),4)
-		draw_rect(Rect2(489,163,14,22),Color("e45a43") if game.rules.card_red else GOLD)
-		center(game.rules.card_text,Vector2(733,181),14,PAPER)
-		draw_set_transform(Vector2.ZERO)
 	game.coaching.draw(self)
 	if game.state in ["paused","finished"]: modal()
 
 func draw_toast(on: CanvasItem=self) -> void:
-	if game.toast_timer<=0 or game.toast=="": return
+	if game.toast_timer<=0 or game.toast=="" or game.broadcast.notification_owner()!="": return
 	var fade := smoothstep(0.0,0.2,game.toast_timer)*smoothstep(0.0,0.18,2.8-game.toast_timer)
 	var y := 28.0 if (game.frontend!=null and game.frontend.visible) or game.state=="menu" else 110.0
 	var style := StyleBoxFlat.new()
@@ -236,11 +247,21 @@ func shot_warning(route: Dictionary) -> String:
 	if route.get("goal_plane",false) and route.target.y>=2.44-game.ball.RADIUS: return "YÜKSEK"
 	return ""
 
+func draw_aim_guide(route: Dictionary,power: float,color: Color,lob: bool=false) -> void:
+	if game.state=="set_piece":
+		aim_indicator.draw_set_piece(self,route,color,lob)
+	else:
+		aim_indicator.draw_arrow(self,route.points,power,color)
+
 func draw_shot_guide(launch: Vector3,spin: float,color: Color,power: float=-1.0,label: String="ŞUT") -> void:
 	var route: Dictionary=shot_guide.preview(game.ball.position,launch,spin,game.attack_sign(0)*50,game.weather)
 	if power<0: power=game.set_pieces.preview_power() if game.state=="set_piece" else game.charge
-	aim_indicator.draw_arrow(self,route.points,power,color)
-	aim_indicator.draw_meter(self,power,label,color,shot_warning(route),game.shot_chip)
+	draw_aim_guide(route,power,color,route.target.y>1.1)
+	var warning := shot_warning(route)
+	var shooter=game.players[game.controlled]
+	var range_to_goal: float=game.flat_distance(game.ball.position,Vector3(0,0,game.attack_sign(shooter.team)*50))
+	if warning=="" and not game.shot_chip and game.strike_quality.overhit_risk(power,range_to_goal,shooter.Attributes.has_style(shooter,"power_shot"))>.3: warning="AŞIRI GÜÇ · TOP HAVALANABİLİR"
+	aim_indicator.draw_meter(self,power,label,color,warning,game.shot_chip,game.strike_quality.OVERHIT_START)
 
 func draw_pass_guide(plan: Dictionary,route: Dictionary,color: Color,opacity: float=1.0) -> void:
 	color.a*=opacity
@@ -257,7 +278,7 @@ func draw_pass_guide(plan: Dictionary,route: Dictionary,color: Color,opacity: fl
 	var warning := ""
 	if absf(route.target.x)>P.HALF_WIDTH or absf(route.target.z)>50: warning="SAHA DIŞINA YÖNELİYOR"
 	elif game.pass_charging and game.pass_risk>0.48: warning="PAS YOLUNDA RAKİP"
-	aim_indicator.draw_arrow(self,route.points,power,color)
+	draw_aim_guide(route,power,color,lob)
 	aim_indicator.draw_meter(self,power,label,color,warning,lob)
 
 func action_hints() -> Array:
@@ -293,7 +314,8 @@ func ceremony_overlay() -> void:
 	draw_set_transform(Vector2.ZERO)
 
 func scoreboard() -> void:
-	draw_set_transform(game.ui.edge_offset(-1,-1))
+	var scale_value: float=game.experience.hud_scale("score")
+	draw_set_transform(game.ui.edge_offset(-1,-1)+Vector2(32,28)*(1-scale_value),0,Vector2.ONE*scale_value)
 	var slide := bug_slide()
 	if game.training:
 		training_scoreboard(slide)
@@ -361,6 +383,7 @@ func skip_chip(rect: Rect2,label: String="SPACE / ENTER  ·  GEÇ",pad_label: St
 func set_piece_overlay() -> void:
 	var setup = game.set_pieces
 	if game.state!="set_piece" or game.restart_team!=0: return
+	setup.routines.draw(self,setup)
 	if setup.kind()=="shot":
 		draw_shot_guide(setup.pending_velocity,setup.pending_curve,GOLD,setup.preview_power(),"PENALTI" if game.restart_type=="PENALTI" else "FRİKİK")
 		return
@@ -379,22 +402,27 @@ func crest(p: Vector2,away: bool,scale_value: float=1) -> void:
 	center(club.short.substr(0,1),p+Vector2(0,7*scale_value),int(22*scale_value),Color("9e3d32") if away else GOLD)
 
 func player_info() -> void:
-	draw_set_transform(game.ui.edge_offset(-1,1)+Vector2(0,24))
+	var scale_value: float=game.experience.hud_scale("player")
+	draw_set_transform(game.ui.edge_offset(-1,1)+Vector2(0,24)+Vector2(32,844)*(1-scale_value),0,Vector2.ONE*scale_value)
 	var p = game.players[game.controlled]
 	panel(Rect2(32,744,266,100),Color(0.045,0.10,0.12,0.93),4)
 	draw_rect(Rect2(32,744,4,100),GOLD)
 	text("%02d" % p.shirt_number,Vector2(51,789),31,GOLD,true)
-	text(p.display_name,Vector2(103,773),21,PAPER,true)
+	UI.fit(self,bold,p.display_name,Vector2(103,773),184,21,PAPER)
 	text("YILDIZ MODU" if game.player_lock else game.team_name(0),Vector2(103,792),9,MUTE,true)
 	var stamina_color := Color("ed9279") if p.exhausted else (Color("e9ce87") if p.energy<0.4 else Color("a7d9bb"))
 	var stamina_status := "STAMİNA"
 	if p.exhausted: stamina_status = "YORGUN"
 	elif p.active_sprint: stamina_status = "SPRİNT"
-	elif p.desired.length()<0.1 and p.energy<0.99: stamina_status = "DİNLENİYOR"
+	elif p.desired.length()<0.1 and p.energy<p.stamina_capacity()-.01: stamina_status = "DİNLENİYOR"
+	elif p.match_fatigue>.12: stamina_status = "MAÇ YORGUNU"
 	text(stamina_status,Vector2(51,815),12,stamina_color,true)
 	text("%d%%" % roundi(p.energy*100),Vector2(241,815),12,stamina_color,true)
 	panel(Rect2(51,827,225,6),Color("39504d"),3)
 	if p.energy>0: panel(Rect2(51,827,225*p.energy,6),stamina_color,3)
+	if p.match_fatigue>.01:
+		var capacity: float=51+225*p.stamina_capacity()
+		draw_line(Vector2(capacity,825),Vector2(capacity,835),Color("ed9279"),1)
 	if p.exhausted:
 		var threshold: float = 51+225*p.RECOVERY_LIMIT
 		draw_line(Vector2(threshold,825),Vector2(threshold,835),PAPER,1)
@@ -414,7 +442,8 @@ func player_info() -> void:
 	draw_set_transform(Vector2.ZERO)
 
 func minimap() -> void:
-	draw_set_transform(game.ui.edge_offset(1,1)+Vector2(0,24))
+	var amount: float=game.experience.hud_scale("map")
+	draw_set_transform(game.ui.edge_offset(1,1)+Vector2(0,24)+Vector2(1406,845)*(1-amount),0,Vector2.ONE*amount)
 	var rect = Rect2(1268,655,138,190)
 	panel(rect,Color(0.03,0.08,0.09,0.72),4,Color(1,1,1,0.1))
 	var pitch = Rect2(1281,673,112,155)
@@ -430,37 +459,34 @@ func minimap() -> void:
 		var p = game.players[i]
 		if not p.visible: continue
 		var pos = Vector2(1337+p.position.x/P.WIDTH*112,750.5+p.position.z/P.LENGTH*155)
-		draw_circle(pos,3 if i==game.controlled else 2.2,GOLD if i==game.controlled else team_colors[p.team])
+		if game.experience.team_symbols:
+			draw_circle(pos,4.5,INK)
+			if p.team==0: draw_circle(pos,3,Color.WHITE)
+			else: draw_rect(Rect2(pos-Vector2(3,3),Vector2(6,6)),Color.WHITE,false,1.5)
+			if i==game.controlled: draw_arc(pos,6,0,TAU,16,GOLD,1.5,true)
+		else: draw_circle(pos,3 if i==game.controlled else 2.2,GOLD if i==game.controlled else team_colors[p.team])
 	var ball_pos: Vector3 = game.ball.position
-	draw_circle(Vector2(1337+ball_pos.x/P.WIDTH*112,750.5+ball_pos.z/P.LENGTH*155),2.3,Color.WHITE)
+	var dot := Vector2(1337+ball_pos.x/P.WIDTH*112,750.5+ball_pos.z/P.LENGTH*155)
+	if game.experience.team_symbols:
+		draw_circle(dot,5,INK)
+		draw_colored_polygon(PackedVector2Array([dot+Vector2(0,-4),dot+Vector2(4,0),dot+Vector2(0,4),dot+Vector2(-4,0)]),GOLD)
+	else: draw_circle(dot,2.3,Color.WHITE)
 	center("↑  HÜCUM",Vector2(1337,643),10,Color(1,1,1,0.7))
+	if game.experience.team_symbols: center("● BİZ  □ RAKİP",Vector2(1337,860),12,Color.WHITE)
 	draw_set_transform(Vector2.ZERO)
 
+func team_symbols() -> void:
+	for i in range(game.players.size()):
+		var player=game.players[i]
+		if not player.visible or i==game.controlled or game.camera.is_position_behind(player.position): continue
+		var point: Vector2=game.screen_position(player.position+Vector3.UP*(player.height_cm/100.0+.30))
+		if not game.ui.bounds().grow(-16).has_point(point): continue
+		draw_circle(point,7,INK)
+		if player.team==0: draw_circle(point,4,Color.WHITE)
+		else: draw_rect(Rect2(point-Vector2(4,4),Vector2(8,8)),Color.WHITE,false,2)
+
 func menu() -> void:
-	# The pitch remains live behind an editorial, restrained match-day title card.
-	var full: Rect2=game.ui.bounds()
-	if full.position.x<0: draw_rect(Rect2(full.position,Vector2(-full.position.x,full.size.y)),Color(0.025,0.055,0.065,.97))
-	for i in range(90):
-		draw_rect(Rect2(i*10,full.position.y,10,full.size.y),Color(0.025,0.055,0.065,0.97*pow(1.0-i/90.0,0.45)))
-	draw_texture_rect(Brand.CREST,Rect2(62,32,146,146),false)
-	text("STARTING",Vector2(226,83),31,PAPER,true)
-	headline("ELEVEN FC",Vector2(223,135),53,PAPER)
-	text("S E F C   /   1 1 ' E  1 1  F U T B O L",Vector2(228,160),10,GOLD,true)
-	panel(Rect2(68,225,166,29),Color(0.9,0.81,0.54,0.13),2,Color(GOLD,0.35))
-	text("M A Ç   G Ü N Ü",Vector2(84,245),11,GOLD,true)
-	headline("SAHA SENİN.",Vector2(64,363),96)
-	headline("OYUN SENİN.",Vector2(64,461),96,GOLD)
-	text("İlk dokunuştan son düdüğe.",Vector2(70,513),22,PAPER)
-	text("11'e 11 futbol. Bir sonraki golü sen yaz.",Vector2(70,548),16,MUTE)
-	button(Rect2(68,601,345,64),"HIZLI MAÇ","ENTER",true)
-	button(Rect2(68,681,345,56),"ANTRENMAN","T",false)
-	button(Rect2(440,601,295,64),"KARİYER","",true)
-	button(Rect2(68,751,345,46),"AYARLAR","P",false)
-	button(Rect2(68,820,345,48),"KONTROL REHBERİ","Y" if game.controller.using_gamepad else "F1",false)
-	draw_set_transform(game.ui.edge_offset(1,-1))
-	panel(Rect2(1194,36,208,33),Color(0.03,0.08,0.09,0.75),3)
-	text("KIYI ARENA  ·  İSTANBUL",Vector2(1210,58),10,PAPER,true)
-	draw_set_transform(Vector2.ZERO)
+	home_menu.draw(self)
 
 func button(rect: Rect2,title: String,key: String,primary: bool) -> void:
 	if game.controller.using_gamepad:
@@ -468,7 +494,7 @@ func button(rect: Rect2,title: String,key: String,primary: bool) -> void:
 	var hover = rect.has_point(get_global_mouse_position())
 	var color = GOLD.lightened(0.1) if hover else GOLD
 	if not primary: color = Color(0.14,0.23,0.24,0.98) if hover else Color(0.09,0.16,0.17,0.92)
-	panel(rect,color,4,Color(GOLD,0.25) if not primary else Color.TRANSPARENT)
+	panel(rect,color,UI.RADIUS,Color(GOLD,0.25) if not primary else Color.TRANSPARENT)
 	text(title,rect.position+Vector2(22,rect.size.y*0.5+7),18,INK if primary else PAPER,true)
 	if game.controller.using_gamepad and key!="":
 		draw_texture_rect(game.controller.Glyphs.icon(JOY_BUTTON_A,game.controller.family),Rect2(rect.position+Vector2(rect.size.x-51,rect.size.y*0.5-15),Vector2(30,30)),false)
@@ -491,28 +517,7 @@ func modal() -> void:
 	if game.state=="paused":
 		preload("res://scripts/pause_art.gd").draw(self)
 		return
-	draw_rect(game.ui.bounds(),Color(0.02,0.05,0.06,0.73))
-	panel(Rect2(425,218,590,480),Color("112527"),6,Color(GOLD,0.28))
-	center(Brand.SHORT+"  /  MAÇ GÜNÜ",Vector2(720,261),11,GOLD)
-	if game.state=="paused":
-		center("OYUN SENİ BEKLER.",Vector2(720,339),35,PAPER)
-		center("Kısa bir nefes. Sonra tekrar sahaya.",Vector2(720,380),16,MUTE)
-		button(Rect2(490,420,460,55),"DEVAM ET","ESC",true)
-		button(Rect2(490,485,460,48),"YENİ DENEME" if game.training else "KADRO & TAKTİK","R" if game.training else "K / VIEW",false)
-		button(Rect2(490,543,460,48),"AYARLAR","P",false)
-		button(Rect2(490,601,220,48),"ANTRENMANLAR" if game.training else "HIZLI MAÇ","T" if game.training else "R",false)
-		button(Rect2(730,601,220,48),"ANA MENÜ","←",false)
-	else:
-		center(game.ending_reason if game.ending_reason!="" else "SON DÜDÜK",Vector2(720,313),18 if game.ending_reason!="" else 35,PAPER)
-		center("%d  –  %d" % game.score,Vector2(720,384),60,GOLD)
-		center(game.team_name(0)+"       ·       "+game.team_name(1),Vector2(720,415),13,MUTE)
-		center("ŞUT  %d – %d     İSABET  %d – %d" % [game.shots[0],game.shots[1],game.shots_on_target[0],game.shots_on_target[1]],Vector2(720,447),14,PAPER)
-		center("PAS  %d – %d     KURTARIŞ  %d – %d" % [game.passes[0],game.passes[1],game.saves[0],game.saves[1]],Vector2(720,472),14,PAPER)
-		var total: float = maxf(0.01,game.possession[0]+game.possession[1])
-		center("TOPA SAHİP OLMA  %%%d – %%%d" % [int(game.possession[0]/total*100),int(game.possession[1]/total*100)],Vector2(720,498),12,MUTE)
-		button(Rect2(490,526,460,58),"KARİYERE DÖN" if not game.clubs.career_clubs.is_empty() else "TEKRAR OYNA","ENTER",true)
-		button(Rect2(490,600,460,54),"ANA MENÜ","←",false)
-	if game.state=="paused": button(Rect2(490,660,460,34),"KONTROL REHBERİ","F1",false)
+	Report.draw(self)
 
 func rematch() -> void:
 	if game.state!="finished" or not game.clubs.career_clubs.is_empty(): return
@@ -525,9 +530,16 @@ func sync_navigation() -> void:
 	var covered: bool=(is_instance_valid(game.match_menu) and game.match_menu.visible) or (is_instance_valid(game.frontend) and game.frontend.visible) or (is_instance_valid(game.controls_help) and game.controls_help.visible)
 	covered=covered or (is_instance_valid(game.career_screen) and game.career_screen.visible)
 	covered=covered or (is_instance_valid(game.training_menu) and game.training_menu.visible) or (game.broadcast.active and game.state!="paused")
-	help_launcher.visible=not covered and state=="finished"
+	help_launcher.visible=false
 	help_launcher.text="" if game.controller.using_gamepad else "F1  ·  KONTROL REHBERİ"
 	help_glyphs.visible=game.controller.using_gamepad
+	if state=="menu" and not covered:
+		if not home_menu.was_visible:
+			home_menu.refresh()
+			if nav_state=="menu":
+				for i in range(nav_buttons.size()): nav_buttons[i].tooltip_text=home_menu.title(i)
+		home_menu.was_visible=true
+	else: home_menu.was_visible=false
 	if covered:
 		for item in nav_buttons: item.hide()
 		return
@@ -538,11 +550,7 @@ func sync_navigation() -> void:
 		nav_index=0
 		match state:
 			"menu":
-				nav_button(Rect2(68,601,345,64),game.frontend.open_selection)
-				nav_button(Rect2(68,681,345,56),game.training_menu.open_menu)
-				nav_button(Rect2(68,751,345,46),game.match_menu.open_menu)
-				nav_button(Rect2(68,820,345,48),game.controls_help.open_panel)
-				nav_button(Rect2(440,601,295,64),game.career_screen.open_entry)
+				home_menu.navigation(self)
 			"paused":
 				var rects=preload("res://scripts/pause_art.gd").RECTS
 				nav_button(rects[0],game.resume)
@@ -551,14 +559,14 @@ func sync_navigation() -> void:
 				nav_button(rects[3],game.training_menu.open_menu if game.training else game.frontend.open_selection)
 				nav_button(rects[4],game.return_menu)
 				nav_button(rects[5],game.controls_help.open_panel)
-			"finished":
-				nav_button(Rect2(490,526,460,58),game.career_screen.open_hub if not game.clubs.career_clubs.is_empty() else rematch)
-				nav_button(Rect2(490,600,460,54),game.return_menu)
-			"halftime": nav_button(Rect2(510,564,420,54),game.interval.finish)
+				nav_button(rects[6],game.open_instant_replay)
+			"finished": Report.navigation(self)
+			"halftime": nav_button(Rect2(86,564,420,54),game.interval.finish)
 			"ceremony": nav_button(Rect2(1175,825,225,40),game.ceremony.finish.bind(true))
 			"replay": nav_button(Rect2(game.ui.bounds().end.x-225,game.ui.bounds().position.y+8,215,36),game.replay.finish)
 			"goal","kickoff_skip": nav_button(Rect2(1177,74,229,36),game.skip_to_kickoff)
 		for i in range(nav_buttons.size()):
+			if state=="menu": break
 			var item := nav_buttons[i]
 			item.focus_neighbor_top=item.get_path_to(nav_buttons[posmod(i-1,nav_buttons.size())])
 			item.focus_neighbor_bottom=item.get_path_to(nav_buttons[(i+1)%nav_buttons.size()])
@@ -566,9 +574,6 @@ func sync_navigation() -> void:
 			item.focus_neighbor_right=item.focus_neighbor_bottom
 			item.focus_next=item.focus_neighbor_bottom
 			item.focus_previous=item.focus_neighbor_top
-		if state=="menu":
-			nav_buttons[0].focus_neighbor_right=nav_buttons[0].get_path_to(nav_buttons[4])
-			nav_buttons[4].focus_neighbor_left=nav_buttons[4].get_path_to(nav_buttons[0])
 	if state=="replay" and not nav_buttons.is_empty():
 		nav_buttons[0].position=Vector2(game.ui.bounds().end.x-225,game.ui.bounds().position.y+8)
 	elif state=="ceremony" and not nav_buttons.is_empty():
@@ -614,15 +619,32 @@ func handle_pad(code: int) -> void:
 			game._input(event)
 
 func halftime_overlay() -> void:
-	draw_rect(game.ui.bounds(),Color(0.02,0.05,0.06,0.42))
-	panel(Rect2(440,250,560,390),Color(0.035,0.09,0.10,0.96),6,Color(GOLD,0.35))
-	center("45:00  /  DEVRE ARASI",Vector2(720,294),17,GOLD)
-	center("%d  –  %d" % game.score,Vector2(720,366),58,PAPER)
-	center(game.team_name(0)+"       ·       "+game.team_name(1),Vector2(720,403),14,MUTE)
-	center("ŞUT  %d – %d       PAS  %d – %d" % [game.shots[0],game.shots[1],game.passes[0],game.passes[1]],Vector2(720,447),15,PAPER)
-	center("OYUNCULAR DİNLENİYOR · ENERJİ +%20",Vector2(720,491),12,GOLD)
-	center("İkinci yarıda kaleler değişir. Hücum yönün ↓",Vector2(720,521),13,MUTE)
-	button(Rect2(510,564,420,54),"İKİNCİ YARIYA GEÇ  ·  %d" % ceili(maxf(0,game.interval.DURATION-game.interval.age)),"ENTER",true)
+	panel(Rect2(56,250,480,390),Color(0.035,0.09,0.10,0.94),6,Color(GOLD,0.35))
+	center("45:00  /  DEVRE ARASI",Vector2(296,294),17,GOLD)
+	center("%d  –  %d" % game.score,Vector2(296,366),58,PAPER)
+	center(game.team_name(0)+"       ·       "+game.team_name(1),Vector2(296,403),13,MUTE)
+	center("ŞUT  %d – %d       PAS  %d – %d" % [game.shots[0],game.shots[1],game.passes[0],game.passes[1]],Vector2(296,447),15,PAPER)
+	center("TAKIMLAR SOYUNMA ODASINDA" if game.interval.phase=="room" else "OYUNCULAR SOYUNMA ODASINA GİDİYOR",Vector2(296,484),12,GOLD)
+	center("İkinci yarı santrası · Kaleler değişir · Enerji +%20",Vector2(296,517),12,MUTE)
+	button(Rect2(86,564,420,54),"HAZIRLIK TAMAMLANIYOR" if game.interval.resume_requested else "DEVAM ET · İKİNCİ YARI","ENTER",true)
 
 func action_label(action: int) -> String:
 	return game.controller.label_for(action) if game.controller.using_gamepad else OS.get_keycode_string(game.match_menu.key_for(action))
+
+func draw_other_people() -> void:
+	# Second person: a name tag and compact charge bar above the player.
+	if not game.humans.multiple() or game.state not in ["playing","set_piece"]: return
+	for slot in range(1,game.humans.slots.size()):
+		var state: Dictionary=game.humans.slots[slot].state
+		var index: int=game.humans.controlled_of(slot)
+		if index<0: continue
+		var p=game.players[index]
+		var point: Vector3=p.position+Vector3.UP*(p.height_cm/100.0+.55)
+		if game.camera.is_position_behind(point): continue
+		var at: Vector2=game.screen_position(point)
+		var color: Color=game.humans.COLORS[slot]
+		center("P%d" % (slot+1),at+Vector2(0,-10),12,color)
+		var fill: float=float(state.get("charge",0.0)) if state.get("charging",false) else (float(state.get("pass_power",0.0)) if state.get("pass_charging",false) else -1.0)
+		if fill>=0:
+			panel(Rect2(at+Vector2(-30,-2),Vector2(60,6)),Color(0,0,0,.55),2)
+			panel(Rect2(at+Vector2(-30,-2),Vector2(60*clampf(fill,0,1),6)),color,2)

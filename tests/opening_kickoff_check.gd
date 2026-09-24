@@ -31,7 +31,7 @@ func run() -> void:
 		else: pad(true); pad(false)
 		await tick(30)
 		check(game.state=="set_piece" and game.restart_type=="SANTRA" and game.restart_team==0 and game.half==1,mode+": skipping the ceremony waits at the first-half kickoff")
-		check(game.ball.position.distance_to(Vector3(0,.23,0))<.06 and game.passes[0]==0,mode+": the skip button does not also kick the ball")
+		check(game.ball.position.distance_to(Vector3(0,game.ball.GROUND_HEIGHT,0))<.06 and game.passes[0]==0,mode+": the skip button does not also kick the ball")
 		var legal := true
 		for i in range(game.players.size()):
 			if i==game.set_pieces.taker: continue

@@ -26,6 +26,10 @@ config/icon="res://assets/branding/sefc-icon.png"
 config/macos_native_icon="res://assets/branding/sefc.icns"
 config/windows_native_icon="res://assets/branding/sefc.ico"
 
+[audio]
+
+general/text_to_speech=true
+
 [display]
 
 window/size/viewport_width=1440

@@ -34,6 +34,7 @@ func reset(owner: int=9) -> void:
 	game.controller.reset_bindings(); game.controller.held.clear(); game.controller.clear_shot_aim()
 	game.controller.stick=Vector2.ZERO; game.controller.using_gamepad=false
 	game.controlled=owner; p=game.players[owner]
+	p.attributes["skill_moves"]=5
 	for i in range(game.players.size()):
 		var q=game.players[i]
 		q.visible=i==owner; q.collision_layer=2 if q.visible else 0; q.collision_mask=1
@@ -195,12 +196,19 @@ func run() -> void:
 	for through in [false,true]:
 		await reset()
 		var code := KEY_Y if through else KEY_S
-		key(code,true,true); await tick(25)
-		var preview: Dictionary=game.pass_preview.duplicate()
-		check(game.pass_driven and preview.velocity.length()>18 and preview.velocity.y<.2,"Driven pass has its own fast, low preview")
+		key(code,true,true)
+		var launch: Vector3=Vector3.ZERO
+		if through:
+			await tick(25)
+			launch=game.pass_preview.velocity
+			check(game.pass_driven and launch.length()>18 and launch.y<.2,"Driven through pass keeps its charged, low preview")
+		else:
+			launch=game.kick_contact.pending.velocity
+			check(not game.pass_charging and launch.length()>18 and launch.y<.2,"Driven normal pass starts immediately without a power bar")
 		key(code,false)
 		await tick(10)
-		check(game.passes[0]==1 and game.ball.kick_velocity.distance_to(preview.velocity)<.001,"Driven pass release exactly uses the displayed route")
+		var intended: Vector3=game.strike_quality.last.get("intended",Vector3.ZERO)
+		check(game.passes[0]==1 and intended.distance_to(launch)<.001 and game.ball.kick_velocity.distance_to(game.strike_quality.last.velocity)<.001,"Driven input produces exactly one physical pass")
 	for style in ["low","power","outside","timed"]:
 		await reset()
 		if style=="timed": key(KEY_5); key(KEY_5,false)
@@ -250,7 +258,7 @@ func run() -> void:
 			check(game.shots[0]==1 and game.controlled==9,family+" chord makes one shot without accidental player switching")
 		await reset(); game.controller.adopt_device(0,family)
 		button(JOY_BUTTON_RIGHT_SHOULDER); button(JOY_BUTTON_A); await tick(20)
-		check(game.pass_driven,family+" supports a charged driven pass")
+		check(not game.pass_charging and game.passes[0]==1,family+" supports an immediate driven pass")
 		button(JOY_BUTTON_A,false); button(JOY_BUTTON_RIGHT_SHOULDER,false)
 		check(game.passes[0]==1,family+" driven pass releases normally")
 		await reset(); game.controller.adopt_device(0,family)

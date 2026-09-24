@@ -1,6 +1,8 @@
 extends RefCounted
-const G=preload("res://scripts/geometry.gd")
+const World=preload("res://scripts/career_world.gd")
 var game
+var presentation:=preload("res://scripts/trophy_presentation.gd").new()
+var return_to_hub:=false
 var fixture: Dictionary={}
 var attempts: Array=[[],[]]
 var totals: Array=[0,0]
@@ -46,6 +48,7 @@ func reset() -> void:
 		if is_instance_valid(p): p.keeper=keeper_flags[p]
 	keeper_flags.clear()
 	masks.clear(); keys.clear(); charging=false; paused=false; fixture={}
+	presentation.clear(); return_to_hub=false
 
 func begin_shootout(f: Dictionary) -> void:
 	reset(); fixture=f; attempts=[[],[]]; totals=[0,0]; side=0; pools=[[],[]]
@@ -102,7 +105,7 @@ func handle(event: InputEvent) -> bool:
 	return true
 
 func toggle_pause() -> void:
-	paused=not paused; game.ball.freeze=paused; charging=false
+	paused=not paused; game.ball.freeze=paused or game.state=="trophy"; charging=false
 
 func input_direction() -> Vector2:
 	var value:=axes if game.controller.using_gamepad else Vector2.ZERO
@@ -121,7 +124,7 @@ func shot_button(pressed: bool) -> void:
 
 func launch(target: Vector2,strength: float) -> void:
 	phase="flight"; age=0; charging=false
-	var accuracy: float=shooter.attributes.finishing/100.0
+	var accuracy: float=(float(shooter.attributes.finishing)*.6+shooter.Attributes.value(shooter,"composure")*.4)/100.0
 	var error_size: float=(1-accuracy)*.5+maxf(0,strength-.82)*2.8
 	var goal:=Vector3(target.x*3.42+random.randf_range(-error_size,error_size),.3+target.y*2.45,50.3)
 	var origin:=Vector3(0,game.ball.GROUND_HEIGHT,39)
@@ -158,7 +161,9 @@ func update(delta: float) -> void:
 		if not saved:
 			for n in range(5):
 				if keeper.can_save(last_ball.lerp(point,n/4.0)):
-					saved=true; game.ball.strike(Vector3(signf(point.x)*8,2.2,-9)); break
+					saved=true
+					game.feedback.contact("glove",game.players.find(keeper),point,game.ball.linear_velocity.normalized(),clampf(game.ball.linear_velocity.length()/25,.18,1))
+					game.ball.strike(Vector3(signf(point.x)*8,2.2,-9)); break
 		if last_ball.z<(50+game.ball.RADIUS) and point.z>=(50+game.ball.RADIUS):
 			var cross:=last_ball.lerp(point,((50+game.ball.RADIUS)-last_ball.z)/maxf(.001,point.z-last_ball.z))
 			resolve(absf(cross.x)<3.66-game.ball.RADIUS and cross.y<2.44-game.ball.RADIUS)
@@ -186,70 +191,79 @@ func shootout_winner() -> int:
 	if a>=5 and a==b and totals[0]!=totals[1]: return 0 if totals[0]>totals[1] else 1
 	return -1
 
-func after_result(f: Dictionary) -> void:
+func award_for(f: Dictionary) -> Dictionary:
 	var c=game.career
-	if f.has("competition") and c.world.cups[f.competition].champion!="":
-		var winner: String=c.world.cups[f.competition].champion
-		begin_ceremony(0 if winner==c.world.user else 1,c.world.cups[f.competition].title)
-		prize_amount=c.cups.championship_prize(f.competition)
-	elif not f.has("competition"):
-		var remaining: bool=c.world.fixtures.any(func(q): return not q.played and q.league==f.league)
-		if not remaining and c.standings(f.league)[0]==c.world.user:
-			begin_ceremony(0,preload("res://scripts/career_world.gd").LEAGUES[f.league])
-			prize_amount=preload("res://scripts/career_world.gd").LEAGUE_CHAMPION_PRIZES[f.league]
+	if not f.get("played",false): return {}
+	if f.has("competition"):
+		var key: String=f.competition
+		var cup: Dictionary=c.world.cups.get(key,{})
+		var winner: String=cup.get("champion","")
+		if winner!="" and winner in [f.home,f.away]:
+			return {"club":winner,"opponent":f.away if winner==f.home else f.home,"title":cup.title,"prize":c.cups.championship_prize(key)}
+	elif c.world.league_prizes.get("%d:%d" % [c.world.year,f.league],{}).get("champion","")==c.world.user:
+		return {"club":c.world.user,"opponent":f.away if c.world.user==f.home else f.home,"title":World.LEAGUES[f.league],"prize":World.LEAGUE_CHAMPION_PRIZES[f.league]}
+	return {}
 
-	if game.state!="trophy": reset()
+func award_for_division(division: int) -> Dictionary:
+	var c=game.career
+	var matches: Array=c.world.fixtures if division<World.LEAGUES.size() else c.world.cup_fixtures
+	var key: String=["domestic","champions","super"][division-World.LEAGUES.size()] if division>=World.LEAGUES.size() else ""
+	for i in range(matches.size()-1,-1,-1):
+		var f: Dictionary=matches[i]
+		if not f.played or c.world.user not in [f.home,f.away]: continue
+		if (key!="" and f.get("competition","")!=key) or (key=="" and f.league!=division): continue
+		var award:=award_for(f)
+		if award.get("club","")==c.world.user: return award
+	return {}
+
+func after_result(f: Dictionary) -> void:
+	var award:=award_for(f)
+	if award.is_empty(): reset(); return
+	begin_ceremony(0 if award.club==game.career.world.user else 1,award.title)
+	prize_amount=award.prize
+
+func show_award(award: Dictionary) -> bool:
+	if award.is_empty() or game.career.in_match: return false
+	var c=game.career
+	c.remember_quick_match()
+	game.clubs.career_clubs=[]; game.clubs.career_rosters=[[],[]]
+	for side_index in range(2):
+		var id: String=award.club if side_index==0 else award.opponent
+		var club: Dictionary=c.world.clubs[id]
+		game.clubs.career_clubs.append(club.duplicate(true))
+		var chosen: Array=club.lineup.filter(func(pid): return pid in club.roster)
+		for pid in club.roster:
+			if not pid in chosen: chosen.append(pid)
+		if chosen.size()<18: game.clubs.clear_career(); return false
+		for pid in chosen.slice(0,18): game.clubs.career_rosters[side_index].append(c.player(pid).duplicate(true))
+	game.clubs.lineups=[range(11),range(11)]; game.clubs.reserves=[range(11,18),range(11,18)]
+	game.clubs.apply()
+	# A menu replay/simulated match uses fresh scene actors, not discipline or
+	# hidden rigs left over from the last physically played match.
+	for p in game.players:
+		p.dismissed=false; p.visible=true; p.rig.show(); p.pose="run"
+	var screen=game.career_screen
+	screen.hide(); screen.clear_controls(); game.frontend.hide()
+	game.camera.cull_mask=screen.world_mask; game.audio.set_process(true)
+	game.weather.sound.stream_paused=false
+	begin_ceremony(0,award.title)
+	prize_amount=award.prize; return_to_hub=true
+	return true
 
 func begin_ceremony(winner: int,label: String) -> void:
 	reset(); champion=winner; title=label; age=0; game.state="trophy"; game.ball.freeze=true
-	stage=Node3D.new(); game.add_child(stage)
-	var dark:=G.material(Color("173c3a")); var gold:=G.material(Color("e6c570"),.22); gold.metallic=.75
-	G.block(stage,Vector3(15,.22,5),Vector3(0,.03,0),dark)
-	G.block(stage,Vector3(15,.07,.12),Vector3(0,.18,-2.5),gold)
-	trophy=Node3D.new(); stage.add_child(trophy)
-	G.cylinder(trophy,.21,.12,Vector3.ZERO,dark); G.cylinder(trophy,.07,.36,Vector3(0,.23,0),gold)
-	G.cylinder(trophy,.15,.43,Vector3(0,.60,0),gold,.34)
-	for side_x in [-1,1]:
-		for n in range(12):
-			var a: float=-PI*.7+n*PI*1.4/12; var b: float=-PI*.7+(n+1)*PI*1.4/12
-			G.rod(trophy,Vector3(side_x*(.23+cos(a)*.23),.60+sin(a)*.24,0),Vector3(side_x*(.23+cos(b)*.23),.60+sin(b)*.24,0),.025,gold)
-	var count:=0
-	for p in game.players:
-		masks[p]=p.collision_mask; p.collision_mask=1; p.action_timer=0; p.velocity=Vector3.ZERO; p.desired=Vector3.ZERO; p.stamina_free_movement=true
-		p.chosen=false; p.shot_preparation=0; p.set_piece_pose=""
-		if p.team==winner and p.visible and not p.dismissed:
-			p.position=Vector3((count%6-2.5)*1.75,.16,-.5+floori(count/6.0)*1.9); p.facing=Vector3.FORWARD; p.rig.rotation.y=0
-			p.celebration="cheer"; count+=1
-			var medal:=Node3D.new(); p.spine.add_child(medal); medals.append(medal)
-			var ribbon:=G.material(Color("22487c")); G.rod(medal,Vector3(-.16,.52,-.17),Vector3(0,.19,-.29),.016,ribbon); G.rod(medal,Vector3(.16,.52,-.17),Vector3(0,.19,-.29),.016,ribbon)
-			G.sphere(medal,.062,Vector3(0,.18,-.30),gold)
-		else: p.position=Vector3(10+p.number*.6,0,8); p.celebration="dejected"
-	shooter=game.players.filter(func(p): return p.team==winner and p.visible and not p.dismissed and not p.keeper)[0]; shooter.position=Vector3(0,.16,-1.7)
-	confetti=MultiMeshInstance3D.new(); confetti.multimesh=MultiMesh.new(); confetti.multimesh.transform_format=MultiMesh.TRANSFORM_3D; confetti.multimesh.use_colors=true
-	var mesh:=BoxMesh.new(); mesh.size=Vector3(.10,.025,.18); mesh.material=G.material(Color.WHITE)
-	mesh.material.vertex_color_use_as_albedo=true; confetti.multimesh.mesh=mesh; confetti.multimesh.instance_count=260; stage.add_child(confetti)
-	game.audio.react("goal",winner,Vector3.ZERO); game.stadium.crowd.react("goal",winner,Vector3.ZERO)
+	presentation.begin(self)
+	if not is_instance_valid(trophy): game.state="finished"
 
 func celebrate(delta: float) -> void:
-	for p in game.players:
-		if p.team!=champion or not p.visible or p.dismissed: continue
-		p.step(delta)
-		p.position.y=.16+absf(sin(age*3.8+p.number))*.18
-	var lift:=smoothstep(1.8,4.2,age)
-	shooter.spine.rotation=Vector3.ZERO
-	shooter.left_arm.rotation=Vector3(1.1+lift*1.85,0,-.08); shooter.right_arm.rotation=Vector3(1.1+lift*1.85,0,.08)
-	shooter.left_elbow.rotation.x=.08; shooter.right_elbow.rotation.x=.08
-	trophy.global_position=(shooter.left_hand.global_position+shooter.right_hand.global_position)*.5-Vector3(0,.5,0)
-	trophy.rotation.z=sin(age*4)*.035*lift
-	for i in range(260):
-		var pos:=Vector3(sin(i*9.71)*8+sin(age+i)*.7,8-fmod(age*(.75+i%5*.08)+i*.037,8),cos(i*3.13)*5)
-		var t:=Transform3D(Basis.from_euler(Vector3(age+i,age*.7,i)),pos)
-		confetti.multimesh.set_instance_transform(i,t); confetti.multimesh.set_instance_color(i,Color("e6c570") if i%2==0 else Color("f2f0df"))
-	if age>22: finish_ceremony()
+	presentation.update(self,delta)
 
 func finish_ceremony() -> void:
-	if game.state!="trophy" or age<1: return
+	if game.state!="trophy" or age<1 or paused: return
+	var hub:=return_to_hub
 	reset(); game.state="finished"; game.ball.freeze=false; game.ball.active=false
+	if hub:
+		game.career.detach(); game.clubs.apply(); game.career_screen.open_hub()
 
 func camera() -> bool:
 	if not game.state in ["shootout","trophy"]: return false
@@ -257,20 +271,28 @@ func camera() -> bool:
 	if game.state=="shootout":
 		game.camera.fov=48; game.camera.position=Vector3(0,5.1,30.5); game.camera.look_at(Vector3(0,1.0,47))
 	else:
-		game.camera.fov=42; game.camera.position=Vector3(sin(age*.06)*2,3.8,-13.5); game.camera.look_at(Vector3(0,1.45,0))
+		presentation.camera(self)
 	return true
 
 func draw(h) -> void:
-	h.panel(Rect2(310,42,820,142),Color("122c30"),12)
 	if game.state=="trophy":
-		h.center(title.to_upper(),Vector2(720,87),21,h.GOLD)
-		h.center("ŞAMPİYON  ·  "+game.clubs.career_clubs[champion].name,Vector2(720,139),32)
+		var compact:=1.0 if game.experience.reduce_motion else smoothstep(1.8,3.2,presentation.timeline(self))
+		var card:=Rect2(Vector2(310,42).lerp(Vector2(32,30),compact),Vector2(820,142).lerp(Vector2(560,76),compact))
+		h.panel(card,Color("122c30"),10)
+		h.center(title.to_upper(),card.position+Vector2(card.size.x*.5,lerpf(45,26,compact)),roundi(lerpf(21,12,compact)),preload("res://scripts/ui_style.gd").GOLD)
+		h.center("ŞAMPİYON  ·  "+game.clubs.career_clubs[champion].name,card.position+Vector2(card.size.x*.5,lerpf(97,56,compact)),roundi(lerpf(32,21,compact)))
 		if prize_amount>0:
-			h.panel(Rect2(450,199,540,79),Color("183b34"),10)
-			h.center("ŞAMPİYONLUK ÖDÜLÜ",Vector2(720,226),12,h.GOLD)
-			h.center("+ "+game.career.money(prize_amount),Vector2(720,260),28,h.GOLD)
-		h.center("DEVAM ET  ·  A / SPACE",Vector2(720,837),17,h.GOLD)
+			h.panel(Rect2(1100,30,308,76),Color("183b34"),10)
+			h.center("ŞAMPİYONLUK ÖDÜLÜ",Vector2(1254,57),11,preload("res://scripts/ui_style.gd").GOLD)
+			h.center("+ "+game.career.money(prize_amount),Vector2(1254,87),23,preload("res://scripts/ui_style.gd").GOLD)
+		var phase_text: String={"presentation":"ŞAMPİYONLUK TÖRENİ","receive":"KAPTAN KUPAYI TESLİM ALIYOR","lift":"KUPA HAVAYA!","celebrate":"TAKIMINLA KUTLA","share":"BU KUPA HEPİMİZİN","photo":"ŞAMPİYON KADRO · TAKIM FOTOĞRAFI"}.get(phase,"")
+		h.panel(Rect2(490,750,460,44),Color("122c30"),10)
+		h.center("DURAKLATILDI · ESC / START" if paused else phase_text,Vector2(720,778),15,preload("res://scripts/ui_style.gd").GOLD)
+		if game.controller.using_gamepad:
+			game.controller.Glyphs.draw_hints(h,Vector2(551,817),[["A","Devam et"],["START","Mola"]],game.controller.family,h.font,24,13)
+		else: h.center("DEVAM ET · ENTER / SPACE    |    ESC · MOLA",Vector2(720,837),17,preload("res://scripts/ui_style.gd").GOLD)
 		return
+	h.panel(Rect2(310,42,820,142),Color("122c30"),12)
 	h.center("PENALTI ATIŞLARI    %d — %d" % totals,Vector2(720,80),29,h.GOLD)
 	for team in range(2):
 		for n in range(maxi(5,attempts[team].size())):

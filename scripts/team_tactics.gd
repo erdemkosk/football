@@ -16,26 +16,71 @@ var support_time := 0.0
 var support_rest := 0.0
 var support_owner := -1
 var support_player := -1
+var possession_team := -1
+var counter_time := [0.0,0.0]
+var score_fixture := ""
+var aggregate_offset := [0,0]
 
 func reset() -> void:
 	targets.clear(); roles.clear(); pressers=[-1,-1]; age=0; last_opponent_plan=-1
 	observed_owner=-1; observed_ball=Vector3.ZERO; observed_velocity=Vector3.ZERO; observation_age=0
 	support_time=0; support_rest=0; support_owner=-1; support_player=-1
+	clear_transition()
+	score_fixture=""; aggregate_offset=[0,0]
+
+func clear_transition() -> void:
+	possession_team=-1; counter_time=[0.0,0.0]
+
+func score_intent(team: int) -> int:
+	if game.training or game.match_time<=game.LENGTH*.68: return 0
+	if team==0 and game.management.manual_plan: return 0
+	if team==1 and game.opponent_coach.reason=="ten_men": return 0
+	return -signi(score_margin(team))
+
+func score_margin(team: int) -> int:
+	# A second-leg leader protects the aggregate, not just tonight's score.
+	if game.career.in_match and score_fixture!=game.career.fixture_id:
+		score_fixture=game.career.fixture_id; aggregate_offset=[0,0]
+		var fixture: Dictionary=game.career.cups.live_fixture()
+		if int(fixture.get("leg",1))==2:
+			var total: Array=game.career.cups.total_score(fixture,[0,0])
+			aggregate_offset=total if fixture.home==game.career.world.user else [total[1],total[0]]
+	var margin: int=game.score[team]-game.score[1-team]
+	if game.career.in_match: margin+=aggregate_offset[team]-aggregate_offset[1-team]
+	return margin
+
+func countering(team: int) -> bool:
+	return counter_time[team]>0 and game.management.identity.counter_style(team) and score_intent(team)>=0
+
+func observe_possession(delta: float) -> void:
+	for team in range(2): counter_time[team]=maxf(0,counter_time[team]-delta)
+	var owner: int=game.dribbler if game.dribbler>=0 else game.carrier
+	if owner<0 or not game.players[owner].visible: return
+	var team: int=game.players[owner].team
+	if team==possession_team: return
+	if possession_team>=0 and game.ball.position.z*game.attack_sign(team)<22:
+		counter_time[team]=5.5
+	counter_time[1-team]=0
+	possession_team=team
 
 func plan_for(team: int) -> int:
-	if team==0: return game.management.mentality
+	if team==0:
+		var intent := score_intent(team)
+		return intent+1 if intent!=0 else game.management.mentality
 	var base: int=game.opponent_coach.mentality
 	if game.opponent_coach.reason=="ten_men": return base
-	if game.match_time>game.LENGTH*.68:
-		var margin: int=game.score[team]-game.score[1-team]
-		if margin<0: return 2
-		if margin>0: return 0
+	var intent := score_intent(team)
+	if intent!=0: return intent+1
 	return base
 
 func press_level(team: int) -> int:
-	return game.management.pressing if team==0 else game.opponent_coach.press_level()
+	if team==1: return game.opponent_coach.press_level()
+	var intent := score_intent(team)
+	return intent+1 if intent!=0 else game.management.pressing
 
 func update(delta: float) -> void:
+	if game.training or game.state!="playing": return
+	observe_possession(delta)
 	support_rest=maxf(0,support_rest-delta)
 	if support_time>0:
 		support_time=maxf(0,support_time-delta)
@@ -62,7 +107,7 @@ func update(delta: float) -> void:
 			targets.clear(); roles.clear(); pressers=[-1,-1]
 		return
 	var defending_team: int=1-game.players[owner].team
-	age=([.48,.32,.22][game.opponent_coach.level()] if defending_team==1 else .28)*lerpf(1.30,.74,game.management.identity.team_quality(defending_team,true))
+	age=(game.management.pick([.48,.32,.22],.17) if defending_team==1 else .28)*lerpf(1.30,.74,game.management.identity.team_quality(defending_team,true))
 	var previous_presser: int=pressers[1]
 	targets.clear(); roles.clear(); pressers=[-1,-1]
 	observed_owner=-1
@@ -80,7 +125,11 @@ func update(delta: float) -> void:
 	var goal_side := Vector3(-ball.x*.018,0,-forward).normalized()
 	var plan: int=plans[team]
 	var height: int=game.management.line_height if team==0 else game.opponent_coach.line_height
-	var line := clampf(ball.z*forward-14+float(height-1)*6+float(plan-1)*2,-42,6)
+	if team==0 and score_intent(team)!=0: height=plan
+	var line := clampf(ball.z*forward-14+float(height-1)*6+float(plan-1)*2+game.sliders.offset(team,"line_height",6),-42,6)
+	# An unpressured carrier facing our goal can play in behind: the line drops
+	# a few metres instead of waiting flat for the through ball.
+	line=maxf(-42,line-through_ball_threat(team,owner)*5.0)
 	var cohesion: float=game.management.identity.team_quality(team,true)
 	var closest := INF
 	for i in range(team*11+1,team*11+11):
@@ -88,16 +137,18 @@ func update(delta: float) -> void:
 		if not p.visible or p.dismissed: continue
 		var group: int=game.management.slot_role(i)
 		var depth: float=line+([0,0,1,2][group])*lerpf(13,9.5,cohesion)
+		# "Hold" drops a little deeper; "join the attack" stays forward for the break.
+		var order: Dictionary=game.management.instruction(i)
+		if not order.is_empty(): depth+=[-4.0,0.0,6.0][int(order.get("attack",1))]
 		var bias: float=game.opponent_coach.wing_bias*3.0 if team==1 else 0.0
-		var at := Vector3(clampf(p.home.x*.78+ball.x*.24+bias,-(P.HALF_WIDTH-5),(P.HALF_WIDTH-5)),0,forward*clampf(depth,-43,36))
+		var at := Vector3(clampf(p.home.x*.78*game.sliders.scale(team,"line_width",.82,1.18)+ball.x*.24+bias,-(P.HALF_WIDTH-5),(P.HALF_WIDTH-5)),0,forward*clampf(depth,-43,36))
 		targets[i]=at; roles[i]="block"
 		var cost: float=game.flat_distance(p.position,ball)+(1-p.energy)*3
-		if team==1:
-			# A nearby player behind the runner is not necessarily able to stop him.
-			var ahead: float=(p.position-ball).dot(goal_side)
-			if ahead<-.3: cost+=minf(7,2.5-ahead*1.5)
-			elif i==previous_presser: cost-=.9
-			if p.tackle_cooldown>0: cost+=p.tackle_cooldown*2
+		# A nearby player behind the runner is not necessarily able to stop him.
+		var ahead: float=(p.position-ball).dot(goal_side)
+		if ahead<-.3: cost+=minf(7,2.5-ahead*1.5)
+		elif i==previous_presser: cost-=.9
+		if p.tackle_cooldown>0: cost+=p.tackle_cooldown*2
 		if cost<closest and p.action_timer<=0: closest=cost; pressers[team]=i
 	var presser: int=pressers[team]
 	if presser<0:
@@ -110,24 +161,25 @@ func update(delta: float) -> void:
 	var in_box: bool=ball.z*forward< -33.5 and absf(ball.x)<20.16
 	if game.flat_distance(game.players[presser].position,ball)>reach:
 		pressers[team]=-1
-		if team==1: opponent_duties(owner,-1,-1,false,in_box)
+		defensive_duties(team,owner,-1,-1,false,in_box)
 		spread_cover(ball,in_box,-1)
 		incoming_cover()
 		return
 	# Approach from the goal side, screening the central pass as we close.
 	var exposed: bool=game.duels.ball_opened(owner)
 	targets[presser]=ball+goal_side*(.65 if exposed else (1.35 if in_box else 1.12))
+	var press_gap: float=game.flat_distance(game.players[presser].position,ball)
 	if team==1:
-		var gap: float=game.flat_distance(game.players[presser].position,ball)
-		var anticipation: float=[.10,.24,.34][game.opponent_coach.level()]*clampf(gap/4,.5,1.5)*lerpf(.70,1.22,game.management.identity.quality(presser,true))
+		# The opponent reads the carrier's visible travel with level-scaled
+		# sharpness; the user's side usually presses with the human anyway.
+		var anticipation: float=game.management.pick([.10,.24,.34],.05,.40)*clampf(press_gap/4,.5,1.5)*lerpf(.70,1.22,game.management.identity.quality(presser,true))
 		# Read visible travel, never the human's pending input. Meet the running
 		# lane from the goal side instead of following yesterday's ball position.
 		targets[presser]+=observed_velocity*anticipation
 	roles[presser]="press"
 	var covering := -1
 	var cover_cost := INF
-	var hole: Vector3=game.players[presser].position+Vector3(0,0,-forward*5)
-	if team==1: hole=targets[presser]+goal_side*5.6
+	var hole: Vector3=targets[presser]+goal_side*5.6
 	for i in targets:
 		if i==presser: continue
 		var q=game.players[i]
@@ -137,6 +189,7 @@ func update(delta: float) -> void:
 		targets[covering]=Vector3(clampf(hole.x,-(P.HALF_WIDTH-7),(P.HALF_WIDTH-7)),0,forward*clampf(hole.z*forward,-44,30))
 		roles[covering]="cover"
 	# The remaining midfielders block lanes toward nearby attacking receivers.
+	var compact_block: bool=game.management.detail(team,"width")==0 and press==0 and absf(ball.x)<12
 	var assigned: Array=[]
 	for i in targets:
 		if i in [presser,covering] or game.management.slot_role(i)!=2: continue
@@ -145,6 +198,9 @@ func update(delta: float) -> void:
 		for j in range((1-team)*11+1,(1-team)*11+11):
 			var q=game.players[j]
 			if j==owner or j in assigned or not q.visible: continue
+			# A narrow low block concedes a harmless wide outlet instead of
+			# dragging its midfield away from the central route to goal.
+			if compact_block and absf(q.position.x)>18 and q.position.z*forward> -30: continue
 			var screen: Vector3=ball.lerp(q.position,.72)
 			var gap: float=game.flat_distance(targets[i],screen)
 			if gap<best: best=gap; choice=j
@@ -152,7 +208,7 @@ func update(delta: float) -> void:
 			assigned.append(choice)
 			targets[i]=targets[i].lerp(ball.lerp(game.players[choice].position,.72),.65)
 			roles[i]="screen"
-	if team==1: opponent_duties(owner,presser,covering,trigger,in_box)
+	defensive_duties(team,owner,presser,covering,trigger,in_box)
 	spread_cover(ball,in_box,presser)
 	incoming_cover()
 	for i in targets:
@@ -264,24 +320,42 @@ func spread_cover(ball: Vector3,in_box: bool,presser: int) -> void:
 			var direction := gap.normalized() if gap.length()>1.0 else (goal_side+Vector3(lane*.7,0,0)).normalized()
 			targets[i]=ball+direction*distance
 
-func opponent_duties(owner: int,presser: int,covering: int,trigger: bool,in_box: bool) -> void:
-	var brain=game.opponent_coach
+func through_ball_threat(team: int,owner: int) -> float:
+	# 0..1: how freely the carrier can play the ball in behind this team.
+	var carrier=game.players[owner]
+	var toward_goal := Vector3(0,0,-game.attack_sign(team))
+	var facing: float=clampf(carrier.facing.dot(toward_goal),0,1)
+	var nearest := INF
+	for i in range(team*11+1,team*11+11):
+		var q=game.players[i]
+		if q.visible and not q.dismissed: nearest=minf(nearest,game.flat_distance(q.position,carrier.position))
+	var free: float=smoothstep(2.5,7.0,nearest)
+	# A carrier deep in his own half is not yet a through-ball threat.
+	var depth: float=smoothstep(-30.0,5.0,carrier.position.z*game.attack_sign(carrier.team))
+	return facing*free*depth
+
+func defensive_duties(team: int,owner: int,presser: int,covering: int,trigger: bool,in_box: bool) -> void:
+	# Both teams read the same football. The opponent's sharpness follows the
+	# difficulty; the user's teammates defend at the tuned normal level and the
+	# marking slider sets how tightly they track runners.
+	var sharp: int=game.opponent_coach.level() if team==1 else 1
 	var ball: Vector3=game.ball.position
-	var forward: float=game.attack_sign(1)
+	var forward: float=game.attack_sign(team)
 	if in_box and presser>=0: roles[presser]="contain"
 	# The second defender closes the escape lane; the cover stays behind both.
 	var trapped: bool=absf(ball.x)>P.HALF_WIDTH-7 or (game.duels.ball_opened(owner) and trigger)
-	var double_press: bool=presser>=0 and brain.level()>0 and press_level(1)==2 and (trapped or brain.transition>0) and not in_box
+	var transition: bool=team==1 and game.opponent_coach.transition>0
+	var double_press: bool=presser>=0 and sharp>0 and press_level(team)==2 and (trapped or transition) and not in_box
 	if double_press and (support_time>0 or support_rest<=0):
 		var helper := -1
-		var best := 10.0 if brain.level()==2 else 7.0
+		var best := 10.0 if sharp==2 else 7.0
 		for i in targets:
-			if i in [presser,covering] or game.players[i].energy<.38 or game.management.slot_role(i)==1: continue
+			if i in [presser,covering] or game.players[i].energy<.38 or game.management.slot_role(i)==1 or game.is_user_player(i): continue
 			var gap: float=game.flat_distance(game.players[i].position,ball)
 			if i==support_player: gap-=.8
 			if gap<best: best=gap; helper=i
 		if helper>=0:
-			if support_time<=0: support_time=1.45 if brain.level()==2 else 1.1
+			if support_time<=0: support_time=1.45 if sharp==2 else 1.1
 			support_player=helper
 			var exit := Vector3(-signf(ball.x)*2.7,0,-forward*1.3)
 			if absf(ball.x)<5: exit=Vector3(2.7 if game.players[presser].position.x<ball.x else -2.7,0,-forward*1.3)
@@ -289,21 +363,43 @@ func opponent_duties(owner: int,presser: int,covering: int,trigger: bool,in_box:
 	elif support_time>0:
 		support_time=0; support_rest=3.8; support_player=-1
 	# Pick up dangerous runners goal-side, without dragging every centre back out.
+	var marking: float=game.sliders.value(team,"marking")
+	var watch_depth: float=18.0-(marking-.5)*12.0
+	var lead: float=[.08,.25,.42][sharp]*lerpf(.7,1.3,marking)
 	var assigned: Array=[]
 	for i in targets:
-		if i==presser or (i==covering and not in_box) or roles[i]=="press_support" or game.management.slot_role(i)!=1: continue
+		if i==presser or (i==covering and not in_box) or roles[i]=="press_support" or game.management.slot_role(i)!=1 or game.is_user_player(i): continue
 		var best := 0.0
 		var runner := -1
-		for j in range(1,11):
+		for j in range((1-team)*11+1,(1-team)*11+11):
 			var q=game.players[j]
 			if j==owner or j in assigned or not q.visible or q.dismissed: continue
 			var danger: float=-q.position.z*forward
-			if danger<18 or absf(q.position.x)>25: continue
+			if danger<watch_depth or absf(q.position.x)>25: continue
 			var score: float=danger-game.flat_distance(game.players[i].position,q.position)*1.2
 			if score>best: best=score; runner=j
-		if runner>=0 and (brain.level()>0 or in_box):
+		if runner>=0 and (sharp>0 or in_box):
 			assigned.append(runner)
 			var q=game.players[runner]
-			var target: Vector3=q.position+q.velocity*([.08,.25,.42][brain.level()])+Vector3(0,0,-forward*1.3)
+			var target: Vector3=q.position+q.velocity*lead+Vector3(0,0,-forward*1.3)
 			targets[i]=Vector3(clampf(target.x,-(P.HALF_WIDTH-4),(P.HALF_WIDTH-4)),0,forward*clampf(target.z*forward,-47,15))
 			roles[i]="recover" if game.players[i].position.z*forward>target.z*forward+2 else "track"
+	# Only the opponent learns the user's favourite wing.
+	if team==1: adapt_wing(presser,covering,in_box)
+
+func adapt_wing(presser: int,covering: int,in_box: bool) -> void:
+	var bias: float=game.opponent_coach.wing_bias
+	var ball: Vector3=game.ball.position
+	if in_box or absf(bias)<.5 or ball.x*bias<6 or ball.z*game.attack_sign(0)<10: return
+	# Commit one midfielder to the familiar exit lane. His old lane is left
+	# open; the other flank cannot acquire an extra player or a speed bonus.
+	var point := ball+Vector3(-signf(bias)*5,0,-game.attack_sign(1)*3)
+	var choice := -1
+	var best := 20.0
+	for i in targets:
+		var p=game.players[i]
+		if i in [presser,covering] or game.management.slot_role(i)!=2 or roles[i]=="press_support" or p.action_timer>0: continue
+		var cost: float=game.flat_distance(p.position,point)
+		if cost<best: best=cost; choice=i
+	if choice>=0:
+		targets[choice]=point; roles[choice]="wing_cover"

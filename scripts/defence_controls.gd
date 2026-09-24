@@ -11,9 +11,10 @@ func reset() -> void:
 
 func directional_choice(direction: Vector3) -> int:
 	var origin: Vector3=game.players[game.controlled].position
+	var team: int=game.active_team()
 	var best := -1
 	var score := INF
-	for i in range(11):
+	for i in range(team*11,team*11+11):
 		var p=game.players[i]
 		if i==game.controlled or not p.visible or p.dismissed or p.action_timer>0: continue
 		var offset: Vector3=(p.position-origin)*Vector3(1,0,1)
@@ -31,7 +32,8 @@ func switch_direction(direction: Vector3) -> void:
 func update(delta: float) -> void:
 	if game.state!="playing": reset(); return
 	rest=maxf(0,rest-delta)
-	if not pressing or game.last_touch==0 or game.ball.held_by!=null or rest>0:
+	var team: int=game.active_team()
+	if not pressing or game.last_touch==team or game.ball.held_by!=null or rest>0:
 		presser=-1; press_age=0; return
 	press_age+=delta
 	if press_age>4.0:
@@ -39,9 +41,9 @@ func update(delta: float) -> void:
 	if presser<0 or presser==game.controlled or not game.players[presser].visible or game.players[presser].energy<.12 or game.players[presser].action_timer>0:
 		presser=-1
 		var best := 22.0
-		for i in range(1,11):
+		for i in range(team*11+1,team*11+11):
 			var p=game.players[i]
-			if i==game.controlled or not p.visible or p.dismissed or p.energy<.18 or p.action_timer>0: continue
+			if game.is_user_player(i) or not p.visible or p.dismissed or p.energy<.18 or p.action_timer>0: continue
 			var gap: float=game.flat_distance(p.position,game.ball.position)
 			if gap<best: best=gap; presser=i
 	if presser<0: return
@@ -88,7 +90,8 @@ func intercept(index: int) -> bool:
 	if p.action_timer>0 or p.tackle_cooldown>0 or game.dribbler==index or p.keeper: return false
 	var aim: Vector3=((game.ball.position-p.position)*Vector3(1,0,1)).normalized()
 	var point: Vector3=game.ball.position+game.ball.linear_velocity*.14
-	point=p.position+(point-p.position).limit_length(1.0); point.y=clampf(point.y,game.ball.RADIUS,.65)
+	var stretch: float=lerpf(.92,1.1,p.Attributes.skill(p,"interceptions"))*(1.12 if p.Attributes.has_style(p,"intercept") else 1.0)
+	point=p.position+(point-p.position).limit_length(stretch); point.y=clampf(point.y,game.ball.RADIUS,.65)
 	p.volley_motion.begin(p,{"point":point,"time":.14,"kind":"intercept"},aim)
 	p.pose="intercept"; p.tackle_cooldown=.65
 	intercepts[index]={"ball":game.ball.position,"boot":p.volley_motion.boot(p)}

@@ -1,4 +1,5 @@
 extends Node
+const Contact=preload("res://scripts/contact_profile.gd")
 const AMBIENCE = preload("res://assets/audio/stadium-ambience.mp3")
 const CHEERING = preload("res://assets/audio/crowd-cheering.mp3")
 const GOAL_CHEER = preload("res://assets/audio/goal-cheer.mp3")
@@ -82,6 +83,11 @@ func crowd_context(home: float,danger: float,hush: float,margin: int,progress: f
 var clips: Dictionary = {}
 var contacts: Array[AudioStreamPlayer] = []
 var contact_cursor := 0
+var contact_variation := 0
+var contact_variants: Dictionary = {}
+var steps: Array[AudioStreamPlayer] = []
+var step_cursor := 0
+var step_count := 0
 
 func _ready() -> void:
 	drum_rng.randomize()
@@ -175,6 +181,15 @@ func _ready() -> void:
 	clips.ball_tackle=synth("ball_tackle",0.18)
 	clips.slide=synth("slide",0.40)
 	clips.net=synth("net",0.72)
+	clips.glove=synth("glove",.19)
+	clips.woodwork=synth("woodwork",.52)
+	clips.soft_pass=synth("soft_pass",.12)
+	clips.grass_step=synth("grass_step",.14)
+	clips.wet_step=synth("wet_step",.17)
+	for kind in ["kick","soft_pass","shot","power","glove","grass_step","wet_step"]:
+		contact_variants[kind]=[clips[kind]]
+		for variant in range(1,3):
+			contact_variants[kind].append(synth(kind,clips[kind].get_length(),variant))
 	net_impact=AudioStreamPlayer.new()
 	net_impact.name="NetImpact"
 	net_impact.stream=clips.net
@@ -183,15 +198,20 @@ func _ready() -> void:
 		var channel := AudioStreamPlayer.new()
 		add_child(channel)
 		contacts.append(channel)
+	for i in range(3):
+		var channel := AudioStreamPlayer.new()
+		channel.name="TurfStep%d" % i
+		add_child(channel)
+		steps.append(channel)
 	effects.volume_db = -11
 
-func synth(kind: String, duration: float) -> AudioStreamWAV:
+func synth(kind: String, duration: float,variant: int=0) -> AudioStreamWAV:
 	var sample_rate = 22050
 	var count = int(sample_rate*duration)
 	var data = PackedByteArray()
 	data.resize(count*2)
 	var rng = RandomNumberGenerator.new()
-	rng.seed = 73
+	rng.seed = 73+variant*419
 	var low = 0.0
 	var fabric = 0.0
 	for i in range(count):
@@ -202,12 +222,17 @@ func synth(kind: String, duration: float) -> AudioStreamWAV:
 		var value = 0.0
 		match kind:
 			"kick": value = (sin(TAU*(100*t-80*t*t))*0.6+low*0.8+n*0.11)*exp(-t*35)
+			"soft_pass": value=(sin(TAU*118*t)*.40+fabric*.38)*exp(-t*48)*smoothstep(0,.002,t)
+			"grass_step": value=(low*.70*exp(-t*40)+(fabric-low)*.30*exp(-t*26)+sin(TAU*62*t)*.13*exp(-t*55))*smoothstep(0,.003,t)*smoothstep(0,.035,duration-t)
+			"wet_step": value=(low*.65*exp(-t*35)+(fabric-low)*.60*exp(-t*19)+sin(TAU*57*t)*.15*exp(-t*45))*smoothstep(0,.003,t)*smoothstep(0,.045,duration-t)
 			"whistle": value = (sin(TAU*2300*t+sin(t*42)*2)+sin(TAU*2850*t)*0.22)*0.22*minf(t*50,1)*minf((duration-t)*20,1)
 			"shot": value = sin(TAU*(108*t-105*t*t))*0.68*exp(-t*24)+low*1.2*exp(-t*36)+n*0.23*exp(-t*130)
 			"power": value = sin(TAU*(48*t-22*t*t))*0.9*exp(-t*12)+low*1.7*exp(-t*9)+n*0.10*exp(-t*28)
 			"body_hit": value = sin(TAU*(65*t-35*t*t))*0.55*exp(-t*19)+low*1.4*exp(-t*15)+n*0.16*exp(-t*55)
 			"ball_tackle": value = sin(TAU*145*t)*0.46*exp(-t*34)+n*0.20*exp(-t*45)+low*0.8*exp(-t*20)
 			"slide": value = (low*0.7+n*0.06)*sin(PI*t/duration)*exp(-t*3)
+			"glove": value=(sin(TAU*72*t)*.48*exp(-t*42)+(fabric-low)*1.2*exp(-t*32))*smoothstep(0,.002,t)
+			"woodwork": value=(sin(TAU*430*t)*.38*exp(-t*12)+sin(TAU*1163*t)*.17*exp(-t*18)+low*.65*exp(-t*55))*smoothstep(0,.002,t)*smoothstep(0,.07,duration-t)
 			"rain": value = n*0.13+low*0.7
 			"net":
 				# A padded ball thump, taut cord snap and a soft fabric tail.
@@ -233,12 +258,25 @@ func play(kind: String) -> void:
 	effects.play()
 
 func contact(kind: String,strength: float=0.5,proximity: float=1.0) -> void:
-	if muted or background: return
+	if muted or background or paused or not clips.has(kind): return
+	var profile:=Contact.read(kind,strength)
 	var channel := contacts[contact_cursor]
 	contact_cursor=(contact_cursor+1)%contacts.size()
-	channel.stream=clips[kind]
-	channel.pitch_scale=lerpf(1.09,0.94,strength)
-	channel.volume_db=lerpf(-19,-8,strength)+linear_to_db(maxf(0.05,proximity))
+	channel.stream=contact_variants[kind][contact_variation%3] if contact_variants.has(kind) else clips[kind]
+	channel.pitch_scale=profile.pitch*[.985,1.018,1.0,1.026,.976][contact_variation%5]
+	channel.volume_db=lerpf(-19,-8,clampf(strength,0,1))+profile.gain+linear_to_db(maxf(0.05,proximity))
+	contact_variation+=1
+	channel.play()
+
+func footstep(speed: float,wetness: float,proximity: float) -> void:
+	if muted or background or paused or proximity<=.05: return
+	var kind := "wet_step" if wetness>.25 else "grass_step"
+	var channel := steps[step_cursor]
+	step_cursor=(step_cursor+1)%steps.size()
+	channel.stream=contact_variants[kind][step_count%3]
+	channel.pitch_scale=[1.0,.96,1.025,1.012,.98][step_count%5]
+	channel.volume_db=lerpf(-31,-23,smoothstep(.6,10,speed))+linear_to_db(proximity)
+	step_count+=1
 	channel.play()
 
 func net_contact(strength: float,scored: bool) -> void:
@@ -275,12 +313,14 @@ func toggle() -> void:
 	if muted: net_impact.stop()
 	if muted:
 		for channel in contacts: channel.stop()
+		for channel in steps: channel.stop()
 
 func start_match(enabled: bool) -> void:
 	stop_atmosphere()
 	if background:
 		effects.stop()
 		for channel in contacts: channel.stop()
+		for channel in steps: channel.stop()
 	match_audio=enabled
 	drum_wait=drum_rng.randf_range(12,22)
 	schedule_chants()
@@ -295,6 +335,9 @@ func start_match(enabled: bool) -> void:
 		stop_menu()
 
 func stop_atmosphere() -> void:
+	for channel in contacts+steps:
+		channel.stop()
+		channel.stream_paused=false
 	net_impact.stop()
 	net_impact.stream_paused=false
 	match_audio=false
@@ -592,6 +635,7 @@ func update_atmosphere(delta: float,state: String) -> void:
 	for bed in packed: bed.stream_paused=paused
 	effects.stream_paused=paused
 	net_impact.stream_paused=paused
+	for channel in contacts+steps: channel.stream_paused=paused
 	update_menu(delta)
 	if not match_audio or paused: return
 	if state=="menu": stop_atmosphere(); return

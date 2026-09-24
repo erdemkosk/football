@@ -58,17 +58,17 @@ func run() -> void:
 	check(game.state=="halftime" and game.half==1 and game.match_time==120,"The first half stops at exactly 45:00")
 	var position: Vector3=game.players[9].position
 	for n in range(120): await tick()
-	check(game.match_time==120 and game.players[9].position.distance_to(position)>0.5,"Players walk toward the bench while the match clock is stopped")
+	check(game.match_time==120 and game.players[9].position.distance_to(position)>0.5,"Players walk toward the tunnel while the match clock is stopped")
 	check(is_equal_approx(game.players[9].energy,0.3),"Walking off for halftime costs no stamina")
 	key(KEY_ESCAPE)
 	var age: float=game.interval.age
 	for n in range(30): await tick()
-	check(game.state=="paused" and game.interval.age==age,"Pause also suspends the interval countdown")
+	check(game.state=="paused" and game.interval.age==age,"Pause also suspends the walk to the dressing rooms")
 	game.resume()
 	key(KEY_F)
 	await capture("halftime-fps")
 	key(KEY_ENTER)
-	check(game.half==2 and game.state=="restart" and game.restart_team==1 and game.restart_type=="SANTRA","Enter starts the second half with the other team's kickoff")
+	check(game.half==2 and game.state in ["restart","set_piece"] and game.restart_team==1 and game.restart_type=="SANTRA","Enter starts the second half with the other team's kickoff")
 	check(game.players[0].home==-home and game.attack_sign(0)==1 and game.attack_sign(1)==-1,"Both teams switch ends")
 	check(game.score==[2,1] and game.shots==[8,5] and game.passes==[20,18] and game.players[4].yellow_cards==1 and game.players[5].dismissed and not game.players[5].visible,"Score, statistics, bookings and dismissals survive halftime")
 	check(is_equal_approx(game.players[9].energy,0.5),"Skipping halftime still grants the same bounded recovery")
@@ -77,7 +77,7 @@ func run() -> void:
 		await tick()
 		if game.state=="playing": completed=true; break
 		if n%2400==0: print("SECOND HALF PREPARATION ",n," ",game.set_pieces.recovery.phase)
-	check(completed and game.half==2 and game.last_touch==1,"Teams physically return and the away kickoff releases play")
+	check(completed and game.half==2 and game.last_touch==1,"The direct second-half formation releases play with the away kickoff")
 	check(game.match_time<120.02,"Second-half clock waits for the kickoff")
 	game.rules.reset()
 	game.kick_lock=0
@@ -114,9 +114,10 @@ func run() -> void:
 	check(game.half==1 and game.players[0].home==home,"A new match restores first-half orientation")
 	game.match_time=119.999
 	await tick()
-	game.interval.age=game.interval.DURATION-0.004
+	game.interval.age=60
 	await tick()
-	check(game.half==2 and game.state=="restart","The interval also ends automatically")
+	check(game.half==1 and game.state=="halftime","The interval waits for Continue instead of an automatic countdown")
+	game.interval.finish()
 	game.state="playing"
 	game.match_time=239.999
 	await tick()

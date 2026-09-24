@@ -29,8 +29,10 @@ func run() -> void:
 	game.match_menu.config_path="res://tests/aim-preview-settings.tmp"
 	game.match_menu.display.set_fullscreen(false)
 	game.match_menu.display.select_resolution(Vector2i(1440,900))
-	scene(); game.begin_pass(); game.pass_power=.64; game.last_direction=Vector3(-.4,0,-1).normalized(); game.update_pass_preview()
+	scene(); game.begin_pass()
 	await photo("pass")
+	scene(); game.begin_pass(true); game.pass_power=.64; game.pass_direction=Vector3(-.4,0,-1).normalized(); game.update_pass_preview()
+	await photo("through")
 	game.pass_power=.12; game.update_pass_preview(); await photo("pass-low")
 	scene(); game.begin_pass(true,true); game.pass_power=.78; game.update_pass_preview()
 	await photo("loft")

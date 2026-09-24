@@ -112,7 +112,9 @@ func run() -> void:
 	check(game.players[20].ai_think==1,"A closer opponent does not repeatedly reset the actual carrier's decision time")
 	game.players[20].receive_timer=.3; game.dribbler=-1
 	check(not game.ai_attack.act(20),"An uncontrolled first touch is settled before attempting another pass")
-	setup(); player(18,Vector3(10,0,2)); game.ball.linear_velocity=Vector3(15,0,0)
+	# Use a quick crossing pass with distinct 80 ms arrival samples. At the
+	# slower speed both runners can legitimately choose the same meeting point.
+	setup(); game.weather.select(0,true); player(18,Vector3(10,0,2)); game.ball.linear_velocity=Vector3(20,0,0)
 	var fresh_target: Vector3=game.ai_attack.receiving_target(18)
 	game.players[18].energy=.05; game.players[18].exhausted=true
 	var tired_target: Vector3=game.ai_attack.receiving_target(18)

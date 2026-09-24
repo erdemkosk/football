@@ -16,18 +16,22 @@ var rng := RandomNumberGenerator.new()
 var quick_state: Dictionary={}
 var contracts:=preload("res://scripts/career_contracts.gd").new()
 var director:=preload("res://scripts/career_director.gd").new()
+var training:=preload("res://scripts/career_training.gd").new()
 var terms:=preload("res://scripts/career_terms.gd").new()
 var match_minutes: Dictionary={}
 var match_entered: Dictionary={}
 var cups:=preload("res://scripts/career_cups.gd").new()
 
 func _init() -> void:
-	contracts.career=self; cups.career=self; director.career=self; terms.career=self
+	contracts.career=self; cups.career=self; director.career=self; terms.career=self; training.career=self
 
 func remember_quick_match() -> void:
 	if not quick_state.is_empty(): return
 	quick_state={"plan":{},"alternate":game.clubs.alternate.duplicate(),"lineups":game.clubs.lineups.duplicate(true),"reserves":game.clubs.reserves.duplicate(true)}
+	quick_state.difficulty=game.management.difficulty
+	quick_state.level=game.management.level
 	for key in World.plan(): quick_state.plan[key]=game.management.get(key)
+	quick_state.plan.instructions=game.management.instructions.duplicate(true)
 
 func club() -> Dictionary: return world.clubs[world.user]
 func player(id: String) -> Dictionary: return world.players[id]
@@ -57,8 +61,9 @@ func slot_summary(index: int) -> Dictionary:
 	var w: Dictionary=saved.world; var c: Dictionary=w.clubs[w.user]
 	return {"name":c.name,"league":c.league,"date":w.date,"year":w.year,"badge":c}
 
-func new_career(id: String,index: int=1) -> bool:
+func new_career(id: String,index: int=1,settings: Dictionary={}) -> bool:
 	world=World.create(); world.user=id; slot=index; in_match=false; fixture_id=""; deal.clear()
+	world.match_settings=preload("res://scripts/match_settings.gd").normalized(settings)
 	cups.start(world)
 	director.ensure(world)
 	news("YENİ DÖNEM",club().name+" teknik direktörünü karşıladı. Hedef: "+club().objective,"club")
@@ -70,6 +75,7 @@ func valid(w) -> bool:
 	for key in ["clubs","players","fixtures","table","news","date","year","user","rng","offers","ledger","history","scorers","results","deals","next_player","pending_fixture","season_done"]:
 		if not w.has(key): return false
 	if not w.clubs.has(w.user) or not w.clubs.size() in [36,48,92,World.CLUB_COUNT]: return false
+	if not training.valid(w): return false
 	if w.has("league_prizes") and not w.league_prizes is Dictionary: return false
 	if w.version>=3:
 		for key in ["cups","cup_fixtures","cup_history","cups_pending"]:
@@ -186,7 +192,10 @@ func roster(id: String) -> Array:
 func best_eleven(id: String) -> Array:
 	var c: Dictionary=world.clubs[id]
 	var shape: int=c.plan.formation
-	var roles: Array=[0,1,1,1,1,2,2,2,2,3,3] if shape==0 else ([0,1,1,1,1,2,2,2,3,3,3] if shape==1 else [0,1,1,1,2,2,2,2,2,3,3])
+	var roles: Array=[0]
+	var counts: Array=preload("res://scripts/match_management.gd").LINE_COUNTS[clampi(shape,0,8)]
+	for group in range(3):
+		for n in range(int(counts[group])): roles.append(group+1)
 	var chosen: Array=[]
 	for role in roles:
 		var best := -INF; var pick := ""
@@ -239,12 +248,13 @@ func next_fixture() -> Dictionary:
 	return {}
 
 func advance_one() -> String:
-	if not exists() or in_match: return ""
+	if not exists() or in_match or not training.active.is_empty(): return ""
 	var next:=next_fixture()
 	if not next.is_empty() and next.day<=world.date: return "Maç günü. Maça çık veya sonucu simüle et."
 	world.date+=1
 	contracts.update_calendar()
 	director.daily()
+	training.daily()
 	terms.daily()
 	for p in world.players.values(): p.fitness=minf(1,p.fitness+.055)
 	var date:=World.calendar(world.date)
@@ -272,6 +282,7 @@ func advance_one() -> String:
 	return ""
 
 func advance_to_event() -> String:
+	if not training.active.is_empty(): return "Önce antrenmanı bitir veya programa dön."
 	var next:=next_fixture()
 	if world.season_done: return "Sezon tamamlandı. Yeni sezona geçebilirsin."
 	var limit: int=mini(next.day,world.date+7) if not next.is_empty() else world.date+7
@@ -331,6 +342,7 @@ func apply_result(f: Dictionary,result: Array,scorers: Dictionary={},played: boo
 		for pid in eleven:
 			var p:=player(pid)
 			p.appearances+=1; p.form=clampf(p.form*.8+(gf-ga)*.12,-1,1)
+			if p.get("arrival",{}).get("club","")==id and not p.arrival.get("debut",false): p.arrival.debut=true
 			if not played: p.fitness=maxf(.35,p.fitness-(.17 if world.clubs[id].plan.pressing==2 else .11))
 			p.morale=clampf(p.morale+(0.035 if gf>=ga else -.045),.1,1)
 			if rng.randf()<.008: p.injury=world.date+rng.randi_range(5,15)
@@ -518,6 +530,8 @@ func transfer(pid: String,buyer: String,fee: int,wage: int,years: int,role: int,
 		var q:=player(swap); buying.roster.erase(swap); buying.lineup.erase(swap)
 		world.clubs[seller].roster.append(swap); q.club=seller
 	buying.roster.append(pid); p.club=buyer; p.wage=wage; p.contract=World.calendar(world.date).year+years; p.squad_role=role; p.listed=false; p.loan_listed=false
+	p.arrival={"club":buyer,"day":world.date,"debut":false}
+	if swap!="": player(swap).arrival={"club":seller,"day":world.date,"debut":false}
 	p.terms={"signing":0,"appearance":0,"goal":0,"title":0,"release":0,"sell_on":0,"beneficiary":""}
 	p.promise={}; p.concern=""; p.recent_minutes=[]
 	assign_shirt(pid)
@@ -677,6 +691,7 @@ func prepare_match() -> bool:
 	var first:=Color(club().primary); var second:=Color(world.clubs[opponent].primary)
 	if Vector3(first.r-second.r,first.g-second.g,first.b-second.b).length()<.4: game.clubs.alternate[1]=true
 	apply_plan(club().plan)
+	game.management.level=world.match_settings.get("level",preload("res://scripts/match_settings.gd").TIER_LEVEL[world.match_settings.difficulty])
 	game.clubs.apply()
 	in_match=true; fixture_id=f.id
 	cups.extra_phase=0
@@ -686,6 +701,8 @@ func prepare_match() -> bool:
 
 func apply_plan(p: Dictionary) -> void:
 	for key in ["formation","mentality","pressing","line_height","width","tempo","runs","fullbacks","anchor"]: game.management.set(key,p.get(key,1))
+	var orders: Variant=p.get("instructions",{})
+	game.management.instructions=orders.duplicate(true) if orders is Dictionary else {}
 
 func match_started() -> void:
 	if not in_match: return
@@ -695,6 +712,7 @@ func match_started() -> void:
 			var p=game.players[side*11+i]
 			if p.career_id!="":
 				p.energy=player(p.career_id).fitness; match_participants[side].append(p.career_id); match_entered[p.career_id]=0.0
+				game.broadcast.debut(p)
 		match_ids[side]=[]
 		for n in game.clubs.lineups[side]+game.clubs.reserves[side]: match_ids[side].append(game.clubs.career_rosters[side][n].id)
 	club().lineup=match_ids[0].slice(0,11)
@@ -710,6 +728,7 @@ func remember_player(p) -> void:
 func enter_player(p) -> void:
 	if not in_match or p.career_id=="": return
 	p.energy=player(p.career_id).fitness
+	game.broadcast.debut(p)
 	match_entered[p.career_id]=game.match_time/game.LENGTH*90
 	if not p.career_id in match_participants[p.team]: match_participants[p.team].append(p.career_id)
 
@@ -746,5 +765,6 @@ func detach() -> void:
 	game.clubs.clear_career()
 	if not quick_state.is_empty():
 		apply_plan(quick_state.plan)
+		game.management.level=quick_state.get("level",preload("res://scripts/match_settings.gd").TIER_LEVEL[clampi(int(quick_state.get("difficulty",1)),0,2)])
 		game.clubs.alternate=quick_state.alternate; game.clubs.lineups=quick_state.lineups; game.clubs.reserves=quick_state.reserves
 		quick_state.clear()

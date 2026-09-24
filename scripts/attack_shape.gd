@@ -22,14 +22,25 @@ func eligible(index: int,owner: int,support) -> bool:
 	if support.roles.get(index,"")!="support": return false
 	return game.management.slot_role(index)>=2
 
+func planned_roles() -> Array[String]:
+	var result: Array[String]=[]
+	result.assign(ROLES)
+	# A feet-first build-up needs a second passing angle, while a direct
+	# plan sends a runner behind. Chasing a goal may open the patient plan.
+	if game.management.detail(team,"runs")==0 and game.team_tactics.score_intent(team)<=0 and not game.team_tactics.countering(team):
+		result[1]="link_outlet"
+	if game.management.detail(team,"width")==0: result.erase("wide_outlet")
+	return result
+
 func update(delta: float,owner: int,possession: int,support) -> void:
 	if game.state!="playing" or owner<0 and game.ai_pass_time[possession]<=0:
 		reset(); return
 	if team!=possession:
 		reset(); team=possession
 	refresh-=delta; hold-=delta
+	var wanted := planned_roles()
 	for role in jobs.keys():
-		if not eligible(jobs[role],owner,support):
+		if role not in wanted or not eligible(jobs[role],owner,support):
 			jobs.erase(role); points.erase(role); refresh=0
 	if refresh<=0:
 		refresh=lerpf(.40,.19,game.management.identity.team_quality(team))
@@ -55,19 +66,21 @@ func plan(owner: int,support) -> void:
 	var open_side := 1.0
 	if game.ai_attack.clearance(ball+Vector3(-9,0,forward*depth),team)>game.ai_attack.clearance(ball+Vector3(9,0,forward*depth),team): open_side=-1
 	# Keep a run in its chosen channel while the job is held.
-	if points.has("channel_run") and jobs.has("channel_run"):
-		open_side=signf(points.channel_run.x-ball.x)
+	var held_role := "channel_run" if jobs.has("channel_run") else "link_outlet"
+	if points.has(held_role) and jobs.has(held_role):
+		open_side=signf(points[held_role].x-ball.x)
 		if open_side==0: open_side=1
 	var anchors := {
 		"short_outlet":ball+Vector3(-open_side*7,0,-forward*5),
+		"link_outlet":ball+Vector3(open_side*7,0,forward*3),
 		"channel_run":ball+Vector3(open_side*8*width,0,forward*depth),
 		"wide_outlet":Vector3(-open_side*25*P.WIDTH_RATIO*width,0,ball.z+forward*3)
 	}
 	var reserved: Array[Vector3]=[]
 	var offside_limit: float=maxf(0,game.rules.offside_line(team)-.9)
 	for index in support.targets:
-		if support.roles[index] in ["one_two","give_go","overlap","box"]: reserved.append(support.targets[index])
-	for role in ROLES:
+		if support.roles[index] in ["one_two","directed_run","come_short","set_piece_run","give_go","overlap","box"] or str(support.roles[index]).begins_with("box_"): reserved.append(support.targets[index])
+	for role in planned_roles():
 		var space_scores: Dictionary={}
 		var best := -INF
 		var chosen := -1
@@ -97,12 +110,12 @@ func plan(owner: int,support) -> void:
 					space_scores[at]=minf(8,game.ai_attack.clearance(at,team))*1.1+lane*1.5
 				var score: float=space_scores[at]-travel*.42-offset.length()*.25
 				var group: int=game.management.slot_role(i)
-				if role=="short_outlet": score+=3 if group==2 else 0
+				if role in ["short_outlet","link_outlet"]: score+=3 if group==2 else 0
 				elif role=="channel_run": score+=(3 if group==3 else 0)-(1-p.energy)*7
 				else: score+=minf(3,absf(p.home.x)*.14)
 				# Prefer the technician as an outlet and a fast runner in the
 				# channel, using the actual lineup rather than shirt numbers.
-				if role=="short_outlet": score+=(float(p.attributes.get("passing",p.attributes.control))-72)*.10
+				if role in ["short_outlet","link_outlet"]: score+=(float(p.attributes.get("passing",p.attributes.control))-72)*.10
 				elif role=="channel_run": score+=(float(p.attributes.pace)+float(p.attributes.acceleration)-144)*.07
 				if score>best: best=score; chosen=i; destination=at
 		if chosen>=0:

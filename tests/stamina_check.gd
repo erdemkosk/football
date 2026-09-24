@@ -19,6 +19,9 @@ func run() -> void:
 	game.ball.freeze=true
 	var p=game.players[9]
 	var ai=game.players[18]
+	# Durations below use the base drain constants; isolate endurance from
+	# the club-specific attributes that the live squad now starts with.
+	p.attributes.stamina=72; ai.attributes.stamina=72
 	p.desired=Vector3.FORWARD
 	p.sprinting=true
 	advance(p,0.5)

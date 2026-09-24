@@ -52,7 +52,7 @@ func run() -> void:
 	check(hard.distance>dry.distance*2.5 and hard.time>dry.time*1.5 and hard.after_second>dry.after_second,"Kick power changes actual range and stopping time, rather than assigning a fixed travel distance")
 	check(hard.after_second<hard.initial-3 and hard.distance<50,"A strong low ball visibly loses pace instead of crossing the pitch at nearly constant speed")
 	var wet: Dictionary=await roll(2,8)
-	check(wet.distance>dry.distance+1 and wet.stopped and wet.drift<0.01,"Wet intact grass allows a longer skid but the same ball still comes to rest")
+	check(wet.distance<dry.distance*.55 and wet.time<dry.time*.65 and wet.monotonic and wet.stopped and wet.drift<0.01,"Heavy rain sharply shortens the same ball's stopping distance and time on intact grass")
 	var dry_short: Dictionary=await roll(0,4,Vector3(0,Size.GROUND_HEIGHT,47),Vector3.RIGHT)
 	var muddy: Dictionary=await roll(2,4,Vector3(0,Size.GROUND_HEIGHT,47),Vector3.RIGHT)
 	check(muddy.distance<dry_short.distance*0.6 and muddy.smooth and muddy.stopped,"The same weak pass loses more energy in a muddy goalmouth and stops much sooner")
@@ -60,13 +60,16 @@ func run() -> void:
 	var rate60: Dictionary=await roll(0,8,Vector3(15,Size.GROUND_HEIGHT,-25),Vector3.BACK,60)
 	check(absf(rate30.distance-dry.distance)<0.18 and absf(rate60.distance-dry.distance)<0.1,"Actual stopping distance remains consistent at 30, 60 and 120 physics updates")
 	Engine.physics_ticks_per_second=120
-	game.weather.select(2,true); game.ball.place(Vector3(-10,Size.GROUND_HEIGHT,0),Vector3(10,0,0)); await frames(3)
+	game.weather.select(2,true); game.ball.place(Vector3(-8,Size.GROUND_HEIGHT,0),Vector3(10,0,0)); await frames(3)
 	var outside_loss := 0.0; var mud_loss := 0.0; var outside_count := 0; var mud_count := 0
+	var wet_damping: float=Motion.profile(game.weather,Vector3(15,0,-25)).y
 	for n in range(250):
 		var speed: float=game.ball.linear_velocity.x
 		var mud: float=game.weather.mud_at(game.ball.position)
 		await physics_frame
-		var loss: float=(speed-game.ball.linear_velocity.x)*120
+		# Remove the common speed-dependent water loss before comparing terrain:
+		# the ball is already slower by the time it reaches the muddy centre.
+		var loss: float=(speed-game.ball.linear_velocity.x)*120-wet_damping*speed
 		if mud<0.05 and speed>1: outside_loss+=loss; outside_count+=1
 		elif mud>0.6 and speed>1: mud_loss+=loss; mud_count+=1
 	check(outside_count>0 and mud_count>0 and mud_loss/mud_count>outside_loss/outside_count+1.5,"Resistance changes at the real mud patch as the ball rolls across it")

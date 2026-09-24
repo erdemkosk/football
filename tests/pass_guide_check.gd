@@ -53,10 +53,11 @@ func run() -> void:
 	var velocity: Vector3=plan.velocity
 	game.pass_ball(true)
 	contact()
-	check(game.ball.kick_velocity.is_equal_approx(velocity),"The normal cross releases the exact velocity used by its preview")
+	check(game.strike_quality.last.get("intended",Vector3.INF).is_equal_approx(velocity) and game.ball.kick_velocity.is_equal_approx(game.strike_quality.last.velocity),"The normal cross releases the velocity used by its preview plus its recorded crossing error")
 	check(game.hud.pass_trail_time==0 and game.hud.last_pass.is_empty(),"The pass guide disappears as soon as the ball is released")
 	await snapshot("cross")
-	setup(); game.begin_pass(); game.pass_power=0.6; game.update_pass_preview()
+	setup(); game.begin_pass()
+	check(not game.pass_charging and game.pass_preview.is_empty(),"Automatic normal passing has no charged aim guide")
 	await snapshot("pass")
 	setup(); game.begin_pass(true); game.pass_power=0.55; game.update_pass_preview()
 	await snapshot("through")

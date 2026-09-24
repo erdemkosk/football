@@ -149,7 +149,7 @@ func build_dugout(team: int) -> void:
 	G.block(shelter,Vector3(10.48,0.26,0.065),Vector3(0,2.29,-1.05),trim)
 	var label := Label3D.new()
 	team_labels.append(label)
-	label.text = "KIYI SPOR  ·  YEDEK KULÜBESİ" if team==0 else "ATLAS FC  ·  YEDEK KULÜBESİ"
+	label.text = preload("res://scripts/sefc_identity.gd").CLUBS[team][0]+"  ·  YEDEK KULÜBESİ"
 	label.font_size = 48
 	label.pixel_size = 0.0035
 	label.outline_size = 0

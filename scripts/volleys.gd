@@ -173,6 +173,7 @@ func resolve() -> void:
 	cancel(best)
 	if request.user:
 		game.charging=false; game.charge=0; game.shot_chip=false; game.shot_finesse=false
+	p.strike_effort=float(request.power)
 	if game.strike(best,velocity,0,false,"half_volley" if request.kind=="half_volley" else "volley"):
 		p.volley_motion.hit=true
 		p.volley_motion.target=game.ball.position

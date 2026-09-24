@@ -1,7 +1,7 @@
 extends RefCounted
-## Short, interruptible ground moves. Only a measured boot contact moves the
-## rigid ball; the exit is a steering suggestion, never guaranteed possession.
-const KINDS := ["roll","stop_go","knock_around"]
+## Short, interruptible ground moves. A measured boot contact changes direction;
+## nearby control joins the planting step and exit without locking the rigid ball.
+const KINDS := ["roll","stop_go","knock_around","fake_shot","fake_pass"]
 const PREPARE := .12
 const CONTACT_END := .30
 const BOOT := Vector3(0,-.42,-.05)
@@ -13,6 +13,7 @@ static func setup(game,p,s: Dictionary) -> void:
 	s.previous_boot=s.origin; s.previous_ball=game.ball.position
 	s.contacts=0; s.contact_gap=INF; s.phase="prepare"
 	s.origin_position=p.position
+	s.entry_offset=(game.ball.position-p.position)*Vector3(1,0,1)
 	s.opponent=-1; s.opponent_position=p.position+s.direction*2
 	var nearest := 4.5
 	for i in range(game.players.size()):
@@ -50,14 +51,32 @@ static func steer(game,p,s: Dictionary) -> void:
 		if s.kind=="stop_go" and s.contacts==1: s.target=game.ball.position
 	p.protecting=false
 
+static func close_control(game,p,s: Dictionary) -> void:
+	# Keep the existing carry through the preparation, then recover the ball
+	# after a lateral touch / second stop-go contact. An opened knock-around
+	# stays completely free, and a tackle or out-of-reach ball gets no rescue.
+	if s.contacts>0 and (s.kind=="knock_around" or (s.kind=="stop_go" and s.contacts==1)): return
+	if game.dribbler!=game.players.find(p) or game.ball.held_by!=null or game.ball.pending_kick or game.ball.position.y>.6: return
+	var offset: Vector3=(game.ball.position-p.position)*Vector3(1,0,1)
+	if offset.length()>1.3: return
+	var goal: Vector3=s.entry_offset.lerp(s.direction*.52,smoothstep(0,PREPARE,s.age))
+	if s.contacts>0:
+		var heading: Vector3=p.desired.normalized() if p.desired.length()>.1 else p.facing
+		goal=s.exit_offset.lerp(heading*.58,smoothstep(0,.18,s.age-s.last_contact_age))
+	var relative: Vector3=(game.ball.linear_velocity-p.velocity)*Vector3(1,0,1)
+	game.ball.guide(((goal-offset)*144-relative*24).limit_length(85))
+
 static func pose(p,s: Dictionary) -> void:
 	var age: float=s.age
-	var weight := smoothstep(0,PREPARE,age)*(1-smoothstep(.48,s.duration,age))
+	var weight := smoothstep(0,PREPARE,age)*(1-smoothstep(minf(.48,s.duration*.78),s.duration,age))
 	var leg: Node3D=p.left_leg if s.foot==0 else p.right_leg
 	var knee: Node3D=p.left_knee if s.foot==0 else p.right_knee
 	var waiting: bool=s.contacts==0 or (s.kind=="stop_go" and s.contacts==1)
 	if waiting:
 		var contact: Vector3=s.origin.lerp(s.target,smoothstep(0,PREPARE,age))
+		if s.kind in ["fake_shot","fake_pass"]:
+			# Show a backswing, then bring the boot across the real ball.
+			contact+=s.direction*(-.20 if s.kind=="fake_shot" else -.11)*sin(PI*clampf(age/PREPARE,0,1))
 		contact.y=maxf(p.global_position.y+p.boot_ground_height(),contact.y-.04)
 		var local: Vector3=p.rig.to_local(contact)-leg.position
 		# Do not stretch a boot across the body to rescue a lost ball.
@@ -69,12 +88,16 @@ static func pose(p,s: Dictionary) -> void:
 		leg.rotation.y+=float(s.side)*.16*weight
 		knee.rotation.x-=.12*weight
 	p.spine.rotation.z=lerpf(p.spine.rotation.z,float(s.side)*(.12 if s.kind!="knock_around" else -.16),weight*.8)
+	if s.kind in ["fake_shot","fake_pass"]:
+		p.spine.rotation.y=lerpf(p.spine.rotation.y,-float(s.side)*.32,weight)
+		p.spine.rotation.x=lerpf(p.spine.rotation.x,-.16,weight*.7)
 	p.left_arm.rotation.z-=weight*.22; p.right_arm.rotation.z+=weight*.22
 	var lowest: float=minf(p.left_knee.to_global(BOOT).y,p.right_knee.to_global(BOOT).y)
 	p.rig.position.y+=maxf(0,p.global_position.y+p.boot_ground_height()-lowest)
 
 static func resolve(game,index: int,s: Dictionary) -> void:
 	var p=game.players[index]
+	close_control(game,p,s)
 	var boot: Vector3=(p.left_knee if s.foot==0 else p.right_knee).to_global(BOOT)
 	var from: Vector3=s.previous_ball-s.previous_boot
 	var to: Vector3=game.ball.position-boot
@@ -94,6 +117,7 @@ static func resolve(game,index: int,s: Dictionary) -> void:
 	velocity.y=.05
 	game.ball.touch(velocity,game.ball.mass*18)
 	s.contacts+=1; s.last_contact_age=s.age
+	s.exit_offset=(game.ball.position-p.position)*Vector3(1,0,1)
 	s.hit_gap=s.contact_gap
 	p.ball_actions.control_grace=0
 	game.feedback.contact("kick",index,game.ball.position,velocity.normalized(),.22)

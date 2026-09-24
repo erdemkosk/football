@@ -135,7 +135,9 @@ func run() -> void:
 				if frame==30: await capture("recovery")
 				if frame==68: await capture("settled")
 		check(peak>1.0 and support_height<0.04,"A strong kick follows through over its planted support foot at speed %.2f" % speed)
-		check(max_change<0.5 and follow_hand.distance_to(recovered_hand)>0.07,"Arms and body move through the kick without a joint snap at speed %.2f" % speed)
+		# Hand displacement is measured in world metres after the rig resize;
+		# the angular continuity limit is independent of that visual scale.
+		check(max_change<0.5 and follow_hand.distance_to(recovered_hand)>0.07*player.WORLD_SCALE,"Arms and body move through the kick without a joint snap at speed %.2f" % speed)
 		check(player.kick_timer==0 and absf(player.right_leg.rotation.x-(0.1-sin(player.run_phase)*0.78*minf(speed/8.7,1)*player.gait_stride))<0.001,"The kick returns to the current individual stride at speed %.2f" % speed)
 	for duration in [0.32,0.46]:
 		reset()

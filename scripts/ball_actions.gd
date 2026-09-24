@@ -20,6 +20,7 @@ var contact_age := 0.0
 var contact_windup := .055
 var contact_origin := Vector3.ZERO
 var release_age := 1.0
+var recovery_power := 0.0
 var release_hip := Quaternion.IDENTITY
 var release_knee := Quaternion.IDENTITY
 var support_foot := -1
@@ -33,6 +34,10 @@ var receive_contact := "inside"
 var receive_error := 0.0
 var receive_reason := ""
 var receive_feedback_time := 0.0
+var intent_direction := Vector3.ZERO
+var intent_age := 0.0
+var kick_context := "straight"
+var kick_speed := 0.0
 
 func reset(p) -> void:
 	p.receiving_facing=Vector3.ZERO
@@ -44,6 +49,9 @@ func reset(p) -> void:
 	receive_direction=Vector3.ZERO; receive_distance=0
 	receive_contact="inside"; receive_error=0; receive_reason=""
 	receive_feedback_time=0
+	intent_direction=Vector3.ZERO; intent_age=0
+	kick_context="straight"; kick_speed=0
+	recovery_power=0
 	p.motion_transition.reset()
 
 func update(delta: float) -> void:
@@ -67,11 +75,17 @@ func prepare_kick(p,point: Vector3,direction: Vector3,pressure: float=0) -> void
 	foot=choose_foot(p,point)
 	var forward: Vector3=-p.rig.global_basis.z.normalized()
 	var aim := (direction*Vector3(1,0,1)).normalized()
+	var angle := forward.angle_to(aim) if aim.length()>.1 else 0.0
+	kick_speed=Vector2(p.velocity.x,p.velocity.z).length()
+	kick_context="back" if angle>2.25 else ("open" if angle>.70 else ("running" if kick_speed>3 else "straight"))
 	kick_turn=clampf(forward.signed_angle_to(aim,Vector3.UP),-1.05,1.05) if aim.length()>0.1 else 0.0
 	var reach: float=Vector2(point.x-p.position.x,point.z-p.position.z).length()
 	var balance: float=p.body_language.balance_strength if p.body_language.balance_age<0.45 else p.locomotion.cut*0.5
 	difficulty=clampf(absf(kick_turn)*0.35+pressure*0.35+balance*0.35+maxf(0,reach-0.9)*0.35+(1-p.energy)*0.15,0,1)
 	plant_support(p,1-foot,.19)
+	# A runner releases the planted foot sooner; a turning pass has a slightly
+	# longer load-bearing step, while movement and the contact deadline stay live.
+	support_duration=lerpf(.19,.13,clampf(kick_speed/9,0,1))
 
 func begin_receive(p,point: Vector3,velocity: Vector3,reach: float) -> void:
 	receive_foot=choose_foot(p,point)
@@ -168,10 +182,26 @@ func release_charged_shot(p,point: Vector3) -> void:
 
 func finish_contact(p) -> void:
 	contact_pending=false; release_age=0
+	recovery_power=p.kick_power
 	var leg: Node3D=p.left_leg if foot==0 else p.right_leg
 	var knee: Node3D=p.left_knee if foot==0 else p.right_knee
 	release_hip=leg.quaternion; release_knee=knee.quaternion
 	p.kick_timer=minf(p.kick_timer,p.kick_duration*.84)
+
+func recover_weight(p) -> void:
+	if release_age>=.62 or contact_pending or recovery_power<=0: return
+	if p.keeper or p.action_timer>0 or p.receive_timer>0 or p.shot_preparation>0 or p.set_piece_pose!="" or p.celebration!="" or not p.skill_move.is_empty(): return
+	var weight:=smoothstep(.10,.22,release_age)*(1-smoothstep(.30,.62,release_age))*recovery_power
+	var side: float=-1 if foot==0 else 1
+	# The planted side absorbs the follow-through and the opposite shoulder
+	# unwinds into the next stride. This never changes movement or ball contact.
+	p.spine.rotation.x=lerpf(p.spine.rotation.x,-.13,weight*.55)
+	p.spine.rotation.y=lerpf(p.spine.rotation.y,-side*.20,weight)
+	p.spine.rotation.z=lerpf(p.spine.rotation.z,side*.08,weight)
+	var support: Node3D=p.right_knee if foot==0 else p.left_knee
+	support.rotation.x-=weight*.14
+	p.left_arm.rotation.z=lerpf(p.left_arm.rotation.z,-.58,weight)
+	p.right_arm.rotation.z=lerpf(p.right_arm.rotation.z,.58,weight)
 
 func finish_pose(p) -> void:
 	if p.action_timer>0 or p.set_piece_pose!="" or p.celebration!="" or not p.skill_move.is_empty():

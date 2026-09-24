@@ -21,6 +21,39 @@ func place(index: int,point: Vector3) -> void:
 func advance(seconds: float) -> void:
 	for frame in range(ceili(seconds*120)): game.team_control.update(1.0/120)
 
+func cursor_regressions() -> void:
+	for half in [1,2]:
+		for rate in [30,60,120]:
+			defence(); game.half=half
+			var direction := Vector3(0,0,game.attack_sign(1))
+			place(9,Vector3(1.8,0,0)); place(6,direction*14)
+			place(17,-direction*.65); game.players[17].velocity=direction*6
+			var stable := true
+			for frame in range(rate):
+				# The short fast touch between dribble contacts must not be
+				# interpreted as an uncontested pass to the distant defender.
+				game.dribbler=17 if frame%3==0 else -1
+				game.carrier=game.dribbler
+				game.ball.linear_velocity=direction*(6 if frame%3==0 else 18)
+				game.team_control.update(1.0/rate)
+				if game.controlled!=9: stable=false
+			check(stable,"A 1.8m challenger never jumps to the 14m defender between dribble touches, half %d at %dHz" % [half,rate])
+		defence(); game.half=half
+		var direction := Vector3(0,0,game.attack_sign(1))
+		game.dribbler=-1; game.carrier=-1
+		place(17,-direction*8); place(9,-direction*6); place(6,direction*28)
+		game.ball.linear_velocity=direction*16
+		var forecast: Dictionary=game.team_control.predict_receiver(game.ball.linear_velocity)
+		advance(.2)
+		check(forecast.index<0 and game.controlled==9,"A speculative interception several seconds away cannot select a distant defender, half %d" % half)
+		place(6,direction*4)
+		game.team_control.update(.1)
+		check(game.controlled==6,"A genuinely imminent interception still selects the defender on the pass path, half %d" % half)
+		game.team_control.select(9,true); advance(.5)
+		check(game.controlled==9,"A defensive manual choice survives a predicted reception for its grace period, half %d" % half)
+		game.team_control.touched(6)
+		check(game.controlled==6,"Actual interception still overrides defensive manual grace, half %d" % half)
+
 func screenshot() -> void:
 	if "--visual" not in OS.get_cmdline_user_args(): return
 	game.camera.position=Vector3(0,28,18); game.camera.look_at(Vector3.ZERO); game.camera.size=32
@@ -123,6 +156,7 @@ func run() -> void:
 	defence(); game.dribbler=-1; game.carrier=-1; game.players[6].position.z=1.8; advance(.15)
 	check(game.controlled==6,"A loose slow ball selects its nearby receiver before physical contact")
 	defence(); game.dribbler=-1; game.carrier=-1; game.ball.linear_velocity=Vector3.BACK*18
+	game.kick_lock=.2 # An actual dispatched pass, not a free moment between dribble touches.
 	game.players[9].position.z=-2; game.players[6].position=Vector3(3,0,9); advance(.15)
 	check(game.controlled==6,"An opponent through ball chooses the interception path instead of the player it has already passed")
 	game.team_control.select(9,true); game.players[9].action_timer=1; game.players[9].pose="fall"
@@ -140,6 +174,7 @@ func run() -> void:
 		advance(.3)
 		check(game.controlled==9,"Defensive automation respects "+mode)
 	check(game.passes[0]==0 and game.shots[0]==0,"Selection assistance never performs the user's pass or shot")
+	cursor_regressions()
 	await live_run(1); await live_run(2)
 	print("DEFENSIVE SELECTION CHECK: %d failures" % failures)
 	game.free(); await process_frame; quit(1 if failures else 0)

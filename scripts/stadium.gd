@@ -202,7 +202,7 @@ func stands() -> void:
 			banner.position = Vector3((-33+section*33)*P.WIDTH_RATIO,1.12,side*57.55)
 			if side>0: banner.rotation.y = PI
 			G.block(banner,Vector3(12,0.95,0.035),Vector3.ZERO,front)
-			var title := board_label(banner,["KIYI 1967","HEP BİRLİKTE","BİZİM ŞEHRİMİZ"][section],Vector3(0,0,0.025),Color("bcbda4"),0.015)
+			var title := board_label(banner,["CST 1967","HEP BİRLİKTE","BİZİM ŞEHRİMİZ"][section],Vector3(0,0,0.025),Color("bcbda4"),0.015)
 			supporter_banners.append({"label":title,"away":Crowd.visiting(banner.position),"section":section})
 
 func details() -> void:

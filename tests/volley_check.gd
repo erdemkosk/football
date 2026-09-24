@@ -149,8 +149,9 @@ func run() -> void:
 	button(true,JOY_BUTTON_DPAD_RIGHT); button(true)
 	var aimed: Vector3=game.shot_direction
 	await tick(8); button(false); button(false,JOY_BUTTON_DPAD_RIGHT); await tick(80)
-	var outgoing: Vector3=(game.ball.kick_velocity*Vector3(1,0,1)).normalized()
-	check(contacts==1 and game.ball.kick_velocity.x>12 and outgoing.dot(aimed)>.9999,"Independent controller aim redirects the actual volley along the camera-relative aim")
+	var intended: Vector3=(game.strike_quality.last.get("intended",Vector3.ZERO)*Vector3(1,0,1)).normalized()
+	var launched: bool=game.ball.kick_velocity.is_equal_approx(game.strike_quality.last.get("velocity",Vector3.INF))
+	check(contacts==1 and game.ball.kick_velocity.x>12 and intended.dot(aimed)>.9999 and launched,"Independent controller aim redirects the actual volley along the camera-relative aim")
 	await reset()
 	var weak: Vector3=game.volleys.launch_velocity(9,Vector3.RIGHT,.1)
 	var strong: Vector3=game.volleys.launch_velocity(9,Vector3.RIGHT,.9)

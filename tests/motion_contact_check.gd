@@ -52,7 +52,8 @@ func run() -> void:
 			while not game.kick_contact.pending.is_empty() and elapsed<.2:
 				tick(1.0/rate); elapsed+=1.0/rate
 			check(game.ball.pending_kick and game.kick_contact.last_gap<=.36 and elapsed<=.1,"Real boot contact commits within 100 ms at %d Hz" % rate)
-			check(game.feedback.event_count==1 and game.last_kicker==9 and game.ball.kick_velocity.distance_to(velocity)<.001,"One contact commits trajectory, sound and feedback together")
+			var outcome: Dictionary=game.strike_quality.last
+			check(game.feedback.event_count==1 and game.last_kicker==9 and outcome.get("intended",Vector3.INF).distance_to(velocity)<.001 and game.ball.kick_velocity.distance_to(outcome.velocity)<.001,"One contact commits trajectory, sound and feedback together")
 			if kind=="shot": check(game.stadium.crowd.event_kind=="shot","The crowd reacts at the shot's actual contact")
 			if rate==120: await capture(kind+"-contact",p)
 	for direction in [Vector3.FORWARD,Vector3.LEFT]:

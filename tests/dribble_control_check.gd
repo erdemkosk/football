@@ -79,7 +79,9 @@ func run() -> void:
 	await setup()
 	await drive(Vector3.FORWARD,240)
 	print("RUN gap range=",samples.min(),"..",samples.max()," contacts=",touch_gaps.size()," free=",free_frames)
-	var running_gap: float=samples.max()
+	# Compare established carries: the shared 0.78m setup/acquisition gap is
+	# not the distance a jogging player keeps once the first touch settles.
+	var running_gap: float=samples.slice(120).max()
 	check(touch_gaps.size()>3 and touch_gaps.size()<30 and free_frames>190,"Running uses separate boot impulses with smooth close-control guidance between them")
 	check(samples.max()<1.35 and samples.max()-samples.min()>.12 and game.dribbler==9,"The ball rolls ahead and is recovered without a fixed foot offset")
 	if not touch_gaps.is_empty(): check(touch_gaps.max()<.40,"Every dribble impulse has an actual animated boot contact")
@@ -93,7 +95,8 @@ func run() -> void:
 	await setup()
 	await drive(Vector3.FORWARD,260,true)
 	print("SPRINT max=",samples.max()," contacts=",touch_gaps.size())
-	check(samples.max()>running_gap+.08 and samples.max()<1.12 and game.dribbler==9,"Sprinting exposes the ball a little farther without losing it")
+	var sprint_gap: float=samples.slice(120).max()
+	check(sprint_gap>running_gap+.08 and samples.max()<1.12 and game.dribbler==9,"Sprinting exposes the ball a little farther without losing it")
 	samples.clear(); await drive(Vector3.FORWARD,140)
 	print("RECOVER max=",samples.max()," last=",samples.back()," owner=",game.dribbler)
 	check(game.dribbler==9 and samples.back()<1.2,"Releasing sprint returns to controlled touches")

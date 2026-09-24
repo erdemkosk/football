@@ -12,21 +12,21 @@ func close_duties() -> int:
 		if game.flat_distance(game.team_tactics.targets[i],game.ball.position)<3.3: count+=1
 	return count
 
-func skill_duel(move: String,gap: float,side: float=1,blocked: bool=false,team: int=0) -> Dictionary:
+func skill_duel(move: String,gap: float,side: float=1,blocked: bool=false,team: int=0,pace: float=0) -> Dictionary:
 	defence()
 	for p in game.players: p.visible=false
 	var owner := 9 if team==0 else 20
 	var marker := 14 if team==0 else 4
 	var forward := Vector3(0,0,game.attack_sign(team))
 	var exit: Vector3=game.skills.exit_direction(move,forward,side) if move!="" else forward
-	player(owner,Vector3.ZERO); player(marker,forward*gap,-forward*4)
+	player(owner,Vector3.ZERO,forward*pace); player(marker,forward*gap,-forward*4)
 	game.controlled=owner; game.players[owner].attributes.control=90
 	game.players[owner].facing=forward
 	if blocked: player(marker+1,exit*2.0)
 	for p in game.players:
 		p.collision_layer=2 if p.visible else 0; p.collision_mask=3
 		p.body_language.enabled=false
-	game.ball.freeze=false; game.ball.place(forward*.55+Vector3.UP*game.ball.GROUND_HEIGHT)
+	game.ball.freeze=false; game.ball.place(forward*.55+Vector3.UP*game.ball.GROUND_HEIGHT,forward*pace)
 	await physics_frame; await physics_frame
 	game.dribbler=owner; game.carrier=owner; game.last_kicker=owner; game.last_touch=team; game.kick_lock=0
 	if move!="": check(game.skills.start(owner,move,side),"Shared skill starts for team %d: %s at %.2fm" % [team,move,gap])
@@ -122,5 +122,12 @@ func run() -> void:
 		elif entry[0]=="elastico":
 			check(result.get("kept",false) and result.load>0,"An outside-inside exit makes the marker plant while retaining normal ball control")
 	check(wins>=2 and losses>=2,"Live one-on-ones allow timed skill escapes, while late or crowded attempts remain contestable")
+	var straight: Dictionary=await skill_duel("",3.4,1,false,0,7)
+	var lateral: Dictionary=await skill_duel("roll",3.4,1,false,0,7)
+	var reversal: Dictionary=await skill_duel("elastico",3.4,1,false,0,7)
+	check(not straight.escaped and lateral.escaped and reversal.escaped,"Timed roll and elastico exits beat a committed marker who stops a straight sprint")
+	check(lateral.physical and reversal.physical and not lateral.foul and not reversal.foul,"Running skill escapes preserve opponent collisions and do not depend on a foul")
+	var late: Dictionary=await skill_duel("roll",1.05,1,false,0,7)
+	check(not late.escaped,"A sprint trick triggered after reaching the defender is still contestable")
 	print("SPACE AND SKILL BALANCE CHECK: %d checks, %d failures" % [checks,failures])
 	game.free(); quit(1 if failures else 0)

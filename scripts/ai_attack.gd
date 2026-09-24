@@ -350,12 +350,13 @@ func shot_choice(index: int) -> Dictionary:
 	if level(p.team)>0 and absf(keeper.position.x)>.65: target.x=-signf(keeper.position.x)*2.55
 	var aim: Vector3=((target-game.ball.position)*Vector3(1,0,1)).normalized()
 	var power := clampf((distance-6)/26,.30,.78)
-	var shot: Dictionary={"kind":"shot","velocity":game.shot_velocity(aim,power,false,false,index),"curve":0.0}
+	var shot: Dictionary={"kind":"shot","velocity":game.shot_velocity(aim,power,false,false,index),"curve":0.0,"power":power}
 	# An advancing keeper opens a chip; it still travels through the ordinary ball solver.
 	if game.flat_distance(keeper.position,goal)>5.0 and distance>10 and distance<24 and (keeper.position-game.ball.position).dot(aim)>1:
 		var flight := clampf(distance/15,.95,1.55)
 		shot.kind="chip"
 		shot.velocity=game.Passing.Motion.lob_velocity(game.ball.position,target+Vector3.UP*1.0,flight,game.weather)
+		shot.power=.45
 		return shot
 	# One covered corner does not close the entire goal. Look at the other
 	# corner before giving up the shot, using defenders' visible positions.
@@ -367,7 +368,7 @@ func shot_choice(index: int) -> Dictionary:
 		shot.velocity=game.shot_velocity(aim,power,false,false,index)
 	if absf(p.position.x)>6 and distance>14:
 		shot.kind="finesse"
-		shot.curve=-signf(aim.signed_angle_to(Vector3(0,0,forward),Vector3.UP))*game.FINESSE_CURVE
+		shot.curve=-signf(aim.signed_angle_to(Vector3(0,0,forward),Vector3.UP))*game.FINESSE_CURVE*game.curl_factor(index)
 		shot.velocity=game.shot_velocity(aim.rotated(Vector3.UP,signf(shot.curve)*.10),power,true,false,index)
 		# On the strong-foot side, a technical finisher can wrap the outside of the boot.
 		var strong_side: float=-1 if p.attributes.preferred_foot==0 else 1
@@ -408,12 +409,20 @@ func skill_choice(index: int,read: Dictionary) -> Dictionary:
 		if p.velocity.length()>3.8: kinds.append("elastico")
 		if absf(p.position.x)>24: kinds.append("scoop")
 		if p.attributes.control>=90 and read.gap>2 and read.closing>3.5 and flourish_in[p.team]<=0: kinds.append("rainbow")
+		if read.gap<2.3 and read.closing>1.5: kinds.append("spin")
+	if level(p.team)>=1:
+		if read.gap<1.9 and read.closing<1.5: kinds.append("nutmeg")
+		if p.velocity.length()>3: kinds.append("heel_to_heel")
+		if read.gap<2.2 and read.closing>1: kinds.append("ball_roll_cut")
 	var best := -INF
 	var result: Dictionary={}
 	for kind in kinds:
+		# The same skill-star limits apply to both teams.
+		if not p.Attributes.can_perform(p,kind): continue
 		for side in [-1.0,1.0]:
 			var aim: Vector3=game.skills.exit_direction(kind,p.facing,side)
-			var near: Vector3=p.position+aim*1.1
+			# A nutmeg's first space is behind the defender it goes through.
+			var near: Vector3=p.position+aim*(2.8 if kind=="nutmeg" else 1.1)
 			var exit: Vector3=p.position+aim*2.5
 			if absf(exit.x)>P.HALF_WIDTH-1.5 or absf(exit.z)>48: continue
 			var near_room := future_clearance(near,p.team,.22)
@@ -545,7 +554,7 @@ func act(index: int) -> bool:
 	if return_to>=0 and game.support.runs[return_to].get("explicit",false): reaction=minf(reaction,.30)
 	if urgent and think_in.get(index,0.0)>.24: think_in[index]=.24
 	if not game.autonomous_kicks(p.team) or game.state!="playing" or p.action_timer>0 or game.skills.active.has(index) or not game.can_touch(index,1.15) or game.ball.pending_kick or game.kick_lock>0 or p.touch_cooldown>0 or p.ai_think<reaction or think_in.get(index,0.0)>0: return false
-	think_in[index]=.24 if urgent else [1.0,.58,.36][level(p.team)]*[1.45,1.0,.72][game.management.detail(p.team,"tempo")]*lerpf(1.30,.72,game.management.identity.quality(index))
+	think_in[index]=.24 if urgent else (game.management.pick([1.0,.58,.36],.28) if p.team==1 else .58)*[1.45,1.0,.72][game.management.detail(p.team,"tempo")]*lerpf(1.30,.72,game.management.identity.quality(index))
 	var choice := decide(index)
 	if choice.is_empty(): return false
 	var kind: String=choice.kind
@@ -558,7 +567,7 @@ func act(index: int) -> bool:
 		var aim: Vector3=choice.aim.rotated(Vector3.UP,game.rng.randf_range(-error,error))
 		if finishing.queue(index,aim,choice.power,kind): record(kind); return true
 		return false
-	if kind in ["roll","stop_go","knock_around","roulette","elastico","scoop","rainbow","heel","flick"]:
+	if kind in ["roll","stop_go","knock_around","roulette","elastico","scoop","rainbow","heel","flick","heel_to_heel","ball_roll_cut","nutmeg","spin"]:
 		if game.skills.start(index,kind,choice.side):
 			skill_in[index]=2.2 if kind in ["roll","stop_go","knock_around"] else [8.0,7.0,6.0][level(p.team)]
 			team_skill_in[p.team]=.8 if kind in ["roll","stop_go","knock_around"] else 3.6
@@ -580,6 +589,7 @@ func act(index: int) -> bool:
 	var velocity: Vector3=choice.velocity if choice.has("velocity") else choice.route.velocity
 	var error: float=game.management.pass_error(p.team,index,choice.has("velocity"))
 	velocity=velocity.rotated(Vector3.UP,game.rng.randf_range(-error,error))
+	if choice.has("velocity"): p.strike_effort=float(choice.get("power",-1.0))
 	if not game.strike(index,velocity,choice.get("curve",0.0),false,"shot" if choice.has("velocity") else ("cross" if kind=="cross" else "kick")): return false
 	if not game.kick_contact.pending.is_empty() and game.kick_contact.pending.index==index:
 		game.kick_contact.pending.ai_choice=choice

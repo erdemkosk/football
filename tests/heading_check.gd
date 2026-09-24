@@ -152,7 +152,8 @@ func run() -> void:
 	button(true,JOY_BUTTON_DPAD_RIGHT); button(true)
 	await tick(12); button(false); button(false,JOY_BUTTON_DPAD_RIGHT)
 	await tick(55)
-	check(contacts==1 and game.ball.kick_velocity.x>9 and absf(game.ball.kick_velocity.z)<0.05,"Independent D-pad aim redirects the actual header, not just its preview")
+	var header_aim: Vector3=game.strike_quality.last.get("intended",Vector3.ZERO)
+	check(contacts==1 and game.ball.kick_velocity.x>9 and header_aim.x>9 and absf(header_aim.z)<0.05 and game.ball.kick_velocity.is_equal_approx(game.strike_quality.last.velocity),"Independent D-pad aim redirects the actual header, not just its preview")
 	await reset()
 	game.ball.place(game.heading.head_point(p)+Vector3(0,0,-0.36),Vector3(0,0,3))
 	await physics_frame; await physics_frame

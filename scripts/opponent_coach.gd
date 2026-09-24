@@ -5,6 +5,9 @@ var elapsed := 0.0
 var review_in := 0.0
 var samples := 0.0
 var wing_time := [0.0,0.0]
+var wing_entries := [0.0,0.0]
+var observed_lane := -1
+var entry_cooldown := 0.0
 var central_time := 0.0
 var direct_play := 0.0
 var build_pressure := 0.0
@@ -26,6 +29,7 @@ func level() -> int:
 
 func reset() -> void:
 	elapsed=0; review_in=0; samples=0; wing_time=[0.0,0.0]; central_time=0
+	wing_entries=[0.0,0.0]; observed_lane=-1; entry_cooldown=0
 	direct_play=0; build_pressure=0; possession_team=-1; transition=0
 	press_load=0; press_rest=0; mentality=1; pressing=1; line_height=1
 	wing_bias=0; protect_depth=false; escape_press=false; reason="balance"; next_sub=0
@@ -56,6 +60,14 @@ func update(delta: float) -> void:
 		if possession_team==1 and team==0: transition=[0.0,2.0,3.4][level()]
 		possession_team=team
 	var decay := exp(-delta/35.0)
+	entry_cooldown=maxf(0,entry_cooldown-delta)
+	wing_entries[0]*=exp(-delta/55.0); wing_entries[1]*=exp(-delta/55.0)
+	var lane: int=(0 if game.ball.position.x<0 else 1) if team==0 and absf(game.ball.position.x)>12 and game.ball.position.z*game.attack_sign(0)>10 else -1
+	if lane!=observed_lane:
+		if lane>=0 and entry_cooldown<=0:
+			wing_entries[lane]=minf(6,wing_entries[lane]+1)
+			entry_cooldown=3.0
+		observed_lane=lane
 	wing_time[0]*=decay; wing_time[1]*=decay; central_time*=decay
 	direct_play*=exp(-delta/48.0); build_pressure*=decay; samples*=decay
 	if team==0:
@@ -85,11 +97,14 @@ func review() -> void:
 		var difference: float=(wing_time[1]-wing_time[0])/maxf(1,samples)
 		if absf(difference)>.34:
 			wing_bias=signf(difference)*[.28,.62,.9][level()]; reason="wing"
+		var repeated: float=wing_entries[1]-wing_entries[0]
+		if absf(repeated)>1.65:
+			wing_bias=signf(repeated)*[.35,.78,1.0][level()]; reason="wing"
 		protect_depth=direct_play>[4.8,2.8,1.8][level()]
 		if protect_depth: line_height=0; reason="depth"
 	escape_press=build_pressure>[7.0,4.0,2.5][level()]
 	if escape_press: reason="outlet"
-	var margin: int=game.score[1]-game.score[0]
+	var margin: int=game.team_tactics.score_margin(1)
 	var late: bool=game.match_time>game.LENGTH*.68
 	var available := 0
 	for i in range(12,22):
@@ -116,7 +131,9 @@ func review() -> void:
 
 func press_level() -> int:
 	if press_rest>0 or energy()<.28: return mini(1,pressing)
-	if transition>0 and level()>0 and game.ball.position.z*game.attack_sign(1)>-25: return 2
+	# Only a pressing plan counterpresses. A counterattacking block retreats
+	# after losing possession instead of acquiring the press club's identity.
+	if pressing==2 and transition>0 and level()>0 and game.ball.position.z*game.attack_sign(1)>-25: return 2
 	return pressing
 
 func substitution() -> Dictionary:
@@ -129,16 +146,22 @@ func substitution() -> Dictionary:
 		if not p.visible or p.dismissed: continue
 		var role: int=game.management.slot_role(i)
 		var threshold: float=[.36,.44,.52][level()]
-		var need: float=maxf(0,threshold-p.energy)*8
+		var need: float=maxf(0,threshold-p.readiness())*8
+		var wide: bool=role>=2 and absf(p.home.x)>16
 		if late and level()>0 and p.yellow_cards>0 and role==1: need+=.85
 		if late and mentality==2 and role==3 and p.energy<.78: need+=.8
+		if late and mentality==2 and wide and p.match_fatigue>.12: need+=1.0
 		if late and mentality==0 and role==1 and p.energy<.7: need+=.65
 		if need<=0: continue
 		for reserve in range(1,7):
 			var b: Dictionary=game.management.bench[1][reserve]
 			if int(b.get("role",game.management.natural_role(b.shirt,b.keeper)))!=role or game.management.substitution_reason(i,reserve)!="": continue
 			var stats: Dictionary=b.get("attributes",{})
-			var fit: float=float(stats.get("finishing" if role==3 else ("balance" if role==1 else "control"),72))/100.0
+			var fit: float=float(stats.get("pace" if wide else ("finishing" if role==3 else ("balance" if role==1 else "control")),72))/100.0
+			var fitness: float=float(b.get("fitness",1.0))
+			if fitness<=p.readiness()+.08: continue
+			if wide: fit+=(float(stats.get("acceleration",72))-float(p.attributes.acceleration))*.015
+			fit*=fitness
 			if need+fit*.2>best:
 				best=need+fit*.2; choice={"slot":i,"reserve":reserve}
 	return choice

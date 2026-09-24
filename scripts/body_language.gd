@@ -214,6 +214,12 @@ func apply_pose(p) -> void:
 		p.spine.rotation.z=lerpf(p.spine.rotation.z,-local.x*.19,weight)
 		p.spine.rotation.x=lerpf(p.spine.rotation.x,local.z*.12,weight)
 		p.spine.rotation.y=lerpf(p.spine.rotation.y,-contest_side*.14,weight)
+		# Shoulder bracing must not mask the impact/recovery already recorded by
+		# collision detection while the two players remain in contact.
+		if balance_age<BALANCE_TIME:
+			var recoil:=sin(clampf(balance_age/BALANCE_TIME,0,1)*PI)*balance_strength
+			p.spine.rotation.z+=contest_side*recoil*.14
+			p.left_knee.rotation.x-=recoil*.10; p.right_knee.rotation.x-=recoil*.10
 		point_cancelled=true
 		return
 	if shielding>0:

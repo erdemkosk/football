@@ -56,13 +56,16 @@ func contact(kind: String,index: int,point: Vector3,direction: Vector3,strength:
 	var nearby: bool=game.flat_distance(point,game.players[game.controlled].position)<16
 	var personal: bool=game.is_user_player(index) or game.is_user_player(victim)
 	var cue := "power" if heavy and kind in ["shot","header"] else ("shot" if kind=="header" else kind)
+	if kind=="kick" and strength<.18: cue="soft_pass"
 	game.audio.contact(cue,strength,1.0 if personal else (0.65 if nearby else 0.32))
-	if personal: game.controller.rumble(strength*(1.15 if heavy else 1.0),kind in ["shot","header"],0.38 if heavy else -1.0)
+	if personal: game.controller.contact_rumble(cue,strength)
 	if personal or nearby:
 		age=0
 		duration=(lerpf(0.34,0.48,strength) if heavy else (0.23 if kind in ["shot","header"] else 0.30))
 		amplitude=lerpf(0.18 if heavy else 0.055,0.32 if heavy else 0.19,strength)*(1.0 if personal else 0.35)
 		if kind=="body_hit": amplitude*=1.25
+		if kind=="kick": amplitude*=.28; duration=.10
+		if kind=="glove": amplitude*=.40; duration=.12
 		axis=Vector3(direction.x,0,direction.z).normalized()
 		if axis.length()<0.1: axis=Vector3.RIGHT
 	if victim==game.controlled and kind=="body_hit": hurt=0.3+strength*0.5
@@ -104,8 +107,10 @@ func woodwork(point: Vector3,direction: Vector3,strength: float) -> void:
 	if axis.length()<0.1: axis=Vector3.RIGHT
 	else: axis=axis.normalized()
 	woodwork_in=0.38
+	game.broadcast_event("woodwork")
+	game.audio.contact("woodwork",strength)
 	if is_instance_valid(game.controller):
-		game.controller.rumble(0.22+strength*0.28,false,0.16)
+		game.controller.contact_rumble("woodwork",strength)
 
 func watch_woodwork() -> void:
 	var ball=game.ball

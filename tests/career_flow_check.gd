@@ -48,7 +48,7 @@ func run() -> void:
 	var c=game.career; var ui=game.career_screen
 	c.save_root="res://tests/career-flow.tmp"; DirAccess.make_dir_recursive_absolute(c.save_root)
 	game.hud.sync_navigation()
-	check(go(game.hud.nav_buttons[4]),"Career is reachable from the main menu by controller")
+	check(go(game.hud.nav_buttons[5]),"Career save management is reachable from the main menu by controller")
 	tap(JOY_BUTTON_A)
 	check(ui.visible and ui.page=="entry" and game.state=="career","Controller opens the save-slot screen and pauses the stadium")
 	check(go(named("YENİ KARİYER")),"A new career slot is reachable")

@@ -171,7 +171,7 @@ func player_tunnel() -> void:
 	G.block(tunnel,Vector3(21,0.25,6.3),Vector3(49.15,3.38,0),tunnel_cover)
 	G.block(tunnel,Vector3(0.15,3.3,6),Vector3(59.65,1.65,0),charcoal)
 	G.block(tunnel,Vector3(0.26,0.6,6.6),Vector3(38.65,3.32,0),trim)
-	var sign = label(tunnel,"KIYI ARENA",Vector3(38.49,3.32,0),0.015,Color("e5dfc8"))
+	var sign = label(tunnel,"SEFC ARENA",Vector3(38.49,3.32,0),0.015,Color("e5dfc8"))
 	sign.rotation.y = -PI*0.5
 	for x in [39.1,41.8,44.5]:
 		for z in [-2.85,2.85]: G.block(tunnel,Vector3(0.1,0.08,0.1),Vector3(x,2.6,z),frame)
@@ -186,7 +186,7 @@ func scoreboard(parent: Node3D,pos: Vector3) -> void:
 	var bezel := G.material(Color("96bdb8"))
 	bezel.shading_mode=BaseMaterial3D.SHADING_MODE_UNSHADED
 	G.block(display,Vector3(11.6,.025,.018),Vector3(0,1.27,.31),bezel)
-	team_captions.append(label(display,"KIYI       DEPLASMAN",Vector3(0,1.75,0.31),0.015,Color("c5dbd7")))
+	team_captions.append(label(display,"CST       DEPLASMAN",Vector3(0,1.75,0.31),0.015,Color("c5dbd7")))
 	score_labels.append(label(display,"0   :   0",Vector3(0,0.12,0.31),0.033,Color("f1ead5")))
 	var clock := label(display,"00:00",Vector3(0,-1.56,0.31),0.021,Color("e9ce87"))
 	var digits := SystemFont.new()

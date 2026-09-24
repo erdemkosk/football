@@ -78,6 +78,8 @@ func begin(team: int) -> void:
 
 func update(delta: float) -> void:
 	age+=delta
+	if game.experience.short_presentation and age>2.2:
+		game.pace.request(skip)
 	if urgent:
 		update_urgent(delta)
 		return

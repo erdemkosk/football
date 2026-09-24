@@ -64,17 +64,25 @@ func run() -> void:
 			var launch: Vector3=game.shot_velocity(game.last_direction,power,true)
 			spin=game.choose_finesse_curve(game.last_direction)
 			var route := Guide.predict(origin,launch,spin,-50,game.weather)
-			check(route.goal_plane and route.points.size()>15 and Array(route.points).all(func(p): return p.y>=game.ball.RADIUS-0.001),"The full preview reaches the goal plane above the turf (weather %d / power %.2f)" % [weather,power])
+			# Rain now absorbs enough pace for the weakest shot to stop short.
+			var reaches_goal: bool=not (weather==2 and power==0.25)
+			check(route.goal_plane==reaches_goal and route.points.size()>15 and Array(route.points).all(func(p): return p.y>=game.ball.RADIUS-0.001),"The preview distinguishes a goal-line finish from a shot stopped by wet turf (weather %d / power %.2f)" % [weather,power])
 			game.ball.strike(launch,spin)
 			var previous := origin
 			var actual := Vector3.INF
+			var crossed := false
 			for frame in range(480):
 				await physics_frame
 				var point: Vector3=game.ball.position
 				if point.z<=-50:
 					actual=previous.lerp(point,(-50-previous.z)/(point.z-previous.z))
+					crossed=true
+					break
+				if frame>2 and game.ball.linear_velocity.length()<.5 and point.y<game.ball.RADIUS+.1:
+					actual=point
 					break
 				previous=point
+			check(actual.is_finite() and crossed==reaches_goal,"The physical shot reaches the goal or stops as expected (weather %d / power %.2f)" % [weather,power])
 			var error: float=actual.distance_to(route.target)
 			print("Finesse target: expected=",route.target," actual=",actual," error=",error)
 			check(error<0.65,"Visible target agrees with the unobstructed physical shot (weather %d / power %.2f)" % [weather,power])
@@ -144,7 +152,8 @@ func run() -> void:
 	var committed: Vector3=restart.pending_velocity
 	key(KEY_E,false)
 	release_restart(restart)
-	check(absf(spin)>1.4 and game.ball.spin==spin and game.ball.kick_velocity.is_equal_approx(committed),"Free-kick release commits the shown curl even when the modifier is released during run-up")
+	var intended: Vector3=game.strike_quality.last.get("intended",Vector3.INF)
+	check(absf(spin)>1.4 and game.ball.spin==spin and intended.is_equal_approx(committed) and game.ball.kick_velocity.is_equal_approx(game.strike_quality.last.velocity),"Free-kick release commits the shown curl even when the modifier is released during run-up")
 	restart.clear()
 	check(restart.pending_curve==0,"The next restart cannot inherit a stale curl")
 	check(game.hud.shot_warning({"target":Vector3(0,1.2,-50),"goal_plane":true,"on_target":true})=="","An on-target shot has no lock label")

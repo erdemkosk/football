@@ -25,7 +25,8 @@ var running_pose_interval := 0.0
 var render_batch: Node3D
 
 func can_defer_running_pose() -> bool:
-	return not keeper and pose=="run" and action_timer<=0 and kick_timer<=0 and receive_timer<=0 and shot_preparation<=0 and not ball_actions.contact_pending and dribble_motion.freshness<=0 and not protecting and not jockeying and not aerial_preparing and skill_move.is_empty() and feint_time<=0 and set_piece_pose=="" and celebration=="" and discipline_pose=="" and contest_weight<=0 and body_language.contest_weight<=0 and locomotion.cut<=0 and locomotion.braking<.02 and locomotion.plant_weight<=0
+	if ball_actions.release_age<.62 and ball_actions.recovery_power>0: return false
+	return not keeper and pose=="run" and action_timer<=0 and kick_timer<=0 and receive_timer<=0 and shot_preparation<=0 and not ball_actions.contact_pending and dribble_motion.freshness<=0 and not protecting and not jockeying and not aerial_preparing and skill_move.is_empty() and feint_time<=0 and set_piece_pose=="" and celebration=="" and discipline_pose=="" and contest_weight<=0 and body_language.contest_weight<=0 and locomotion.cut<=0 and locomotion.adjustment<=0 and locomotion.stop_age>=.42 and locomotion.braking<.02 and locomotion.plant_weight<=0
 
 func flush_running_pose() -> void:
 	if pending_pose_delta<=0: return
@@ -48,6 +49,7 @@ var dribble_motion := preload("res://scripts/dribble_motion.gd").new()
 var impact_motion := ImpactMotion.new()
 var reaction := PlayerReaction.new()
 var motion_transition := preload("res://scripts/motion_transition.gd").new()
+var footfalls := preload("res://scripts/footfalls.gd").new()
 var keeper_motion := preload("res://scripts/keeper_motion.gd").new()
 var gait_cadence := 1.8
 var gait_stride := 1.0
@@ -56,6 +58,7 @@ var gait_sway := 1.0
 var kick_character := 1.0
 var tackle_foot := 1
 var tackle_target := Vector3.ZERO
+var poke_recovery_duration := 0.0
 static var hair_mesh: ArrayMesh
 const HairStyles=preload("res://scripts/hair_styles.gd")
 var haircut: MeshInstance3D
@@ -81,6 +84,8 @@ var home := Vector3.ZERO
 var desired := Vector3.ZERO
 var facing := Vector3.FORWARD
 var energy := 1.0
+var match_fatigue := 0.0
+const MAX_MATCH_FATIGUE := .42
 var sprinting := false
 const SPRINT_DRAIN := 0.026
 const RUN_DRAIN := 0.0027
@@ -98,6 +103,7 @@ var dismissed := false
 var wall_hold := 0.0
 var wall_jump_delay := -1.0
 var tackle_cooldown := 0.0
+var tackle_recovery := 0.0
 var kick_timer := 0.0
 var touch_cooldown := 0.0
 var ai_think := 0.0
@@ -144,11 +150,18 @@ var discipline_pose := ""
 var discipline_age := 0.0
 var protecting := false
 var jockeying := false
+# Strafe dribble keeps the body square to a locked heading; controlled sprint
+# trades a little pace for jogging-length touches.
+var strafing := false
+var strafe_facing := Vector3.ZERO
+var controlled_sprint := false
 var feint_time := 0.0
 var feint_side := 1.0
 var skill_cooldown := 0.0
 var defensive_turn_load := 0.0
 var stamina_free_movement := false
+# Gradual running load follows match length; burst sprint energy stays real time.
+var fatigue_time_scale := 1.0
 var shot_preparation := 0.0
 var shot_ready_blend := 0.0
 var wrapping := 0.0
@@ -170,7 +183,24 @@ var impact_strength := 0.0
 var impact_duration := 0.8
 var skill_move: Dictionary = {}
 var dummy_time := 0.0
+# While a nutmeg passes through his stance the ball ignores this body.
+var nutmeg_time := 0.0
+# 0 fit, 1 minor knock, 2 injury, 3 serious: pace, sprint and readiness drop.
+var injury_level := 0
+const INJURY_PACE := [1.0,.88,.76,.62]
+const INJURY_READINESS := [1.0,.55,.3,0.0]
 var distribution_move: Dictionary = {}
+# Derived techniques, skill stars and play styles, keyed to the identity dictionary.
+var traits: Dictionary = {}
+var trait_stamp := -1.0
+var trait_identity := -2
+# Charge of the strike being prepared (0..1, -1 unknown) and timing quality
+# of a timed finish; the contact reads and clears both.
+var strike_effort := -1.0
+# Gameplay-slider multipliers for this side.
+var sprint_scale := 1.0
+var accel_scale := 1.0
+var strike_timing := 1.0
 const SkillMoves = preload("res://scripts/skill_moves.gd")
 const Distribution = preload("res://scripts/keeper_distribution.gd")
 var volley_motion := preload("res://scripts/volley_pose.gd").new()
@@ -238,6 +268,8 @@ func _ready() -> void:
 	mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	marker = G.mesh(self,torus,mat,Vector3(0,0.035,0))
 	marker.scale.y = 0.18
+	# Selection is shown above the player; keep the ball unobstructed at foot level.
+	marker.hide()
 	add_child(call_label)
 	call_label.text = "PAS!"
 	call_label.position = Vector3(0,height_cm/100.0+0.28,0)
@@ -434,7 +466,8 @@ func can_save(ball_position: Vector3) -> bool:
 		return minf(left_hand.global_position.distance_to(ball_position),right_hand.global_position.distance_to(ball_position))<0.65
 	if pose=="dive" and action_timer>0:
 		if dive_duration-action_timer>0.84: return false
-		return minf(left_hand.global_position.distance_to(ball_position),right_hand.global_position.distance_to(ball_position))<0.40 or spine.to_global(Vector3(0,0.3,0)).distance_to(ball_position)<0.42
+		var glove: float=0.40*(1.1 if Attributes.has_style(self,"far_reach") else 1.0)
+		return minf(left_hand.global_position.distance_to(ball_position),right_hand.global_position.distance_to(ball_position))<glove or spine.to_global(Vector3(0,0.3,0)).distance_to(ball_position)<0.42
 	return minf(left_hand.global_position.distance_to(ball_position),right_hand.global_position.distance_to(ball_position))<0.43 or (Vector2(global_position.x-ball_position.x,global_position.z-ball_position.z).length()<0.60 and ball_position.y<1.60)
 
 func start_claim(target_height: float=2.8,time_available: float=0.35) -> void:
@@ -456,6 +489,7 @@ func step(delta: float,stoppage_speed: float=0.0) -> void:
 			flush_running_pose()
 	landing_age+=delta
 	feint_time=maxf(0,feint_time-delta)
+	nutmeg_time=maxf(0,nutmeg_time-delta)
 	skill_cooldown=maxf(0,skill_cooldown-delta)
 	if wall_hold>0:
 		wall_hold=maxf(0,wall_hold-delta)
@@ -469,6 +503,7 @@ func step(delta: float,stoppage_speed: float=0.0) -> void:
 	action_timer = maxf(0,action_timer-delta)
 	if pose=="slide" and action_timer<=slide_rise: pose="rise"
 	tackle_cooldown = maxf(0,tackle_cooldown-delta)
+	tackle_recovery = maxf(0,tackle_recovery-delta)
 	touch_cooldown = maxf(0,touch_cooldown-delta)
 	kick_timer = maxf(0,kick_timer-delta)
 	receive_timer = maxf(0,receive_timer-delta)
@@ -522,10 +557,11 @@ func step(delta: float,stoppage_speed: float=0.0) -> void:
 	var current_speed := Vector2(velocity.x,velocity.z).length()
 	var target_speed := Vector2(target.x,target.z).length()
 	var energy_blend := smoothstep(0.08,0.4,energy)
-	var acceleration_attribute := Attributes.multiplier(attributes.acceleration,.19)
+	var acceleration_attribute := Attributes.multiplier(attributes.acceleration,.19)*(1-match_fatigue*.5)
+	if current_speed<4.5 and Attributes.has_style(self,"quick_step"): acceleration_attribute*=1.07
 	var pace := accel_pace()
-	var acceleration: float=lerpf(38,56,energy_blend)*acceleration_attribute*pace
-	var sprint_acceleration: float=lerpf(11,16,energy_blend)*acceleration_attribute*pace
+	var acceleration: float=lerpf(38,56,energy_blend)*acceleration_attribute*pace*accel_scale
+	var sprint_acceleration: float=lerpf(11,16,energy_blend)*acceleration_attribute*pace*SPRINT_SPEED_SCALE*accel_scale
 	var deceleration := lerpf(8,12,energy_blend)*pace
 	var settle := lerpf(7,10,energy_blend)*pace
 	if stamina_free_movement and stoppage_speed>0:
@@ -551,8 +587,19 @@ func step(delta: float,stoppage_speed: float=0.0) -> void:
 	# its own turn touch even though the new direction has already been pressed.
 	if dribble_motion.freshness>0 and driving and current_speed>2 and Vector3(velocity.x,0,velocity.z).dot(desired.normalized())<current_speed*.92:
 		rate=maxf(rate,acceleration)
+	# Plant for a controlled trick using the same braking authority as a
+	# dribbling cut; ordinary running deceleration overruns a sole stop.
+	if not skill_move.is_empty() and skill_move.kind in ["roll","stop_go","roulette","elastico","scoop","ball_roll_cut","spin","heel_to_heel"] and action_timer<=0:
+		rate=maxf(rate,acceleration)
+	if driving and current_speed>2 and action_timer<=0 and Vector3(velocity.x,0,velocity.z).dot(desired.normalized())<current_speed*.92:
+		rate*=Attributes.turning(self)
+	# Short strafing steps change direction faster than a running cut.
+	if strafing and driving and action_timer<=0: rate=maxf(rate,acceleration*1.15)
 	if defensive_turn_load>0 and action_timer<=0:
 		rate=minf(rate,lerpf(28,12,defensive_turn_load)*Attributes.multiplier(attributes.get("defending",attributes.balance),.16))
+	if tackle_recovery>0 and action_timer<=0:
+		# Plant the tackling foot before accelerating or reversing again.
+		rate=minf(rate,12.0)
 	if is_instance_valid(surface): rate*=surface.grip_at(position,sampled_mud)
 	velocity.x = move_toward(velocity.x,target.x,delta*rate)
 	velocity.z = move_toward(velocity.z,target.z,delta*rate)
@@ -564,7 +611,7 @@ func step(delta: float,stoppage_speed: float=0.0) -> void:
 		header_airborne=false; landing_age=0
 		landing_strength=clampf(absf(travel_velocity.y)/8,0.2,1)*Attributes.multiplier(144-attributes.balance,.16)
 	if body_language.enabled: body_language.collisions(self,travel_velocity)
-	if desired.length()>0.05 and action_timer<=0 and (not keeper or stoppage_speed>0) and not protecting and not jockeying and kick_timer<=0 and shot_preparation<=0 and not aerial_preparing:
+	if desired.length()>0.05 and action_timer<=0 and (not keeper or stoppage_speed>0) and not protecting and not jockeying and not strafing and kick_timer<=0 and shot_preparation<=0 and not aerial_preparing:
 		facing = desired.normalized()
 	if receiving_facing.length_squared()>.1 and action_timer<=0 and kick_timer<=0 and not aerial_preparing:
 		facing=receiving_facing
@@ -589,16 +636,24 @@ func step(delta: float,stoppage_speed: float=0.0) -> void:
 		pending_pose_delta=0
 		animate(pose_delta)
 	if is_instance_valid(surface): surface.player_step(self,delta)
-	marker.visible = chosen and pose not in ["slide","dive","rise"]
 
 func reset_stamina() -> void:
+	footfalls.reset()
 	energy = 1
+	match_fatigue = 0
+	tackle_recovery = 0
 	exhausted = false
 	active_sprint = false
 	sprinting = false
 	recovery_delay = 0
 	sprint_load=0
 	breath=0
+
+func stamina_capacity() -> float:
+	return 1.0-match_fatigue
+
+func readiness() -> float:
+	return maxf(0,energy-match_fatigue*.65)*INJURY_READINESS[injury_level]
 
 func update_stamina(delta: float) -> void:
 	if stamina_free_movement:
@@ -610,16 +665,19 @@ func update_stamina(delta: float) -> void:
 	recovery_delay = maxf(0,recovery_delay-delta)
 	if exhausted and energy>=RECOVERY_LIMIT and not sprinting:
 		exhausted = false
-	active_sprint = moving and sprinting and not exhausted and energy>EXHAUSTION_LIMIT
+	active_sprint = moving and sprinting and not exhausted and energy>EXHAUSTION_LIMIT and injury_level<2
+	var endurance := Attributes.multiplier(attributes.get("stamina",72),.25)
 	if active_sprint:
-		energy -= SPRINT_DRAIN*delta/Attributes.multiplier(attributes.get("stamina",72),.25)
+		energy -= SPRINT_DRAIN*delta/endurance
+		match_fatigue=minf(MAX_MATCH_FATIGUE,match_fatigue+.0032*delta*fatigue_time_scale/endurance)
 		recovery_delay = 0.75
 	elif moving and not exhausted and desired.length()>0.45:
-		energy -= RUN_DRAIN*minf(desired.length(),1)*delta/Attributes.multiplier(attributes.get("stamina",72),.25)
+		energy -= RUN_DRAIN*minf(desired.length(),1)*delta*fatigue_time_scale/endurance
+		match_fatigue=minf(MAX_MATCH_FATIGUE,match_fatigue+.00065*minf(desired.length(),1)*delta*fatigue_time_scale/endurance)
 		recovery_delay = 0.75
 	elif recovery_delay<=0:
 		energy += (0.045 if moving else 0.12)*delta
-	energy = clampf(energy,0,1)
+	energy = clampf(energy,0,stamina_capacity())
 	if energy<=EXHAUSTION_LIMIT:
 		exhausted = true
 		active_sprint = false
@@ -629,6 +687,7 @@ func update_stamina(delta: float) -> void:
 
 const MOVEMENT_PACE := 0.68
 const ACCEL_PACE := 0.78
+const SPRINT_SPEED_SCALE := 1.20
 
 func movement_pace() -> float:
 	return MOVEMENT_PACE*(2.0 if prematch else 1.0)
@@ -637,9 +696,13 @@ func accel_pace() -> float:
 	return ACCEL_PACE*(2.0 if prematch else 1.0)
 
 func movement_speed() -> float:
+	return base_movement_speed()*INJURY_PACE[injury_level]
+
+func base_movement_speed() -> float:
 	if exhausted: return 3.4*movement_pace()
-	if active_sprint: return movement_pace()*lerpf(8.8,10.4,smoothstep(0.08,0.4,energy))*Attributes.multiplier(attributes.pace,.17)
-	return movement_pace()*lerpf(4.6,6.5 if keeper else 6.2,smoothstep(0.08,0.3,energy))*Attributes.multiplier(attributes.pace,.055)
+	var recovery := .62 if tackle_recovery>0 else 1.0
+	if active_sprint: return (.9 if controlled_sprint else 1.0)*sprint_scale*movement_pace()*SPRINT_SPEED_SCALE*lerpf(8.8,10.4,smoothstep(0.08,0.4,energy))*Attributes.multiplier(attributes.pace,.17)*(1-match_fatigue*.36)*recovery
+	return movement_pace()*lerpf(4.6,6.5 if keeper else 6.2,smoothstep(0.08,0.3,energy))*Attributes.multiplier(attributes.pace,.055)*(1-match_fatigue*.12)*recovery
 
 func begin_kick(power: float,duration: float,style: String="laces",point: Vector3=Vector3.INF,direction: Vector3=Vector3.ZERO,pressure: float=0) -> void:
 	if point.is_finite(): ball_actions.prepare_kick(self,point,direction,pressure)
@@ -686,6 +749,8 @@ func refresh_appearance() -> void:
 	refresh_hair()
 
 func apply_identity(data: Dictionary) -> void:
+	# A new player on this body starts fit.
+	injury_level=0
 	career_id=data.get("career_id","")
 	var role_value=data.get("role",-1)
 	natural_position=int(role_value) if role_value is int else int(data.get("natural_group",-1))
@@ -781,6 +846,17 @@ func animate_shot(delta: float,amount: float,stride: float) -> void:
 	poses=ball_actions.mirror_poses(poses)
 	# Footwork mirrors; turning toward the aimed direction must not.
 	poses[4].y+=ball_actions.kick_turn*0.24*sweep
+	# Context changes the weight transfer around the same measured contact.
+	# The IK below still places the striking boot on the live ball.
+	if ball_actions.kick_context=="back":
+		poses[4].y+=ball_actions.kick_turn*.20*sweep
+		poses[4].x+=.12*sweep
+		poses[5].z-=.16*plant; poses[6].z+=.16*plant
+	elif ball_actions.kick_context=="open":
+		poses[4].y+=ball_actions.kick_turn*.14*sweep
+		poses[4].z+=sin(ball_actions.kick_turn)*.10*plant
+	elif ball_actions.kick_context=="running":
+		poses[4].x-=minf(.10,ball_actions.kick_speed*.012)*plant
 	for i in range(kick_joints.size()):
 		var joint := kick_joints[i]
 		var support := i in ([0,2] if ball_actions.foot==1 else [1,3])
@@ -856,7 +932,9 @@ func animate(delta: float) -> void:
 				left_leg.rotation.x+=0.18*rest
 				left_knee.rotation.x-=0.22*rest
 				spine.rotation.z+=0.04*rest
+	motion_transition.capture_gait(self)
 	animate_shot(delta,amount,stride)
+	ball_actions.recover_weight(self)
 	if receive_timer>0 and kick_timer<=0 and action_timer<=0: apply_receive()
 	if call_timer>0 and kick_timer<=0 and shot_preparation<=0:
 		right_arm.rotation.z = 2.75+sin(motion_clock*9)*0.12
@@ -865,6 +943,8 @@ func animate(delta: float) -> void:
 		if pose=="poke":
 			var elapsed := .38-action_timer
 			var reach := smoothstep(0,.12,elapsed)*(1-smoothstep(.16,.38,elapsed))
+			if poke_recovery_duration>0:
+				reach=smoothstep(0,poke_recovery_duration,action_timer)
 			var leg: Node3D=left_leg if tackle_foot==0 else right_leg
 			var knee: Node3D=left_knee if tackle_foot==0 else right_knee
 			var support_knee: Node3D=right_knee if tackle_foot==0 else left_knee
@@ -1022,6 +1102,7 @@ func animate(delta: float) -> void:
 			spine.rotation.x=-0.235-amount*0.12
 			left_arm.rotation.x*=0.55
 			right_arm.rotation.x*=0.55
+	motion_transition.release_legs(self)
 	motion_transition.apply(self,delta)
 	if (kick_timer>0 or receive_timer>0 or motion_transition.age<motion_transition.DURATION) and action_timer<=0 and skill_move.is_empty() and set_piece_pose=="" and celebration=="" and not ball_actions.contact_pending and locomotion.plant_weight<=0 and dribble_motion.freshness<=0:
 		var sole_height := minf(left_knee.to_global(ball_actions.BOOT).y,right_knee.to_global(ball_actions.BOOT).y)
@@ -1039,6 +1120,8 @@ func animate(delta: float) -> void:
 	body_language.apply_gaze(self,delta)
 	if breath>0.08 and reaction.kind=="":
 		head_joint.rotation.x=lerpf(head_joint.rotation.x,0.36+0.07*sin(motion_clock*3.1+number),smoothstep(0.08,0.5,breath))
+	motion_transition.capture(self)
+	footfalls.sample(self,delta)
 	update_cloth()
 
 func update_cloth() -> void:

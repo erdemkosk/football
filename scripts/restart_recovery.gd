@@ -6,6 +6,8 @@ var setup:
 	get: return owner_ref.get_ref() if owner_ref!=null else null
 var phase := ""
 var age := 0.0
+var elapsed := 0.0
+var shortened := false
 var pickup_point := Vector3.ZERO
 var delivery := Vector3.ZERO
 var rest_age := 0.0
@@ -19,6 +21,7 @@ var helpers: Dictionary = {}
 func reset() -> void:
 	phase=""
 	age=0
+	elapsed=0; shortened=false
 	rest_age=0
 	collector=-1
 	worker=-1
@@ -29,6 +32,7 @@ func begin(owner) -> void:
 	owner_ref=weakref(owner)
 	phase="watch"
 	age=0
+	elapsed=0; shortened=false
 	relayed=false
 	choose_collector()
 	set_delivery()
@@ -81,6 +85,9 @@ func enter(next: String) -> void:
 
 func step(delta: float) -> void:
 	var game=setup.game
+	elapsed+=delta
+	if game.experience.short_presentation and elapsed>2.2 and not shortened and game.referees.ready_for_restart():
+		shortened=true; game.pace.request(game.pace.restart_ready)
 	# The boy may claim the ball after the original player was dispatched.
 	# Transfer the recovery job as well: a player cannot pick up a held ball.
 	var lines=game.stadium.sidelines

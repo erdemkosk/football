@@ -25,6 +25,8 @@ var menus = preload("res://scripts/menu_navigation.gd").new()
 var combos = preload("res://scripts/attacking_combos.gd").new()
 var seen_pads: Array[int] = []
 var input_seen := false
+## In a two-person match each controller keeps its own device.
+var locked := false
 
 func _ready() -> void:
 	menus.game=game
@@ -200,6 +202,7 @@ func claim_device(id: int,from_input: bool=false) -> void:
 	if device==id:
 		if from_input: input_seen=true
 		return
+	if locked: return
 	if has_live_pad(): return
 	var fresh := device<0 or not input_seen
 	adopt_device(id)
@@ -270,6 +273,11 @@ func net_rumble(strength: float,own_goal: bool) -> void:
 	if not vibration or device not in Input.get_connected_joypads(): return
 	var weight := 1.0 if own_goal else 0.65
 	Input.start_joy_vibration(device,lerpf(0.18,0.72,strength)*weight,lerpf(0.16,0.92,strength)*weight,lerpf(0.24,0.42,strength))
+
+func contact_rumble(kind: String,strength: float) -> void:
+	if not vibration or device not in Input.get_connected_joypads(): return
+	var cue:=preload("res://scripts/contact_profile.gd").read(kind,strength)
+	Input.start_joy_vibration(device,cue.low,cue.high,cue.duration)
 
 func rebind(action: int,button: int) -> void:
 	if button==100+JOY_AXIS_TRIGGER_RIGHT: return

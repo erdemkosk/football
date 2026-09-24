@@ -27,6 +27,10 @@ var last_hip := Quaternion.IDENTITY
 var last_knee := Quaternion.IDENTITY
 var last_pelvis := 0.0
 var release_pelvis := 0.0
+var adjustment := 0.0
+var adjustment_side := 0.0
+var stop_age := 1.0
+var stop_leg := -1
 
 func reset() -> void:
 	side=0; backward=0; braking=0; cut=0
@@ -38,6 +42,7 @@ func reset() -> void:
 	brake_latched=false
 	cooldown=0
 	release_age=RELEASE_TIME
+	adjustment=0; adjustment_side=0; stop_age=1; stop_leg=-1
 
 func available(p) -> bool:
 	return p.action_timer<=0 and p.kick_timer<=0 and p.receive_timer<=0 and p.shot_preparation<=0 and p.set_piece_pose=="" and p.celebration=="" and p.discipline_pose=="" and not p.saluting and p.feint_time<=0
@@ -55,12 +60,18 @@ func update(p,delta: float,previous_velocity: Vector3) -> void:
 	plant_age=minf(PLANT_TIME,plant_age+delta)
 	release_age=minf(RELEASE_TIME,release_age+delta)
 	cut=move_toward(cut,0,delta*4.5)
+	adjustment=move_toward(adjustment,0,delta*4)
 	var request: Vector3=p.desired*Vector3(1,0,1)
 	var moving := request.length()>0.05
 	var old_speed := previous_velocity.length()
 	var deceleration := (old_speed-speed)/maxf(delta,0.001)
 	var changed := moving and (previous_request.length()<0.05 or previous_request.normalized().dot(request.normalized())<0.64)
 	var turning := changed and old_speed>2.0 and previous_velocity.normalized().dot(request.normalized())<0.58
+	if moving and old_speed>2 and previous_request.length()>.05:
+		var angle := previous_request.signed_angle_to(request,Vector3.UP)
+		if absf(angle)>.12 and absf(angle)<.9:
+			adjustment=maxf(adjustment,smoothstep(.12,.75,absf(angle)))
+			adjustment_side=-signf(angle)
 	if turning and cooldown<=0:
 		var angle := previous_velocity.signed_angle_to(request,Vector3.UP)
 		cut_side=-1.0 if angle>0 else 1.0
@@ -75,7 +86,17 @@ func update(p,delta: float,previous_velocity: Vector3) -> void:
 		if feet.size()==2 and (feet[1]-feet[0]).dot(previous_velocity)>0: front=1
 		plant(p,front)
 		brake_latched=true
-	if moving: brake_latched=false
+		stop_age=0
+		stop_leg=1-plant_leg
+	# A second, shorter support step absorbs the remaining coast. A new input
+	# cancels it immediately, without touching velocity or the running phase.
+	if moving:
+		brake_latched=false; stop_age=1; stop_leg=-1
+	elif stop_age<.42:
+		var before := stop_age
+		stop_age+=delta
+		if before<.23 and stop_age>=.23 and stop_leg>=0 and speed>.35:
+			plant(p,stop_leg)
 	previous_request=request
 	var local: Vector3=velocity.rotated(Vector3.UP,-p.rig.rotation.y)
 	var direction := local/maxf(speed,0.001)
@@ -107,7 +128,7 @@ func apply_pose(p,amount: float,stride: float) -> void:
 	var gait_width: float=p.gait_width
 	var lateral := smoothstep(0.2,0.85,absf(side))*(1-backward*0.45)
 	var direction := signf(side)
-	var reverse_stride := stride*lerpf(1.0,-0.62,backward)
+	var reverse_stride := stride*lerpf(1.0,-0.62,backward)*(1-adjustment*.22)
 	# Backpedalling has shorter reversed steps. Side steps open and gather the
 	# feet while the chest keeps facing the opponent or the ball.
 	for i in range(2):
@@ -124,13 +145,16 @@ func apply_pose(p,amount: float,stride: float) -> void:
 		if braking>0.01:
 			leg_rotation.x=lerpf(leg_rotation.x,0.44 if i==plant_leg else -0.12,braking*0.78)
 			knee_rotation.x=lerpf(knee_rotation.x,-0.58 if i==plant_leg else -0.42,braking*0.85)
-		knee_rotation.x-=cut*0.16
+		knee_rotation.x-=cut*0.16+adjustment*.06
 		leg.rotation=leg_rotation; knee.rotation=knee_rotation
 	# Bounded pelvis shift transfers weight onto the outside support leg.
 	var support_side := -1.0 if plant_leg==0 else 1.0
 	rig.position.x=sin(p.motion_clock*2.0+p.number*0.8)*0.013*(1-amount)+support_side*cut*0.055
+	# Compress into the support step, then let ground IK release the loaded foot.
+	var load:=sin(clampf(plant_age/PLANT_TIME,0,1)*PI)*cut
+	rig.position.y-=load*.045
 	var rig_rotation := rig.rotation
-	rig_rotation.z=lerp_angle(rig_rotation.z,-side*0.08-cut_side*cut*0.12,maxf(lateral,cut)*0.55)
+	rig_rotation.z=lerp_angle(rig_rotation.z,-side*0.08-cut_side*cut*0.12-adjustment_side*adjustment*.055,maxf(adjustment,maxf(lateral,cut))*0.55)
 	rig_rotation.x=lerp_angle(rig_rotation.x,0.09,braking*0.65)
 	rig.rotation=rig_rotation
 	# The free leg takes a short catch step while the supporting knee loads.
@@ -140,6 +164,7 @@ func apply_pose(p,amount: float,stride: float) -> void:
 	var spine_rotation := spine.rotation
 	spine_rotation.x=lerpf(spine_rotation.x,-0.22,backward*0.45+braking*0.35)
 	spine_rotation.z=lerpf(spine_rotation.z,cut_side*cut*0.12,lateral*0.25+cut*0.6)
+	spine_rotation.y=lerpf(spine_rotation.y,-cut_side*cut*.16,cut*.7)
 	spine.rotation=spine_rotation
 	var balance := maxf(lateral*0.65,maxf(braking,cut))
 	var left_rotation := left_arm.rotation

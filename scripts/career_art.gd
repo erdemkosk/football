@@ -1,8 +1,9 @@
 extends RefCounted
-const WHITE=Color("f3f5ee")
-const MUTED=Color("93a6b8")
-const LIME=Color("d6f77a")
-const BLUE=Color("7acde3")
+const Style=preload("res://scripts/ui_style.gd")
+const WHITE=Style.PAPER
+const MUTED=Style.MUTE
+const LIME=Style.ACCENT
+const BLUE=Style.BLUE
 
 func fade(s,rect: Rect2,left: Color,right: Color) -> void:
 	s.draw_polygon(PackedVector2Array([rect.position,rect.position+Vector2(rect.size.x,0),rect.end,rect.position+Vector2(0,rect.size.y)]),PackedColorArray([left,right,right,left]))
@@ -14,7 +15,8 @@ func surface(s,rect: Rect2,accent: Color=LIME) -> void:
 
 func background(s) -> void:
 	s.draw_rect(s.game.ui.bounds(),Color("081019"))
-	fade(s,s.game.ui.bounds(),Color("122630"),Color("081019"))
+	var tint: Color=Style.club_tint(s.game.career.club()) if s.game.career.exists() else BLUE
+	fade(s,s.game.ui.bounds(),Style.INK.lerp(tint,.16),Style.INK)
 	for i in range(9):
 		s.draw_line(Vector2(720+i*106,0),Vector2(100+i*106,900),Color(.5,.7,.8,.025),26,true)
 	s.draw_arc(Vector2(1160,485),460,-2.4,1.6,90,Color(.5,.8,.8,.045),2,true)
@@ -78,8 +80,10 @@ func hub(s) -> void:
 	var image: Texture2D=s.showcase.picture()
 	if image!=null: s.draw_texture_rect(image,rect,false)
 	fade(s,rect,Color(.035,.075,.11,.98),Color(.03,.06,.1,.04))
-	s.text("MAÇ GÜNÜ" if not f.is_empty() and f.day<=c.world.date else "KULÜBÜNLE ZİRVEYE",Vector2(78,214),12,LIME,true)
-	s.text("BİZİM HİKÂYEMİZ.",Vector2(77,258),32,WHITE,true)
+	s.text("MAÇ GÜNÜ" if not f.is_empty() and f.day<=c.world.date else "KARİYER MERKEZİ",Vector2(78,214),12,LIME,true)
+	s.text("SIRADAKİ MAÇ" if not f.is_empty() else "SEZON TAMAMLANDI",Vector2(77,258),32,WHITE,true)
+	s.text(s.showcase.hero_label,Vector2(596,486),12,MUTED,true)
+	Style.fit(s,s.bold,s.showcase.hero_name,Vector2(596,510),244,17,WHITE)
 	if not f.is_empty():
 		var opp: String=f.away if f.home==c.world.user else f.home
 		s.badge(Vector2(135,336),c.club(),1.25); s.badge(Vector2(382,336),c.world.clubs[opp],1.25)
@@ -101,16 +105,17 @@ func hub(s) -> void:
 		s.draw_string(s.bold,Vector2(987,y),c.world.clubs[id].name,HORIZONTAL_ALIGNMENT_LEFT,320,14,WHITE)
 		s.text(str(c.world.table[id].pts),Vector2(1339,y),19,LIME,true)
 	surface(s,Rect2(884,494,512,114),Color("e7c993"))
-	s.text("KULÜP GÜNDEMİ",Vector2(910,522),10,Color("e7c993"),true)
+	s.text("KULÜP GÜNDEMİ · %d BEKLEYEN TEKLİF" % s.pending_offers(),Vector2(910,522),12,BLUE,true)
 	if not c.world.news.is_empty():
 		var item: Dictionary=c.world.news[0]
 		s.draw_string(s.bold,Vector2(910,551),item.title,HORIZONTAL_ALIGNMENT_LEFT,456,19,WHITE)
-		s.wrapped(item.body,Vector2(910,577),452,12,MUTED,2)
+		if s.pending_offers()==0: s.wrapped(item.body,Vector2(910,577),452,12,MUTED,2)
 
 func players(s) -> void:
+	s.PlayerList.header(s)
 	var c=s.game.career
 	if s.page=="squad": s.text("TAKIMIN  /  %d" % s.list_ids.size(),Vector2(54,205),23,WHITE,true)
-	s.center("%d / %d" % [s.list_page+1,maxi(1,ceili(s.list_ids.size()/9.0))],Vector2(454,779),15,MUTED)
+	s.center("%d / %d" % [s.list_page+1,maxi(1,ceili(s.list_ids.size()/9.0))],Vector2(682,778),15,MUTED)
 	if s.selected=="":
 		surface(s,Rect2(887,174,510,628))
 		card_icon(s,Vector2(1138,339),"market",BLUE)
@@ -127,7 +132,7 @@ func players(s) -> void:
 	s.text(s.World.ROLES[p.role],Vector2(918,279),12,WHITE,true)
 	if p.club!="": s.badge(Vector2(945,327),c.world.clubs[p.club],.68)
 	s.draw_string(s.bold,Vector2(915,372),c.world.clubs[p.club].name if p.club!="" else "SERBEST OYUNCU",HORIZONTAL_ALIGNMENT_LEFT,196,12,WHITE)
-	s.text(p.name,Vector2(912,397),24,WHITE,true)
+	Style.fit(s,s.bold,p.name,Vector2(912,397),460,24,WHITE)
 	s.text("%d YAŞ  /  %d cm  /  %d kg  /  %s" % [p.age,p.height_cm,p.weight_kg,s.World.International.NATIONS.get(p.get("nationality","TR"),"TÜRKİYE")],Vector2(914,421),12,MUTED)
 	var keys: Array=["pace","finishing","passing","control","defending","stamina"] if not p.keeper else ["reflexes","handling","positioning","passing","pace","stamina"]
 	var labels: Array=["HIZ","ŞUT","PAS","TEKNİK","SAVUNMA","FİZİK"] if not p.keeper else ["REFLEKS","TUTUŞ","POZİSYON","PAS","HIZ","FİZİK"]

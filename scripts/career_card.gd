@@ -17,7 +17,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	var target:=1.0 if has_focus() or is_hovered() else 0.0
 	var before:=emphasis
-	emphasis=move_toward(emphasis,target,delta*9)
+	emphasis=target if screen.game.experience.reduce_motion else move_toward(emphasis,target,delta*9)
 	if not is_equal_approx(before,emphasis): queue_redraw()
 
 func label(value: String,at: Vector2,points: int,color: Color,font_value: Font=null,width: float=-1) -> void:
@@ -25,18 +25,20 @@ func label(value: String,at: Vector2,points: int,color: Color,font_value: Font=n
 
 func _draw() -> void:
 	if screen==null: return
-	var chosen: bool=identity==screen.selected if kind=="player" else identity==screen.selected_club
+	var chosen: bool=identity==screen.selected if kind in ["player","player_row"] else identity==screen.selected_club
 	var base:=Color("10202b").lerp(Color("253e48"),emphasis*.8)
 	var style:=StyleBoxFlat.new(); style.bg_color=base; style.set_corner_radius_all(16)
 	style.set_border_width_all(3 if emphasis>.05 else 1)
 	style.border_color=accent.lerp(Color("f5ffe9"),emphasis) if chosen or emphasis>.05 else Color("304254")
 	draw_style_box(style,Rect2(Vector2.ZERO,size))
 	draw_colored_polygon(PackedVector2Array([Vector2(size.x*.49,0),Vector2(size.x,0),Vector2(size.x,size.y),Vector2(size.x*.12,size.y)]),Color(accent,.055+.055*emphasis))
-	if kind=="player":
+	if kind=="player_row":
+		preload("res://scripts/career_list.gd").row(self,screen.game.career.player(identity))
+	elif kind=="player":
 		var p: Dictionary=screen.game.career.player(identity)
 		var photo: Texture2D=screen.portraits.photo(screen.portrait_data(identity))
 		if photo!=null:
-			var zoom:=1.0+.025*emphasis
+			var zoom:=1.0 if screen.game.experience.reduce_motion else 1.0+.025*emphasis
 			var rect:=Rect2(size.x-159-(zoom-1)*72,0,155*zoom,155*zoom)
 			draw_texture_rect(photo,rect,false)
 		label(str(screen.World.ovr(p)),Vector2(16,49),36,accent)
@@ -49,7 +51,9 @@ func _draw() -> void:
 		if p.get("retirement_year",0)>0: info="SEZON SONUNDA EMEKLİ"
 		elif not p.get("loan",{}).is_empty(): info="KİRALIK  ·  %d YAŞ" % p.age
 		info+="  ·  "+str(p.get("nationality","TR"))
-		label(info,Vector2(16,152),10,screen.MUTE,screen.font)
+		label(info,Vector2(16,153),11,screen.MUTE,screen.font,size.x-27)
+		if p.injury>screen.game.career.world.date or p.banned>0:
+			label("+ SAKAT" if p.injury>screen.game.career.world.date else "! CEZALI",Vector2(72,108),12,preload("res://scripts/ui_style.gd").RED)
 		var fitness: float=clampf(p.fitness,0,1)
 		draw_rect(Rect2(16,size.y-5,size.x-32,3),Color("334454"))
 		draw_rect(Rect2(16,size.y-5,(size.x-32)*fitness,3),accent)

@@ -1,6 +1,6 @@
 extends RefCounted
 const NATIONS:={"TR":"TÜRKİYE","ES":"İSPANYA","PT":"PORTEKİZ","IT":"İTALYA","DE":"ALMANYA","FR":"FRANSA","GB":"İNGİLTERE","NL":"HOLLANDA","BR":"BREZİLYA","AR":"ARJANTİN","HR":"HIRVATİSTAN","NG":"NİJERYA","JP":"JAPONYA"}
-const LEAGUE_NATIONS:=["TR","TR","ES","PT","IT","DE","FR","GB","NL","TR"]
+const LEAGUE_NATIONS:=["SEFC","SEFC","ES","PT","IT","DE","FR","GB","NL","TR"]
 const CITIES:={"ES":["VALENCIA","SEVILLA","BILBAO","MÁLAGA","ZARAGOZA","VIGO"],"PT":["BRAGA","COIMBRA","FARO","AVEIRO","VISEU","SETÚBAL"],"IT":["TORINO","NAPOLI","FIRENZE","GENOVA","BOLOGNA","VERONA"],"DE":["HAMBURG","KÖLN","BREMEN","DRESDEN","MAINZ","HANNOVER"],"FR":["LILLE","NANTES","NICE","BORDEAUX","TOULOUSE","RENNES"],"GB":["YORK","BRISTOL","OXFORD","LEEDS","DERBY","EXETER","BATH"],"NL":["UTRECHT","DELFT","BREDA","LEIDEN","ZWOLLE","ARNHEM","GOUDA"]}
 const POOLS:={
 	"ES":[["DIEGO","ÁLVARO","MATEO","PABLO"],["MORENO","ROMERO","SERRANO","VEGA"]],
@@ -54,6 +54,8 @@ static func expand(w: Dictionary) -> void:
 			var serial: int=w.next_player; w.next_player+=1
 			p.merge({"id":"p%04d" % serial,"career_id":"p%04d" % serial,"appearance_id":serial,"club":id,"shirt":n+1,"age":19+(n*7+i*3)%15,"contract":w.year+2+n%3,"fitness":1.0,"form":0.0,"morale":.7,"banned":0,"yellow":0,"injury":0,"listed":false,"loan_listed":n>=18,"goals":0,"appearances":0,"used":false,"loan":{},"retired":false,"retirement_year":0},true)
 			p.erase("nationality"); nationality(p,info[3],true)
+			p.talent_club=id; p.talent_slot=n
+			if p.has("talent_version"): p.talent_version=1
 			p.retirement_age=(36 if p.keeper else 34)+posmod(serial*13+p.role*7,5)
 			for key in p.attributes:
 				if key in ["preferred_foot","weak_foot","archetype"]: continue
@@ -66,7 +68,9 @@ static func expand(w: Dictionary) -> void:
 
 static func complete_leagues(w: Dictionary) -> void:
 	for c in w.clubs.values():
-		if c.nation!="TR": c.league=LEAGUE_NATIONS.find(c.nation)
+		# The independent SEFC association has two divisions. Its country code
+		# must not send every lower-division club back to the top division.
+		if CITIES.has(c.nation): c.league=LEAGUE_NATIONS.find(c.nation)
 	var serial:=48
 	for league in range(2,9):
 		var country: String=LEAGUE_NATIONS[league]
@@ -82,6 +86,8 @@ static func complete_leagues(w: Dictionary) -> void:
 				p.merge({"id":"p%04d" % number,"career_id":"p%04d" % number,"appearance_id":number,"club":id,"age":18+(number*7)%16,"contract":w.year+2+j%3,"loan":{},"retired":false,"retirement_year":0},true)
 				p.merge({"fitness":1.0,"form":0.0,"morale":.7,"banned":0,"yellow":0,"injury":0,"listed":false,"loan_listed":j>=18,"goals":0,"appearances":0,"minutes":0,"recent_minutes":[],"promise":{},"concern":"","used":false,"shirt":j+1},true)
 				p.erase("development"); p.erase("terms"); p.erase("nationality"); nationality(p,country,true)
+				p.talent_club=id; p.talent_slot=j
+				if p.has("talent_version"): p.talent_version=1
 				p.retirement_age=(36 if p.keeper else 34)+posmod(number*13+p.role*7,5)
 				for key in p.attributes:
 					if not key in ["preferred_foot","weak_foot","archetype"]: p.attributes[key]=clampi(p.attributes[key]-8+n%4,35,92)

@@ -36,7 +36,7 @@ func value(index: int,choice: Dictionary,context: Dictionary={}) -> float:
 	var isolated: bool=context.isolated
 	if kind in ["shield","invite"]:
 		return 35+minf(4,pressure)*1.2+(float(p.attributes.balance)-72)*.1-danger.urgency*maxf(0,danger.closing-2)*4
-	if kind in ["carry","push","feint","roll","stop_go","knock_around","roulette","elastico","scoop","rainbow","heel","flick"]:
+	if kind in ["carry","push","feint","roll","stop_go","knock_around","roulette","elastico","scoop","rainbow","heel","flick","heel_to_heel","ball_roll_cut","nutmeg","spin"]:
 		# Keep carry_target's cache update even when the option has its own exit.
 		var at: Vector3=choice.get("exit",brain.carry_target(index))
 		var room: float=minf(8,brain.clearance(at,p.team))

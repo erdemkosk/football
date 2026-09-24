@@ -129,7 +129,7 @@ func carry(game,index: int,_delta: float) -> void:
 	var closing: bool=offset.dot(relative)<-.3
 	var requested_speed: float=p.movement_speed()*p.desired.length()
 	var braking: bool=pace>requested_speed+1.0
-	var close: bool=offset.length()<(.84 if p.active_sprint else .70)
+	var close: bool=offset.length()<(.84 if (p.active_sprint and not p.controlled_sprint) else .70)
 	var recovering: bool=moving and offset.dot(aim)<.1 and offset.length()<1.18
 	# Keep a controlled ball in front of the standing player, not tied to the
 	# bobbing toe. The small stride pulse preserves visible touches without jitter.
@@ -138,13 +138,13 @@ func carry(game,index: int,_delta: float) -> void:
 	var guided: bool=acquired and offset.length()<(1.45 if settling else 1.30) and incoming.length()<15.5 and absf(ball.position.x)<P.HALF_WIDTH+.2 and absf(ball.position.z)<50.2
 	if guided:
 		var technique: float=clampf((float(p.attributes.control)-45)/50,0,1)
-		var reach: float=(.72 if p.active_sprint else .51)+(.025 if moving else 0.0)*sin(p.run_phase*2)
+		var reach: float=(lerpf(.90,.67,technique)*(.9 if p.Attributes.has_style(p,"rapid") else 1.0) if (p.active_sprint and not p.controlled_sprint) else lerpf(.60,.48,technique))+(.025 if moving else 0.0)*sin(p.run_phase*2)
 		var right := aim.cross(Vector3.UP)
 		var goal: Vector3=aim*reach+right*clampf(offset.dot(right),-.13,.13)
 		if p.protecting: goal=aim*.48+right*clampf(offset.dot(right),-.16,.16)
-		var grip: float=lerpf(90,130,technique)*(0.60 if p.active_sprint else 1.0)
+		var grip: float=lerpf(90,130,technique)*(0.60 if (p.active_sprint and not p.controlled_sprint) else 1.0)
 		var acceleration: Vector3=(goal-offset)*grip-relative*(2*sqrt(grip))
-		ball.guide(acceleration.limit_length(85 if not p.active_sprint else 65))
+		ball.guide(acceleration.limit_length(85 if not (p.active_sprint and not p.controlled_sprint) else 65))
 	var needs_touch: bool=close and (moving or stopping) or (closing and offset.length()<.78) or (turn>.5 and offset.length()<1.13 and moving) or ((stopping or braking) and offset.length()<1.25)
 	needs_touch=needs_touch or (moving and absf(offset.dot(aim))<.45 and offset.length()<1.05)
 	needs_touch=needs_touch or (feinting and offset.length()<1.05)
@@ -179,9 +179,10 @@ func carry(game,index: int,_delta: float) -> void:
 	elif moving:
 		# A small lead lets the ball roll out and be caught by the next stride.
 		# Faster carries have a longer exposed interval; tired players open it more.
-		var travelling: float=maxf(0,horizontal.dot(aim)) if p.active_sprint else pace
+		var travelling: float=maxf(0,horizontal.dot(aim)) if (p.active_sprint and not p.controlled_sprint) else pace
 		var speed: float=minf(requested_speed,travelling+2.0)
-		var lead: float=(.75 if p.active_sprint else .42)+(1-p.energy)*.12
+		var technique: float=p.Attributes.technique(p.attributes.control)
+		var lead: float=(lerpf(1.0,.65,technique) if (p.active_sprint and not p.controlled_sprint) else lerpf(.55,.35,technique))+(1-p.energy)*.12
 		var lateral: Vector3=offset-aim*offset.dot(aim)
 		output=aim*(speed+lead)-lateral.limit_length(.30)*2.0
 		if p.protecting: output=horizontal+aim*.4-lateral.limit_length(.2)
@@ -203,14 +204,14 @@ func carry(game,index: int,_delta: float) -> void:
 	output.y=clampf(ball.linear_velocity.y*.15,-.6,.3) if absf(ball.linear_velocity.y)>.5 else ball.linear_velocity.y
 	# Once acquired, the guide supplies control between light boot impulses.
 	# Braking and a genuine cut still get a decisive contact with the ball.
-	var impulse: float=(.65 if p.active_sprint else .40) if guided and not urgent else (22.0 if style=="sole" else 16.0)
+	var impulse: float=(.65 if (p.active_sprint and not p.controlled_sprint) else .40) if guided and not urgent else (22.0 if style=="sole" else 16.0)
 	ball.touch(output,ball.mass*impulse)
 	hit=true; contacts+=1; last_gap=gap; last_contact=ball.position
 	contact_position=p.position
 	previous_direction=aim
 	# Keep the approach target through contact. Replacing its short prediction
 	# with the ball's old position yanked the toe backwards on the next frame.
-	cooldown=.075 if feinting else (.055 if style=="sole" else (.13 if p.active_sprint else .10))
+	cooldown=.075 if feinting else (.055 if style=="sole" else (.13 if (p.active_sprint and not p.controlled_sprint) else .10))
 	game.dribble_direction=aim
 	game.last_touch=p.team; game.last_kicker=index
 

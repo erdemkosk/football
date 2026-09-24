@@ -37,10 +37,21 @@ func start_dummy(index: int) -> bool:
 
 func skill_gesture(direction: Vector3) -> void:
 	var p=game.players[game.controlled]
-	var fancy: bool=game.controller.action_held(KEY_E) or Input.is_key_pressed(KEY_E)
+	var fancy: bool=game.controller.action_held(KEY_E) or game.key_down(KEY_E)
 	var forward: float=direction.dot(p.facing)
 	var lateral: float=direction.dot(p.facing.cross(Vector3.UP))
-	if game.controller.action_held(KEY_W):
+	# LB + right stick: the newer moves; LB + LT + right stick: heel to heel.
+	if shoulder_held():
+		roll_side=0
+		game.controller.combos.switch_pending=false
+		if game.controller.action_held(KEY_E): game.skills.start(game.controlled,"heel_to_heel",side())
+		elif forward>.35: game.skills.start(game.controlled,"nutmeg",side())
+		elif forward<-.35: game.skills.start(game.controlled,"ball_roll_cut",-1.0 if lateral<0 else 1.0)
+		else: game.skills.start(game.controlled,"spin",-1.0 if lateral<0 else 1.0)
+		return
+	# Keeping sprint held must not turn every lateral trick into an exposed
+	# knock-around. Forward/back retain their deliberate sprint variants.
+	if not fancy and game.controller.action_held(KEY_W) and absf(forward)>=absf(lateral):
 		roll_side=0
 		game.skills.start(game.controlled,"stop_go" if forward<-.35 else "knock_around",-1 if lateral<0 else 1)
 		return
@@ -127,6 +138,8 @@ func handle(event: InputEvent) -> bool:
 		if not event.pressed or event.echo: return false
 		if event.keycode==KEY_9: game.skills.start(index,"stop_go",side()); return true
 		if event.keycode==KEY_0: game.skills.start(index,"knock_around",side()); return true
+		if event.shift_pressed and event.keycode in [KEY_1,KEY_2,KEY_3,KEY_4]:
+			game.skills.start(index,["heel_to_heel","ball_roll_cut","nutmeg","spin"][event.keycode-KEY_1],side()); return true
 		if event.keycode in [KEY_1,KEY_2,KEY_3,KEY_4]:
 			game.skills.start(index,["roulette","roll","elastico","scoop"][event.keycode-KEY_1],side()); return true
 		if event.keycode in [KEY_6,KEY_7,KEY_8]:
@@ -189,7 +202,7 @@ func handle(event: InputEvent) -> bool:
 	if action in [KEY_S,KEY_Y] and rb and not lb and game.has_ball_control(index) and not in_hand:
 		consumed[button]="pass"; pad.using_gamepad=true
 		game.begin_pass(action==KEY_Y,false,true); return true
-	if action==KEY_S and not game.has_ball_control(index) and game.last_touch!=0:
+	if action==KEY_S and not game.has_ball_control(index) and game.last_touch!=game.players[index].team:
 		consumed[button]="press"; game.defending.pressing=true; pad.using_gamepad=true; return true
 	if button==JOY_BUTTON_LEFT_STICK:
 		consumed[button]="stick"; pad.using_gamepad=true

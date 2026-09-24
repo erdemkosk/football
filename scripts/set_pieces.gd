@@ -20,8 +20,10 @@ var curl_axis := 0.0
 var receiver := -1
 var target := Vector3.ZERO
 var ai_choice: Dictionary = {}
+var routines := preload("res://scripts/set_piece_routines.gd").new()
 
 func clear() -> void:
+	routines.reset()
 	ai_choice.clear()
 	recovery.reset()
 	if is_instance_valid(game.ball): game.ball.release_hold()
@@ -149,7 +151,7 @@ func prepare() -> void:
 	game.carrier=-1
 	game.last_touch=team
 	game.last_kicker=-1
-	if team==0: game.controlled=taker
+	if game.human_team(team): game.humans.set_controlled_for_team(team,taker)
 	game.last_direction=direction
 	ready_age=0
 	recovery.begin(self)
@@ -320,9 +322,9 @@ func ready() -> void:
 	game.ball.active=true
 	game.referees.whistle()
 	if game.restart_type=="SANTRA":
-		game.hint("SANTRA · "+((("A" if game.controller.using_gamepad else "S")+" İLE PAS VEREREK BAŞLA") if game.restart_team==0 else "RAKİP OYUNU BAŞLATIYOR"))
+		game.hint("SANTRA · "+((("A" if game.controller.using_gamepad else "S")+" İLE PAS VEREREK BAŞLA") if game.human_team(game.restart_team) else "RAKİP OYUNU BAŞLATIYOR"))
 	else:
-		game.hint("DÜDÜK · "+("YÖNÜ SEÇ, VURUŞU YAP" if game.restart_team==0 else "RAKİP DURAN TOPU KULLANIYOR"))
+		game.hint("DÜDÜK · "+("YÖNÜ SEÇ, VURUŞU YAP" if game.human_team(game.restart_team) else "RAKİP DURAN TOPU KULLANIYOR"))
 	preview()
 
 func update(delta: float) -> void:
@@ -333,7 +335,7 @@ func update(delta: float) -> void:
 		game.players[taker].desired=direction*0.6
 		if runup<=0: launch()
 		return
-	if game.restart_team==1 or game.menu_match.running:
+	if not game.human_team(game.restart_team) or game.menu_match.running:
 		if ready_age>1.15 and plan_ai(): commit()
 		return
 	var aim: Vector3=aim_input()
@@ -400,7 +402,7 @@ func curl_input() -> float:
 	var axis := 0.0
 	if pad.aim_stick.length()>pad.deadzone:
 		axis=clampf(pad.aim_stick.x,-1,1)
-	var keys := float(Input.is_physical_key_pressed(game.match_menu.key_for(KEY_E)))-float(Input.is_physical_key_pressed(game.match_menu.key_for(KEY_Q)))
+	var keys := float(game.key_held(KEY_E))-float(game.key_held(KEY_Q))
 	return clampf(axis+keys,-1,1)
 
 func steer_curl(delta: float) -> void:
@@ -430,7 +432,9 @@ func aim_input() -> Vector3:
 	return game.aiming_input()
 
 func input(event: InputEvent) -> void:
-	if game.state!="set_piece" or game.restart_team!=0 or runup>=0: return
+	if game.state!="set_piece" or not game.human_team(game.restart_team) or game.active_team()!=game.restart_team or runup>=0: return
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode in [KEY_1,KEY_2,KEY_3,KEY_4]:
+		routines.select(self,event.keycode-KEY_1); return
 	if event is InputEventKey and event.keycode in [KEY_S,KEY_A,KEY_D] and not event.echo:
 		if event.pressed:
 			if game.restart_type=="PENALTI" and event.keycode!=KEY_D: return
@@ -466,6 +470,7 @@ func preview(delta: float=0.0) -> void:
 
 func commit() -> void:
 	if ai_choice.is_empty(): preview()
+	routines.start(self)
 	runup=0.25
 	if game.restart_type!="TAÇ":
 		targets[taker]=game.restart_point-direction*0.48
@@ -486,7 +491,12 @@ func launch() -> void:
 	game.rules.restart_taken(restart,team,taker)
 	game.referees.ball_in_play(restart,taker)
 	game.replay.origin()
+	game.players[taker].strike_effort=power
+	# A penalty is struck under the stadium's full attention.
+	if restart=="PENALTI": game.strike_quality.extra_pressure[taker]=.45
 	game.strike(taker,pending_velocity,pending_curve,false,"shot" if action=="shot" else "kick")
+	if game.kick_contact.pending.get("index",-1)==taker:
+		game.kick_contact.pending.restart={"shot":action=="shot","team":team}
 	if action=="shot": game.shots[team]+=1
 	else: game.passes[team]+=1
 	var heading: Vector3=(pending_velocity*Vector3(1,0,1)).normalized()
@@ -501,8 +511,31 @@ func launch() -> void:
 	game.players[taker].touch_cooldown=0.65
 	game.players[taker].set_piece_pose="throw" if restart=="TAÇ" else ""
 	if restart=="TAÇ": game.players[taker].wall_hold=0.45
+	routines.launch(self)
 	game.kick_lock=0.2
 	runup=-1
 	button=0
 	power=0
 	ai_choice.clear()
+
+func cancel_input() -> bool:
+	if button==0 and runup<0: return false
+	button=0; power=0; runup=-1; ai_choice.clear()
+	if taker>=0:
+		game.players[taker].shot_preparation=0; game.players[taker].wrapping=0
+		targets[taker]=game.restart_point-direction*.92
+	if routines.selected>=0: routines.select(self,routines.selected)
+	preview()
+	return true
+
+func restore_cancelled(request: Dictionary) -> void:
+	if request.shot: game.shots[request.team]=maxi(0,game.shots[request.team]-1)
+	else: game.passes[request.team]=maxi(0,game.passes[request.team]-1)
+	game.state="set_piece"; game.kick_lock=0; game.dribbler=-1; game.carrier=-1
+	game.ai_receivers[request.team]=-1; game.ai_pass_time[request.team]=0
+	game.support.reset(); game.rules.reset()
+	for i in wall:
+		game.players[i].wall_hold=0; game.players[i].wall_jump_delay=-1
+	game.players[taker].touch_cooldown=0
+	button=KEY_D if request.shot else KEY_A
+	cancel_input()

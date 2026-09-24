@@ -8,9 +8,11 @@ var previous_velocity := Vector3.ZERO
 var scan_in := 0.0
 var attacking_team := 0
 var source := ""
+var jobs: Dictionary = {}
 
 func reset() -> void:
 	targets.clear(); roles.clear(); remaining=0; previous_velocity=Vector3.ZERO; scan_in=0; source=""
+	jobs.clear()
 
 func alert(kind: String,attack: int) -> void:
 	if game.state!="playing": return
@@ -21,7 +23,7 @@ func landing() -> Vector3:
 	var velocity: Vector3=ball.kick_velocity if ball.pending_kick else ball.linear_velocity
 	var point: Vector3=ball.position
 	if point.y>.5 or velocity.y>1:
-		var samples=game.Passing.Motion.sample_flight(point,velocity,ball.spin,1.4,28,game.weather)
+		var samples=game.Passing.Motion.sample_flight(point,velocity,ball.spin,3.0,60,game.weather)
 		for next in samples:
 			var descending: bool=next.y<point.y
 			point=next
@@ -42,7 +44,7 @@ func update(delta: float) -> void:
 	previous_velocity=velocity
 	remaining=maxf(0,remaining-delta)
 	if remaining<=0 or game.dribbler>=0:
-		targets.clear(); roles.clear(); remaining=0; return
+		targets.clear(); roles.clear(); jobs.clear(); remaining=0; return
 	scan_in-=delta
 	if scan_in>0: return
 	scan_in=.12; targets.clear(); roles.clear()
@@ -52,18 +54,37 @@ func update(delta: float) -> void:
 		for i in range(team*11+1,team*11+11):
 			var p=game.players[i]
 			if p.visible and not p.dismissed and p.action_timer<=0: candidates.append(i)
-		candidates.sort_custom(func(a,b): return arrival(a,point)<arrival(b,point))
+		var previous: Array=jobs.get(team,[])
+		candidates.sort_custom(func(a,b): return arrival(a,point)-(.22 if not previous.is_empty() and a==previous[0] else 0.0)<arrival(b,point)-(.22 if not previous.is_empty() and b==previous[0] else 0.0))
 		if candidates.is_empty() or arrival(candidates[0],point)>3.8: continue
 		var first: int=candidates[0]
 		targets[first]=point; roles[first]="contest"
-		game.players[first].reaction.reset()
+		# Keep the runner through small landing changes, but yield to a clearly
+		# earlier arrival. Never erase a physical stumble to manufacture urgency.
+		jobs[team]=[first]
 		if candidates.size()>1:
 			var next: int=candidates[1]
 			var forward: float=game.attack_sign(team)
 			var side := -1.0 if game.players[next].position.x<point.x else 1.0
-			var support := point+Vector3(side*4.0,0,forward*(2 if team==attacking_team else -4))
-			targets[next]=Vector3(clampf(support.x,-(P.HALF_WIDTH-3),(P.HALF_WIDTH-3)),0,clampf(support.z,-46,46))
-			roles[next]="finish" if team==attacking_team else "protect_goal"
+			var support: Vector3=point+Vector3(side*4,0,forward*(3 if team==attacking_team else -4))
+			assign(next,support,"finish" if team==attacking_team else "protect_goal")
+			jobs[team].append(next)
+			if candidates.size()>2:
+				var third: int=candidates[2]
+				# An outlet catches the next knockdown; the defending cover sits
+				# between the landing and goal instead of joining the same pile.
+				var cover: Vector3=point+Vector3(-side*4.5,0,-forward*(4 if team==attacking_team else 7))
+				assign(third,cover,"collect" if team==attacking_team else "screen_landing")
+				jobs[team].append(third)
+
+func assign(index: int,point: Vector3,role: String) -> void:
+	point.x=clampf(point.x,-(P.HALF_WIDTH-3),P.HALF_WIDTH-3); point.z=clampf(point.z,-47,47)
+	# Goal-line clipping must not collapse two support assignments together.
+	for i in targets:
+		if game.players[i].team!=game.players[index].team: continue
+		if game.flat_distance(point,targets[i])<3:
+			point.x=clampf(point.x+(3.5 if point.x>=targets[i].x else -3.5),-P.HALF_WIDTH+2,P.HALF_WIDTH-2)
+	targets[index]=point; roles[index]=role
 
 func arrival(index: int,point: Vector3) -> float:
 	var p=game.players[index]

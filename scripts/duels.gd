@@ -22,6 +22,7 @@ func reset() -> void:
 		p.feint_time=0
 		p.skill_cooldown=0
 		p.defensive_turn_load=0
+		p.tackle_recovery=0
 
 func shield_direction(index: int) -> Vector3:
 	var p=game.players[index]
@@ -90,16 +91,22 @@ func push_ahead(index: int) -> void:
 
 func standing_tackle(index: int) -> void:
 	var p=game.players[index]
-	if not p.visible or p.action_timer>0 or p.tackle_cooldown>0 or game.dribbler==index: return
+	if not p.visible or p.dismissed or game.dribbler==index: return
+	if p.action_timer>0 or p.tackle_cooldown>0:
+		game.skills.explain(index,"TOPARLANIYOR · YENİ HAMLE İÇİN %.1f sn" % maxf(p.action_timer,p.tackle_cooldown))
+		game.playtest.event("tackle_rejected",index,{"recovery":maxf(p.action_timer,p.tackle_cooldown)})
+		return
 	var facing: Vector3=(game.ball.position-p.position)*Vector3(1,0,1)
 	if facing.length()>0.1: p.facing=facing.normalized()
 	p.pose="poke"
 	p.tackle_foot=p.ball_actions.choose_foot(p,game.ball.position)
 	p.tackle_target=game.ball.position
 	p.action_timer=0.38
+	p.poke_recovery_duration=0
 	p.tackle_cooldown=0.85
 	p.sprinting=false
 	attempts[index]=0.0
+	game.playtest.event("tackle_attempt",index)
 
 func resolve(delta: float) -> void:
 	for i in attempts.keys():
@@ -110,7 +117,7 @@ func resolve(delta: float) -> void:
 		attempts.erase(i)
 		var a: Vector3=p.position*Vector3(1,0,1)
 		var owner: int=game.dribbler
-		var end: Vector3=a+p.facing*poke_reach(owner)*p.Attributes.multiplier(p.attributes.get("defending",72),.075)
+		var end: Vector3=a+p.facing*poke_reach(owner)*tackle_reach(p)
 		var ball: Vector3=game.ball.position*Vector3(1,0,1)
 		var victim := -1
 		var body_distance := INF
@@ -127,8 +134,31 @@ func resolve(delta: float) -> void:
 		var boot: Vector3=(p.left_knee if p.tackle_foot==0 else p.right_knee).to_global(p.ball_actions.BOOT)
 		var reaches_ball: bool=Geometry3D.get_closest_point_to_segment(ball,a,end).distance_to(ball)<poke_ball_radius(owner) and boot.distance_to(game.ball.position)<.53 and game.ball.position.y<0.75
 		if reaches_ball and (victim<0 or a.distance_to(ball)<body_distance+poke_body_slack(owner)) and ball_exposed(i,owner):
-			game.strike(i,p.facing*4.8+Vector3.UP*0.15,0,false,"ball_tackle")
-		elif victim>=0 and body_distance<1.05:
+			var direction: Vector3=p.facing
+			if owner>=0 and owner!=i:
+				# The side of the real boot contact determines the loose ball.
+				# Avoid poking straight back through the carrier's feet.
+				var away: Vector3=(ball-game.players[owner].position*Vector3(1,0,1)).normalized()
+				if away.length()>.1: direction=(direction*.35+away*.65).normalized()
+			var control: float=p.Attributes.skill(p,"tackling")
+			var incoming: Vector3=game.ball.linear_velocity*Vector3(1,0,1)
+			var output: Vector3=direction*lerpf(4.8,3.5,control)+incoming.limit_length(8)*.12
+			if game.strike(i,output+Vector3.UP*.15,0,false,"ball_tackle"):
+				# A clean plant can follow the ball sooner than a missed lunge.
+				# Possession still requires the next actual control opportunity.
+				p.action_timer=minf(p.action_timer,lerpf(.16,.10,control))
+				p.poke_recovery_duration=p.action_timer
+				p.touch_cooldown=minf(p.touch_cooldown,.16)
+				game.playtest.event("tackle_clean",i,{"speed":output.length()})
+			continue
+		# Missing commits the same recovery for humans and AI, even if no body
+		# was hit. A late sidestep earns space without granting ball immunity.
+		game.playtest.event("tackle_miss",i,{"gap":a.distance_to(ball),"fatigue":p.match_fatigue})
+		p.tackle_recovery=lerpf(.78,.42,p.Attributes.technique(float(p.attributes.get("defending",72))*.75+p.Attributes.value(p,"tackling")*.25))+p.match_fatigue*.3
+		p.tackle_cooldown=maxf(p.tackle_cooldown,.95)
+		p.recovery_delay=maxf(p.recovery_delay,.75)
+		p.energy=maxf(0,p.energy-.012)
+		if victim>=0 and body_distance<1.05:
 			var q=game.players[victim]
 			var from_victim: Vector3=(a-q.position*Vector3(1,0,1)).normalized()
 			var behind: bool=from_victim.dot(q.facing)<-0.48
@@ -152,8 +182,12 @@ func ai_poke_window(index: int,owner: int) -> bool:
 	var now: Vector3=game.ball.position*Vector3(1,0,1)
 	var future: Vector3=now+game.ball.linear_velocity*Vector3(1,0,1)*.12
 	var aim: Vector3=(now-p.position*Vector3(1,0,1)).normalized()
-	var end: Vector3=start+aim*poke_reach(owner)*p.Attributes.multiplier(p.attributes.get("defending",72),.075)
+	var end: Vector3=start+aim*poke_reach(owner)*tackle_reach(p)
 	return Geometry3D.get_closest_point_to_segment(future,start,end).distance_to(future)<poke_ball_radius(owner)*.9
+
+static func tackle_reach(p) -> float:
+	var reach: float=p.Attributes.multiplier(float(p.attributes.get("defending",72))*.4+p.Attributes.value(p,"tackling")*.6,.075)
+	return reach*(1.08 if p.Attributes.has_style(p,"anticipate") else 1.0)
 
 func ai_can_challenge(index: int,owner: int,sliding: bool=false) -> bool:
 	if owner<0: return false

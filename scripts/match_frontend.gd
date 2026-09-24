@@ -11,7 +11,13 @@ const ROLE_COLORS := [Color("ead091"),Color("a4c9eb"),Color("a8dfc0"),Color("f0b
 const LINES := [
 	[[0],[1,2,3,4],[5,6,7,8],[9,10]],
 	[[0],[1,2,3,4],[5,6,7],[8,9,10]],
-	[[0],[1,2,3],[4,5,6,7,8],[9,10]]]
+	[[0],[1,2,3],[4,5,6,7,8],[9,10]],
+	[[0],[1,2,3,4],[5,6,7,8,9],[10]],
+	[[0],[1,2,3,4],[5,6,7,8],[9,10]],
+	[[0],[1,2,3,4,5],[6,7,8],[9,10]],
+	[[0],[1,2,3],[4,5,6,7],[8,9,10]],
+	[[0],[1,2,3,4],[5,6,7,8,9],[10]],
+	[[0],[1,2,3,4],[5,6,7,8],[9,10]]]
 
 func slot_group(index: int) -> int:
 	return game.management.slot_role(index)
@@ -42,12 +48,21 @@ var inspected := {"kind":"slot","index":9}
 var pane_focus := ["", ""]
 var tab_buttons: Array[Button] = []
 var tactic_buttons: Array = []
+## Formation row pages (three shapes per page); -1 follows the active shape.
+var formation_browse := -1
+var formation_arrows: Array[Button] = []
 var back_button: Button
 var plan_button: Button
 const ROLES := [
 	["KL","SLB","STP","STP","SĞB","SO","MO","MO","SA","SF","SF"],
 	["KL","SLB","STP","STP","SĞB","MO","MDO","MO","SLK","SF","SĞK"],
-	["KL","STP","STP","STP","SKB","MO","MDO","MO","SĞKB","SF","SF"]]
+	["KL","STP","STP","STP","SKB","MO","MDO","MO","SĞKB","SF","SF"],
+	["KL","SLB","STP","STP","SĞB","MDO","MDO","SLK","MOO","SĞK","SF"],
+	["KL","SLB","STP","STP","SĞB","MDO","MO","MO","MOO","SF","SF"],
+	["KL","SKB","STP","STP","STP","SĞKB","MO","MDO","MO","SF","SF"],
+	["KL","STP","STP","STP","SO","MO","MO","SA","SLK","SF","SĞK"],
+	["KL","SLB","STP","STP","SĞB","MDO","SO","MO","MO","SA","SF"],
+	["KL","SLB","STP","STP","SĞB","SO","MO","MO","SA","İF","SF"]]
 var game
 var stage := "teams"
 var pane := 0
@@ -61,8 +76,10 @@ var previews: Array = []
 var slot_buttons: Array[Button] = []
 var first_focus: Button
 var time_button: Button
+var players_button: Button
 var weather_button: Button
 var difficulty_button: Button
+var duration_button: Button
 var team_left: Array[Button] = []
 var team_right: Array[Button] = []
 var team_select: Array[Button] = []
@@ -102,7 +119,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if visible:
 		age+=delta
-		enter_age+=delta
+		enter_age=1.0 if game.experience.reduce_motion else enter_age+delta
 		queue_redraw()
 		if overlay: overlay.queue_redraw()
 		if stage=="teams":
@@ -113,6 +130,7 @@ func _process(delta: float) -> void:
 					ovr_punch[side]=1.0
 				shown_ovr[side]=move_toward(float(shown_ovr[side]),target,delta*64.0)
 				ovr_punch[side]=move_toward(float(ovr_punch[side]),0.0,delta*3.4)
+				if game.experience.reduce_motion: shown_ovr[side]=target; ovr_punch[side]=0
 	if select_wait>0:
 		select_wait=maxf(0,select_wait-delta)
 		if select_wait<=0: finish_pick()
@@ -180,6 +198,7 @@ func clear_controls() -> void:
 	plan_button=null
 	tab_buttons.clear()
 	tactic_buttons.clear()
+	formation_arrows.clear()
 	for child in controls.get_children(): controls.remove_child(child); child.queue_free()
 
 func build() -> void:
@@ -220,6 +239,7 @@ func build_teams() -> void:
 		var preview := Preview.new()
 		preview.position=Vector2(x+196,273)
 		preview.size=Vector2(432,370)
+		preview.game=game
 		controls.add_child(preview)
 		preview.show_kit(game.clubs.kit(side),side)
 		preview.player.apply_identity(game.clubs.member(side,game.clubs.lineups[side][9]))
@@ -235,11 +255,17 @@ func build_teams() -> void:
 		var kit_title: String="FORMA · KONTRAST" if game.clubs.contrast_override.has(side) else ("FORMA  B" if game.clubs.alternate[side] else "FORMA  A")
 		kit_buttons.append(make_button(controls,Rect2(x+445,285,163,31),kit_title,toggle_kit.bind(side)))
 		kit_buttons[-1].add_theme_font_size_override("font_size",12)
-	back_button=make_button(controls,Rect2(48,828,180,48),"← ANA MENÜ",back)
-	weather_button=make_button(controls,Rect2(252,828,220,48),"HAVA  ·  "+game.weather.label(),cycle_weather)
-	difficulty_button=make_button(controls,Rect2(490,828,220,48),"ZORLUK  ·  "+["KOLAY","NORMAL","ZOR"][game.management.difficulty],cycle_difficulty)
-	time_button=make_button(controls,Rect2(728,828,220,48),"SAAT  ·  "+game.stadium.light_rig.label(),cycle_time)
-	for button in [back_button,weather_button,difficulty_button,time_button]: button.add_theme_font_size_override("font_size",13)
+	back_button=make_button(controls,Rect2(48,828,160,48),"← ANA MENÜ",back)
+	weather_button=make_button(controls,Rect2(224,828,170,48),"HAVA  ·  "+game.weather.label(),cycle_weather)
+	difficulty_button=make_button(controls,Rect2(410,828,182,48),"ZORLUK  ·  "+game.MatchSettings.LEVEL_SHORT[game.management.level],cycle_difficulty)
+	duration_button=make_button(controls,Rect2(608,828,176,48),"DEVRE  ·  %d DK" % game.quick_half_minutes,cycle_duration)
+	duration_button.tooltip_text="İki devre toplam %d dakika; duraklamalar hariç." % (game.quick_half_minutes*2)
+	time_button=make_button(controls,Rect2(800,828,164,48),"SAAT  ·  "+game.stadium.light_rig.label(),cycle_time)
+	for button in [back_button,weather_button,difficulty_button,duration_button,time_button]: button.add_theme_font_size_override("font_size",13)
+	# Local multiplayer: one person, head to head, or two on the same side.
+	players_button=make_button(controls,Rect2(690,140,330,42),players_label(),cycle_players)
+	players_button.add_theme_font_size_override("font_size",13)
+	players_button.tooltip_text="İkinci kişi bir kontrolcü kullanır; iki kol varsa klavye gerekmez."
 	go_button=make_button(controls,Rect2(978,815,414,64),"KADRO & TAKTİK  →",pick_current,true)
 	first_focus=team_select[mini(pick_step,1)] if pick_step<2 else go_button
 	refresh_picks()
@@ -261,12 +287,15 @@ func refresh_picks() -> void:
 	configure_selection_navigation()
 
 func configure_selection_navigation() -> void:
-	var footer: Array=[back_button,weather_button,difficulty_button,time_button]
+	var footer: Array=[back_button,weather_button,difficulty_button,duration_button,time_button]
 	if not go_button.disabled: footer.append(go_button)
 	for i in range(footer.size()):
 		neighbor(footer[i],SIDE_LEFT,footer[maxi(0,i-1)])
 		neighbor(footer[i],SIDE_RIGHT,footer[mini(footer.size()-1,i+1)])
 		neighbor(footer[i],SIDE_TOP,team_select[pick_step] if pick_step<2 and not team_select[pick_step].disabled else kit_buttons[0 if i<2 else 1])
+	if players_button!=null:
+		for side in range(2): neighbor(league_buttons[side],SIDE_TOP,players_button)
+		neighbor(players_button,SIDE_BOTTOM,league_buttons[mini(pick_step,1)])
 	for side in range(2):
 		neighbor(kit_buttons[side],SIDE_BOTTOM,nearest_x(kit_buttons[side],footer))
 		neighbor(kit_buttons[side],SIDE_LEFT,kit_buttons[0])
@@ -411,11 +440,29 @@ func cycle_time() -> void:
 	build()
 	if time_button: time_button.grab_focus()
 
+func players_label() -> String:
+	var mode: int=game.humans.preferred
+	var missing: bool=mode>0 and Input.get_connected_joypads().is_empty()
+	return "OYUNCULAR  ·  "+game.humans.MODES[mode]+("  ·  KOL BAĞLA" if missing else "")
+
+func cycle_players() -> void:
+	game.humans.preferred=(game.humans.preferred+1)%game.humans.MODES.size()
+	if is_instance_valid(game.match_menu): game.match_menu.persist_session()
+	build()
+	if players_button: players_button.grab_focus()
+
 func cycle_difficulty() -> void:
-	game.management.difficulty=(game.management.difficulty+1)%3
+	game.management.level=(game.management.level+1)%game.MatchSettings.LEVELS.size()
 	if is_instance_valid(game.match_menu): game.match_menu.persist_session()
 	build()
 	if difficulty_button: difficulty_button.grab_focus()
+
+func cycle_duration() -> void:
+	var choices: Array=game.MatchSettings.HALF_MINUTES
+	game.quick_half_minutes=choices[(choices.find(game.quick_half_minutes)+1)%choices.size()]
+	if is_instance_valid(game.match_menu): game.match_menu.persist_session()
+	build()
+	duration_button.grab_focus()
 
 func slot_position(index: int) -> Vector2:
 	var group := slot_group(index)
@@ -500,15 +547,26 @@ func build_tactics() -> void:
 	else:
 		var m=game.management
 		var rows := [["Diziliş",m.FORMATIONS,m.formation,"formation"],["Oyun anlayışı",["Savunmacı","Dengeli","Hücumcu"],m.mentality,"mentality"],["Pres yoğunluğu",["Geri çekil","Dengeli","Yoğun"],m.pressing,"pressing"],["Savunma çizgisi",["Derin","Normal","Önde"],m.line_height,"line_height"]]
+		var page: int=formation_page()
 		for i in range(rows.size()):
 			var row: Array=rows[i]
 			var buttons: Array[Button]=[]
 			for j in range(3):
-				var button := make_button(controls,Rect2(976+j*136,234+i*99,128,42),row[1][j],set_tactic.bind(row[3],j),j==row[2])
+				# The formation row pages through every shape three at a time.
+				var value: int=page*3+j if i==0 else j
+				var rect := Rect2(1000+j*124,234,116,42) if i==0 else Rect2(976+j*136,234+i*99,128,42)
+				var button := make_button(controls,rect,row[1][value],set_tactic.bind(row[3],value),value==row[2])
 				button.add_theme_font_size_override("font_size",14)
 				buttons.append(button)
 				track_tactics_focus(button,"plan:%d:%d" % [i,j])
 			tactic_buttons.append(buttons)
+		formation_arrows.clear()
+		for step in [-1,1]:
+			var arrow := make_button(controls,Rect2(970 if step<0 else 1368,234,26,42),"◀" if step<0 else "▶",page_formations.bind(step))
+			arrow.add_theme_font_size_override("font_size",12)
+			arrow.tooltip_text="Diğer dizilişler"
+			track_tactics_focus(arrow,"formation_page:%d" % step)
+			formation_arrows.append(arrow)
 	back_button=make_button(controls,Rect2(40,834,222,49),("← Kariyere dön" if game.career.in_match else "← Takım seçimi") if prematch else "← Maça dön",back)
 	track_tactics_focus(back_button,"back")
 	undo_button=make_button(controls,Rect2(848,834,240,49),"SON DEĞİŞİKLİĞİ GERİ AL",undo_last)
@@ -538,7 +596,7 @@ func focus_tactics(key: String) -> void:
 			child.grab_focus()
 			return
 	if pane==0: slot_buttons[selected_slot].grab_focus()
-	else: tactic_buttons[0][game.management.formation].grab_focus()
+	else: tactic_buttons[0][game.management.formation%3].grab_focus()
 
 func refresh_card_states() -> void:
 	for card in slot_buttons+reserve_buttons:
@@ -618,7 +676,13 @@ func configure_tactics_navigation() -> void:
 				neighbor(button,SIDE_RIGHT,tactic_buttons[row][mini(2,column+1)])
 				neighbor(button,SIDE_TOP,tactic_buttons[row-1][column] if row>0 else tab_buttons[1])
 				neighbor(button,SIDE_BOTTOM,tactic_buttons[row+1][column] if row<3 else (nearest_x(button,footer) if plan_button==null else plan_button))
-		for tab in tab_buttons: neighbor(tab,SIDE_BOTTOM,tactic_buttons[0][game.management.formation])
+		for tab in tab_buttons: neighbor(tab,SIDE_BOTTOM,tactic_buttons[0][game.management.formation%3])
+		if formation_arrows.size()==2:
+			neighbor(tactic_buttons[0][0],SIDE_LEFT,formation_arrows[0]); neighbor(tactic_buttons[0][2],SIDE_RIGHT,formation_arrows[1])
+			neighbor(formation_arrows[0],SIDE_RIGHT,tactic_buttons[0][0]); neighbor(formation_arrows[1],SIDE_LEFT,tactic_buttons[0][2])
+			for n in range(2):
+				neighbor(formation_arrows[n],SIDE_TOP,tab_buttons[1])
+				neighbor(formation_arrows[n],SIDE_BOTTOM,tactic_buttons[1][0 if n==0 else 2])
 		for button in footer: neighbor(button,SIDE_TOP,nearest_x(button,tactic_buttons[3]))
 	if plan_button!=null:
 		neighbor(plan_button,SIDE_TOP,swap_action if pane==0 else tactic_buttons[3][1])
@@ -762,17 +826,31 @@ func set_pane(value: int) -> void:
 	pane=value
 	build()
 
+func formation_page() -> int:
+	var pages: int=ceili(game.management.FORMATIONS.size()/3.0)
+	return posmod(formation_browse if formation_browse>=0 else game.management.formation/3,pages)
+
+func page_formations(step: int) -> void:
+	# Browsing shapes never applies one; A on a shape does.
+	var pages: int=ceili(game.management.FORMATIONS.size()/3.0)
+	formation_browse=posmod(formation_page()+step,pages)
+	build()
+	if pane==1: focus_tactics("formation_page:%d" % step)
+
 func set_tactic(property: String,value: int) -> void:
+	if game.match_time>0: game.management.manual_plan=true
 	var from: Dictionary={}
 	if property=="formation":
+		formation_browse=-1
 		for i in range(slot_buttons.size()): from[i]=slot_buttons[i].position
 	game.management.set(property,value)
 	game.management.apply_formation()
 	build()
 	if property=="formation": slide_slots(from)
-	if pane==1: focus_tactics("plan:%d:%d" % [["formation","mentality","pressing","line_height"].find(property),value])
+	if pane==1: focus_tactics("plan:%d:%d" % [["formation","mentality","pressing","line_height"].find(property),value%3 if property=="formation" else value])
 
 func slide_slots(from: Dictionary) -> void:
+	if game.experience.reduce_motion: return
 	if DisplayServer.get_name()=="headless" or "--disable-render-loop" in OS.get_cmdline_args(): return
 	if not is_visible_in_tree(): return
 	for i in range(slot_buttons.size()):
@@ -869,6 +947,9 @@ func confirm() -> void:
 	if game.career.in_match:
 		for key in game.career.club().plan: game.career.club().plan[key]=game.management.get(key)
 	if prematch:
+		# People take their slots before kickoff; a career is always one person.
+		var wanted: int=0 if game.career.in_match else game.humans.preferred
+		if not game.humans.configure(wanted): game.announce("İKİNCİ OYUNCU İÇİN BİR KONTROLCÜ BAĞLA · TEK KİŞİ BAŞLIYOR")
 		game.start_match(false,true)
 	else:
 		game.state=previous_state
@@ -904,6 +985,7 @@ func handle(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode==KEY_ESCAPE: back(); get_viewport().set_input_as_handled()
 		elif event.keycode==KEY_Z and stage=="tactics": undo_last(); get_viewport().set_input_as_handled()
+		elif event.keycode in [KEY_T,KEY_Y] and stage=="tactics" and pane==0: cycle_order("attack" if event.keycode==KEY_T else "width"); get_viewport().set_input_as_handled()
 		elif event.keycode==KEY_P: game.match_menu.open_menu(); get_viewport().set_input_as_handled()
 		elif event.keycode==KEY_ENTER and stage=="teams" and is_team_choice(get_viewport().gui_get_focus_owner()):
 			pick_current(); get_viewport().set_input_as_handled()
@@ -918,6 +1000,8 @@ func handle(event: InputEvent) -> void:
 		game.controller.using_gamepad=true
 		if event.button_index==JOY_BUTTON_B: back(); get_viewport().set_input_as_handled()
 		elif event.button_index==JOY_BUTTON_X and stage=="tactics": undo_last(); get_viewport().set_input_as_handled()
+		elif event.button_index in [JOY_BUTTON_Y,JOY_BUTTON_RIGHT_STICK] and stage=="tactics" and pane==0:
+			cycle_order("attack" if event.button_index==JOY_BUTTON_Y else "width"); get_viewport().set_input_as_handled()
 		elif event.button_index==JOY_BUTTON_START: confirm() if stage=="tactics" else pick_current(); get_viewport().set_input_as_handled()
 		elif event.button_index==JOY_BUTTON_BACK: game.match_menu.open_menu(); get_viewport().set_input_as_handled()
 		elif stage=="teams" and event.button_index==JOY_BUTTON_LEFT_SHOULDER:
@@ -929,6 +1013,15 @@ func handle(event: InputEvent) -> void:
 		elif stage=="tactics" and event.button_index in [JOY_BUTTON_LEFT_SHOULDER,JOY_BUTTON_RIGHT_SHOULDER]:
 			set_pane(0 if event.button_index==JOY_BUTTON_LEFT_SHOULDER else 1)
 			get_viewport().set_input_as_handled()
+
+func cycle_order(key: String) -> void:
+	# Player instructions follow the inspected pitch slot, not the bench.
+	if inspected.get("kind","")!="slot": return
+	var p=game.players[int(inspected.index)]
+	if p.keeper or p.team!=0: return
+	var order: Dictionary=game.management.cycle_instruction(p.number,key)
+	status="%s · HÜCUM: %s · GENİŞLİK: %s" % [p.display_name,game.management.ATTACK_ORDERS[int(order.attack)],game.management.WIDTH_ORDERS[int(order.width)]]
+	queue_redraw()
 
 func _draw() -> void:
 	if stage=="teams": SelectionArt.draw(self)
@@ -1048,7 +1141,7 @@ func draw_comparison() -> void:
 func draw_match_brief() -> void:
 	var club: Dictionary=game.clubs.data(0)
 	SelectionArt.fitted(self,club.name.to_upper(),Vector2(978,207),27,398)
-	text("MAÇ GÜNÜ  /  KIYI ARENA",Vector2(980,234),11,SelectionArt.MUTE)
+	text("MAÇ GÜNÜ  /  SEFC ARENA",Vector2(980,234),11,SelectionArt.MUTE)
 	for i in range(5): draw_arc(Vector2(1176,344),94+i*9,-PI*.9,PI*.6,56,Color(SelectionArt.MINT,.10-i*.014),1,true)
 	badge(Vector2(1176,338),club,2.3)
 	badge(Vector2(1002,455),game.clubs.data(1),.63)
@@ -1074,6 +1167,9 @@ func draw_player_spotlight(data: Dictionary) -> void:
 	box(Rect2(981,572,390*data.energy,5),SquadCard.energy_color(data.energy),2)
 	text("ENERJİ",Vector2(981,600),10,SelectionArt.MUTE,true)
 	text("%d%%" % roundi(data.energy*100),Vector2(1337,600),12,SelectionArt.PAPER,true)
+	if inspected.get("kind","")=="slot" and not data.keeper:
+		var order: Dictionary=game.management.instructions.get(int(data.get("appearance_number",0)),{})
+		text("TALİMAT  ·  %s  ·  %s" % [game.management.ATTACK_ORDERS[int(order.get("attack",1))],game.management.WIDTH_ORDERS[int(order.get("width",1))]],Vector2(981,622),10,SelectionArt.GOLD if not order.is_empty() else SelectionArt.MUTE,true)
 
 func make_button(parent: Node,rect: Rect2,value: String,callback: Callable,primary: bool=false) -> Button:
 	var button: Button=super.make_button(parent,rect,value,callback,primary)

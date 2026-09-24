@@ -40,10 +40,14 @@ func run() -> void:
 	club_scene(1,Vector3(0,0,33)); game.management.difficulty=1
 	stats(20,60); game.players[20].ai_think=.95
 	var weak_reaction: float=game.management.reaction(1,20)
-	var weak_error: float=game.management.pass_error(1,20)
+	var hurried := Vector3(0,.1,-22)
+	game.players[20].velocity=Vector3(6,0,0)
+	var weak_error: float=game.strike_quality.assess(20,hurried,"kick").limit
 	check(not game.ai_attack.act(20) and game.kick_contact.pending.is_empty(),"A limited player still needs time to read an otherwise clear shot")
 	stats(20,90)
-	check(game.management.reaction(1,20)<weak_reaction*.8 and game.management.pass_error(1,20)<weak_error*.65,"At fixed difficulty, passing quality changes reaction and execution precision")
+	var strong_error: float=game.strike_quality.assess(20,hurried,"kick").limit
+	game.players[20].velocity=Vector3.ZERO
+	check(game.management.reaction(1,20)<weak_reaction*.8 and strong_error<weak_error*.65,"At fixed difficulty, passing quality changes reaction and execution precision")
 	check(act_and_contact(20) and game.ball.pending_kick and game.shots[1]==1,"The elite player recognizes and physically strikes the same chance earlier")
 	setup(Vector3(0,0,33)); stats(20,60)
 	var aim := Vector3(0,0,1)

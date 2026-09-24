@@ -1,5 +1,6 @@
 extends SubViewportContainer
 signal motion_finished
+var game
 var player: CharacterBody3D
 var viewport: SubViewport
 var age := 0.0
@@ -58,6 +59,10 @@ func _process(delta: float) -> void:
 	viewport.render_target_update_mode=SubViewport.UPDATE_ALWAYS
 	age+=delta
 	if player==null: return
+	if game!=null and game.experience.reduce_motion:
+		if performing:
+			performing=false; motion_left=0; motion_finished.emit()
+		player.animate(0); return
 	player.motion_clock+=delta
 	if performing:
 		player.velocity=player.desired

@@ -24,6 +24,7 @@ func build(s) -> void:
 			var p: Dictionary=c.player(s.selected)
 			s.portraits.request(s.portrait_data(s.selected))
 			if s.page=="development":
+				s.button_at(Rect2(77,252,653,46),"HAFTALIK ANTRENMAN · OYNA / OTOMATİK",func(): s.go("training"),true)
 				s.option_at(Rect2(76,359,654,47),c.director.PLANS,int(p.development.plan),func(v): p.development.plan=v; c.save(); s.build())
 				s.option_at(Rect2(76,469,654,47),["HAFİF · TOPARLANMA","NORMAL · DENGELİ","YOĞUN · HAFTALIK KONDİSYON MALİYETİ"],p.development.intensity,func(v): p.development.intensity=v; c.save(); s.build())
 			else:
@@ -72,7 +73,6 @@ func draw(s) -> void:
 			s.wrapped(p.concern if p.concern!="" else "Takımdaki rolümden memnunum.",Vector2(795,620),560,18,s.MUTE,2)
 			if not p.promise.is_empty(): s.wrapped("SÖZ: "+World.date_label(p.promise.due)+" tarihine kadar 180 dakika. İlerleme: "+str(maxi(0,p.minutes-int(p.promise.start)))+" dk",Vector2(795,696),554,15,s.GOLD,3)
 			if s.page=="development":
-				s.text("BİR SONRAKİ ADIM",Vector2(77,294),28,s.PAPER,true)
 				s.text("GELİŞİM PLANI",Vector2(77,338),12,s.GOLD,true)
 				s.text("ANTRENMAN YÜKÜ",Vector2(77,448),12,s.GOLD,true)
 				s.text("ÖZELLİK GELİŞİMİ  %d / 100" % p.development.xp,Vector2(77,573),17,s.PAPER,true)

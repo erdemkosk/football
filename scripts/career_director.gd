@@ -27,6 +27,7 @@ func ensure(w: Dictionary) -> void:
 	for id in w.clubs:
 		if not w.table.has(id): w.table[id]={"p":0,"w":0,"d":0,"l":0,"gf":0,"ga":0,"pts":0}
 	w.fixtures.sort_custom(func(a,b): return a.day<b.day if a.day!=b.day else a.id<b.id)
+	career.training.ensure(w)
 
 func targets(w: Dictionary) -> void:
 	var c: Dictionary=w.clubs[w.user]
@@ -36,13 +37,13 @@ func targets(w: Dictionary) -> void:
 	w.manager.target=mini(rivals.size(),maxi(2,rank+2))
 	w.manager.youth_minutes=0; w.manager.start_cash=c.cash; w.manager.joined=w.date; w.manager.last_review=0
 
-func gain(p: Dictionary,xp: float) -> void:
+func gain(p: Dictionary,xp: float,exercise_skills: Array=[]) -> void:
 	if p.get("retired",false) or p.age>=30 or World.ovr(p)>=int(p.potential): return
 	var d: Dictionary=p.development
 	d.xp+=xp*(1.35 if p.age<=21 else .7)
-	while d.xp>=100:
+	while d.xp>=100 and World.ovr(p)<int(p.potential):
 		d.xp-=100
-		var keys: Array=FOCUS[int(d.plan)]
+		var keys: Array=FOCUS[int(d.plan)] if exercise_skills.is_empty() else exercise_skills
 		var key: String=keys[int(d.gains)%keys.size()]
 		p.attributes[key]=mini(95,int(p.attributes.get(key,60))+1); d.gains+=1
 

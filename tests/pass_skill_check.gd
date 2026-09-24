@@ -1,146 +1,185 @@
-extends SceneTree
-var game
-var failures:=0
-var visual:=false
-func _initialize() -> void: call_deferred("run")
-func check(ok:bool,label:String) -> void:
-	if ok: print("PASS: "+label)
-	else: failures+=1; push_error("FAIL: "+label)
-func key(code:int,pressed:bool) -> void:
-	var event:=InputEventKey.new()
-	event.keycode=code; event.physical_keycode=code; event.pressed=pressed
-	Input.parse_input_event(event)
-	Input.flush_buffered_events()
+extends "res://tests/team_control_check.gd"
+const DT := 1.0/120
+
+func key(code: int,pressed: bool=true,ctrl: bool=false) -> void:
+	var event := InputEventKey.new()
+	event.keycode=code; event.physical_keycode=code; event.pressed=pressed; event.ctrl_pressed=ctrl
+	game._input(event)
+
 func setup() -> void:
-	game.start_match(false,false)
-	game.set_physics_process(false)
-	game.set_process(false)
-	game.match_camera.select("pitch")
-	game.update_camera(0)
-	game.ball.freeze=true
-	game.ball.pending_reset=false
-	game.ball.pending_kick=false
-	game.ball.position=Vector3(0,0.23,0)
-	game.kick_lock=0
-	game.last_direction=Vector3.FORWARD
-	for p in game.players:
-		p.visible=false; p.collision_layer=0; p.velocity=Vector3.ZERO; p.desired=Vector3.ZERO
-	game.players[9].visible=true
-	game.players[9].position=Vector3(0,0,0.8)
-	game.players[6].visible=true
-	game.players[6].position=Vector3(1.0,0,-8)
-	game.players[7].visible=true
-	game.players[7].position=Vector3(2,0,-29)
-	game.player_lock=true
-func hold(seconds:float,rate:float=120) -> void:
-	for i in range(int(seconds*rate)): game.update_control(1.0/rate)
-func capture() -> void:
-	if not visual: return
-	game.camera.position=Vector3(0,39,13)
-	game.camera.look_at(Vector3(0,0,-13))
-	game.camera.size=39
-	game.hud.queue_redraw()
-	await process_frame
-	await RenderingServer.frame_post_draw
-	root.get_texture().get_image().save_png("res://tests/pass-skill.png")
-func run() -> void:
-	visual="--visual" in OS.get_cmdline_user_args()
-	game=load("res://main.tscn").instantiate()
-	root.add_child(game)
-	await physics_frame
+	super.setup()
+	game.controller.held.clear(); game.controller.using_gamepad=false
+	game.match_camera.select("pitch"); game.update_camera(0)
+	game.players[9].facing=Vector3.FORWARD
+	game.players[9].rig.rotation=Vector3.ZERO; game.players[9].animate(1)
+	game.last_touch=0; game.last_kicker=9; game.dribbler=9; game.carrier=9
+	game.ball.pending_touch=false
+	game.weather.select(0,true)
+
+func incoming() -> void:
 	setup()
-	key(KEY_S,true)
-	check(game.pass_charging and game.passes[0]==0 and not game.ball.pending_kick,"S starts a pass preview without kicking before release")
-	check(game.pass_preview.receiver==-1 and game.pass_preview.velocity.z<0,"A quick tap sends the pass along the aimed heading instead of locking a teammate")
-	hold(0.1)
-	var short_velocity:Vector3=game.pass_preview.velocity
-	key(KEY_S,false)
-	check(game.passes[0]==1 and game.ball.kick_velocity.is_equal_approx(short_velocity),"A short tap releases exactly the previewed pass")
-	setup()
-	key(KEY_S,true)
-	hold(0.65)
-	check(game.pass_power>0.99 and game.pass_preview.receiver==-1,"A short hold reaches full range without locking the farther teammate")
-	check(game.pass_preview.velocity.length()>short_velocity.length()*1.6,"Hold duration physically changes pass speed")
-	await capture()
-	var long_velocity:Vector3=game.pass_preview.velocity
-	key(KEY_S,false)
-	check(game.ball.kick_velocity.is_equal_approx(long_velocity) and not game.pass_charging,"Release commits the shown long pass and closes the preview")
-	setup()
-	game.players[6].position=Vector3(-1,0,8)
-	game.players[7].visible=false
-	key(KEY_S,true)
-	check(game.pass_preview.receiver==-1 and game.pass_preview.velocity.z<0,"Aim assistance never turns a forward pass toward a teammate behind you")
-	key(KEY_S,false)
-	setup()
-	key(KEY_S,true)
-	key(KEY_RIGHT,true)
-	hold(0.85)
-	check(game.pass_direction.x>0.9,"Arrow input steers the pass toward the chosen direction")
-	key(KEY_RIGHT,false)
-	var aimed:Vector3=game.pass_preview.velocity
-	key(KEY_LEFT,true)
-	key(KEY_S,false)
-	check(game.ball.kick_velocity.is_equal_approx(aimed),"A last-moment key event cannot replace the displayed pass direction")
-	key(KEY_LEFT,false)
-	setup()
-	game.players[17].visible=true
-	game.players[17].position=Vector3(0.5,0,-4)
-	key(KEY_S,true)
-	check(game.pass_risk>0.48 and game.pass_preview.receiver==-1,"A defender marks the aimed passing lane as risky instead of choosing another teammate")
-	key(KEY_S,false)
-	setup()
-	key(KEY_S,true)
-	game.ball.position=Vector3(8,0.23,0)
-	hold(0.05)
-	key(KEY_S,false)
-	check(game.passes[0]==0 and not game.pass_charging and game.requested_receiver==-1,"Losing the ball cancels a held pass without a remote kick or unintended request")
-	setup()
-	key(KEY_S,true)
-	key(KEY_ESCAPE,true); key(KEY_ESCAPE,false)
-	key(KEY_S,false)
-	check(game.state=="paused" and game.passes[0]==0 and not game.pass_charging,"Pause cancels the pass and release does not kick")
-	setup()
-	game.players[9].position=Vector3(0,0,-14)
-	game.players[6].position=Vector3(0,0,0.8)
-	key(KEY_S,true)
-	check(game.requested_receiver==9 and not game.pass_charging,"S without possession still requests immediately")
-	key(KEY_S,false)
-	setup()
-	key(KEY_S,true)
-	key(KEY_D,true)
-	check(game.charging and not game.pass_charging,"Starting a shot cancels the pass gesture")
-	key(KEY_S,false)
-	check(game.passes[0]==0,"Releasing a cancelled pass cannot produce a second kick")
-	key(KEY_D,false)
-	setup()
-	key(KEY_S,true)
-	hold(0.4,30)
-	var power30:float=game.pass_power
-	game.cancel_pass()
-	key(KEY_S,false)
-	key(KEY_S,true)
-	hold(0.4,120)
-	check(absf(game.pass_power-power30)<0.001,"Pass charging uses elapsed time consistently at different update rates")
-	hold(2)
-	check(game.pass_power==1,"Holding longer stays at maximum without a timing penalty")
-	key(KEY_S,false)
-	setup()
+	game.players[9].position=Vector3.ZERO
 	game.players[6].visible=false
-	game.players[7].visible=false
-	game.ball.freeze=false
-	game.ball.place(Vector3(0,0.23,0))
+	game.players[7].position=Vector3(8,0,0)
+	game.ball.position=Vector3(0,game.ball.GROUND_HEIGHT,-2.8)
+	game.ball.linear_velocity=Vector3.BACK*12
+	game.dribbler=-1; game.carrier=-1; game.last_kicker=6
+	game.ai_receivers[0]=9; game.ai_pass_time[0]=2
+	game.controller.using_gamepad=true; game.controller.stick=Vector2.RIGHT
+
+func run() -> void:
+	game=load("res://main.tscn").instantiate(); root.add_child(game)
 	await physics_frame
-	await physics_frame
-	key(KEY_UP,true)
-	key(KEY_S,true)
-	game.set_physics_process(true)
-	for i in range(45): await physics_frame
-	var held_while_moving:bool=game.pass_charging
-	key(KEY_S,false)
-	key(KEY_UP,false)
-	game.set_physics_process(false)
-	check(held_while_moving and game.passes[0]==1,"The player can carry the ball while preparing and releasing a pass")
+	game.match_menu.config_path="/tmp/sefc-quick-passing-check.cfg"
+	for pad in [false,true]:
+		setup()
+		if pad: button(JOY_BUTTON_A)
+		else: key(KEY_S)
+		check(game.passes[0]==1 and not game.pass_charging and game.pass_preview.is_empty(),"One press queues a normal pass without a power bar, pad=%s" % pad)
+		check(not game.kick_contact.pending.is_empty() and not game.ball.pending_kick,"Immediate input still waits for real boot contact")
+		check(game.ai_receivers[0]==6,"A normal forward pass chooses the nearby on-direction teammate")
+		contact()
+		var launch: Vector3=game.ball.kick_velocity
+		check(game.last_kicker==9 and launch.z< -10,"The automatic pass leaves the actual passer's foot")
+		hold(.8)
+		if pad: button(JOY_BUTTON_A,false)
+		else: key(KEY_S,false)
+		check(game.passes[0]==1 and game.ball.kick_velocity==launch,"Holding and releasing cannot charge or repeat a normal pass")
+
+	setup()
+	game.players[6].position=Vector3(0,0,-20); game.players[7].visible=false
+	key(KEY_S); var far_speed: float=game.kick_contact.pending.velocity.length(); contact()
+	setup()
+	game.players[6].position=Vector3(0,0,-5); game.players[7].visible=false
+	key(KEY_S)
+	check(far_speed>game.kick_contact.pending.velocity.length()+3,"Automatic power increases for a farther teammate")
+	setup()
+	game.players[6].position=Vector3(8,0,0); game.players[7].position=Vector3(0,0,-4)
+	game.controller.stick=Vector2.RIGHT; button(JOY_BUTTON_A)
+	check(game.ai_receivers[0]==6 and game.kick_contact.pending.velocity.x>10,"Stick direction chooses the lateral teammate over the nearest forward player")
+	setup()
+	game.players[6].position=Vector3(0,0,8); game.players[7].visible=false
+	game.players[9].facing=Vector3.BACK
+	key(KEY_S)
+	check(game.kick_contact.pending.velocity.z>0,"With no direction input, the pass follows the player's facing")
+	setup()
+	game.players[6].position=Vector3(12,0,0); game.players[7].position=Vector3(0,0,8)
+	key(KEY_S)
+	check(game.ai_receivers[0]<0 and absf(game.kick_contact.pending.velocity.x)<.001 and game.kick_contact.pending.velocity.z<0,"An empty aimed direction produces a loose pass, never a sideways or backwards rescue")
+	setup()
+	game.players[6].position=Vector3(0,0,-8); game.players[17].visible=true; game.players[17].position=Vector3(0,0,-4)
+	key(KEY_S)
+	check(game.ai_receivers[0]==6,"A blocked lane does not redirect the user's normal pass to another player")
+	setup()
+	game.players[6].position=Vector3(0,0,-8); game.players[7].position=Vector3(0,0,-18)
+	key(KEY_S)
+	check(game.ai_receivers[0]==6,"Collinear teammates resolve to the nearer normal pass option")
+	setup()
+	game.pass_assistance=0; game.players[6].position=Vector3(2,0,-8)
+	key(KEY_S)
+	check(absf(game.kick_contact.pending.velocity.x)<.001,"Manual assistance setting preserves the exact aimed heading")
+
+	for half in [1,2]:
+		for weather in [0,2]:
+			setup(); game.half=half; game.weather.select(weather,true)
+			var forward: float=game.attack_sign(0)
+			game.players[9].position=Vector3(0,0,-forward*.8); game.players[9].facing=Vector3(0,0,forward)
+			game.players[6].position=Vector3(1,0,forward*10); game.players[7].visible=false
+			game.players[11].position.z=forward*48; game.players[14].position.z=forward*40
+			game.players[6].velocity=Vector3(4,0,forward*4)
+			key(KEY_Y)
+			var short: Dictionary=game.pass_preview.duplicate()
+			check(short.receiver==-1 and absf(short.velocity.x)<.001,"Through aim stays on the chosen ray beside a diagonal runner, half=%d weather=%d" % [half,weather])
+			game.players[6].velocity.x=-4; game.update_pass_preview()
+			check(game.pass_preview.target.is_equal_approx(short.target) and game.pass_preview.velocity.is_equal_approx(short.velocity),"Reversing a teammate run cannot pull the held through-pass arrow")
+			game.players[6].velocity.x=4; hold(1.5)
+			check(game.pass_preview.target.distance_to(game.ball.position)>short.target.distance_to(game.ball.position)+10 and absf(game.pass_preview.velocity.x)<.001,"Holding through pass increases distance along the same freely chosen heading")
+			var route: Dictionary=game.pass_preview.duplicate()
+			key(KEY_Y,false); contact()
+			var intended: Vector3=game.strike_quality.last.get("intended",Vector3.ZERO)
+			check(game.passes[0]==1 and intended.is_equal_approx(route.velocity) and game.ball.kick_velocity.is_equal_approx(game.strike_quality.last.velocity),"Through release commits the previewed physical trajectory plus its recorded contact error")
+			var launched: Vector3=game.ball.kick_velocity
+			game.players[6].velocity.x=-8; game.players[6].position.x-=12
+			game.update_control(DT)
+			check(game.ball.kick_velocity==launched,"Runner changes after release cannot steer the ball")
+	setup(); button(JOY_BUTTON_Y); game.controller.stick=Vector2.RIGHT; hold(DT)
+	check(game.pass_direction.dot(Vector3.RIGHT)>.99 and game.pass_power<.02,"Changing charged pass direction responds immediately without filling the power bar")
+	game.controller.stick=Vector2.ZERO; game.players[6].position=Vector3(10,0,2); hold(.2)
+	check(game.pass_direction.dot(Vector3.RIGHT)>.999999 and game.pass_preview.velocity.normalized().dot(Vector3.RIGHT)>.999,"Returning the stick to neutral preserves the chosen aim beside a teammate")
+	setup(); game.players[6].visible=false; game.players[7].visible=false
+	button(JOY_BUTTON_Y); hold(.2)
+	check(game.pass_preview.receiver==-1 and game.pass_preview.velocity.z<0,"A through pass with no runner remains an aimed free ball")
+	for assistance in [0,1,2]:
+		for lob in [false,true]:
+			setup(); game.pass_assistance=assistance
+			game.players[6].position=Vector3(-1,0,-10); game.players[7].position=Vector3(1,0,-10)
+			game.begin_pass(true,lob)
+			for x in [-.015,.015,.5,-1.0]:
+				game.pass_direction=Vector3(x,0,-1).normalized(); game.pass_power=.6; game.update_pass_preview()
+				var shown: Vector3=(game.pass_preview.velocity*Vector3(1,0,1)).normalized()
+				check(game.pass_preview.receiver==-1 and shown.dot(game.pass_direction)>.999999,"Every aim correction remains free between teammates, assistance=%d lob=%s x=%s" % [assistance,lob,x])
+			game.ball.position=Vector3(29,game.ball.GROUND_HEIGHT,-46)
+			game.pass_direction=Vector3(1,0,-1).normalized(); game.pass_power=.9; game.update_pass_preview()
+			var edge_heading: Vector3=(game.pass_preview.velocity*Vector3(1,0,1)).normalized()
+			check(edge_heading.dot(game.pass_direction)>.999999 and game.pass_preview.target.x>game.P.HALF_WIDTH,"A deliberate pass towards the touchline is not forced back infield")
+	incoming(); game.ball.position.z=-1.4
+	button(JOY_BUTTON_A); button(JOY_BUTTON_A,false)
+	check(not game.pass_buffer.pending.is_empty() and game.kick_contact.pending.is_empty(),"A late early-input inside foot reach still waits for real reception")
+
+	for reason in ["timeout","pause","opponent","selection","dismissal","disconnect","restart","shot"]:
+		incoming(); button(JOY_BUTTON_A); button(JOY_BUTTON_A,false)
+		check(not game.pass_buffer.pending.is_empty() and game.requested_receiver<0 and game.passes[0]==0,"Early input remembers a pass, not a pass request: "+reason)
+		match reason:
+			"timeout": game.update_control(.31)
+			"pause": key(KEY_ESCAPE)
+			"opponent": game.last_touch=1; game.pass_buffer.update(DT)
+			"selection": game.team_control.select(7,true)
+			"dismissal": game.players[9].dismissed=true; game.pass_buffer.update(DT)
+			"disconnect": game.controller.connection_changed(0,false)
+			"restart": game.begin_restart("TAÇ",0,Vector3(32,0,0))
+			"shot": key(KEY_D)
+		check(game.pass_buffer.pending.is_empty() and game.passes[0]==0,"Obsolete early input is canceled: "+reason)
+	incoming(); game.players[9].position.z=14; game.ai_receivers[0]=-1; game.ai_pass_time[0]=0
+	game.ball.linear_velocity=Vector3.ZERO; game.dribbler=7; game.players[7].position=Vector3(0,0,-2)
+	key(KEY_S)
+	check(game.requested_receiver==9 and game.pass_buffer.pending.is_empty(),"Off-ball input still requests a teammate's pass when no delivery is approaching")
+
+	for through in [false,true]:
+		incoming()
+		game.controller.stick=Vector2.RIGHT
+		game.ball.freeze=false; game.ball.place(Vector3(0,game.ball.GROUND_HEIGHT,-2.8),Vector3.BACK*12)
+		await physics_frame; await physics_frame
+		var contacts_before: int=game.kick_contact.contacts
+		var code := JOY_BUTTON_Y if through else JOY_BUTTON_A
+		button(code)
+		game.controller.stick=Vector2.ZERO
+		for frame in range(6): game.simulate_match(DT); await physics_frame
+		button(code,false)
+		var passed := false
+		for frame in range(70):
+			game.simulate_match(DT); await physics_frame
+			if game.last_kicker==9 and game.passes[0]==1 and game.kick_contact.pending.is_empty():
+				passed=game.ball.kick_velocity.x>5 and game.kick_contact.contacts>contacts_before
+				break
+		check(passed,"An early %s input becomes one outgoing physical pass after real reception" % ("through" if through else "normal"))
+		check(game.requested_receiver<0 and game.pass_buffer.pending.is_empty(),"Successful first-time input leaves no request or repeated command")
+	for half in [1,2]:
+		for weather in [0,2]:
+			setup(); game.half=half; game.weather.select(weather,true)
+			var forward: float=game.attack_sign(0)
+			game.players[9].position=Vector3(0,0,-forward*.8); game.players[9].facing=Vector3(0,0,forward)
+			game.players[9].rig.rotation.y=0 if forward<0 else PI; game.players[9].animate(1)
+			game.players[6].position=Vector3(0,0,forward*10); game.players[6].velocity=Vector3(0,0,forward*4)
+			game.players[6].facing=Vector3(0,0,-forward); game.players[7].visible=false
+			game.players[11].position.z=forward*48; game.players[14].position=Vector3(24,0,forward*40)
+			game.players[9].collision_layer=2; game.players[6].collision_layer=2
+			game.ball.freeze=false; game.ball.place(Vector3(0,game.ball.GROUND_HEIGHT,0))
+			await physics_frame; await physics_frame
+			game.begin_pass(true); game.pass_power=.2; game.update_pass_preview(); game.release_pass()
+			var received := false
+			for frame in range(360):
+				game.simulate_match(DT); await physics_frame
+				if game.dribbler==6: received=true; break
+			check(received,"A teammate reaches and controls a manually aimed through pass, half=%d weather=%d" % [half,weather])
 	print("PASS SKILL CHECK: %d failures" % failures)
-	game.free()
-	await process_frame
-	quit(0 if failures==0 else 1)
+	game.free(); await process_frame; quit(1 if failures else 0)

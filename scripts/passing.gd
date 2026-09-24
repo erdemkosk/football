@@ -99,9 +99,55 @@ static func risk(origin: Vector3,pass_plan: Dictionary,team: int,players: Array)
 static func assisted_plan(origin: Vector3,direction: Vector3,power: float,team: int,passer: int,players: Array,assistance: float=0.65,through: bool=false,forward: float=-1,offside: float=100,surface=null) -> Dictionary:
 	var aim := (direction*Vector3(1,0,1)).normalized()
 	if aim.length()<0.1: aim=Vector3(0,0,forward)
-	var reach := lerpf(8,36,power)+(5 if through else 0)
+	# A charged through ball belongs to the user's heading. Teammates may
+	# chase its physical route, but cannot steer its preview or launch.
+	if through: return free_plan(origin,aim,power,true,surface)
+	var reach := lerpf(8,36,power)
 	aim=nudge_heading(origin,aim,reach,team,passer,players,assistance,through,forward,offside)
 	return free_plan(origin,aim,power,through,surface)
+
+static func directional_receiver(origin: Vector3,direction: Vector3,team: int,passer: int,players: Array,assistance: float,through: bool=false,forward: float=-1,offside: float=100,preferred: int=-1) -> int:
+	var aim := (direction*Vector3(1,0,1)).normalized()
+	if aim.length_squared()<.1 or assistance<=0: return -1
+	var cone := deg_to_rad(lerpf(32,50,assistance))
+	var best := INF
+	var selected := -1
+	var preferred_cost := INF
+	for i in range(players.size()):
+		var p=players[i]
+		if i==passer or not p.visible or p.dismissed or p.team!=team or p.action_timer>0: continue
+		if through and p.keeper: continue
+		if p.position.z*forward>offside+.18: continue
+		var offset: Vector3=(p.position-origin)*Vector3(1,0,1)
+		var distance := offset.length()
+		if distance<2.5 or distance>(44.0 if through else 38.0): continue
+		var angle := absf(aim.signed_angle_to(offset,Vector3.UP))
+		if angle>cone: continue
+		# Direction wins; distance breaks similar choices. A blocked lane is
+		# still the user's decision, never a reason to pass to a different side.
+		var cost := angle*28+distance*.18
+		if i==preferred: preferred_cost=cost
+		if cost<best: best=cost; selected=i
+	# Small stick jitter or a power change should not flicker between runners.
+	if preferred_cost<INF and preferred_cost<=best+2.0: return preferred
+	return selected
+
+static func quick_plan(origin: Vector3,direction: Vector3,team: int,passer: int,players: Array,assistance: float,forward: float,offside: float,surface=null,driven: bool=false) -> Dictionary:
+	var aim := (direction*Vector3(1,0,1)).normalized()
+	if aim.length_squared()<.1: aim=Vector3(0,0,forward)
+	var receiver := directional_receiver(origin,aim,team,passer,players,assistance,false,forward,offside)
+	var route: Dictionary
+	if receiver>=0:
+		var p=players[receiver]
+		route=driven_pass(origin,p.position,p.velocity,surface) if driven else plan(origin,p.position,p.velocity,false,surface)
+	else:
+		route=free_plan(origin,aim,.2,false,surface)
+		if driven:
+			route.velocity=aim*19+Vector3.UP*.12
+			route.flight=flight_time(origin,route.target,19,surface)
+	route.receiver=receiver
+	route.driven=driven
+	return route
 
 static func free_plan(origin: Vector3,aim: Vector3,power: float,through: bool,surface=null) -> Dictionary:
 	var distance := lerpf(8,36,power)+(5 if through else 0)
@@ -111,15 +157,20 @@ static func free_plan(origin: Vector3,aim: Vector3,power: float,through: bool,su
 	return {"target":target,"velocity":aim*speed+Vector3.UP*0.32,"flight":flight_time(origin,target,speed,surface),"lob":false,"receiver":-1,"through":through}
 
 static func through_to(origin: Vector3,runner,power: float,forward: float,surface=null) -> Dictionary:
-	var motion: Vector3=runner.velocity*Vector3(1,0,1)
+	var motion: Vector3=(runner.velocity*Vector3(1,0,1)).limit_length(10.4)
 	var run_direction := motion.normalized() if motion.length()>1.0 else Vector3(0,0,forward)
-	var space: float=lerpf(4.5,10.5,power)
+	var space: float=lerpf(1.8,7.5,clampf(power,0,1))
 	var target: Vector3=runner.position+run_direction*space
-	target.x=clampf(target.x,-(P.HALF_WIDTH-2),(P.HALF_WIDTH-2))
-	target.z=clampf(target.z,-47.5,47.5)
-	target.y=BallSize.GROUND_HEIGHT
-	var distance: float=Vector2(target.x-origin.x,target.z-origin.z).length()
-	var speed: float=Motion.passing_speed(clampf(10+distance*0.48+power*1.5,12,27),distance,Motion.along(surface,origin,target))
+	var speed := 13.0
+	for step in range(5):
+		target.x=clampf(target.x,-(P.HALF_WIDTH-2),(P.HALF_WIDTH-2))
+		target.z=clampf(target.z,-47.5,47.5)
+		target.y=BallSize.GROUND_HEIGHT
+		var distance: float=Vector2(target.x-origin.x,target.z-origin.z).length()
+		speed=Motion.passing_speed(clampf(10+distance*.48+power*1.5,12,27),distance,Motion.along(surface,origin,target))
+		if step<4:
+			var flight := flight_time(origin,target,speed,surface)
+			target=runner.position+motion*minf(flight,2.2)+run_direction*space
 	return {"target":target,"velocity":((target-origin)*Vector3(1,0,1)).normalized()*speed+Vector3.UP*0.32,"flight":flight_time(origin,target,speed,surface),"lob":false,"through":true}
 
 static func flight_time(origin: Vector3,target: Vector3,speed: float,surface=null) -> float:
@@ -168,14 +219,15 @@ static func driven_pass(origin: Vector3,receiver: Vector3,run: Vector3,surface=n
 		target.x=clampf(target.x,-(P.HALF_WIDTH-2),(P.HALF_WIDTH-2)); target.z=clampf(target.z,-48,48); target.y=BallSize.GROUND_HEIGHT
 	return {"target":target,"velocity":((target-origin)*Vector3(1,0,1)).normalized()*speed+Vector3.UP*.12,"flight":flight,"lob":false,"driven":true}
 
-static func switch_plan(origin: Vector3,direction: Vector3,power: float,team: int,passer: int,players: Array,assistance: float,forward: float,offside: float,surface=null) -> Dictionary:
+static func switch_plan(origin: Vector3,direction: Vector3,power: float,team: int,passer: int,players: Array,assistance: float,forward: float,offside: float,surface=null,free_aim: bool=false) -> Dictionary:
 	var aim := (direction*Vector3(1,0,1)).normalized()
 	if aim.length()<0.1: aim=Vector3(0,0,forward)
 	var reach := lerpf(18,60,power)
-	aim=nudge_heading(origin,aim,reach,team,passer,players,assistance,false,forward,offside)
+	if not free_aim: aim=nudge_heading(origin,aim,reach,team,passer,players,assistance,false,forward,offside)
 	var target := origin+aim*reach
-	target.x=clampf(target.x,-(P.HALF_WIDTH-1.5),(P.HALF_WIDTH-1.5))
-	target.z=clampf(target.z,-48,48)
+	if not free_aim:
+		target.x=clampf(target.x,-(P.HALF_WIDTH-1.5),(P.HALF_WIDTH-1.5))
+		target.z=clampf(target.z,-48,48)
 	target.y=BallSize.GROUND_HEIGHT
 	var distance := Vector2(target.x-origin.x,target.z-origin.z).length()
 	var flight := clampf(1.1+distance*0.031,1.3,3.0)

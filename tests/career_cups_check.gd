@@ -25,7 +25,7 @@ func complete_season(winner: String="c00") -> void:
 func run() -> void:
 	fresh()
 	check(c.world.clubs.size()==110 and c.world.players.size()==2640,"The career contains 36 SEFC, 18 Turkish and 56 overseas clubs")
-	var foreign: Array=c.world.clubs.values().filter(func(club): return club.nation!="TR")
+	var foreign: Array=c.world.clubs.values().filter(func(club): return club.league>=2 and club.league<=8)
 	check(foreign.size()==56 and foreign.all(func(club): return club.nation!="TR" and club.roster.size()==24),"International clubs have their own country and full playable squads")
 	var nations: Dictionary={}
 	for p in c.world.players.values(): nations[p.nationality]=true

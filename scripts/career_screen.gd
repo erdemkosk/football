@@ -7,6 +7,7 @@ const PAGES := ["hub","squad","tactics","league","market","finance"]
 const Card=preload("res://scripts/career_card.gd")
 var art:=preload("res://scripts/career_art.gd").new()
 var showcase:=preload("res://scripts/career_showcase.gd").new()
+var comparison:=preload("res://scripts/career_comparison.gd").new()
 var focus_memory: Dictionary={}
 var page_memory: Dictionary={}
 var trigger_latched:=false
@@ -22,6 +23,9 @@ var new_world: Dictionary={}
 var division := 0
 var list_page := 0
 var list_ids: Array=[]
+var list_view:=false
+var player_sort:=0
+const PlayerList=preload("res://scripts/career_list.gd")
 var status := ""
 var mode := 0
 var filter := ""
@@ -29,6 +33,9 @@ var position_filter := -1
 var incoming := ""
 var save_slot := 1
 var overwrite := false
+var new_match_settings := {"half_minutes":2,"difficulty":1,"level":2}
+var duration_option: OptionButton
+var difficulty_option: OptionButton
 var office: SubViewportContainer
 var live := false
 var live_state := "playing"
@@ -52,6 +59,7 @@ var pending_action := ""
 var cup_group:=0
 var nation_filter:=""
 var director_ui:=preload("res://scripts/career_director_screen.gd").new()
+var training_ui:=preload("res://scripts/career_training_screen.gd").new()
 var calendar:=preload("res://scripts/career_calendar.gd").new()
 var tactics:=preload("res://scripts/career_tactics.gd").new()
 
@@ -65,7 +73,7 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	if visible:
-		transition=move_toward(transition,1.0,delta*6)
+		transition=1.0 if game.experience.reduce_motion else move_toward(transition,1.0,delta*7)
 		controls.modulate.a=lerpf(.6,1.0,transition)
 		queue_redraw()
 		if not calendar.visible and game.controller.using_gamepad and page in ["squad","market","tactics"]:
@@ -116,7 +124,7 @@ func card_at(rect: Rect2,title: String,callback: Callable,kind: String,id: Strin
 
 func remember_focus() -> void:
 	if page==built_page and page in ["squad","market"]:
-		page_memory[page]={"selected":selected,"list_page":list_page}
+		page_memory[page]={"selected":selected,"list_page":list_page,"list_view":list_view,"player_sort":player_sort}
 	var current:=get_viewport().gui_get_focus_owner()
 	if is_instance_valid(current) and controls.is_ancestor_of(current):
 		focus_memory[built_page]=str(current.get_meta("focus_key",str(current.position)))
@@ -141,6 +149,7 @@ func open_entry() -> void:
 func open_hub() -> void:
 	if not game.career.exists(): open_entry(); return
 	if game.career.in_match and game.state=="finished": game.career.finish_match()
+	if game.state=="trophy": visible=false; clear_controls(); return
 	pause_world(); live=false; visible=true; page="hub"; list_page=0; selected=""; build()
 
 func open_live_tactics() -> void:
@@ -157,6 +166,7 @@ func go(next: String) -> void:
 	page=next; list_page=0; status=""; incoming=""; selected=""; mode=0
 	if page in ["squad","market"] and page_memory.has(page):
 		selected=page_memory[page].selected; list_page=page_memory[page].list_page
+		list_view=page_memory[page].get("list_view",false); player_sort=page_memory[page].get("player_sort",0)
 	pending_action=""
 	if next=="league": division=int(game.career.club().league)
 	build()
@@ -200,6 +210,7 @@ func back() -> void:
 	elif page=="tactics" and tactics.selected!="": tactics.selected=""; status=""; build()
 	elif live: close()
 	elif page=="terms": page="talks"; build()
+	elif page=="comparison": page=comparison.origin; build()
 	elif page=="talks": go("market")
 	elif page=="choose": page="entry"; build()
 	elif page=="entry" or page=="hub": close()
@@ -251,13 +262,16 @@ func build() -> void:
 		"tactics": build_tactics()
 		"finance": build_finance()
 		"talks": build_talks()
+		"comparison": comparison.build(self)
+		"training": training_ui.build(self)
 	if page=="hub" and not game.career.club().lineup.is_empty():
-		var hero: String=game.career.club().lineup[-1]
+		var hero: String=showcase.hero(self)
 		showcase.configure(portrait_data(hero))
 	if page=="tactics":
 		for id in game.career.club().lineup: portraits.request(portrait_data(id))
 	var focus: Control=null
 	var remembered: String=focus_memory.get(page,"")
+	if remembered=="" and page=="hub": remembered=str(Vector2(77,532))
 	if remembered=="" and page=="tactics":
 		var id := tactics.default_id(self)
 		if id!="": remembered="tactic:"+id
@@ -267,7 +281,7 @@ func build() -> void:
 		if focus_key(child)==remembered: focus=child; break
 	if remembered=="" and page in ["squad","market"]:
 		for child in controls.get_children():
-			if child.get_meta("focus_key","")=="player:"+selected: focus=child; break
+			if child.get_meta("focus_key","")==("player_row:" if list_view else "player:")+selected: focus=child; break
 	if focus!=null:
 		focus.grab_focus()
 		if page=="tactics" and focus.get_meta("focus_key","").begins_with("tactic:"):
@@ -293,6 +307,7 @@ func load_career(index: int) -> void:
 
 func choose(index: int) -> void:
 	save_slot=index; new_world=World.create(); page="choose"; overwrite=false; selected_club="c00"; division=0
+	new_match_settings=game.MatchSettings.normalized({"half_minutes":game.quick_half_minutes,"level":game.career.quick_state.get("level",game.management.level)})
 	if DisplayServer.get_name()!="headless" and is_instance_valid(game.match_menu):
 		division=clampi(game.match_menu.last_career_division,0,World.LEAGUES.size()-1)
 		selected_club=game.match_menu.last_career_club
@@ -317,25 +332,41 @@ func build_choose() -> void:
 		var c: Dictionary=new_world.clubs[id]
 		var b:=card_at(Rect2(54+(n%3)*280,248+(n/3)*76,264,63),c.name,func(): selected_club=id; overwrite=false; remember_club(); build(),"club",id)
 		b.add_theme_font_size_override("font_size",12)
-	button_at(Rect2(974,672,396,57),"KAYDIN ÜZERİNE YAZ & BAŞLA" if overwrite else "BU KULÜPLE BAŞLA",begin,true)
+	duration_option=option_at(Rect2(954,685,198,44),game.MatchSettings.HALF_MINUTES.map(func(minutes): return "%d dakika" % minutes),game.MatchSettings.HALF_MINUTES.find(new_match_settings.half_minutes),func(v): new_match_settings.half_minutes=game.MatchSettings.HALF_MINUTES[v]; queue_redraw())
+	duration_option.set_meta("focus_key","career_duration")
+	difficulty_option=option_at(Rect2(1168,685,198,44),game.MatchSettings.LEVELS,new_match_settings.level,func(v): new_match_settings=game.MatchSettings.normalized({"half_minutes":new_match_settings.half_minutes,"level":v}); queue_redraw())
+	difficulty_option.set_meta("focus_key","career_difficulty")
+	var start_button:=button_at(Rect2(954,766,412,52),"KAYDIN ÜZERİNE YAZ & BAŞLA" if overwrite else "BU KULÜPLE BAŞLA",begin,true)
+	# Left/right changes an option's value; up/down visits both settings.
+	duration_option.focus_neighbor_bottom=duration_option.get_path_to(difficulty_option)
+	difficulty_option.focus_neighbor_top=difficulty_option.get_path_to(duration_option)
+	difficulty_option.focus_neighbor_bottom=difficulty_option.get_path_to(start_button)
+	start_button.focus_neighbor_top=start_button.get_path_to(difficulty_option)
 	button_at(Rect2(52,823,220,43),"← KAYITLAR",func(): page="entry"; build())
 
 func begin() -> void:
 	if game.career.has_save(save_slot) and not overwrite: overwrite=true; status="Bu yuvadaki kariyer değiştirilecek. Devam etmek için tekrar seç."; build(); return
-	if game.career.new_career(selected_club,save_slot): open_hub()
+	if game.career.new_career(selected_club,save_slot,new_match_settings): open_hub()
 	else: status=game.career.error
+
+func pending_offers() -> int:
+	var c=game.career
+	return c.world.offers.filter(func(o): return not o.get("closed",false) and o.expires>=c.world.date).size()
 
 func build_hub() -> void:
 	var c=game.career
+	var training_done: int=c.training.data().slots.filter(func(row): return row.done).size()
+	button_at(Rect2(77,592,490,28),"HAFTALIK ANTRENMAN  ·  %d / 5" % training_done,go.bind("training"))
 	var f: Dictionary=c.next_fixture()
 	if c.world.season_done:
 		button_at(Rect2(77,532,490,52),"YENİ SEZONA GEÇ",func(): c.next_season(); build(),true)
 	elif not f.is_empty() and f.day<=c.world.date:
 		button_at(Rect2(77,532,490,52),"KADROYU HAZIRLA & MAÇA ÇIK",play,true)
-		button_at(Rect2(586,532,252,52),"MAÇI SİMÜLE ET",func(): c.simulate_next(); build())
+		button_at(Rect2(586,532,252,52),"MAÇI SİMÜLE ET",simulate_match)
 	else:
 		button_at(Rect2(77,532,490,52),"TAKVİMİ İLERLET  →",advance_calendar,true)
 	button_at(Rect2(908,440,465,29),"PUAN DURUMU & FİKSTÜR",go.bind("league"))
+	if pending_offers()>0: button_at(Rect2(909,567,464,30),"%d TEKLİFİ İNCELE →" % pending_offers(),go.bind("finance"))
 	var a=card_at(Rect2(52,629,436,163),"TRANSFER MERKEZİ",go.bind("market"),"action","market")
 	a.caption="KADRONU GÜÇLENDİR"; a.detail="Oyuncu keşfet · Teklif yap · İmza at"; a.accent=art.BLUE
 	var b=card_at(Rect2(504,629,438,163),"TEKNİK DİREKTÖR MERKEZİ",go.bind("board"),"action","board")
@@ -346,6 +377,14 @@ func build_hub() -> void:
 func play() -> void:
 	if game.career.prepare_match(): visible=false; clear_controls(); game.camera.cull_mask=world_mask; game.audio.set_process(true)
 	else: status=game.career.error
+
+func simulate_match() -> void:
+	var c=game.career
+	var fixture: Dictionary=c.next_fixture()
+	if c.simulate_next():
+		var award: Dictionary=game.finale.award_for(fixture)
+		if award.get("club","")==c.world.user and game.finale.show_award(award): return
+	build()
 
 func advance_calendar() -> void:
 	if calendar.visible or page!="hub": return
@@ -375,6 +414,9 @@ func build_players() -> void:
 		option_at(Rect2(487,173,369,41),["TÜM KADRO","KİRALIK GELENLER","KİRALIK GİDENLER","EMEKLİLİK KARARI"],squad_filter,func(v): squad_filter=v; list_page=0; selected=""; incoming=""; pending_action=""; build())
 	else:
 		list_ids=[]
+		var home_country: String=c.club().get("nation","")
+		var national_league: bool=World.International.NATIONS.has(home_country)
+		if nation_filter=="*" and not national_league: nation_filter=""
 		for pid in c.world.players:
 			var p: Dictionary=c.player(pid)
 			if p.club==c.world.user or p.get("retired",false) or p.get("academy_owner","")!="": continue
@@ -385,7 +427,7 @@ func build_players() -> void:
 			if market_filter==4 and (not p.get("loan_listed",false) or c.contracts.transfer_lock(pid)!=""): continue
 			if market_filter==5 and p.get("retirement_year",0)==0: continue
 			if position_filter>=0 and int(p.role)!=position_filter: continue
-			if nation_filter=="*" and p.get("nationality","TR")=="TR": continue
+			if nation_filter=="*" and p.get("nationality","")==home_country: continue
 			if not nation_filter in ["","*"] and p.get("nationality","TR")!=nation_filter: continue
 			if filter!="" and not p.name.to_lower().contains(filter.to_lower()): continue
 			list_ids.append(pid)
@@ -396,9 +438,11 @@ func build_players() -> void:
 		button_at(Rect2(254,173,65,41),"ARA",func(): filter=search.text; list_page=0; selected=""; build())
 		option_at(Rect2(331,173,144,41),["MEVKİ: TÜMÜ","KALECİ","DEFANS","ORTA SAHA","FORVET"],position_filter+1,func(v): position_filter=v-1; list_page=0; selected=""; build())
 		option_at(Rect2(487,173,195,41),["TÜM OYUNCULAR","BÜTÇEME UYGUN","SATIŞ LİSTESİ","SERBEST","KİRALIK LİSTESİ","EMEKLİ OLACAK"],market_filter,func(v): market_filter=v; list_page=0; selected=""; build())
-		var countries: Array=["ÜLKE: TÜMÜ","YABANCI"]+World.International.NATIONS.values()
-		var codes: Array=["","*"]+World.International.NATIONS.keys()
+		var countries: Array=["ÜLKE: TÜMÜ"]+(["YABANCI"] if national_league else [])+World.International.NATIONS.values()
+		var codes: Array=[""]+(["*"] if national_league else [])+World.International.NATIONS.keys()
 		option_at(Rect2(694,173,166,41),countries,codes.find(nation_filter),func(v): nation_filter=codes[v]; list_page=0; selected=""; build())
+	PlayerList.sort_players(self)
+	PlayerList.toolbar(self)
 	if selected=="" or not selected in list_ids: selected=str(list_ids[0]) if not list_ids.is_empty() else ""
 	list_page=clampi(list_page,0,maxi(0,(list_ids.size()-1)/9))
 	if not list_ids.is_empty() and not selected in list_ids.slice(list_page*9,list_page*9+9): selected=str(list_ids[list_page*9])
@@ -406,11 +450,12 @@ func build_players() -> void:
 		var index:=list_page*9+n
 		if index>=list_ids.size(): break
 		var pid: String=list_ids[index]; var p: Dictionary=c.player(pid)
-		var card:=card_at(Rect2(52+(n%3)*274,228+(n/3)*175,257,163),p.name,select_player.bind(pid),"player",pid)
+		var rect:=Rect2(52,258+n*53,804,49) if list_view else Rect2(52+(n%3)*274,228+(n/3)*175,257,163)
+		var card:=card_at(rect,p.name,select_player.bind(pid),"player_row" if list_view else "player",pid)
 		card.set_meta("card_cell",n)
-		portraits.request(portrait_data(pid))
-	button_at(Rect2(52,751,190,42),"← ÖNCEKİ",func(): list_page=maxi(0,list_page-1); build()).disabled=list_page==0
-	button_at(Rect2(666,751,190,42),"SONRAKİ →",func(): list_page+=1; build()).disabled=(list_page+1)*9>=list_ids.size()
+		if not list_view: portraits.request(portrait_data(pid))
+	button_at(Rect2(52,751,110,42),"← GERİ",func(): list_page=maxi(0,list_page-1); build()).disabled=list_page==0
+	button_at(Rect2(746,751,110,42),"İLERİ →",func(): list_page+=1; build()).disabled=(list_page+1)*9>=list_ids.size()
 	if selected=="": return
 	portraits.request(portrait_data(selected))
 	var member: Dictionary=c.player(selected)
@@ -419,6 +464,7 @@ func build_players() -> void:
 	if page=="market":
 		button_at(Rect2(910,730,218,52),"GÖRÜŞMEYE BAŞLA",negotiate.bind(false),true).disabled=not c.window_open() or blocked!=""
 		button_at(Rect2(1140,730,226,52),"KİRALIK TEKLİF",negotiate_loan).disabled=c.contracts.loan_reason(selected,c.world.user)!=""
+		button_at(Rect2(910,798,456,42),"KADRONLA KARŞILAŞTIR",func(): comparison.open(self,selected,"market"))
 	else:
 		button_at(Rect2(910,639,218,45),"İLK 11'İ DEĞİŞTİR",promote,true).disabled=member.club!=c.world.user
 		if loan.is_empty():
@@ -480,8 +526,11 @@ func portrait_data(pid: String) -> Dictionary:
 
 func build_league() -> void:
 	option_at(Rect2(54,177,423,41),World.LEAGUES+game.career.cups.TITLES.values(),division,func(v): division=v; list_page=0; cup_group=0; build())
+	var award: Dictionary=game.finale.award_for_division(division)
 	if division==World.LEAGUES.size()+1 and not game.career.world.cups.is_empty():
-		option_at(Rect2(536,177,308,41),["GRUP A","GRUP B","GRUP C","GRUP D"],cup_group,func(v): cup_group=v; list_page=0; queue_redraw())
+		option_at(Rect2(536,177,308 if award.is_empty() else 172,41),["GRUP A","GRUP B","GRUP C","GRUP D"],cup_group,func(v): cup_group=v; list_page=0; queue_redraw())
+	if not award.is_empty():
+		button_at(Rect2(720 if division==World.LEAGUES.size()+1 else 536,177,124 if division==World.LEAGUES.size()+1 else 308,41),"TÖRENİ İZLE",func(): game.finale.show_award(award),true)
 	for i in range(3): button_at(Rect2(907+i*158,177,149,41),["FİKSTÜR","SONUÇLAR","GOL KRALI"][i],func(): mode=i; list_page=0; build(),mode==i)
 	button_at(Rect2(908,751,204,42),"← ÖNCEKİ",func(): list_page=maxi(0,list_page-1); build())
 	button_at(Rect2(1162,751,204,42),"SONRAKİ →",func(): list_page+=1; build())
@@ -539,6 +588,7 @@ func build_talks() -> void:
 	office=Office.new(); office.position=Vector2(52,181); office.size=Vector2(822,463)
 	office.club_data=c.club(); office.guest_data=c.player(d.player); controls.add_child(office)
 	if d.stage=="signed": office.react("signed")
+	if not d.renewal: button_at(Rect2(934,666,404,44),"KADRONLA KARŞILAŞTIR",func(): comparison.open(self,d.player,"talks"))
 	if d.stage=="loan":
 		number_control(Vector2(934,295),"fee",10000)
 		option_at(Rect2(934,368,404,42),["YARIM SEZON","SEZON SONUNA KADAR","İKİ SEZON"],loan_term,func(v): loan_term=v; queue_redraw())
@@ -588,13 +638,15 @@ func _draw() -> void:
 		"tactics": art.tactics(self)
 		"finance": draw_finance()
 		"talks": draw_talks()
+		"comparison": comparison.draw(self)
+		"training": training_ui.draw(self)
 
 func draw_choose() -> void:
 	var c: Dictionary=new_world.clubs[selected_club]
 	text("KULÜBÜNÜ SEÇ",Vector2(52,145),24,PAPER,true)
 	var club_count: int=choose_ids().size()
-	text("%d KULÜP  /  %d HAFTA  ·  " % [club_count,(club_count-1)*2]+("TÜRK VE YABANCI OYUNCULAR" if division==World.Turkey.LEAGUE else "ÖZGÜN KULÜPLER"),Vector2(54,237),12,art.MUTED)
-	box(Rect2(923,171,474,589),Color("1d3345"),12,Color("3d6250"))
+	text("%d KULÜP  /  %d HAFTA  ·  " % [club_count,(club_count-1)*2]+("TÜRK VE YABANCI OYUNCULAR" if division==World.Turkey.LEAGUE else ("BAĞIMSIZ KARMA LİG" if division in [0,1] else "ÖZGÜN KULÜPLER")),Vector2(54,237),12,art.MUTED)
+	box(Rect2(923,171,474,660),Color("1d3345"),12,Color("3d6250"))
 	art.pitch(self,Rect2(952,200,414,300),.16)
 	badge(Vector2(1160,273),c,2.1)
 	center(c.name,Vector2(1160,401),25,PAPER,true)
@@ -606,6 +658,9 @@ func draw_choose() -> void:
 	text("TRANSFER BÜTÇESİ",Vector2(954,574),11,MUTE)
 	text(game.career.money(c.budget),Vector2(954,602),24,PAPER,true)
 	text("SEZON HEDEFİ  ·  "+c.objective,Vector2(954,643),15,GOLD)
+	text("DEVRE SÜRESİ",Vector2(954,674),11,MUTE,true)
+	text("RAKİP ZORLUĞU",Vector2(1168,674),11,MUTE,true)
+	text("2 × %d dk · Toplam %d dk · Kariyere kaydedilir" % [new_match_settings.half_minutes,new_match_settings.half_minutes*2],Vector2(954,750),12,MUTE)
 	box(Rect2(54,724,824,64),Color("23433f"),10)
 	text("LİG ŞAMPİYONLUĞU",Vector2(77,750),11,MUTE,true)
 	text(game.career.money(World.LEAGUE_CHAMPION_PRIZES[division]),Vector2(77,778),23,GOLD,true)

@@ -40,6 +40,7 @@ func scenario(team: int,keeper: bool,multiple: bool=false) -> void:
 		var slot: int=slots[n]; var p=game.players[slot]
 		p.position=Vector3(-27+n*18,0,-35+n*28 if team==0 else 35-n*28)
 		p.energy=.17; p.kit_soil=.62; p.update_soil(.5); p.velocity=Vector3.ZERO
+		p.match_fatigue=.34
 		var reserve: int=0 if keeper else n+1
 		game.management.queue_sub(slot,reserve)
 		records.append({"slot":slot,"old":p.identity(),"new":game.management.bench[team][reserve].duplicate(true),"out_pos":p.position,"max_step":0.0,"min_energy":p.energy,"seat_time":-1.0,"in_time":-1.0})
@@ -85,6 +86,7 @@ func scenario(team: int,keeper: bool,multiple: bool=false) -> void:
 		check(item.max_step<.18,"Neither visible identity teleports at the touchline: max step %.4f" % item.max_step)
 		check(p.display_name==item.new.name and p.shirt_number==item.new.shirt and p.attributes==item.new.attributes and p.appearance_id==item.new.appearance_id and game.management.used[team]==slots.size(),"Identity, attributes and substitution allowance transfer exactly once")
 		check(item.min_energy>=.169 and game.match_time==40,"Stoppage movement preserves fatigue and the match clock")
+		check(p.match_fatigue==0 and p.stamina_capacity()==1,"The incoming identity has fresh legs after the physical handoff")
 		for departure in game.stadium.sidelines.departures:
 			if departure.player.display_name!=item.old.name: continue
 			var actor=departure.player

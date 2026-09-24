@@ -1,5 +1,6 @@
 extends RefCounted
 const P = preload("res://scripts/pitch_dimensions.gd")
+const Flight = preload("res://scripts/shot_guide.gd")
 var game
 var holding := -1
 var hold_age := 0.0
@@ -35,7 +36,6 @@ func shot_read(index: int,delta: float) -> Dictionary:
 		return {}
 	if reads.has(index) and reads[index].kicker!=game.last_kicker: reads.erase(index)
 	if not reads.has(index):
-		var difficulty: int=game.management.difficulty if p.team==1 else 1
 		var screened := false
 		var line: Vector3=(ball-p.position)*Vector3(1,0,1)
 		for other in game.players:
@@ -44,13 +44,13 @@ func shot_read(index: int,delta: float) -> Dictionary:
 			var fraction := offset.dot(line)/maxf(line.length_squared(),0.01)
 			if fraction>0.15 and fraction<0.85 and (offset-line*fraction).length()<0.65: screened=true; break
 		var fatigue: float=1.0-p.energy
-		var delay: float=[0.28,0.23,0.18][difficulty]+variation.randf_range(-0.025,0.025)+fatigue*0.055
-		delay/=p.Attributes.multiplier(p.attributes.get("reflexes",72),.25)
+		var delay: float=(game.management.pick([0.28,0.23,0.18],.14) if p.team==1 else .23)+variation.randf_range(-0.025,0.025)+fatigue*0.055
+		delay/=p.Attributes.multiplier(p.attributes.get("reflexes",72),.25)*game.sliders.scale(p.team,"keeper",.75,1.3)
 		# Faster balls leave less time to judge the interception point. Keep this
 		# as one small, persistent read error rather than a forced save/goal roll.
 		var pace_error: float=clampf((velocity.length()-20)/16,0,1)*0.13
-		var error: float=[0.42,0.33,0.21][difficulty]+pace_error+fatigue*0.12+game.weather.rain*0.08
-		error/=p.Attributes.multiplier(p.attributes.get("positioning",72),.28)
+		var error: float=(game.management.pick([0.42,0.33,0.21],.15) if p.team==1 else .33)+pace_error+fatigue*0.12+game.weather.rain*0.08
+		error/=p.Attributes.multiplier(p.attributes.get("positioning",72),.28)*game.sliders.scale(p.team,"keeper",.75,1.3)
 		if screened: delay+=0.06; error+=0.16
 		# One imperfect read per incoming ball, never a random roll every frame.
 		if variation.randf()<0.10: delay+=0.055; error+=0.30
@@ -58,9 +58,12 @@ func shot_read(index: int,delta: float) -> Dictionary:
 	var read: Dictionary=reads[index]
 	read.age+=delta
 	if read.age>=read.next_read:
-		var arrival: float=maxf(0,(p.position.z-ball.z)/velocity.z)
-		read.x=ball.x+velocity.x*arrival+read.error
-		read.height=maxf(game.ball.RADIUS,ball.y+velocity.y*arrival-4.905*arrival*arrival+read.height_error)
+		# A downward header can hit the turf before reaching the keeper. Read
+		# its rebound with the same resistance/restitution as the physical ball,
+		# instead of clamping a below-ground parabola into a low foot save.
+		var flight: Dictionary=Flight.predict(ball,velocity,game.ball.spin,p.position.z,game.weather,Vector3.INF,false,2.2)
+		read.x=flight.target.x+read.error
+		read.height=maxf(game.ball.RADIUS,flight.target.y+read.height_error)
 		read.next_read=read.age+0.12
 	return read
 
@@ -80,18 +83,24 @@ func loose_parry(index: int) -> Vector3:
 	# A weak palm leaves a playable rebound in front; the rigid ball stays live.
 	return Vector3(side,0,forward).normalized()*clampf(game.ball.linear_velocity.length()*0.26,4,8)+Vector3.UP*1.25
 
-func team_has_ball() -> bool:
-	if game.ball.held_by!=null: return game.ball.held_by.team==0
-	if game.dribbler>=0: return game.players[game.dribbler].team==0
+var rush_team := 0
+
+func team_has_ball(team: int=-1) -> bool:
+	if team<0: team=game.active_team()
+	if game.ball.held_by!=null: return game.ball.held_by.team==team
+	if game.dribbler>=0: return game.players[game.dribbler].team==team
 	if game.has_ball_control(game.controlled): return true
 	var nearest: int=game.nearest_to_ball(1.4) if game.ball.linear_velocity.length()<16 else -1
-	return (nearest>=0 and game.players[nearest].team==0) or (game.last_touch==0 and game.ai_pass_time[0]>0)
+	return (nearest>=0 and game.players[nearest].team==team) or (game.last_touch==team and game.ai_pass_time[team]>0)
 
-func can_call() -> bool:
-	return game.state=="playing" and not game.training and game.players[0].visible and not game.players[0].dismissed and not team_has_ball()
+func can_call(team: int=-1) -> bool:
+	if team<0: team=game.active_team()
+	var keeper=game.players[team*11]
+	return game.state=="playing" and not game.training and keeper.visible and not keeper.dismissed and not team_has_ball(team)
 
 func start_rush() -> void:
 	if not can_call(): return
+	rush_team=game.active_team()
 	rush_requested=true
 	returning=false
 	game.clear_pass_request()
@@ -101,10 +110,10 @@ func start_rush() -> void:
 func stop_rush() -> void:
 	if rush_requested: returning=true
 	rush_requested=false
-	game.players[0].sprinting=false
+	game.players[rush_team*11].sprinting=false
 
 func is_rushing(index: int=0) -> bool:
-	return index==0 and rush_requested and can_call()
+	return index==rush_team*11 and rush_requested and can_call(rush_team)
 
 func safe_parry(index: int) -> Vector3:
 	var p=game.players[index]
@@ -189,7 +198,7 @@ func update(index: int,delta: float) -> Vector3:
 			target.x=clampf(predicted,-4.3,4.3)
 			var reach: float=predicted-p.position.x
 			if absf(reach)<1.15 and time<.30 and time>.04 and height<1.65:
-				var style := "smother" if height<.65 and bv.length()<14 and time>.14 else ("foot" if height<.55 else ("catch" if height<1.65 and bv.length()<21 else "spread"))
+				var style := "smother" if height<.65 and bv.length()<18 and time>.14 else ("foot" if height<.55 else ("catch" if height<1.65 and bv.length()<21 else "spread"))
 				p.keeper_motion.start(p,style,Vector3(predicted,height,p.position.z))
 			if absf(reach)>1.05 and absf(reach)<3.9 and time<0.52 and height<2.65:
 				p.start_dive(reach,height,time)
@@ -205,27 +214,34 @@ func update(index: int,delta: float) -> Vector3:
 			stop_rush()
 		return target
 	# Every hand save requires proximity and the ball inside the penalty area.
+	var at_gloves: bool=minf(p.left_hand.global_position.distance_to(ball),p.right_hand.global_position.distance_to(ball))<.43
 	var rebound: bool=game.last_kicker==index and p.motion_clock-p.keeper_motion.saved_at<2.2
 	if rebound and in_box and game.flat_distance(p.position,ball)<4:
 		# Recover where the first save landed, then attack the loose ball. An
 		# automatic retreat to the goal line would abandon every second attempt.
 		target=ball+bv*.12 if p.keeper_motion.rebound_ready(p) else p.position
 		modes[index]="rebound"
-	if in_box and (game.last_touch!=p.team or rebound) and ball.y<.7 and bv.length()<12 and game.flat_distance(p.position,ball)<1.45 and not reacting:
+	if in_box and (game.last_touch!=p.team or rebound) and ball.y<.7 and bv.length()<12 and game.flat_distance(p.position,ball)<1.45 and not reacting and not at_gloves:
 		if rebound and p.keeper_motion.rebound_ready(p) and p.pose!="keeper_rebound":
 			p.keeper_motion.start(p,"rebound",ball,true)
 		elif not rebound: p.keeper_motion.start(p,"smother",ball)
-	elif in_box and game.last_touch!=p.team and ball.y>=.65 and ball.y<1.95 and bv.length()<19 and game.flat_distance(p.position,ball)<1.65 and not reacting:
+	elif in_box and game.last_touch!=p.team and ball.y>=.65 and ball.y<1.95 and bv.length()<19 and game.flat_distance(p.position,ball)<1.65 and not reacting and not at_gloves:
 		p.keeper_motion.start(p,"catch",ball+bv*.10)
 	if in_box and p.can_save(ball) and p.touch_cooldown<=0 and game.kick_lock<=0 and (not reacting or bv.length()<8):
 		var was_on_target: bool=game.reactions.save_on_target(index,bv)
 		var opponent: bool=game.last_touch!=p.team or rebound
 		var glove_distance: float=minf(p.left_hand.global_position.distance_to(ball),p.right_hand.global_position.distance_to(ball))
 		var spill := handling_error(index,read)
-		var catch_speed: float=18.5*p.Attributes.multiplier(p.attributes.get("handling",72),.15) if p.keeper_motion.kind=="catch" else 11.5
-		if opponent and in_box and bv.length()<catch_speed and glove_distance<0.65 and not spill:
+		# A real glove contact with a moderate delivery can be secured in a
+		# scoop, claim or dive too; the pose name alone must not force a parry.
+		var catch_speed: float=(15.5 if p.pose=="dive" else 18.5)*p.Attributes.multiplier(p.attributes.get("handling",72),.15)
+		var relative_speed: float=(bv-p.velocity).length()
+		if opponent and in_box and relative_speed<catch_speed and glove_distance<0.65 and not spill:
 			if not game.rules.before_touch(index,false): return target
+			game.playtest.strike(index,bv,"catch",true)
+			game.feedback.contact("glove",index,ball,bv.normalized(),clampf(bv.length()/25,.18,1))
 			game.saves[p.team]+=1
+			game.broadcast_event("great_save" if p.pose=="dive" else "save",{"index":index})
 			game.stadium.react("save",p.team,ball)
 			game.reactions.saved(index,was_on_target)
 			game.dribbler=-1
@@ -235,6 +251,7 @@ func update(index: int,delta: float) -> Vector3:
 			game.team_control.touched(index)
 			p.keeper_motion.saved(p)
 			p.keeper_motion.secured=true
+			p.keeper_motion.target=ball
 			holding=index
 			hold_age=0
 			if index==0: stop_rush()
@@ -242,7 +259,9 @@ func update(index: int,delta: float) -> Vector3:
 			game.hint("KALECİ TOPU KONTROL ETTİ")
 		elif opponent:
 			if not game.strike(index,loose_parry(index) if spill else safe_parry(index),0,true): return target
+			game.feedback.contact("glove",index,ball,bv.normalized(),clampf(bv.length()/25,.18,1))
 			game.saves[p.team]+=1
+			game.broadcast_event("great_save" if p.pose=="dive" else "save",{"index":index})
 			game.stadium.react("save",p.team,ball)
 			game.reactions.saved(index,was_on_target)
 			p.keeper_motion.saved(p)

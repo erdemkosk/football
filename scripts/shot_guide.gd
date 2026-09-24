@@ -32,16 +32,21 @@ static func predict(origin: Vector3,velocity: Vector3,spin: float,goal_z: float,
 	var drag := Motion.air_drag(surface)
 	var crossed := false
 	var bounced := false
-	var previous_vertical := 0.0
+	var previous_vertical := velocity.y
+	var low_lift_airborne := velocity.y>.4
 	var has_destination := destination.is_finite()
 	var heading := ((destination-origin)*Vector3(1,0,1)).normalized() if has_destination else Vector3.ZERO
 	var reach := Vector2(destination.x-origin.x,destination.z-origin.z).length() if has_destination else INF
 	for frame in range(ceili(duration/dt)):
 		var previous := position
 		var resistance := Motion.profile(surface,position)
+		# Match ball.gd: a deliberate low lift stays airborne until its first
+		# landing, rather than being flattened into a rolling shot at launch.
+		if frame>0 and position.y<=GROUND_HEIGHT+.02 and (velocity.y<=0 or (previous_vertical<0 and velocity.y>=0)):
+			low_lift_airborne=false
 		# Match ball.gd's settled ground travel so weak shots do not preview
 		# airborne curl that the launched ball will never receive.
-		var rolling := position.y<RADIUS+0.10 and (absf(velocity.y)<1.2 or (absf(velocity.y)<2.4 and previous_vertical>-3.0))
+		var rolling := position.y<RADIUS+0.10 and not low_lift_airborne and (absf(velocity.y)<1.2 or (absf(velocity.y)<2.4 and previous_vertical>-3.0))
 		previous_vertical=velocity.y
 		if rolling:
 			if landing and frame>2:
@@ -63,8 +68,7 @@ static func predict(origin: Vector3,velocity: Vector3,spin: float,goal_z: float,
 				bounced=true
 				break
 			position.y=RADIUS
-			var bounce: float=surface.ball_bounce(position) if is_instance_valid(surface) else 0.56
-			velocity.y=-velocity.y*clampf(bounce+0.05,0,1) if velocity.y< -1.2 else 0.0
+			velocity=Motion.ground_rebound(velocity,surface,position)
 			bounced=true
 		if has_destination and not landing and (position-origin).dot(heading)>=reach:
 			var step := (position-previous).dot(heading)

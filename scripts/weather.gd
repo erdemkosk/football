@@ -118,21 +118,21 @@ func grip_at(point: Vector3,sampled_mud: float=-1.0) -> float:
 	return 1.0-wetness*0.12-(mud_at(point) if sampled_mud<0 else sampled_mud)*0.15
 
 func ball_drag(point: Vector3) -> float:
-	# Wet intact grass skids; churned earth absorbs motion.
-	return 2.0-wetness*0.38+mud_at(point)*3.6
+	# Water slows even intact turf; churned ground absorbs additional motion.
+	return 2.0+wetness*3.2+mud_at(point)*3.6
 
 func ball_resistance(point: Vector3) -> Vector2:
 	var mud := mud_at(point)
-	return Vector2(2.0-wetness*.38+mud*3.6,.12+mud*.22)
+	return Vector2(2.0+wetness*3.2+mud*3.6,.12+wetness*.28+mud*.22)
 
 func ball_rolling_damping(point: Vector3) -> float:
-	return 0.12+mud_at(point)*0.22
+	return 0.12+wetness*.28+mud_at(point)*0.22
 
 func ball_air_drag() -> float:
 	return 0.0026+rain*0.0006
 
 func ball_bounce(point: Vector3) -> float:
-	return 0.56-wetness*0.1-mud_at(point)*0.17
+	return 0.56-wetness*0.22-mud_at(point)*0.17
 
 func update(delta: float) -> void:
 	clock+=delta
@@ -201,17 +201,22 @@ func player_step(player, _delta: float) -> void:
 			foot.last=here
 		return
 	foot.last=here
-	foot.distance+=distance
-	if foot.distance>0.95 and player.velocity.length()>0.6:
-		foot.distance=0
-		foot.side=-foot.side
-		var forward: Vector3=player.facing.normalized()
-		var at: Vector3=here+Vector3(-forward.z,0,forward.x)*foot.side*0.2
-		if wetness>0.2:
-			stamp(at,forward,Vector2(0.20,0.38),Color(0.09,0.079,0.045,wetness*(0.15+mud*0.62)))
-			if player.velocity.length()>3: splash(at,player.velocity,3,mud)
-		else:
-			stamp(at,forward,Vector2(0.18,0.34),Color(0.11,0.155,0.078,0.12))
+
+func foot_contact(player,at: Vector3) -> void:
+	# The final animated sole supplies both the mark and its sound in one frame.
+	if game.state not in ["playing","restart","set_piece"] or game.menu_match.running: return
+	var speed := Vector2(player.velocity.x,player.velocity.z).length()
+	var mud := mud_at(at)
+	var forward: Vector3=player.facing.normalized()
+	if wetness>.2:
+		stamp(at,forward,Vector2(.20,.38),Color(.09,.079,.045,wetness*(.15+mud*.62)))
+		if speed>3: splash(at,player.velocity,3,mud)
+	else:
+		stamp(at,forward,Vector2(.18,.34),Color(.11,.155,.078,.12))
+	var distance: float=game.flat_distance(at,game.players[game.controlled].position)
+	if distance>13: return
+	var proximity := 1.0 if player.chosen else .45*(1-smoothstep(3,13,distance))
+	game.audio.footstep(speed,wetness,proximity)
 
 func trail(from: Vector3,to: Vector3,width: float,color: Color) -> void:
 	var travel := (to-from)*Vector3(1,0,1)
