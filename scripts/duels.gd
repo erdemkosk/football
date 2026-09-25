@@ -178,11 +178,16 @@ func ai_poke_window(index: int,owner: int) -> bool:
 	var p=game.players[index]
 	# A poke commits for 120 ms. If a runner will have already left its path,
 	# keep moving and get alongside instead of repeatedly stabbing behind him.
-	var start: Vector3=p.position*Vector3(1,0,1)+p.velocity*Vector3(1,0,1)*.065
+	var slow_ball: bool=game.ball.linear_velocity.length()<5
+	var start: Vector3=p.position*Vector3(1,0,1)+p.velocity*Vector3(1,0,1)*(.02 if slow_ball else .065)
 	var now: Vector3=game.ball.position*Vector3(1,0,1)
 	var future: Vector3=now+game.ball.linear_velocity*Vector3(1,0,1)*.12
 	var aim: Vector3=(now-p.position*Vector3(1,0,1)).normalized()
-	var end: Vector3=start+aim*poke_reach(owner)*tackle_reach(p)
+	var reach: float=poke_reach(owner)*tackle_reach(p)
+	var end: Vector3=start+aim*reach
+	# Against a slow ball, step into the boot's reach before committing. The
+	# wider sweep tolerance is for a moving ball, not extra stationary leg length.
+	if slow_ball and future.distance_to(start)>reach: return false
 	return Geometry3D.get_closest_point_to_segment(future,start,end).distance_to(future)<poke_ball_radius(owner)*.9
 
 static func tackle_reach(p) -> float:

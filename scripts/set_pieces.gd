@@ -77,7 +77,8 @@ func prepare() -> void:
 		if i==taker or game.players[i].keeper: continue
 		if game.players[i].team==team: attackers.append(i)
 		else: defenders.append(i)
-	if kind in ["KORNER","SERBEST VURUŞ","ENDİREKT VURUŞ"] and distance<43:
+	var delivery_range: bool=distance<43 or (kind!="KORNER" and point.z*forward>=0 and distance<58)
+	if kind in ["KORNER","SERBEST VURUŞ","ENDİREKT VURUŞ"] and delivery_range:
 		# Two forwards attack the posts, midfielders occupy the penalty spot/edge.
 		attackers.reverse()
 		for j in range(mini(5,attackers.size())):
@@ -85,6 +86,7 @@ func prepare() -> void:
 			targets[attackers[j]] = spaces[j]
 		for j in range(mini(5,mini(defenders.size(),attackers.size()))):
 			targets[defenders[j]] = targets[attackers[j]]+Vector3(0.9,0,forward*1.1)
+		routines.prepare_default(self,attackers)
 	if kind in ["SERBEST VURUŞ","ENDİREKT VURUŞ"] and (distance<36 or game.training):
 		var count := 4 if distance<29 or game.training else 3
 		if distance<22: count=5
@@ -269,6 +271,9 @@ func formation_ready() -> bool:
 			if p.position.z*-game.attack_sign(p.team)<0: return false
 			if game.flat_distance(p.position,targets[i])>1.2: return false
 		if i in wall and game.flat_distance(p.position,targets[i])>0.2: return false
+		# The referee used to release distant free kicks while the intended
+		# receivers were still jogging from midfield. Let the delivery shape arrive.
+		if i in routines.runs and game.flat_distance(p.position,targets[i])>2.5: return false
 		if kind=="PENALTI":
 			if p.keeper and p.team!=game.restart_team:
 				if absf(p.position.z-forward*50)>0.08: return false
@@ -461,8 +466,9 @@ func preview(delta: float=0.0) -> void:
 		target=route.target
 		pending_velocity=route.velocity
 		if kind() in ["cross","throw"]:
-			target=point+direction*lerpf(10,32,strength)
-			var flight := lerpf(0.85,2.2,strength)
+			var long_delivery: bool=game.restart_type in ["SERBEST VURUŞ","ENDİREKT VURUŞ"] and point.z*game.attack_sign(game.restart_team)<18
+			target=point+direction*lerpf(10,48 if long_delivery else 32,strength)
+			var flight := lerpf(0.85,2.8 if long_delivery else 2.2,strength)
 			var start_y: float = game.ball.position.y if game.restart_type=="TAÇ" else game.ball.GROUND_HEIGHT
 			pending_velocity=Passing.Motion.lob_velocity(Vector3(point.x,start_y,point.z),Vector3(target.x,game.ball.GROUND_HEIGHT,target.z),flight,game.weather)
 		if game.restart_type=="TAÇ":

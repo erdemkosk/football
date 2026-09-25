@@ -120,6 +120,10 @@ func restart_checks() -> void:
 			game.restart_team=0; game.restart_type=kind
 			game.restart_point=Vector3(32 if kind=="KORNER" else -8,0,forward*(49 if kind=="KORNER" else 25))
 			game.set_pieces.prepare(); game.set_pieces.snap_ready(); game.state="set_piece"
+			# This synchronous fixture does not advance the physics frame that
+			# normally applies snap_ready's queued stationary-ball placement.
+			game.ball.position=game.restart_point+Vector3.UP*game.ball.GROUND_HEIGHT
+			game.ball.pending_reset=false; game.ball.linear_velocity=Vector3.ZERO
 			var sp=game.set_pieces
 			for choice in range(4):
 				sp.button=KEY_A; sp.power=.6; sp.preview()

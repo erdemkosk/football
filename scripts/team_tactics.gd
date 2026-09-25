@@ -176,7 +176,11 @@ func update(delta: float) -> void:
 		return
 	# Approach from the goal side, screening the central pass as we close.
 	var exposed: bool=game.duels.ball_opened(owner)
-	targets[presser]=ball+goal_side*(.65 if exposed else (1.35 if in_box else 1.12))
+	# Close control is not a reason to stop just outside the visible boot's
+	# reach. Keep a smaller gap against slow carriers; sprint coverage is unchanged.
+	var challenge_gap: float=clampf(game.duels.poke_reach(owner)*game.duels.tackle_reach(game.players[presser])-.12,.78,1.08)
+	var hold_gap: float=challenge_gap if observed_velocity.length()<4.5 else (1.35 if in_box else 1.12)
+	targets[presser]=ball+goal_side*(.65 if exposed else hold_gap)
 	var press_gap: float=game.flat_distance(game.players[presser].position,ball)
 	if team==1:
 		# The opponent reads the carrier's visible travel with level-scaled
@@ -337,6 +341,11 @@ func defensive_movement(index: int,target: Vector3) -> Vector3:
 	# arrival steering slows to a walk precisely when the attacker runs past.
 	var offset: Vector3=(target-p.position)*Vector3(1,0,1)
 	if mark:
+		# At arm's length, follow the visible ball between tactical scans. This
+		# does not read the carrier's input or remove a committed runner's turn.
+		if gap<2.4 and speed<4.5:
+			offset+=(game.ball.position-observed_ball)*Vector3(1,0,1)
+			if p.jockeying: p.facing=((game.ball.position-p.position)*Vector3(1,0,1)).normalized()
 		offset+=observed_velocity*minf(observation_age,.26)
 		var tracking: Vector3=observed_velocity+offset*4.2
 		var pace: float=10.4 if p.sprinting else 6.2

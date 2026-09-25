@@ -215,13 +215,18 @@ func update(index: int,delta: float) -> Vector3:
 	if reacting:
 		target=read.set
 		modes[index]="react"
-	elif not read.is_empty() and in_box and absf(bv.z)>5:
+	elif not read.is_empty() and absf(bv.z)>5:
 		var time: float=(p.position.z-ball.z)/bv.z
-		if time>0 and time<0.70:
+		# Once the flight has been read, use the available time to set the feet.
+		# Waiting for the ball to enter the box wastes most of a long shot's flight.
+		if time>0 and time<1.25:
 			var predicted: float=read.x
 			var height: float=read.height
 			target.x=clampf(predicted,-4.3,4.3)
 			var reach: float=predicted-p.position.x
+			# Central high shots need raised gloves too, even without a lateral dive.
+			if absf(reach)<1.05 and time<.42 and time>.10 and height>=1.65 and height<2.65 and p.is_on_floor():
+				p.start_claim(height,time)
 			if absf(reach)<1.15 and time<.30 and time>.04 and height<1.65:
 				var style := "smother" if height<.65 and bv.length()<18 and time>.14 else ("foot" if height<.55 else ("catch" if height<1.65 and bv.length()<21 else "spread"))
 				p.keeper_motion.start(p,style,Vector3(predicted,height,p.position.z))

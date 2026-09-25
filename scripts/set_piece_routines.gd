@@ -11,6 +11,16 @@ func reset() -> void:
 func available(setup) -> bool:
 	return setup.game.restart_type in ["KORNER","SERBEST VURUŞ","ENDİREKT VURUŞ"] and setup.taker>=0
 
+func prepare_default(setup,attackers: Array[int]) -> void:
+	# A delivery has runners even if no optional organization was selected.
+	# Keep the rest of the team available for a short outlet and counter cover.
+	var forward: float=setup.game.attack_sign(setup.game.restart_team)
+	for j in range(mini(4,attackers.size())):
+		var i: int=attackers[j]
+		var destination: Vector3=setup.targets[i]+Vector3(0,0,forward*(3.0 if j<3 else 1.5))
+		destination.z=forward*minf(destination.z*forward,46)
+		runs[i]=destination
+
 func select(setup,value: int) -> bool:
 	if not available(setup) or setup.runup>=0 or value<0 or value>=LABELS.size(): return false
 	var game=setup.game
@@ -35,8 +45,9 @@ func select(setup,value: int) -> bool:
 	elif value==3:
 		destinations[0]=short+Vector3(-side*5,0,-forward*6)
 		destinations[2]=Vector3(-side*11,0,forward*33)
-	# For a distant free kick, the same requests become playable local lanes.
-	if point.z*forward<15:
+	# Own-half restarts retain local build-up lanes. An attacking-half free
+	# kick still sends the requested near/far-post runners into the box.
+	if point.z*forward<0:
 		for j in range(3): destinations[j].z=point.z+forward*(16 if j<2 else 9)
 	var order: Array=[value]
 	for j in range(4):
@@ -53,7 +64,9 @@ func select(setup,value: int) -> bool:
 		elif j==0 and value==2: staging=destination+Vector3(0,0,forward*5)
 		if order[j]==3: staging=destination
 		setup.targets[i]=legal(setup,staging)
-		runs[i]=legal(setup,destination)
+		# Staging/run-up must be onside. Preserve the actual destination so a
+		# runner can continue once the released ball carries the offside line on.
+		runs[i]=destination
 	return true
 
 func legal(setup,point: Vector3) -> Vector3:
@@ -65,9 +78,11 @@ func legal(setup,point: Vector3) -> Vector3:
 	return point
 
 func start(setup) -> void:
+	if selected<0 and setup.kind()=="pass": return
 	for i in runs: setup.targets[i]=legal(setup,runs[i])
 
 func launch(setup) -> void:
+	if selected<0 and setup.kind()=="pass": return
 	for i in runs:
 		if setup.game.players[i].visible and not setup.game.players[i].dismissed:
 			setup.game.support.assign_run(i,runs[i],"set_piece_run",2.4)
