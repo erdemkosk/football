@@ -254,7 +254,9 @@ func draw_aim_guide(route: Dictionary,power: float,color: Color,lob: bool=false)
 		aim_indicator.draw_arrow(self,route.points,power,color)
 
 func draw_shot_guide(launch: Vector3,spin: float,color: Color,power: float=-1.0,label: String="ŞUT") -> void:
-	var route: Dictionary=shot_guide.preview(game.ball.position,launch,spin,game.attack_sign(0)*50,game.weather)
+	# Like aerial deliveries, restart shots reveal only the flight before the
+	# first landing. The endpoint marker must not disclose a later bounce.
+	var route: Dictionary=shot_guide.preview(game.ball.position,launch,spin,game.attack_sign(0)*50,game.weather,Vector3.INF,game.state=="set_piece")
 	if power<0: power=game.set_pieces.preview_power() if game.state=="set_piece" else game.charge
 	draw_aim_guide(route,power,color,route.target.y>1.1)
 	var warning := shot_warning(route)

@@ -1,6 +1,6 @@
 extends RefCounted
-## Open play uses a short direction ribbon. Set pieces show the full estimated
-## flight and its target so the taker can place the delivery. Rendering is read-only.
+## Open play uses a short direction ribbon. Set pieces show the estimated flight
+## up to the first landing or goal line. Rendering is read-only.
 const INK := Color("10272b")
 const PAPER := Color("fff5dc")
 

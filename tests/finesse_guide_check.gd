@@ -64,16 +64,22 @@ func run() -> void:
 			var launch: Vector3=game.shot_velocity(game.last_direction,power,true)
 			spin=game.choose_finesse_curve(game.last_direction)
 			var route := Guide.predict(origin,launch,spin,-50,game.weather)
+			var first_flight := Guide.predict(origin,launch,spin,-50,game.weather,Vector3.INF,true)
 			# Rain now absorbs enough pace for the weakest shot to stop short.
 			var reaches_goal: bool=not (weather==2 and power==0.25)
 			check(route.goal_plane==reaches_goal and route.points.size()>15 and Array(route.points).all(func(p): return p.y>=game.ball.RADIUS-0.001),"The preview distinguishes a goal-line finish from a shot stopped by wet turf (weather %d / power %.2f)" % [weather,power])
 			game.ball.strike(launch,spin)
 			var previous := origin
 			var actual := Vector3.INF
+			var first_landing := Vector3.INF
+			var airborne := false
 			var crossed := false
 			for frame in range(480):
 				await physics_frame
 				var point: Vector3=game.ball.position
+				if point.y>game.ball.GROUND_HEIGHT+.1: airborne=true
+				if airborne and not first_landing.is_finite() and previous.y>point.y and point.y<=game.ball.GROUND_HEIGHT+.02:
+					first_landing=point
 				if point.z<=-50:
 					actual=previous.lerp(point,(-50-previous.z)/(point.z-previous.z))
 					crossed=true
@@ -86,6 +92,16 @@ func run() -> void:
 			var error: float=actual.distance_to(route.target)
 			print("Finesse target: expected=",route.target," actual=",actual," error=",error)
 			check(error<0.65,"Visible target agrees with the unobstructed physical shot (weather %d / power %.2f)" % [weather,power])
+			var first_end: Vector3=actual if first_flight.goal_plane else first_landing
+			print("First-flight target: expected=",first_flight.target," actual=",first_end," launch=",launch)
+			check(first_end.is_finite() and first_end.distance_to(first_flight.target)<.65,"The restricted guide ends at the physical first landing or an earlier goal crossing (weather %d / power %.2f)" % [weather,power])
+			var descending := false
+			var no_second_flight := true
+			for i in range(1,first_flight.points.size()):
+				var rise: float=first_flight.points[i].y-first_flight.points[i-1].y
+				if rise<-.001: descending=true
+				if descending and rise>.001: no_second_flight=false
+			check(no_second_flight and first_flight.points[-1].is_equal_approx(first_flight.target),"Neither the line nor the marker reveals a second flight (weather %d / power %.2f)" % [weather,power])
 	await setup()
 	game.training=false
 	game.begin_restart("SERBEST VURUŞ",0,Vector3(8,0,-28))
@@ -161,6 +177,23 @@ func run() -> void:
 	check(game.hud.shot_warning({"target":Vector3(6,1.0,-50),"goal_plane":true,"on_target":false})=="","A wide finish has no out label")
 	check(game.hud.shot_warning({"target":Vector3(2,0.8,-20),"goal_plane":false,"on_target":false})=="","A landing inside the pitch has no arrival label")
 	check(game.hud.shot_warning({"target":Vector3(34,0.3,-10),"goal_plane":false,"on_target":false})=="","A shot leaving the pitch has no out label")
+	if "--visual" in OS.get_cmdline_user_args():
+		game.match_menu.display.set_fullscreen(false)
+		game.match_menu.display.select_resolution(Vector2i(1440,900))
+		for row in [["SERBEST VURUŞ",.28,-28.0,false,"free-kick-first-landing"],["PENALTI",.05,-39.0,false,"penalty-first-landing"],["SERBEST VURUŞ",.7,-28.0,true,"free-kick-airborne-finish"]]:
+			await setup()
+			game.training=false; game.begin_restart(row[0],0,Vector3(0,0,row[2]))
+			game.set_pieces.snap_ready(); game.state="set_piece"
+			game.ball.freeze=true; game.ball.pending_reset=false
+			game.ball.position=game.restart_point+Vector3.UP*game.ball.GROUND_HEIGHT
+			restart=game.set_pieces; restart.button=KEY_D; restart.power=row[1]
+			restart.direction=Vector3.FORWARD; restart.preview()
+			game.frontend.hide(); game.match_menu.hide(); game.controls_help.hide()
+			game.hud.sync_navigation(); game.toast_timer=0
+			game.camera.position=Vector3(0,37,-7); game.camera.look_at(Vector3(0,0,-35)); game.camera.size=42
+			await capture(row[4])
+			var shown: Dictionary=game.hud.shot_guide.cached
+			check(not shown.is_empty() and shown.goal_plane==row[3] and (row[3] or shown.target.y<=game.ball.GROUND_HEIGHT+.001),"The rendered restart HUD ends at first ground contact or an earlier goal line: "+row[4])
 	await setup()
 	game.ball.freeze=true
 	game.players[9].visible=true

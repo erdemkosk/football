@@ -9,7 +9,7 @@ const GAP := 6.5
 const REPEAT := {"goal":1.0,"own_goal":1.0,"red":1.0,"penalty":5.0,"woodwork":5.0,"great_save":8.0,"save":12.0,"shot_high":12.0,"shot_wide":12.0,"shot":12.0,"long_shot":14.0,"header":14.0,"volley":14.0,"cross":16.0,"corner":18.0,"free_kick":18.0,"offside":16.0,"skill":28.0,"counter":32.0,"wing_attack":50.0,"pressure":55.0,"build_up":60.0,"late_chase":65.0,"late_protect":65.0,"late_level":65.0,"fatigue":100.0,"rain":160.0}
 var game
 var enabled := true
-var volume := .8
+var volume := 1.0
 var subtitles := false
 var voice := ""
 var cooldown := 0.0

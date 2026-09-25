@@ -592,7 +592,7 @@ func load_settings() -> void:
 	game.sliders.load_config(cfg)
 	game.humans.preferred=clampi(int(cfg.get_value("match","players",0)),0,game.humans.MODES.size()-1)
 	game.commentary.enabled=bool(cfg.get_value("commentary","enabled",true))
-	game.commentary.volume=clampf(float(cfg.get_value("commentary","volume",.8)),0,1)
+	game.commentary.volume=clampf(float(cfg.get_value("commentary","volume",1.0)),0,1)
 	game.commentary.subtitles=bool(cfg.get_value("commentary","subtitles",false))
 	display.load_config(cfg)
 	game.management.apply_formation()
