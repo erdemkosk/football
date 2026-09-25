@@ -62,7 +62,9 @@ func _process(delta: float) -> void:
 	var next: Rect2=Rect2(get_global_transform_with_canvas().affine_inverse()*focused.get_global_transform_with_canvas().origin,focused.size*focused.get_global_transform_with_canvas().get_scale()/get_global_transform_with_canvas().get_scale()).grow(3)
 	var screen: String=game.controller.menus.screen()
 	if focused!=target or not goal.is_equal_approx(next):
-		origin=rect if is_instance_valid(target) and context==screen else next
+		# Animate navigation between controls; follow the same control immediately
+		# when resizing or scrolling moves its actual screen position.
+		origin=rect if focused!=target and is_instance_valid(target) and context==screen else next
 		goal=next; age=0; target=focused; context=screen
 	age=minf(.14,age+delta)
 	rect=goal if game.experience.reduce_motion else Rect2(origin.position.lerp(goal.position,smoothstep(0,.14,age)),origin.size.lerp(goal.size,smoothstep(0,.14,age)))

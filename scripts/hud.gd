@@ -574,7 +574,8 @@ func sync_navigation() -> void:
 			item.focus_neighbor_right=item.focus_neighbor_bottom
 			item.focus_next=item.focus_neighbor_bottom
 			item.focus_previous=item.focus_neighbor_top
-	if state=="replay" and not nav_buttons.is_empty():
+	if state=="menu": home_menu.layout(self)
+	elif state=="replay" and not nav_buttons.is_empty():
 		nav_buttons[0].position=Vector2(game.ui.bounds().end.x-225,game.ui.bounds().position.y+8)
 	elif state=="ceremony" and not nav_buttons.is_empty():
 		nav_buttons[0].position=Vector2(1175,825)+game.ui.edge_offset(1,1)

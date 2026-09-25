@@ -56,10 +56,23 @@ func career_action() -> void:
 func title(index: int) -> String:
 	return ["HIZLI MAÇ","ANTRENMAN","AYARLAR","KONTROL REHBERİ","KARİYERE DEVAM ET" if resume_slot>0 else "YENİ KARİYER","YENİ / KAYITLAR"][index]
 
+func content_offset(bottom: bool=false) -> Vector2:
+	# Keep a 32-unit side margin on the real screen, independently of the
+	# centered canvas used by modal menus. Extra height separates hero/cards.
+	return game.ui.edge_offset(-1,1 if bottom else -1)+Vector2(-32,0)
+
+func card_rect(index: int) -> Rect2:
+	return Rect2(RECTS[index].position+content_offset(true),RECTS[index].size)
+
+func layout(h) -> void:
+	for i in range(mini(RECTS.size(),h.nav_buttons.size())):
+		var at := card_rect(i).position
+		if h.nav_buttons[i].position!=at: h.nav_buttons[i].position=at
+
 func navigation(h) -> void:
 	var callbacks: Array[Callable]=[game.frontend.open_selection,game.training_menu.open_menu,game.match_menu.open_menu,game.controls_help.open_panel,career_action,game.career_screen.open_entry]
 	for i in range(RECTS.size()):
-		h.nav_button(RECTS[i],callbacks[i])
+		h.nav_button(card_rect(i),callbacks[i])
 		h.nav_buttons[i].set_meta("home_action",ACTIONS[i])
 		h.nav_buttons[i].tooltip_text=title(i)
 	# Geometry and controller navigation follow the same visual order.
@@ -76,10 +89,10 @@ func navigation(h) -> void:
 
 func draw(h) -> void:
 	var full: Rect2=game.ui.bounds()
-	if full.position.x<0: h.draw_rect(Rect2(full.position,Vector2(-full.position.x,full.size.y)),Color("081416"))
 	for i in range(90):
-		h.draw_rect(Rect2(i*10,full.position.y,10,full.size.y),Color(.025,.055,.06,.97*pow(1.0-i/90.0,.55)))
-	if not summary.is_empty(): h.draw_rect(Rect2(0,full.position.y,5,full.size.y),preload("res://scripts/ui_style.gd").club_tint(summary.badge))
+		h.draw_rect(Rect2(full.position+Vector2(i*10,0),Vector2(10,full.size.y)),Color(.025,.055,.06,.97*pow(1.0-i/90.0,.55)))
+	if not summary.is_empty(): h.draw_rect(Rect2(full.position,Vector2(5,full.size.y)),preload("res://scripts/ui_style.gd").club_tint(summary.badge))
+	h.draw_set_transform(content_offset())
 	h.draw_texture_rect(h.Brand.CREST,Rect2(62,32,108,108),false)
 	h.text("STARTING",Vector2(188,74),24,h.PAPER,true)
 	h.headline("ELEVEN FC",Vector2(185,120),46)
@@ -89,6 +102,7 @@ func draw(h) -> void:
 	h.headline("MAÇA HAZIR MISIN?",Vector2(61,259),51)
 	h.headline("HİKÂYENE DEVAM ET." if resume_slot>0 else "İLK DÜDÜK SENİN.",Vector2(61,325),43,h.GOLD)
 	h.text("İlk dokunuştan son düdüğe.",Vector2(66,363),17,h.MUTE)
+	h.draw_set_transform(content_offset(true))
 	card(h,0,"Takımını seç. Sahaya çık.","quick",resume_slot==0)
 	card(h,1,"İlk dokunuş, çalım ve bitiricilik.","training",false)
 	card(h,2,"","settings",false)
@@ -113,7 +127,7 @@ func fitted(h,value: String,at: Vector2,size: int,width: float,color: Color,stro
 func card(h,index: int,subtitle: String,kind: String,primary: bool) -> void:
 	var rect: Rect2=RECTS[index]
 	var focused: bool=index<h.nav_buttons.size() and h.nav_buttons[index].has_focus()
-	var hover: bool=rect.has_point(h.get_local_mouse_position())
+	var hover: bool=card_rect(index).has_point(h.get_local_mouse_position())
 	var hot: bool=focused or hover
 	var color: Color=h.GOLD.lightened(.06 if hot else 0) if primary else Color("1e3738") if hot else Color(.065,.135,.145,.96)
 	var ink: Color=h.INK if primary else h.PAPER
@@ -146,7 +160,7 @@ func card(h,index: int,subtitle: String,kind: String,primary: bool) -> void:
 
 func icon(h,at: Vector2,kind: String,color: Color,small: bool) -> void:
 	var scale:=.70 if small else 1.0
-	h.draw_set_transform(at,0,Vector2.ONE*scale)
+	h.draw_set_transform(content_offset(true)+at,0,Vector2.ONE*scale)
 	match kind:
 		"quick":
 			h.draw_style_box(icon_box(color),Rect2(-21,-16,42,32))
@@ -174,7 +188,7 @@ func icon(h,at: Vector2,kind: String,color: Color,small: bool) -> void:
 		"guide":
 			h.draw_style_box(icon_box(color),Rect2(-17,-20,34,40))
 			for y in [-9,0,9]: h.draw_line(Vector2(-8,y),Vector2(8,y),color,2,true)
-	h.draw_set_transform(Vector2.ZERO)
+	h.draw_set_transform(content_offset(true))
 
 func icon_box(color: Color) -> StyleBoxFlat:
 	var style:=StyleBoxFlat.new()

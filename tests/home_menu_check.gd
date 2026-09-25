@@ -9,11 +9,13 @@ func return_home() -> void:
 func run() -> void:
 	game=load("res://main.tscn").instantiate(); root.add_child(game); await physics_frame
 	game.set_process(false); game.set_physics_process(false); game.controller.set_process(false)
-	game.match_menu.config_path="/tmp/sefc-home-menu-check.cfg"
 	game.controller.device=0
 	var c=game.career
-	c.save_root="/tmp/sefc-home-menu-check-"+str(OS.get_process_id())
-	DirAccess.make_dir_recursive_absolute(c.save_root)
+	var temp_root := OS.get_environment("TEMP") if OS.has_feature("windows") else "/tmp"
+	c.save_root=temp_root.path_join("sefc-home-menu-check-"+str(OS.get_process_id()))
+	var created := DirAccess.make_dir_recursive_absolute(c.save_root)
+	if created!=OK: check(false,"Create the isolated save fixture"); game.free(); quit(1); return
+	game.match_menu.config_path=c.save_root.path_join("settings.cfg")
 	c.world={}
 	await return_home()
 	var menu=game.hud.home_menu
@@ -22,7 +24,7 @@ func run() -> void:
 	var separate:=true
 	for i in range(game.hud.nav_buttons.size()):
 		var rect: Rect2=game.hud.nav_buttons[i].get_rect()
-		fits=fits and Rect2(50,380,550,460).encloses(rect)
+		fits=fits and game.ui.bounds().encloses(rect)
 		for j in range(i): separate=separate and not rect.intersects(game.hud.nav_buttons[j].get_rect())
 	check(fits and separate,"Every menu action fits one aligned column with no overlapping click targets")
 	go(game.hud.nav_buttons[4]); tap(JOY_BUTTON_A); await settle()

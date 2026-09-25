@@ -1,5 +1,5 @@
 extends CanvasLayer
-## Fill the output with the 3D scene; retain an undistorted, centered UI canvas.
+## Fill the output with 3D; center modal menus and anchor screen furniture to bounds().
 const DESIGN_SIZE := Vector2(1440,900)
 
 func _ready() -> void:
@@ -15,7 +15,7 @@ func bounds() -> Rect2:
 	return Rect2(-offset,get_viewport().get_visible_rect().size)
 
 func edge_offset(horizontal: int=0,vertical: int=0) -> Vector2:
-	# Menus stay centered; broadcast furniture follows the actual output edges.
+	# Full-screen menus and broadcast furniture use actual output edges.
 	var full := bounds()
 	return Vector2(full.position.x if horizontal<0 else (full.end.x-DESIGN_SIZE.x if horizontal>0 else 0.0),full.position.y if vertical<0 else (full.end.y-DESIGN_SIZE.y if vertical>0 else 0.0))
 
