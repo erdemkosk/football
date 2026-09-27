@@ -43,6 +43,7 @@ const Appearance = preload("res://scripts/player_appearance.gd")
 var appearance: Dictionary = {}
 var face_detail:=preload("res://scripts/character_face.gd").new()
 const CharacterMesh=preload("res://scripts/character_mesh.gd")
+const BodyMesh=preload("res://scripts/player_body_mesh.gd")
 var age:=25
 const BallActions = preload("res://scripts/ball_actions.gd")
 const ImpactMotion = preload("res://scripts/impact_motion.gd")
@@ -321,12 +322,13 @@ func build_model() -> void:
 	kit_materials["printed"]=printed
 	jersey_body=G.mesh(rig,KitGraphics.torso_mesh(),printed,Vector3(0,1.22,0))
 	jersey_body.name="JerseyCloth"
-	var collar=G.mesh(rig,CharacterMesh.limb([Vector3(-.027,.107,.101),Vector3(-.020,.116,.110),Vector3(.018,.113,.108),Vector3(.026,.106,.100)]),trim,Vector3(0,1.51,0)); collar.name="RibbedCollar"
-	G.mesh(rig,CharacterMesh.limb([Vector3(-.135,.215,.145),Vector3(-.11,.242,.153),Vector3(.08,.237,.154),Vector3(.135,.215,.145)]),shorts,Vector3(0,.83,0))
-	G.mesh(rig,CharacterMesh.limb([Vector3(-.073,.109,.086),Vector3(-.032,.087,.077),Vector3(.051,.077,.072),Vector3(.073,.083,.077)]),skin,Vector3(0,1.56,0))
+	var collar=G.mesh(rig,CharacterMesh.limb([Vector3(-.027,.107,.101),Vector3(-.020,.116,.110),Vector3(.018,.113,.108),Vector3(.026,.106,.100)]),trim,Vector3(0,1.625,0)); collar.scale=Vector3(.78,.70,.72); collar.name="RibbedCollar"
+	G.mesh(rig,BodyMesh.model("pelvis"),shorts,Vector3(0,.95,0))
+	G.mesh(rig,BodyMesh.model("neck"),skin,Vector3(0,1.635,0))
 	rig.add_child(head_joint)
 	head_joint.name="Head"
-	head_joint.position=Vector3(0,1.60,0)
+	# Shrink the oversized arcade head around its crown, retaining roster height.
+	head_joint.position=Vector3(0,1.60+BodyMesh.CROWN*(1-BodyMesh.HEAD_SCALE),0)
 	face_detail.build(self)
 	# A fitted scalp shell covers the head's crown; an offset squashed sphere
 	# intersected the forehead and exposed a skin-coloured patch on every player.
@@ -337,44 +339,44 @@ func build_model() -> void:
 		var leg = left_leg if side<0 else right_leg
 		rig.add_child(leg)
 		leg.position = Vector3(side*0.14,0.85,0)
-		G.mesh(leg,CharacterMesh.limb([Vector3(-.15,.092,.092),Vector3(-.12,.104,.104),Vector3(.08,.113,.118),Vector3(.15,.097,.106)]),shorts,Vector3(0,-.14,0))
+		G.mesh(leg,BodyMesh.model("shorts"),shorts,Vector3(0,-.14,0))
+		G.mesh(leg,BodyMesh.model("thigh"),knees,Vector3.ZERO)
 		var knee = left_knee if side<0 else right_knee
 		leg.add_child(knee)
 		knee.position = Vector3(0,-0.33,0)
-		var kneecap=G.sphere(knee,0.084,Vector3.ZERO,knees)
-		var shin=G.cylinder(knee,0.081,0.12,Vector3(0,-0.055,0),knees)
-		G.combine_rigid(knee,[kneecap,shin],"knee_skin")
-		G.mesh(knee,CharacterMesh.limb([Vector3(-.145,.054,.059),Vector3(-.08,.063,.069),Vector3(.045,.079,.084),Vector3(.115,.074,.080)]),socks,Vector3(0,-.24,0))
-		G.mesh(knee,CharacterMesh.limb([Vector3(-.0225,.083,.089),Vector3(.0225,.083,.089)]),trim,Vector3(0,-.14,0))
+		G.mesh(knee,BodyMesh.model("knee"),knees,Vector3.ZERO)
+		G.mesh(knee,BodyMesh.model("calf"),socks,Vector3(0,-.24,0))
+		G.mesh(knee,CharacterMesh.limb([Vector3(-.019,.073,.081),Vector3(.019,.073,.081)]),trim,Vector3(0,-.14,0))
 		var boot = G.mesh(knee,Appearance.boot_mesh(0),boots,Vector3(0,-0.42,-0.05))
 		boot.name="Boot"; boot_meshes.append(boot)
 		boot.scale = Vector3(0.77,0.61,1.65)
 		var arm = left_arm if side<0 else right_arm
 		rig.add_child(arm)
-		arm.position = Vector3(side*0.315,1.43,0)
-		G.mesh(arm,CharacterMesh.limb([Vector3(-.12,.083,.086),Vector3(-.095,.096,.098),Vector3(.055,.108,.113),Vector3(.10,.072,.082),Vector3(.13,.002,.002)]),jersey,Vector3(0,-.1,0))
-		G.cylinder(arm,.100,.018,Vector3(0,-.205,0),trim)
+		arm.position = Vector3(side*BodyMesh.SHOULDER_X,1.475,0)
+		G.mesh(arm,BodyMesh.model("sleeve"),jersey,Vector3(0,-.1,0))
+		G.mesh(arm,CharacterMesh.limb([Vector3(-.009,.078,.086),Vector3(.009,.079,.087)]),trim,Vector3(0,-.213,0))
+		G.mesh(arm,BodyMesh.model("upper_arm"),skin,Vector3.ZERO)
 		if side<0 and not official:
-			captain_band=G.cylinder(arm,.111,.088,Vector3(0,-.155,0),G.material(Color("f7df68")))
+			captain_band=G.cylinder(arm,.092,.070,Vector3(0,-.155,0),G.material(Color("f7df68")))
 			captain_band.name="CaptainArmband"; captain_band.visible=false
-			G.cylinder(captain_band,.113,.016,Vector3(0,0,0),G.material(Color("15272e")))
+			G.cylinder(captain_band,.094,.012,Vector3(0,0,0),G.material(Color("15272e")))
 		var elbow = left_elbow if side<0 else right_elbow
 		arm.add_child(elbow)
-		elbow.position = Vector3(0,-0.24,0)
-		var elbow_cap=G.sphere(elbow,0.071,Vector3.ZERO,skin)
-		var forearm=G.mesh(elbow,CharacterMesh.limb([Vector3(-.125,.046,.050),Vector3(-.085,.050,.054),Vector3(.03,.068,.070),Vector3(.125,.069,.067)]),skin,Vector3(0,-.125,0))
-		var hand = G.sphere(elbow,0.103 if keeper else 0.08,Vector3(0,-0.29,0),G.material(Color("ececd7")) if keeper else skin)
-		if not keeper: hand.scale=Vector3(.74,1.10,.46)
+		elbow.position = Vector3(0,-0.275,0)
+		var elbow_cap=G.sphere(elbow,0.060,Vector3.ZERO,skin)
+		var forearm=G.mesh(elbow,BodyMesh.model("forearm"),skin,Vector3.ZERO)
+		var hand = G.sphere(elbow,0.090 if keeper else 0.073,Vector3(0,-0.30,0),G.material(Color("ececd7")) if keeper else skin)
+		if not keeper: hand.scale=Vector3(.68,1.18,.43)
 		if keeper:
-			G.combine_rigid(elbow,[elbow_cap,forearm],"forearm_skin")
+			G.combine_rigid(elbow,[elbow_cap,forearm],"forearm_skin_v3")
 		else:
-			var thumb=G.sphere(elbow,.025,Vector3(-side*.054,-.280,-.012),skin); thumb.scale=Vector3(.65,1.20,.65)
-			G.combine_rigid(elbow,[elbow_cap,forearm,hand,thumb],"forearm_hand_skin_v2_%d" % side,[hand])
+			var thumb=G.sphere(elbow,.023,Vector3(-side*.045,-.285,-.012),skin); thumb.scale=Vector3(.65,1.20,.65)
+			G.combine_rigid(elbow,[elbow_cap,forearm,hand,thumb],"forearm_hand_skin_v3_%d" % side,[hand])
 		if keeper:
 			hand.scale=Vector3(1.05,1.3,.66)
 			gloves.append(hand); hand.name="KeeperGlove"
-			G.block(hand,Vector3(.145,.12,.03),Vector3(0,-.025,.063),G.material(Color("253a48")))
-			G.cylinder(hand,.085,.058,Vector3(0,.09,0),G.material(Color("ef9e42")))
+			var glove_back=G.sphere(hand,.072,Vector3(0,-.018,.047),G.material(Color("253a48"))); glove_back.scale=Vector3(.90,.86,.24)
+			G.cylinder(hand,.073,.049,Vector3(0,.09,0),G.material(Color("ef9e42")))
 		if side<0: left_hand = hand
 		else: right_hand = hand
 	# A waist pivot lets the torso bend independently of hips and planted feet.
@@ -768,7 +770,7 @@ func apply_build() -> void:
 	if official: height=1.18*WORLD_SCALE; width=1.22*WORLD_SCALE; depth=1.22*WORLD_SCALE
 	body_scale=Vector3(width,height,depth)
 	# Vary the build without stretching faces with the shoulders.
-	head_joint.scale=Vector3(clampf(REFERENCE_SCALE.x/width,.94,1.07),clampf(REFERENCE_SCALE.y/height,.96,1.05),clampf(REFERENCE_SCALE.z/depth,.94,1.07))
+	head_joint.scale=Vector3(clampf(REFERENCE_SCALE.x/width,.94,1.07),clampf(REFERENCE_SCALE.y/height,.96,1.05),clampf(REFERENCE_SCALE.z/depth,.94,1.07))*BodyMesh.HEAD_SCALE
 	idle_habit=int(appearance.get("movement",0))
 	stance=0.08 if keeper else (0.055 if number in [2,3,4,5] else 0.0)
 	var agility := clampf((float(attributes.control)+float(attributes.acceleration)-144)/70,-1,1)
@@ -783,8 +785,8 @@ func apply_build() -> void:
 	kick_character=clampf(1+build*.12-agility*.08,.85,1.18)
 	rig.scale=body_scale
 	jersey_body.scale.x=clampf(1.0+build*.065,.95,1.07)
-	left_arm.position.x=-.315*jersey_body.scale.x
-	right_arm.position.x=.315*jersey_body.scale.x
+	left_arm.position.x=-BodyMesh.SHOULDER_X*jersey_body.scale.x
+	right_arm.position.x=BodyMesh.SHOULDER_X*jersey_body.scale.x
 	if body_collision!=null and body_collision.shape is CapsuleShape3D:
 		var shape: CapsuleShape3D=body_collision.shape
 		# The capsule already had human height; align its width to the smaller rig.

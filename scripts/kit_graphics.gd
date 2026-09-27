@@ -91,44 +91,7 @@ static func shirt(colors: Dictionary,number: int,is_keeper: bool,player_name: St
 	return shirts[key]
 
 static func torso_mesh() -> ArrayMesh:
-	if torso!=null: return torso
-	var vertices := PackedVector3Array()
-	var normals := PackedVector3Array()
-	var uv := PackedVector2Array()
-	var indices := PackedInt32Array()
-	const SEGMENTS := 32
-	# Sloped shoulders join the collar instead of ending in a flat cylinder lid.
-	var radii := [0.12,0.32,0.285,0.225]
-	var levels := [0.275,0.21,0.06,-0.275]
-	var v_coords := [0.0,0.118,0.39,1.0]
-	for row in range(4):
-		for i in range(SEGMENTS+1):
-			var u := float(i)/SEGMENTS
-			# UVs read left-to-right from outside the shirt, including its back.
-			var angle := -(u-0.25)*TAU
-			var radial := Vector3(sin(angle),0,-cos(angle))
-			var fold:=sin(u*TAU*6+v_coords[row]*3)*.003*smoothstep(.2,.95,v_coords[row])
-			vertices.append(radial*(radii[row]+fold)*Vector3(1,1,.78)+Vector3(0,levels[row],0))
-			normals.append((radial*Vector3(1,1,1.0/.78)+Vector3(0,[2.77,.38,.20,-.18][row],0)).normalized())
-			uv.append(Vector2(u,v_coords[row]))
-	for row in range(3):
-		for i in range(SEGMENTS):
-			var a := row*(SEGMENTS+1)+i
-			indices.append_array(PackedInt32Array([a,a+1,a+SEGMENTS+1,a+1,a+SEGMENTS+2,a+SEGMENTS+1]))
-	# Caps share the cloth colour at a blank UV location.
-	for row in range(2):
-		var center := vertices.size()
-		var y := 0.275 if row==0 else -0.275
-		for i in range(SEGMENTS+1):
-			var angle := i*TAU/SEGMENTS
-			vertices.append(Vector3(sin(angle)*(0.12 if row==0 else 0.225),y,-cos(angle)*(0.12 if row==0 else 0.225)*.78))
-			normals.append(Vector3.UP if row==0 else Vector3.DOWN); uv.append(Vector2(.56,.9))
-		vertices.append(Vector3(0,y,0)); normals.append(Vector3.UP if row==0 else Vector3.DOWN); uv.append(Vector2(.56,.9))
-		for i in range(SEGMENTS):
-			indices.append_array(PackedInt32Array([center+SEGMENTS+1,center+i,center+i+1] if row==0 else [center+SEGMENTS+1,center+i+1,center+i]))
-	var arrays := []; arrays.resize(Mesh.ARRAY_MAX)
-	arrays[Mesh.ARRAY_VERTEX]=vertices; arrays[Mesh.ARRAY_NORMAL]=normals; arrays[Mesh.ARRAY_TEX_UV]=uv; arrays[Mesh.ARRAY_INDEX]=indices
-	torso=ArrayMesh.new(); torso.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
+	if torso==null: torso=preload("res://scripts/player_body_mesh.gd").model("torso")
 	return torso
 
 # Compact athletic lettering baked into the same UV atlas, including Turkish
