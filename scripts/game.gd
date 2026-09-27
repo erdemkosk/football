@@ -359,6 +359,7 @@ func start_match(practice: bool = false,show_ceremony: bool = true,background: b
 	rules.reset()
 	rules.card_time=0
 	training = practice
+	clubs.rivalry.begin(self,practice,background)
 	audio.start_match(not practice and not background)
 	weather.reset_match()
 	ending_reason=""

@@ -339,6 +339,7 @@ func scoreboard() -> void:
 		var extended: bool=game.career.cups.extra_phase>0 and not game.clubs.career_clubs.is_empty()
 		center(preload("res://scripts/match_clock.gd").text(game.match_time,game.LENGTH,game.half,extended),Vector2(435+slide,64),22,GOLD)
 		text(("UZATMA  ·  " if extended else "")+("1. YARI  ·  HÜCUM ↑" if game.half==1 else "2. YARI  ·  HÜCUM ↓"),Vector2(34+slide,104),10,Color(1,1,1,0.8),true)
+		if game.clubs.rivalry.active: text("DERBİ",Vector2(453+slide,104),11,GOLD,true)
 	draw_set_transform(game.ui.edge_offset(1,-1))
 	var live := Rect2(LIVE.position+Vector2(live_slide(),0),LIVE.size)
 	panel(live,Color(0.045,0.10,0.12,0.88),3)

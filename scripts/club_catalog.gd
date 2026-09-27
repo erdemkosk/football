@@ -3,6 +3,7 @@ const Physique = preload("res://scripts/player_physique.gd")
 const World = preload("res://scripts/career_world.gd")
 const SEFC = preload("res://scripts/sefc_identity.gd")
 var game
+var rivalry:=preload("res://scripts/match_rivalry.gd").new()
 var selected := [0,1]
 var league := [0,0]
 var alternate := [false,false]
@@ -45,6 +46,19 @@ func club_id(side: int) -> String:
 	var ids: Array=league_ids(league[side])
 	if ids.is_empty(): return "c%02d" % selected[side]
 	return str(ids[clampi(selected[side],0,ids.size()-1)])
+
+func match_id(side: int) -> String:
+	return str(career_clubs[side].id) if not career_clubs.is_empty() else club_id(side)
+
+func choose_rival() -> bool:
+	ensure_world()
+	var ids: Array=preload("res://scripts/rivalries.gd").rivals(club_id(0))
+	if ids.is_empty() or not exhibition.clubs.has(ids[0]): return false
+	clear_career()
+	league[1]=int(exhibition.clubs[ids[0]].league)
+	selected[1]=league_ids(league[1]).find(ids[0])
+	reset_side(1); apply()
+	return true
 
 func catalog_index(side: int) -> int:
 	if exhibition.is_empty(): return clampi(selected[side],0,CLUBS.size()-1)

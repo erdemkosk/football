@@ -173,12 +173,13 @@ func championship_prize(key: String) -> int:
 	return CHAMPION_PRIZES.get(key,0)
 
 func fixture_label(f: Dictionary) -> String:
-	if not f.has("competition"): return World.LEAGUES[int(f.league)]+" · %d. HAFTA" % (f.round+1)
+	var prefix: String="DERBİ · " if not World.Rivalries.fixture(f).is_empty() else ""
+	if not f.has("competition"): return prefix+World.LEAGUES[int(f.league)]+" · %d. HAFTA" % (f.round+1)
 	var stage: String="FİNAL"
 	if f.competition=="domestic": stage=ROUNDS[int(f.stage)]
 	elif f.competition=="champions": stage=["GRUP "+str(char(65+int(f.group))),"ÇEYREK FİNAL","YARI FİNAL","FİNAL"][int(f.stage)]
 	if f.get("tie","")!="": stage+=" · %d. MAÇ" % f.leg
-	return TITLES[f.competition]+" · "+stage
+	return prefix+TITLES[f.competition]+" · "+stage
 
 func live_fixture() -> Dictionary:
 	if not career.in_match: return {}

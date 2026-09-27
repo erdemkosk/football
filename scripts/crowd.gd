@@ -24,6 +24,8 @@ var wave_age := 100.0
 var wave_cooldown := 0.0
 var danger := 0.0
 var home_attack := -1.0
+var derby_heat := 0.0
+var home_team := 0
 var excitement := 0.0
 var follow := 0.0
 var progress := 0.0
@@ -47,10 +49,12 @@ static func visiting(position: Vector3) -> bool:
 
 func context(score: Array,time: float,length: float) -> void:
 	progress=clampf(time/maxf(1,length),0,1)
-	margin=int(score[0])-int(score[1])
+	margin=int(score[home_team])-int(score[1-home_team])
 	var late := smoothstep(.65,.95,progress)
 	home_support=.34+late*(.57 if margin in [-1,0] else (.3 if margin==1 else .05))
 	away_support=.34+late*(.57 if margin in [0,1] else (.3 if margin== -1 else .05))
+	home_support=minf(1.0,home_support+derby_heat*.22)
+	away_support=minf(1.0,away_support+derby_heat*.18)
 var ball_focus := Vector3.ZERO
 var cloth := [Color("23363a"),Color("34434c"),Color("29483f"),Color("4b5554"),Color("647267"),Color("706654"),Color("76524d"),Color("a2a493"),Color("536a79"),Color("393933")]
 var skins := [Color("ba9073"),Color("aa7b59"),Color("755340"),Color("c4a18b"),Color("916443")]
@@ -275,6 +279,7 @@ func publish(key: String,value: Variant) -> void:
 	for prop in prop_materials: prop.set_shader_parameter(key,value)
 
 func react(kind: String,team: int,location: Vector3) -> void:
+	team=0 if team==home_team else 1
 	# A pass or save must not cut off an ongoing goal celebration.
 	if event_kind=="goal" and event_age<event_duration and kind!="goal": return
 	if kind=="shot" and event_kind=="shot" and event_age<0.35: return
@@ -289,6 +294,7 @@ func react(kind: String,team: int,location: Vector3) -> void:
 	material.set_shader_parameter("event_entrance",kind=="entrance")
 	var significance := 1.0
 	if kind=="goal" and progress>.8 and abs(margin)<=1: significance=1.3
+	if kind in ["goal","save"]: significance+=derby_heat*.2
 	material.set_shader_parameter("event_strength",significance if kind in ["goal","save"] else (0.9 if kind=="shot" else 0.75))
 	material.set_shader_parameter("event_duration",event_duration)
 	material.set_shader_parameter("event_age",0.0)
@@ -314,6 +320,7 @@ func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int
 	wave_age += delta
 	wave_cooldown = maxf(0,wave_cooldown-delta)
 	var forward := home_attack if team==0 else -home_attack
+	team=0 if team==home_team else 1
 	var target := 0.0
 	if playing and ball_position.z*forward>8:
 		var depth := clampf((ball_position.z*forward-8.0)/34.0,0,1)

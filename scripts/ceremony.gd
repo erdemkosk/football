@@ -69,6 +69,9 @@ func begin() -> void:
 	camera_at=Vector3(36+P.SIDE_SHIFT,1.2,0)
 	camera_eye=Vector3(20+P.SIDE_SHIFT,8,14)
 	camera_size=24
+	if game.clubs.rivalry.active and not game.experience.reduce_motion:
+		camera_at=game.stadium.supporters.displays[0].root.global_position
+		camera_eye=camera_at+Vector3(25,9,9); camera_size=30
 	game.stadium.react("entrance",0,Vector3(32+P.SIDE_SHIFT,0,0))
 
 func move_actor(p,destination: Vector3,delta: float,speed: float) -> bool:
@@ -181,6 +184,9 @@ func update_camera(delta: float) -> void:
 		target=Vector3.ZERO
 		eye=Vector3(0,70,37)
 		size=65
+	if phase=="walkout" and age<3.4 and game.clubs.rivalry.active and not game.experience.reduce_motion:
+		target=game.stadium.supporters.displays[0].root.global_position
+		eye=target+Vector3(25,9,9); size=30
 	var blend := 1-exp(-delta*3.6)
 	camera_at=camera_at.lerp(target,blend)
 	camera_eye=camera_eye.lerp(eye,blend)
@@ -190,4 +196,5 @@ func update_camera(delta: float) -> void:
 	game.camera.look_at(camera_at)
 
 func caption() -> String:
-	return "TAKIMLAR SAHAYA ÇIKIYOR" if phase=="walkout" else ("SEFC ARENA'YA HOŞ GELDİNİZ" if phase=="presentation" else "İLK DÜDÜĞE HAZIR")
+	var title: String="TAKIMLAR SAHAYA ÇIKIYOR" if phase=="walkout" else ("SEFC ARENA'YA HOŞ GELDİNİZ" if phase=="presentation" else "İLK DÜDÜĞE HAZIR")
+	return game.clubs.rivalry.caption()+" · "+title if game.clubs.rivalry.active else title

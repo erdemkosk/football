@@ -75,11 +75,15 @@ var swell_gain: Array[float] = []
 var packed: Array[AudioStreamPlayer] = []
 var score_margin := 0
 var match_progress := 0.0
+var derby_heat := 0.0
+var home_team := 0
+var chant_order: Array=[0,1,2]
+var chant_tempos: Array=[1.0,1.0,1.0]
 
 func crowd_context(home: float,danger: float,hush: float,margin: int,progress: float,attack_team: int=0) -> void:
 	crowd_lift=clampf(danger*.7+maxf(0,home-.35)*.6,0,1)
 	crowd_danger=clampf(danger,0,1)
-	crowd_hush=hush; score_margin=margin; match_progress=progress; crowd_attack=attack_team
+	crowd_hush=hush; score_margin=margin*(1 if home_team==0 else -1); match_progress=progress; crowd_attack=0 if attack_team==home_team else 1
 var clips: Dictionary = {}
 var contacts: Array[AudioStreamPlayer] = []
 var contact_cursor := 0
@@ -322,7 +326,7 @@ func start_match(enabled: bool) -> void:
 		for channel in contacts: channel.stop()
 		for channel in steps: channel.stop()
 	match_audio=enabled
-	drum_wait=drum_rng.randf_range(12,22)
+	drum_wait=drum_rng.randf_range(12,22)*lerpf(1.0,.65,derby_heat)
 	schedule_chants()
 	if enabled:
 		stop_menu()
@@ -431,6 +435,7 @@ func start_roar(team: int) -> void:
 	roar_age=0
 	roar_duration=maxf(2.0,clip.get_length())
 	roar_level=-4.0 if team==0 else -7.0
+	roar_level+=derby_heat
 	if match_progress>.8 and abs(score_margin)<=1: roar_level+=1.5
 	roar.play()
 
@@ -469,7 +474,7 @@ func update_walkout(delta: float) -> void:
 	if walkout==null or walkout_duration<=0: return
 	walkout_age+=delta
 	var envelope: float=minf(smoothstep(0,0.7,walkout_age),smoothstep(0,1.4,walkout_duration-walkout_age))
-	var volume: float=db_to_linear(-8.5)*envelope*stadium_volume
+	var volume: float=db_to_linear(-8.5+derby_heat*1.8)*envelope*stadium_volume
 	walkout.volume_db=linear_to_db(maxf(0.0001,volume)) if not muted else -80
 	if walkout_age>=walkout_duration or not walkout.playing:
 		stop_walkout()
@@ -483,7 +488,7 @@ func stop_replay_chant() -> void:
 	replay_duration=0
 
 func start_replay_chant(team: int) -> void:
-	if replay_chant==null or muted or not match_audio or team!=0: return
+	if replay_chant==null or muted or not match_audio or team!=home_team: return
 	var clip: AudioStreamMP3=REPLAY_CHANT.duplicate()
 	clip.loop=false
 	var span: float=maxf(0.0,clip.get_length()-8.0)
@@ -587,6 +592,7 @@ func start_reaction(kind: String) -> void:
 
 func react(kind: String,_team: int,_location: Vector3) -> void:
 	if not match_audio or muted or paused: return
+	_team=0 if _team==home_team else 1
 	if kind=="entrance":
 		start_walkout()
 		return
@@ -611,6 +617,7 @@ func react(kind: String,_team: int,_location: Vector3) -> void:
 	cheer_level={"goal":-10.0,"card":-11.0,"foul":-12.0,"save":-12.0,"shot":-15.0,"miss":-18.0,"tackle":-17.0}[kind]
 	# Goal, foul and booking use their own supplied recordings.
 	if _team==1: cheer_level-=5.0
+	cheer_level+=derby_heat*1.3
 	if kind=="goal" and match_progress>.8 and abs(score_margin)<=1: cheer_level+=2
 	if kind=="miss": cheer_duration=1.35; cheer_level-=2
 	if kind in ["save","miss"]: cheer_level+=crowd_danger*3.0
@@ -642,7 +649,7 @@ func update_atmosphere(delta: float,state: String) -> void:
 	cheer_cooldown=maxf(0,cheer_cooldown-delta)
 	update_drums(delta,state)
 	update_chants(delta,state)
-	var target := 0.0 if muted else db_to_linear(-18 if state=="halftime" else (-12+crowd_lift*4-crowd_hush*7))
+	var target := 0.0 if muted else db_to_linear(-18 if state=="halftime" else (-12+crowd_lift*4-crowd_hush*7+derby_heat*1.4))
 	ambience_gain=move_toward(ambience_gain,target,delta*0.25)
 	# Fade at the recording's loop boundary to avoid a hard audio click.
 	var position := ambience.get_playback_position()
@@ -673,7 +680,7 @@ func update_drums(delta: float,state: String) -> void:
 		if drum_age>=drum_duration or not drums.playing:
 			drums.stop()
 			drum_duration=0
-			drum_wait=drum_rng.randf_range(24,42)
+			drum_wait=drum_rng.randf_range(24,42)*lerpf(1.0,.72,derby_heat)
 		return
 	if state!="playing" or cheer_duration>0 or cheer_cooldown>0: return
 	drum_wait=maxf(0,drum_wait-delta)
@@ -688,7 +695,7 @@ func schedule_chants() -> void:
 	for i in range(chants.size()):
 		chant_age[i]=0
 		chant_duration[i]=0
-		chant_wait[i]=drum_rng.randf_range(16.0+i*8.0,28.0+i*12.0)
+		chant_wait[i]=drum_rng.randf_range(16.0+i*8.0,28.0+i*12.0)*lerpf(1.0,.58,derby_heat)
 
 func stop_chants(reschedule: bool) -> void:
 	for i in range(chants.size()):
@@ -708,13 +715,14 @@ func chanting() -> int:
 
 func start_chant(index: int) -> void:
 	if index<0 or index>=chants.size() or muted or not match_audio: return
-	var clip: AudioStreamMP3=CHANTS[index].duplicate()
+	var clip: AudioStreamMP3=CHANTS[int(chant_order[index])].duplicate()
 	clip.loop=false
 	var span: float=maxf(0.0,clip.get_length()-7.0)
 	var start: float=drum_rng.randf_range(0.0,span)
 	chant_age[index]=0
 	chant_duration[index]=minf(drum_rng.randf_range(6.5,10.5),maxf(3.0,clip.get_length()-start))
 	chants[index].stream=clip
+	chants[index].pitch_scale=float(chant_tempos[index])
 	chants[index].volume_db=-80
 	chants[index].play(start)
 
@@ -725,15 +733,19 @@ func update_chants(delta: float,state: String) -> void:
 			if state!="playing": chant_duration[i]=minf(chant_duration[i],chant_age[i]+0.35)
 			chant_age[i]+=delta
 			var envelope: float=minf(smoothstep(0,0.55,chant_age[i]),smoothstep(0,0.8,chant_duration[i]-chant_age[i]))
-			chants[i].volume_db=linear_to_db(maxf(0.0001,db_to_linear(-16.5)*envelope*drum_volume))
+			var terrace_level: float=-16.5+derby_heat*(1.2 if i!=1 else -.8)
+			chants[i].volume_db=linear_to_db(maxf(0.0001,db_to_linear(terrace_level)*envelope*drum_volume))
 			if chant_age[i]>=chant_duration[i] or not chants[i].playing:
 				chants[i].stop()
 				chant_duration[i]=0
-				chant_wait[i]=drum_rng.randf_range(22,40)
+				chant_wait[i]=drum_rng.randf_range(22,40)*lerpf(1.0,.67,derby_heat)
 			continue
 		if state!="playing" or cheer_duration>0 or cheer_cooldown>0: continue
 		chant_wait[i]=maxf(0,chant_wait[i]-delta)
 		if chant_wait[i]>0: continue
+		if derby_heat>0 and chanting()>0:
+			chant_wait[i]=drum_rng.randf_range(2,4)
+			continue
 		if chanting()>0 and drum_rng.randf()>0.42:
 			chant_wait[i]=drum_rng.randf_range(6,14)
 			continue

@@ -252,8 +252,8 @@ func draw_hub() -> void:
 	text("%d cm · %d kg · %s ayak" % [p.height_cm,p.weight_kg,"Sol" if p.attributes.preferred_foot==0 else "Sağ"],Vector2(76,690),15,MUTE)
 	text("%d maç · %d gol · %d asist" % [d.games,d.goals,d.assists],Vector2(76,724),16)
 	box(Rect2(466,279,580,218),PANEL,12)
-	text("SIRADAKİ GÖREV",Vector2(490,313),13,GOLD,true)
 	var f: Dictionary=c.next_fixture()
+	text("DERBİ GÜNÜ" if not World.Rivalries.fixture(f).is_empty() else "SIRADAKİ GÖREV",Vector2(490,313),13,GOLD,true)
 	if not f.is_empty():
 		var rival: Dictionary=c.world.clubs[f.away if f.home==c.world.user else f.home]
 		fit(rival.name,Vector2(490,355),530,28,PAPER,true)
@@ -323,7 +323,7 @@ func draw_league() -> void:
 	for i in range(mini(3,upcoming.size())):
 		var f: Dictionary=upcoming[i]; var y:=354+i*58
 		fit(c.world.clubs[f.home].name+" – "+c.world.clubs[f.away].name,Vector2(822,y),543,16)
-		text(World.date_label(int(f.day)),Vector2(822,y+24),13,MUTE)
+		text(World.date_label(int(f.day))+(" · DERBİ" if not World.Rivalries.fixture(f).is_empty() else ""),Vector2(822,y+24),13,MUTE)
 	if upcoming.is_empty(): text("Sezon tamamlandı.",Vector2(822,360),18,MUTE)
 	text("SON MAÇLAR",Vector2(822,553),17,GOLD,true)
 	var n:=0

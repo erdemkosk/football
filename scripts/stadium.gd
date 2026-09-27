@@ -26,6 +26,7 @@ var light_rig: Node3D
 var pitch_burst: Node3D
 var static_batch_stats: Dictionary = {}
 var supporter_banners: Array[Dictionary] = []
+var supporters: Node3D
 
 func set_session(practice: bool) -> void:
 	crowd.set_session(practice)
@@ -46,6 +47,8 @@ func _ready() -> void:
 	light_rig.build(self)
 	pitch_burst=PitchBurst.new()
 	add_child(pitch_burst)
+	supporters=preload("res://scripts/supporter_display.gd").new()
+	add_child(supporters)
 
 func lighting() -> void:
 	var environment = WorldEnvironment.new()

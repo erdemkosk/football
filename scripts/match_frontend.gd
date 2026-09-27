@@ -77,6 +77,7 @@ var slot_buttons: Array[Button] = []
 var first_focus: Button
 var time_button: Button
 var players_button: Button
+var rival_button: Button
 var weather_button: Button
 var difficulty_button: Button
 var duration_button: Button
@@ -267,9 +268,15 @@ func build_teams() -> void:
 	players_button=make_button(controls,Rect2(690,140,330,42),players_label(),cycle_players)
 	players_button.add_theme_font_size_override("font_size",13)
 	players_button.tooltip_text="İkinci kişi bir kontrolcü kullanır; iki kol varsa klavye gerekmez."
+	rival_button=make_button(controls,Rect2(1082,140,310,42),"EZELİ RAKİBİ GETİR",select_rival)
+	rival_button.add_theme_font_size_override("font_size",13)
 	go_button=make_button(controls,Rect2(978,815,414,64),"KADRO & TAKTİK  →",pick_current,true)
 	first_focus=team_select[mini(pick_step,1)] if pick_step<2 else go_button
 	refresh_picks()
+
+func select_rival() -> void:
+	if pick_step!=1 or not game.clubs.choose_rival(): return
+	picked[1]=false; build()
 
 func refresh_picks() -> void:
 	if team_select.size()!=2 or go_button==null: return
@@ -285,6 +292,7 @@ func refresh_picks() -> void:
 		for button in [team_left[side],team_right[side],league_buttons[side]]: button.disabled=locked
 	go_button.disabled=not (picked[0] and picked[1]) or select_wait>0
 	go_button.text="KADRO & TAKTİK  →" if not go_button.disabled else "İKİ TAKIMI SEÇ"
+	rival_button.disabled=pick_step!=1 or select_wait>0
 	configure_selection_navigation()
 
 func configure_selection_navigation() -> void:
@@ -297,6 +305,11 @@ func configure_selection_navigation() -> void:
 	if players_button!=null:
 		for side in range(2): neighbor(league_buttons[side],SIDE_TOP,players_button)
 		neighbor(players_button,SIDE_BOTTOM,league_buttons[mini(pick_step,1)])
+	if rival_button!=null and not rival_button.disabled:
+		neighbor(players_button,SIDE_RIGHT,rival_button)
+		neighbor(rival_button,SIDE_LEFT,players_button)
+		neighbor(rival_button,SIDE_BOTTOM,team_select[1])
+		neighbor(kit_buttons[1],SIDE_TOP,rival_button)
 	for side in range(2):
 		neighbor(kit_buttons[side],SIDE_BOTTOM,nearest_x(kit_buttons[side],footer))
 		neighbor(kit_buttons[side],SIDE_LEFT,kit_buttons[0])

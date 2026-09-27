@@ -84,13 +84,15 @@ func card_icon(canvas,at: Vector2,kind: String,color: Color) -> void:
 
 func hub(s) -> void:
 	var c=s.game.career; var f: Dictionary=c.next_fixture()
+	Style.fit(s,s.font,"EZELİ RAKİP · "+s.World.Rivalries.label(c.club(),c.world.clubs),Vector2(55,166),1300,12,MUTED)
 	var rect:=Rect2(52,176,810,432)
 	surface(s,rect)
 	var image: Texture2D=s.showcase.picture()
 	if image!=null: s.draw_texture_rect(image,rect,false)
 	fade(s,rect,Color(.035,.075,.11,.98),Color(.03,.06,.1,.04))
 	s.text("MAÇ GÜNÜ" if not f.is_empty() and f.day<=c.world.date else "KARİYER MERKEZİ",Vector2(78,214),12,LIME,true)
-	s.text("Sıradaki maç" if not f.is_empty() else "Sezon tamamlandı",Vector2(77,258),34,WHITE,true)
+	var derby: Dictionary=s.World.Rivalries.fixture(f)
+	s.text("Derbi günü" if not derby.is_empty() else "Sıradaki maç" if not f.is_empty() else "Sezon tamamlandı",Vector2(77,258),34,WHITE,true)
 	s.text(s.showcase.hero_label,Vector2(596,486),12,MUTED,true)
 	Style.fit(s,s.bold,s.showcase.hero_name,Vector2(596,510),244,17,WHITE)
 	if not f.is_empty():
