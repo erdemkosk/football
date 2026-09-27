@@ -65,6 +65,8 @@ const ControlsHelp = preload("res://scripts/controls_help.gd")
 var controls_help: Control
 var clubs := Clubs.new()
 var career := preload("res://scripts/career.gd").new()
+var legend := preload("res://scripts/legend_career.gd").new()
+var legend_screen: Control
 var finale:=preload("res://scripts/career_finale.gd").new()
 var pace:=preload("res://scripts/presentation_pace.gd").new()
 var career_screen: Control
@@ -200,6 +202,7 @@ func _ready() -> void:
 	team_control.game=self
 	clubs.game=self
 	career.game=self
+	legend.setup(self)
 	finale.game=self
 	pace.game=self
 	management.game=self
@@ -296,6 +299,8 @@ func _ready() -> void:
 	career_screen=preload("res://scripts/career_screen.gd").new()
 	career_screen.game=self
 	canvas.add_child(career_screen)
+	legend_screen=preload("res://scripts/legend_screen.gd").new()
+	legend_screen.game=self; canvas.add_child(legend_screen)
 	hud.mount_toast(canvas)
 	start_match(false,false,true)
 	set_physics_process(true)
@@ -468,6 +473,7 @@ func reset_positions(team: int) -> void:
 	boundary_grace = 0.5
 	previous_ball = Vector3(0,Ball.GROUND_HEIGHT,0)
 	camera_focus = Vector3.ZERO
+	legend.live.enforce_control()
 
 func reset_practice() -> void:
 	work_budget.reset()
@@ -563,13 +569,16 @@ func handle_input(event: InputEvent) -> void:
 	if state=="replay" and replay.instant and event.is_pressed() and not event.is_echo() and ((event is InputEventKey and event.keycode==KEY_Y) or (event is InputEventJoypadButton and event.button_index==JOY_BUTTON_Y)):
 		replay.slow=not replay.slow
 		get_viewport().set_input_as_handled(); return
+	if is_instance_valid(legend_screen) and legend_screen.visible:
+		if controller.menus.handle(event): get_viewport().set_input_as_handled(); return
+		legend_screen.handle(event); return
 	if is_instance_valid(career_screen) and career_screen.visible:
 		if controller.menus.handle(event): get_viewport().set_input_as_handled(); return
 		career_screen.handle(event)
 		return
 	if broadcast.handle(event):
 		get_viewport().set_input_as_handled(); return
-	if coaching.handle(event):
+	if not legend.match_active() and coaching.handle(event):
 		get_viewport().set_input_as_handled()
 		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode==KEY_F1 and (not match_menu.visible or match_menu.capture_action<0):
@@ -604,6 +613,12 @@ func handle_input(event: InputEvent) -> void:
 		if original in match_menu.keys:
 			event=event.duplicate()
 			event.keycode=match_menu.keys[original]
+	if legend.match_active() and not legend.on_pitch() and event is InputEventKey and event.pressed and event.keycode==KEY_ENTER:
+		legend.live.skip_bench(); get_viewport().set_input_as_handled(); return
+	if legend.match_active() and not legend.on_pitch() and event is InputEventKey and event.keycode not in [KEY_ESCAPE,KEY_ENTER,KEY_P,KEY_C,KEY_M]: return
+	if legend.match_active() and not legend.on_pitch():
+		if event is InputEventJoypadMotion or event is InputEventMouseButton: return
+		if event is InputEventJoypadButton and event.button_index!=JOY_BUTTON_START: return
 	if action_control.handle(event):
 		get_viewport().set_input_as_handled(); return
 	if advanced_controls.handle(event):
@@ -672,7 +687,7 @@ func handle_input(event: InputEvent) -> void:
 				weather.select((weather.preset+1)%3,state=="menu")
 				hint("HAVA · "+weather.label())
 			KEY_TAB:
-				player_lock = not player_lock
+				player_lock = true if legend.match_active() else not player_lock
 				hint("YILDIZ MODU · TEK OYUNCU" if player_lock else "TAKIM KONTROLÜ")
 			KEY_Q:
 				if state=="playing" and not charging: switch_player()
@@ -732,6 +747,8 @@ func return_menu() -> void:
 	career.training.active={}
 	if career.in_match: career.save()
 	career.detach()
+	if career==legend.career: career=legend.manager_career
+	if is_instance_valid(legend_screen): legend_screen.hide()
 	clubs.apply()
 	start_match(false,false,true)
 
@@ -803,7 +820,7 @@ func update_camera(delta: float) -> void:
 		return
 	var rendered_ball: Vector3=ball.get_global_transform_interpolated().origin if delta>0 else ball.position
 	var focus: Vector3 = rendered_ball
-	if state=="playing": focus = rendered_ball.lerp(players[controlled].get_global_transform_interpolated().origin if delta>0 else players[controlled].position,0.26)
+	if state=="playing": focus = rendered_ball.lerp(players[controlled].get_global_transform_interpolated().origin if delta>0 else players[controlled].position,0.66 if legend.on_pitch() else 0.26)
 	if state in ["restart","set_piece"] and restart_type=="SANTRA" and set_pieces.recovery.phase in ["arrange","ready"]: focus=restart_point
 	var kick_view := (not training_drills.placing()) and state in ["restart","set_piece"] and restart_type in ["SERBEST VURUŞ","ENDİREKT VURUŞ","PENALTI","KORNER"] and set_pieces.recovery.phase in ["arrange","ready"]
 	if kick_view:
@@ -844,6 +861,7 @@ func _physics_process(delta: float) -> void:
 	else: simulate_match(delta)
 
 func simulate_match(delta: float) -> void:
+	legend.live.update(delta)
 	if pace.update(delta): return
 	playtest.update(delta)
 	match_report.update(delta)
@@ -1017,14 +1035,17 @@ func tint_marker(index: int) -> void:
 	if p.marker.material_override!=marker_materials[owner]: p.marker.material_override=marker_materials[owner]
 
 func human_step(delta: float) -> void:
+	if legend.match_active() and not legend.on_pitch(): return
 	team_control.update(delta)
 	update_control(delta)
 
 func human_prepare(delta: float) -> void:
+	if legend.match_active() and not legend.on_pitch(): return
 	defending.update(delta)
 	finishing.prepare(delta)
 
 func human_resolve() -> void:
+	if legend.match_active() and not legend.on_pitch(): return
 	defending.resolve()
 	finishing.resolve()
 
@@ -1039,6 +1060,7 @@ func restart_pose_can_wait(index: int) -> bool:
 	return p.position.distance_squared_to(ball.position)>12.0*12.0
 
 func is_user_player(index: int) -> bool:
+	if legend.match_active(): return legend.on_pitch() and index==legend.live.index
 	if menu_match.running: return false
 	if humans.multiple(): return humans.owner_of(index)>=0
 	return index==controlled
@@ -1066,6 +1088,7 @@ func human_team(team: int) -> bool:
 	return not menu_match.running and humans.human_team(team)
 
 func autonomous_kicks(team: int) -> bool:
+	if legend.match_active(): return true
 	# Teammates still defend and make runs; possession decisions belong to people.
 	return not human_team(team)
 
@@ -1165,9 +1188,9 @@ func update_control(delta: float) -> void:
 		players[controlled].facing=controller.combos.cross_direction
 		players[controlled].ball_actions.prepare_kick(players[controlled],ball.position,controller.combos.cross_direction,first_touch.pressure(controlled))
 	var own_keeper: int=active_team()*11
-	if controlled==own_keeper and (goalkeeping.is_rushing(own_keeper) or ball.held_by==players[own_keeper]):
+	if controlled==own_keeper and (goalkeeping.is_rushing(own_keeper) or ball.held_by==players[own_keeper] or legend.on_pitch()):
 		var keeper_target: Vector3=goalkeeping.update(own_keeper,delta)
-		if ball.held_by!=players[own_keeper]:
+		if ball.held_by!=players[own_keeper] and not legend.on_pitch():
 			var offset: Vector3=(keeper_target-players[own_keeper].position)*Vector3(1,0,1)
 			players[own_keeper].desired=offset.normalized()*clampf(offset.length()/1.4,0,1)
 
@@ -1303,6 +1326,7 @@ func flat_distance(a: Vector3,b: Vector3) -> float:
 	return Vector2(a.x-b.x,a.z-b.z).length()
 
 func switch_player() -> void:
+	if legend.match_active(): return
 	if not training_drills.team_play(): return
 	clear_pass_request()
 	var best: int=duels.switch_choice()
@@ -1420,8 +1444,10 @@ func commit_strike(index: int,velocity: Vector3,curve: float=0,is_save: bool=fal
 	if not is_save: velocity=strike_quality.apply(index,velocity,kind,curve)
 	playtest.strike(index,velocity,kind,is_save)
 	match_report.strike(index,kind,is_save)
+	legend.live.strike(index,kind,is_save)
 	if not is_save: opponent_coach.observe_kick(index,velocity,kind)
 	if not is_save: rules.kicked(index)
+	var previous_owner: int=dribbler
 	if dribbler>=0: players[dribbler].dribble_motion.release_collision()
 	possession_player = -1
 	dribbler=-1
@@ -2100,6 +2126,7 @@ func goal(team: int) -> void:
 	broadcast_event("own_goal" if own_goal else "goal",{"index":last_kicker,"team":team})
 	reactions.on_target(team)
 	career.capture_goal(team,last_kicker)
+	legend.live.goal(team,last_kicker)
 	support.reset()
 	duels.reset()
 	goalkeeping.reset()

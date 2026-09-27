@@ -114,10 +114,10 @@ func input_direction() -> Vector2:
 
 func shot_button(pressed: bool) -> void:
 	if paused or game.state!="shootout": return
-	if side==0 and phase=="ready":
+	if user_shooter() and phase=="ready":
 		if pressed: charging=true; power=0
 		elif charging: charging=false; launch(aim,clampf(power,.16,1))
-	elif side==1 and pressed and phase in ["ready","flight"] and not keeper_jumped:
+	elif user_keeper() and pressed and phase in ["ready","flight"] and not keeper_jumped:
 		keeper_jumped=true
 		var dir:=input_direction()
 		keeper.start_dive((-1 if dir.x>=0 else 1)*(1.5+absf(dir.x)*2.2),1.5-dir.y,.45)
@@ -136,7 +136,7 @@ func launch(target: Vector2,strength: float) -> void:
 	game.audio.contact("kick",strength)
 	game.stadium.crowd.react("shot",side,origin)
 	# Keeper commits with imperfect anticipation, never tracks every change exactly.
-	if side==0: keeper_aim=goal.x+random.randf_range(-1.8,1.8)
+	if not user_keeper(): keeper_aim=goal.x+random.randf_range(-1.8,1.8)
 
 func update(delta: float) -> void:
 	if paused: return
@@ -145,7 +145,7 @@ func update(delta: float) -> void:
 	if game.state!="shootout": return
 	shooter.step(delta); keeper.step(delta)
 	if phase=="ready":
-		if side==0:
+		if user_shooter():
 			var direction:=input_direction()
 			if game.controller.using_gamepad and not keys.values().has(true):
 				direction=game.controller.precision_stick(axes)
@@ -155,7 +155,7 @@ func update(delta: float) -> void:
 		elif age>2.5: launch(Vector2(random.randf_range(-.98,.98),random.randf_range(.02,.70)),random.randf_range(.45,.82))
 	elif phase=="flight":
 		var point: Vector3=game.ball.position
-		if side==0 and not keeper_jumped and age>=keeper_delay:
+		if not user_keeper() and not keeper_jumped and age>=keeper_delay:
 			keeper_jumped=true; keeper.start_dive(keeper_aim,clampf(aim.y*2.5,.4,2.3),.43)
 		# Sweep the ball between frames against the keeper's animated hands/body.
 		if not saved:
@@ -299,10 +299,16 @@ func draw(h) -> void:
 			var color: Color=h.MUTE if n>=attempts[team].size() else (Color("78d8a5") if attempts[team][n] else Color("eb8e7c"))
 			h.draw_circle(Vector2(412+(n%11)*30+team*340,119+floori(n/11.0)*20),8,color)
 	h.panel(Rect2(285,737,870,124),Color("122c30"),10)
-	h.center("DURAKLATILDI · ESC / START" if paused else (result if phase=="result" else ("YÖNÜ AYARLA · ŞUTU BASILI TUT, BIRAK" if side==0 else "KALECİ SENSİN · YÖN + ŞUT İLE ATLA")),Vector2(720,772),20,h.GOLD)
+	h.center("DURAKLATILDI · ESC / START" if paused else (result if phase=="result" else ("YÖNÜ AYARLA · ŞUTU BASILI TUT, BIRAK" if user_shooter() else "KALECİ SENSİN · YÖN + ŞUT İLE ATLA" if user_keeper() else "TAKIM ARKADAŞLARINI İZLE · SIRANI BEKLE")),Vector2(720,772),20,h.GOLD)
 	if game.controller.using_gamepad: game.controller.Glyphs.draw_hints(h,Vector2(483,802),[["LS / D-PAD","Yön"],["X","Şut / Atla"],["START","Mola"]],game.controller.family,h.font,24,13)
 	else: h.center("YÖN TUŞLARI · D ŞUT / ATLA · ESC MOLA",Vector2(720,807),15)
-	if side==0 and phase=="ready":
+	if user_shooter() and phase=="ready":
 		h.draw_rect(Rect2(446,825,548,9),Color("38504b")); h.draw_rect(Rect2(446,825,548*power,9),h.GOLD if power<.83 else Color("e48e73"))
 		var point: Vector2=game.screen_position(Vector3(aim.x*3.42,.3+aim.y*2.45,50))
 		h.draw_arc(point,12,0,TAU,32,h.GOLD,2,true); h.draw_circle(point,3,h.PAPER)
+
+func user_shooter() -> bool:
+	return shooter!=null and game.is_user_player(game.players.find(shooter)) if game.legend.match_active() else side==0
+
+func user_keeper() -> bool:
+	return keeper!=null and game.is_user_player(game.players.find(keeper)) if game.legend.match_active() else side==1

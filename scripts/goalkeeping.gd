@@ -160,7 +160,7 @@ func update(index: int,delta: float) -> Vector3:
 		if not game.is_user_player(index) or (not game.charging and not game.pass_charging and p.desired.length()<0.05):
 			p.facing=Vector3(0,0,forward)
 		game.ball.hold_target=p.hand_center()
-		if hold_age>1.15+game.management.reaction(p.team)*.35 and game.autonomous_kicks(p.team):
+		if hold_age>1.15+game.management.reaction(p.team)*.35 and game.autonomous_kicks(p.team) and not (game.legend.match_active() and game.is_user_player(index)):
 			game.ai_attack.distribute(index)
 		return p.position
 	if holding==index:
@@ -176,7 +176,7 @@ func update(index: int,delta: float) -> Vector3:
 		p.sprinting=false
 		p.facing=Vector3(0,0,forward)
 		if p.touch_cooldown<=0 and game.kick_lock<=0:
-			if game.autonomous_kicks(p.team): game.ai_attack.keeper_foot_pass(index)
+			if game.autonomous_kicks(p.team) and not (game.legend.match_active() and game.is_user_player(index)): game.ai_attack.keeper_foot_pass(index)
 			elif not in_box and (called or (index==rush_team*11 and returning)):
 				game.strike(index,Vector3(6 if ball.x>=0 else -6,2.5,forward*20))
 			elif not game.player_lock and game.training_drills.team_play(): game.team_control.select(index)

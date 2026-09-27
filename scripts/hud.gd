@@ -170,10 +170,11 @@ func _draw() -> void:
 	game.advanced_controls.draw(self)
 	game.commentary.draw(self)
 	draw_other_people()
+	game.legend.draw(self)
 	if game.experience.team_symbols: team_symbols()
 	var p = game.players[game.controlled]
 	var marker: Vector2 = game.screen_position(p.position+Vector3.UP*(p.height_cm/100.0+0.30))
-	if not game.camera.is_position_behind(p.position) and game.ui.bounds().grow(-36).has_point(marker):
+	if game.is_user_player(game.controlled) and not game.camera.is_position_behind(p.position) and game.ui.bounds().grow(-36).has_point(marker):
 		var pulse := 1-smoothstep(0,.42,game.team_control.selection_age)
 		if pulse>0: draw_arc(marker,11+(1-pulse)*14,0,TAU,32,Color(GOLD,pulse*.85),2,true)
 		draw_colored_polygon(PackedVector2Array([marker+Vector2(-9,-7),marker+Vector2(9,-7),marker+Vector2(0,7)]),INK)
@@ -214,7 +215,7 @@ func _draw() -> void:
 	elif game.state=="playing" and pass_trail_time>0 and not game.charging:
 		draw_pass_guide(last_pass.plan,last_pass.route,Color("8ec6e8") if last_pass.plan.get("lob",false) else Color("a7d9bb"),clampf(pass_trail_time/0.3,0,1)*0.85)
 	if game.state in ["restart","set_piece"]: set_piece_overlay()
-	game.coaching.draw(self)
+	if not game.legend.match_active(): game.coaching.draw(self)
 	if game.state in ["paused","finished"]: modal()
 
 func draw_toast(on: CanvasItem=self) -> void:
@@ -385,6 +386,7 @@ func skip_chip(rect: Rect2,label: String="SPACE / ENTER  ·  GEÇ",pad_label: St
 func set_piece_overlay() -> void:
 	var setup = game.set_pieces
 	if game.state!="set_piece" or game.restart_team!=0: return
+	if game.legend.match_active() and not setup.human_restart(): return
 	setup.routines.draw(self,setup)
 	if setup.kind()=="shot":
 		draw_shot_guide(setup.pending_velocity,setup.pending_curve,GOLD,setup.preview_power(),"PENALTI" if game.restart_type=="PENALTI" else "FRİKİK")
@@ -404,6 +406,7 @@ func crest(p: Vector2,away: bool,scale_value: float=1) -> void:
 	center(club.short.substr(0,1),p+Vector2(0,7*scale_value),int(22*scale_value),Color("9e3d32") if away else GOLD)
 
 func player_info() -> void:
+	if game.legend.match_active() and not game.legend.on_pitch(): return
 	var scale_value: float=game.experience.hud_scale("player")
 	draw_set_transform(game.ui.edge_offset(-1,1)+Vector2(0,24)+Vector2(32,844)*(1-scale_value),0,Vector2.ONE*scale_value)
 	var p = game.players[game.controlled]
@@ -411,7 +414,7 @@ func player_info() -> void:
 	draw_rect(Rect2(32,744,4,100),GOLD)
 	text("%02d" % p.shirt_number,Vector2(51,789),31,GOLD,true)
 	UI.fit(self,bold,p.display_name,Vector2(103,773),184,21,PAPER)
-	text("YILDIZ MODU" if game.player_lock else game.team_name(0),Vector2(103,792),9,MUTE,true)
+	text("EFSANE" if game.legend.match_active() else "YILDIZ MODU" if game.player_lock else game.team_name(0),Vector2(103,792),9,MUTE,true)
 	var stamina_color := Color("ed9279") if p.exhausted else (Color("e9ce87") if p.energy<0.4 else Color("a7d9bb"))
 	var stamina_status := "STAMİNA"
 	if p.exhausted: stamina_status = "YORGUN"
@@ -465,8 +468,8 @@ func minimap() -> void:
 			draw_circle(pos,4.5,INK)
 			if p.team==0: draw_circle(pos,3,Color.WHITE)
 			else: draw_rect(Rect2(pos-Vector2(3,3),Vector2(6,6)),Color.WHITE,false,1.5)
-			if i==game.controlled: draw_arc(pos,6,0,TAU,16,GOLD,1.5,true)
-		else: draw_circle(pos,3 if i==game.controlled else 2.2,GOLD if i==game.controlled else team_colors[p.team])
+			if game.is_user_player(i): draw_arc(pos,6,0,TAU,16,GOLD,1.5,true)
+		else: draw_circle(pos,3 if game.is_user_player(i) else 2.2,GOLD if game.is_user_player(i) else team_colors[p.team])
 	var ball_pos: Vector3 = game.ball.position
 	var dot := Vector2(1337+ball_pos.x/P.WIDTH*112,750.5+ball_pos.z/P.LENGTH*155)
 	if game.experience.team_symbols:
@@ -528,8 +531,10 @@ func rematch() -> void:
 
 func sync_navigation() -> void:
 	var state: String=game.state if game.state in ["menu","paused","finished","halftime","ceremony","replay","goal"] else ""
+	if game.legend.match_active() and game.legend.live.index<0 and not game.legend.live.queued and game.state=="playing": state="legend_bench"
 	if state=="" and can_skip_to_kickoff(): state="kickoff_skip"
 	var covered: bool=(is_instance_valid(game.match_menu) and game.match_menu.visible) or (is_instance_valid(game.frontend) and game.frontend.visible) or (is_instance_valid(game.controls_help) and game.controls_help.visible)
+	covered=covered or (is_instance_valid(game.legend_screen) and game.legend_screen.visible)
 	covered=covered or (is_instance_valid(game.career_screen) and game.career_screen.visible)
 	covered=covered or (is_instance_valid(game.training_menu) and game.training_menu.visible) or (game.broadcast.active and game.state!="paused")
 	help_launcher.visible=false
@@ -556,12 +561,13 @@ func sync_navigation() -> void:
 			"paused":
 				var rects=preload("res://scripts/pause_art.gd").RECTS
 				nav_button(rects[0],game.resume)
-				nav_button(rects[1],game.reset_practice if game.training else game.frontend.open_tactics)
+				nav_button(rects[1],game.reset_practice if game.training else game.controls_help.open_panel if game.legend.match_active() else game.frontend.open_tactics)
 				nav_button(rects[2],game.match_menu.open_menu)
 				nav_button(rects[3],game.training_menu.open_menu if game.training else game.frontend.open_selection)
 				nav_button(rects[4],game.return_menu)
 				nav_button(rects[5],game.controls_help.open_panel)
 				nav_button(rects[6],game.open_instant_replay)
+			"legend_bench": nav_button(Rect2(game.legend.live.SKIP_RECT.position+game.ui.edge_offset(1,-1),game.legend.live.SKIP_RECT.size),game.legend.live.skip_bench)
 			"finished": Report.navigation(self)
 			"halftime": nav_button(Rect2(86,564,420,54),game.interval.finish)
 			"ceremony": nav_button(Rect2(1175,825,225,40),game.ceremony.finish.bind(true))

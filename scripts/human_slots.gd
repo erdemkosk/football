@@ -135,6 +135,7 @@ func slot_for_event(event: InputEvent) -> int:
 	return -1
 
 func set_controlled_for_team(team: int,player: int) -> void:
+	if not game.legend.allows_selection(player): return
 	var slot := slot_for_team(team)
 	if slot<0: return
 	if slot==active: game.controlled=player

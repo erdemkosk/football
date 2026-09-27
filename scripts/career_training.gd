@@ -151,6 +151,7 @@ func start(index: int) -> bool:
 	return true
 
 func finish(score: int) -> Dictionary:
+	if active.get("legend",false): return career.game.legend.finish_training(score)
 	if active.is_empty(): return {}
 	var result: Dictionary={}
 	var c=career
@@ -161,6 +162,7 @@ func finish(score: int) -> Dictionary:
 	return result
 
 func leave() -> void:
+	if career.game.legend.active(): career.game.legend.leave_training(); return
 	active={}
 	var g=career.game
 	g.clubs.apply(); g.training=false; g.player_lock=false

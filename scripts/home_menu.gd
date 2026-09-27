@@ -2,10 +2,10 @@ extends RefCounted
 const World=preload("res://scripts/career_world.gd")
 const Graphics=preload("res://scripts/kit_graphics.gd")
 const RECTS := [
-	Rect2(64,392,520,88), Rect2(64,628,520,72),
-	Rect2(64,716,254,54), Rect2(64,786,520,46),
-	Rect2(64,496,520,116), Rect2(330,716,254,54)]
-const ACTIONS := ["quick","training","settings","guide","career","saves"]
+	Rect2(64,392,520,72), Rect2(64,676,520,60),
+	Rect2(64,748,254,46), Rect2(64,806,520,42),
+	Rect2(64,476,520,96), Rect2(330,748,254,46), Rect2(64,584,520,80)]
+const ACTIONS := ["quick","training","settings","guide","career","saves","legend"]
 var game
 var was_visible:=false
 var resume_slot:=0
@@ -54,7 +54,7 @@ func career_action() -> void:
 		if first_empty>0: game.career_screen.choose(first_empty)
 
 func title(index: int) -> String:
-	return ["HIZLI MAÇ","ANTRENMAN","AYARLAR","KONTROL REHBERİ","KARİYERE DEVAM ET" if resume_slot>0 else "YENİ KARİYER","YENİ / KAYITLAR"][index]
+	return ["HIZLI MAÇ","ANTRENMAN","AYARLAR","KONTROL REHBERİ","KARİYERE DEVAM ET" if resume_slot>0 else "YENİ KARİYER","YENİ / KAYITLAR","EFSANE · FUTBOLCU KARİYERİ"][index]
 
 func content_offset(bottom: bool=false) -> Vector2:
 	# Keep a 32-unit side margin on the real screen, independently of the
@@ -70,15 +70,15 @@ func layout(h) -> void:
 		if h.nav_buttons[i].position!=at: h.nav_buttons[i].position=at
 
 func navigation(h) -> void:
-	var callbacks: Array[Callable]=[game.frontend.open_selection,game.training_menu.open_menu,game.match_menu.open_menu,game.controls_help.open_panel,career_action,game.career_screen.open_entry]
+	var callbacks: Array[Callable]=[game.frontend.open_selection,game.training_menu.open_menu,game.match_menu.open_menu,game.controls_help.open_panel,career_action,game.career_screen.open_entry,game.legend.open]
 	for i in range(RECTS.size()):
 		h.nav_button(card_rect(i),callbacks[i])
 		h.nav_buttons[i].set_meta("home_action",ACTIONS[i])
 		h.nav_buttons[i].tooltip_text=title(i)
 	# Geometry and controller navigation follow the same visual order.
 	# The horizontal pair is Settings / Saves; every other item spans the column.
-	var neighbors := [[3,4,0,0],[4,2,1,1],[1,3,5,5],[2,0,3,3],[0,1,4,4],[1,3,2,2]]
-	var order := [0,4,1,2,5,3]
+	var neighbors := [[3,4,0,0],[6,2,1,1],[1,3,5,5],[2,0,3,3],[0,6,4,4],[1,3,2,2],[4,1,6,6]]
+	var order := [0,4,6,1,2,5,3]
 	var sides := [SIDE_TOP,SIDE_BOTTOM,SIDE_LEFT,SIDE_RIGHT]
 	for i in range(RECTS.size()):
 		var item: Button=h.nav_buttons[i]
@@ -109,6 +109,7 @@ func draw(h) -> void:
 	card(h,3,"","guide",false)
 	card(h,4,str(summary.get("name","Bir kulüp seç. Kendi hikâyeni yaz.")),"career",resume_slot>0)
 	card(h,5,"","saves",false)
+	card(h,6,"Kendi oyuncunu yarat. Formanı kazan.","legend",false)
 	h.draw_line(Vector2(64,851),Vector2(584,851),Color(h.GOLD,.16),1)
 	if game.controller.using_gamepad:
 		h.pad_hints(Vector2(65,877),[["D-PAD","Gez"],["A","Seç"]],22,11)
@@ -168,6 +169,9 @@ func icon(h,at: Vector2,kind: String,color: Color,small: bool) -> void:
 			h.draw_arc(Vector2.ZERO,7,0,TAU,24,color,1.5,true)
 			h.draw_rect(Rect2(-21,-7,7,14),color,false,1.5)
 			h.draw_rect(Rect2(14,-7,7,14),color,false,1.5)
+		"legend":
+			h.draw_arc(Vector2(0,-9),8,0,TAU,24,color,2,true)
+			h.draw_polyline(PackedVector2Array([Vector2(-18,18),Vector2(-15,5),Vector2(0,0),Vector2(15,5),Vector2(18,18)]),color,2,true)
 		"career":
 			h.draw_polyline(PackedVector2Array([Vector2(-13,-17),Vector2(13,-17),Vector2(11,1),Vector2(0,10),Vector2(-11,1),Vector2(-13,-17)]),color,2,true)
 			h.draw_line(Vector2(0,10),Vector2(0,19),color,2,true)

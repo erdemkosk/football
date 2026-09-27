@@ -4,6 +4,8 @@ var game
 var world: Dictionary = {}
 var slot := 1
 var save_root := "user://"
+var save_prefix := "sefc_career_"
+var player_mode := false
 var in_match := false
 var fixture_id := ""
 var match_ids: Array = [[],[]]
@@ -37,7 +39,7 @@ func remember_quick_match() -> void:
 func club() -> Dictionary: return world.clubs[world.user]
 func player(id: String) -> Dictionary: return world.players[id]
 func exists() -> bool: return not world.is_empty()
-func path_for(index: int) -> String: return save_root.path_join("sefc_career_%d.save" % index)
+func path_for(index: int) -> String: return save_root.path_join(save_prefix+str(index)+".save")
 func has_save(index: int) -> bool: return FileAccess.file_exists(path_for(index)) or FileAccess.file_exists(path_for(index)+".bak")
 
 func read_save(index: int) -> Dictionary:
@@ -60,16 +62,20 @@ func slot_summary(index: int) -> Dictionary:
 	var saved:=read_save(index)
 	if saved.is_empty(): return {}
 	var w: Dictionary=saved.world; var c: Dictionary=w.clubs[w.user]
-	return {"name":c.name,"league":c.league,"date":w.date,"year":w.year,"badge":c}
+	var result:={"name":c.name,"league":c.league,"date":w.date,"year":w.year,"badge":c}
+	if w.has("legend"):
+		var p: Dictionary=w.players[w.legend.player]
+		result.merge({"player":p.name,"overall":World.ovr(p),"position":preload("res://scripts/legend_progression.gd").SHORT[int(w.legend.position)]})
+	return result
 
-func new_career(id: String,index: int=1,settings: Dictionary={}) -> bool:
+func new_career(id: String,index: int=1,settings: Dictionary={},persist: bool=true) -> bool:
 	world=World.create(); world.user=id; slot=index; in_match=false; fixture_id=""; deal.clear()
 	world.match_settings=preload("res://scripts/match_settings.gd").normalized(settings)
 	cups.start(world)
 	director.ensure(world)
 	news("YENİ DÖNEM",club().name+" teknik direktörünü karşıladı. Hedef: "+club().objective,"club")
 	contracts.review_retirements()
-	return save()
+	return save() if persist else true
 
 func valid(w) -> bool:
 	if not w is Dictionary or not w.get("version",0) in [1,2,3,4,World.VERSION]: return false
@@ -77,6 +83,7 @@ func valid(w) -> bool:
 		if not w.has(key): return false
 	if not w.clubs.has(w.user) or not w.clubs.size() in [36,48,92,World.CLUB_COUNT]: return false
 	if not training.valid(w): return false
+	if player_mode!=w.has("legend") or not preload("res://scripts/legend_progression.gd").valid(w): return false
 	if w.has("league_prizes") and not w.league_prizes is Dictionary: return false
 	if w.version>=3:
 		for key in ["cups","cup_fixtures","cup_history","cups_pending"]:
@@ -383,6 +390,7 @@ func simulate_next() -> bool:
 	return save()
 
 func sale_allowed(pid: String) -> bool:
+	if player(pid).get("legend_player",false): return false
 	if contracts.transfer_lock(pid)!="" or player(pid).get("academy_owner","")!="": return false
 	var p:=player(pid)
 	if p.club=="": return true
@@ -637,6 +645,7 @@ func next_season() -> bool:
 	for p in world.players.values():
 		if p.get("retired",false): continue
 		p.age+=1; p.goals=0; p.appearances=0; p.fitness=1; p.banned=0; p.yellow=0
+		if p.get("legend_player",false): p.contract=maxi(p.contract,world.year+2)
 		var growth: int=-1 if p.age>=32 else 0
 		p.minutes=0; p.recent_minutes=[]; p.paid_goals=0
 		for key in p.attributes:
@@ -705,6 +714,7 @@ func prepare_match() -> bool:
 		for pid in pool:
 			if reserves.size()>=7: break
 			if not pid in reserves: reserves.append(pid)
+		if side==0 and game.legend.active(): game.legend.ensure_bench(chosen,reserves,pool)
 		chosen.append_array(reserves)
 		if chosen.size()<18: error="Maç kadrosu için 18 uygun oyuncu gerekli."; game.clubs.clear_career(); return false
 		match_ids[side]=chosen
@@ -742,6 +752,7 @@ func match_started() -> void:
 		match_ids[side]=[]
 		for n in game.clubs.lineups[side]+game.clubs.reserves[side]: match_ids[side].append(game.clubs.career_rosters[side][n].id)
 	club().lineup=match_ids[0].slice(0,11)
+	if game.legend.active(): game.legend.live.begin()
 	save()
 
 func remember_player(p) -> void:
@@ -757,6 +768,7 @@ func enter_player(p) -> void:
 	game.broadcast.debut(p)
 	match_entered[p.career_id]=game.match_time/game.LENGTH*90
 	if not p.career_id in match_participants[p.team]: match_participants[p.team].append(p.career_id)
+	if game.legend.active(): game.legend.live.entered_player(p)
 
 func finish_match() -> bool:
 	if not in_match: return false
@@ -781,6 +793,7 @@ func finish_match() -> bool:
 			if identity.yellow>=4: identity.banned=1; identity.yellow=0
 	for other in cups.all_fixtures():
 		if not other.played and other.day<=world.date: simulate(other)
+	if game.legend.active(): game.legend.finish_match()
 	in_match=false; fixture_id=""; save()
 	game.finale.after_result(f)
 	return true

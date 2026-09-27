@@ -216,7 +216,7 @@ func handle(event: InputEvent) -> bool:
 
 func draw(hud) -> void:
 	if game.state!="playing" or game.menu_match.running: return
-	var next: int=game.team_control.next_switch()
+	var next: int=-1 if game.player_lock else game.team_control.next_switch()
 	if next>=0:
 		var p=game.players[next]
 		var point: Vector3=p.position+Vector3.UP*2.75

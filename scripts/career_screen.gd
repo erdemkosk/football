@@ -147,6 +147,7 @@ func open_entry() -> void:
 	pause_world(); visible=true; page="entry"; status=""; build()
 
 func open_hub() -> void:
+	if game.legend.active(): game.legend_screen.open_hub(); return
 	if not game.career.exists(): open_entry(); return
 	if game.career.in_match and game.state=="finished": game.career.finish_match()
 	if game.state=="trophy": visible=false; clear_controls(); return

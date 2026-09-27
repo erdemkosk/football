@@ -40,6 +40,7 @@ func automatic() -> bool:
 	return game.training_drills.team_play() and not game.player_lock and not game.menu_match.running and game.state=="playing"
 
 func touched(index: int) -> void:
+	game.legend.live.touched(index)
 	if game.state!="playing" or index<0 or index>=game.players.size(): return
 	var player=game.players[index]
 	if not player.visible or player.dismissed: return
@@ -83,6 +84,7 @@ func follow_pass(receiver: int,route: Dictionary) -> void:
 	run_target=route.target
 
 func select(index: int,manual: bool=false) -> void:
+	if not game.legend.allows_selection(index): return
 	if game.menu_match.running: return
 	if index<0 or index>=game.players.size(): return
 	var p=game.players[index]

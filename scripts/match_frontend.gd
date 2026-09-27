@@ -162,6 +162,7 @@ func open_selection() -> void:
 	build()
 
 func open_tactics(is_prematch: bool=false) -> void:
+	if game.legend.match_active(): return
 	prematch=is_prematch
 	if not prematch:
 		previous_state=game.before_pause if game.state=="paused" else game.state

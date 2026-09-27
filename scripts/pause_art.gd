@@ -21,7 +21,7 @@ static func draw(hud) -> void:
 	hud.panel(Rect2(108,553,610,5),UI.LINE,2)
 	hud.panel(Rect2(108,553,610*hud.game.possession[0]/total,5),UI.MINT,2)
 	hud.center("ŞUT  %d – %d        KURTARIŞ  %d – %d" % [hud.game.shots[0],hud.game.shots[1],hud.game.saves[0],hud.game.saves[1]],Vector2(412,598),14,UI.MUTE)
-	var labels=["DEVAM ET  →","YENİ DENEME" if hud.game.training else "KADRO & TAKTİK","AYARLAR","ANTRENMAN" if hud.game.training else "HIZLI MAÇ","ANA MENÜ","KONTROL REHBERİ","ANLIK TEKRAR  ·  SON 12 SN"]
+	var labels=["DEVAM ET  →","YENİ DENEME" if hud.game.training else "FUTBOLCU KONTROLLERİ" if hud.game.legend.match_active() else "KADRO & TAKTİK","AYARLAR","ANTRENMAN" if hud.game.training else "HIZLI MAÇ","ANA MENÜ","KONTROL REHBERİ","ANLIK TEKRAR  ·  SON 12 SN"]
 	for i in range(RECTS.size()):
 		var rect: Rect2=RECTS[i]
 		hud.panel(rect,UI.GOLD if i==0 else UI.PANEL,10,UI.LINE if i>0 else Color.TRANSPARENT)

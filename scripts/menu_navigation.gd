@@ -10,9 +10,11 @@ var popup_option: OptionButton
 const DIRECTIONS := {JOY_BUTTON_DPAD_LEFT:Vector2i.LEFT,JOY_BUTTON_DPAD_RIGHT:Vector2i.RIGHT,JOY_BUTTON_DPAD_UP:Vector2i.UP,JOY_BUTTON_DPAD_DOWN:Vector2i.DOWN}
 
 func screen() -> String:
+	if is_instance_valid(popup_option) and popup_option.get_popup().visible: return "option:"+str(popup_option.get_instance_id())
+	if is_instance_valid(game.legend_screen) and game.legend_screen.visible: return "legend:"+game.legend_screen.page
+	if game.legend.match_active() and game.legend.live.index<0 and not game.legend.live.queued and game.state=="playing": return "legend_bench"
 	if is_instance_valid(game.career_screen) and game.career_screen.visible: return "career:"+game.career_screen.page
 	if is_instance_valid(game.controls_help) and game.controls_help.visible: return "controls_help"
-	if is_instance_valid(popup_option) and popup_option.get_popup().visible: return "option:"+str(popup_option.get_instance_id())
 	if is_instance_valid(game.match_menu) and game.match_menu.visible:
 		return "settings:%d:%d" % [game.match_menu.page,game.match_menu.capture_action]
 	if is_instance_valid(game.frontend) and game.frontend.visible:
@@ -99,6 +101,8 @@ func handle(event: InputEvent) -> bool:
 		if event.button_index in [JOY_BUTTON_B,JOY_BUTTON_BACK,JOY_BUTTON_START]: popup_option.get_popup().hide()
 	elif game.controls_help.visible:
 		game.controls_help.handle(event)
+	elif is_instance_valid(game.legend_screen) and game.legend_screen.visible:
+		game.legend_screen.handle(event)
 	elif is_instance_valid(game.career_screen) and game.career_screen.visible:
 		game.career_screen.handle(event)
 	elif game.match_menu.visible:

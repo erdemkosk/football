@@ -153,7 +153,7 @@ func prepare() -> void:
 	game.carrier=-1
 	game.last_touch=team
 	game.last_kicker=-1
-	if game.human_team(team): game.humans.set_controlled_for_team(team,taker)
+	if human_restart(): game.humans.set_controlled_for_team(team,taker)
 	game.last_direction=direction
 	ready_age=0
 	recovery.begin(self)
@@ -327,9 +327,9 @@ func ready() -> void:
 	game.ball.active=true
 	game.referees.whistle()
 	if game.restart_type=="SANTRA":
-		game.hint("SANTRA · "+((("A" if game.controller.using_gamepad else "S")+" İLE PAS VEREREK BAŞLA") if game.human_team(game.restart_team) else "RAKİP OYUNU BAŞLATIYOR"))
+		game.hint("SANTRA · "+((("A" if game.controller.using_gamepad else "S")+" İLE PAS VEREREK BAŞLA") if human_restart() else "TAKIM ARKADAŞIN BAŞLATIYOR" if game.legend.match_active() and game.restart_team==0 else "RAKİP OYUNU BAŞLATIYOR"))
 	else:
-		game.hint("DÜDÜK · "+("YÖNÜ SEÇ, VURUŞU YAP" if game.human_team(game.restart_team) else "RAKİP DURAN TOPU KULLANIYOR"))
+		game.hint("DÜDÜK · "+("YÖNÜ SEÇ, VURUŞU YAP" if human_restart() else "TAKIM ARKADAŞIN DURAN TOPU KULLANIYOR" if game.legend.match_active() and game.restart_team==0 else "RAKİP DURAN TOPU KULLANIYOR"))
 	preview()
 
 func update(delta: float) -> void:
@@ -340,7 +340,7 @@ func update(delta: float) -> void:
 		game.players[taker].desired=direction*0.6
 		if runup<=0: launch()
 		return
-	if not game.human_team(game.restart_team) or game.menu_match.running:
+	if not human_restart() or game.menu_match.running:
 		if ready_age>1.15 and plan_ai(): commit()
 		return
 	var aim: Vector3=aim_input()
@@ -437,7 +437,7 @@ func aim_input() -> Vector3:
 	return game.aiming_input()
 
 func input(event: InputEvent) -> void:
-	if game.state!="set_piece" or not game.human_team(game.restart_team) or game.active_team()!=game.restart_team or runup>=0: return
+	if game.state!="set_piece" or not human_restart() or game.active_team()!=game.restart_team or runup>=0: return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode in [KEY_1,KEY_2,KEY_3,KEY_4]:
 		routines.select(self,event.keycode-KEY_1); return
 	if event is InputEventKey and event.keycode in [KEY_S,KEY_A,KEY_D] and not event.echo:
@@ -531,6 +531,7 @@ func launch() -> void:
 	ai_choice.clear()
 
 func cancel_input() -> bool:
+	if game.legend.match_active() and not human_restart(): return false
 	if button==0 and runup<0: return false
 	button=0; power=0; runup=-1; ai_choice.clear()
 	if taker>=0:
@@ -560,3 +561,6 @@ func restore_cancelled(request: Dictionary) -> void:
 		return
 	button=KEY_D if request.shot else KEY_A
 	cancel_input()
+
+func human_restart() -> bool:
+	return game.is_user_player(taker) if game.legend.match_active() else game.human_team(game.restart_team)

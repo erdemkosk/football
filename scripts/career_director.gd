@@ -38,6 +38,7 @@ func targets(w: Dictionary) -> void:
 	w.manager.youth_minutes=0; w.manager.start_cash=c.cash; w.manager.joined=w.date; w.manager.last_review=0
 
 func gain(p: Dictionary,xp: float,exercise_skills: Array=[]) -> void:
+	if p.get("legend_player",false): return
 	if p.get("retired",false) or p.age>=30 or World.ovr(p)>=int(p.potential): return
 	var d: Dictionary=p.development
 	d.xp+=xp*(1.35 if p.age<=21 else .7)
@@ -148,6 +149,7 @@ func talk(pid: String,choice: int) -> String:
 	c.news("BİREBİR GÖRÜŞME",p.name+": "+reply,"club"); c.save(); return reply
 
 func review() -> void:
+	if career.world.has("legend"): return
 	var c=career; var w: Dictionary=c.world; var m: Dictionary=w.manager
 	if not m.employed or w.date-m.joined<60 or w.date-m.last_review<28: return
 	m.last_review=w.date
@@ -164,6 +166,7 @@ func review() -> void:
 	else: c.news("YÖNETİM RAPORU","Güven %d / 100 · Hedef ilk %d · Sıra %d. Akademi süresi %d / 450 dk." % [m.trust,m.target,position,m.youth_minutes],"club")
 
 func season_review() -> void:
+	if career.world.has("legend"): return
 	var c=career; var m: Dictionary=c.world.manager
 	if not m.employed: return
 	var position: int=c.standings(c.club().league).find(c.world.user)+1
