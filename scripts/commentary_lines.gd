@@ -23,7 +23,6 @@ const LINES := {
 	"offside":["Ofsayt bayrağı kalkıyor.","Ofsayt.","Bayrak havada, ofsayt var.","Hücum ofsaytla kesildi.","Yardımcı hakem ofsaytı işaret ediyor."],
 	"yellow":["Sarı kart. {name} uyarıldı.","Hakem sarı kartını çıkarıyor.","{name} sarı kart görüyor.","Bu müdahaleye sarı kart.","Sarı kart çıktı, artık daha dikkatli olmalı."],
 	"red":["Kırmızı kart! {name} oyundan atılıyor!","Oyundan atılma! Takım eksik kalıyor.","{name} için kırmızı kart!","Hakem kırmızı kartını gösterdi!","Kırmızı kart çıktı, maç onun için bitti!"],
-	"handball":["Elle oynama!","Topa elle müdahale, düdük geliyor.","Hakem elle oynamayı gördü.","El teması var, oyun duruyor.","Düdük, elle oynama kararı."],
 	"injury":["{name} için sakatlık işareti var.","{name} zorlanıyor, devam edebilecek mi?","{name} rahat hareket edemiyor.","Sakatlık var gibi, {name} sıkıntı yaşıyor.","{name} için sağlık durumuna bakılacak."],
 	"halftime":["İlk yarı sona erdi.","Hakem ilk yarıyı bitiriyor.","Devre arası düdüğü geldi.","İlk yarının son düdüğü.","Takımlar soyunma odasına gidiyor."],
 	"fulltime":["Son düdük! Maç sona erdi.","Ve maç bitti!","Hakemin son düdüğü geldi.","Karşılaşmanın son düdüğü geldi.","Maç tamamlandı, son düdük çaldı."],

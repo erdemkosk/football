@@ -3,7 +3,7 @@ extends RefCounted
 ## (DisplayServer TTS): no recordings are bundled and player names are read
 ## live. Calls follow real events; stale remarks are dropped, never queued.
 const LINES = preload("res://scripts/commentary_lines.gd").LINES
-const PRIORITY := {"goal":5,"own_goal":5,"red":5,"penalty":4,"fulltime":6,"halftime":6,"woodwork":3,"great_save":3,"handball":3,"kickoff":3,"second_half":3,"yellow":2,"injury":2,"shot_high":2,"shot_wide":2,"save":2,"offside":2,"corner":1,"free_kick":1,"substitution":1,"long_shot":1,"header":1,"volley":1,"cross":1,"shot":1,"skill":0}
+const PRIORITY := {"goal":5,"own_goal":5,"red":5,"penalty":4,"fulltime":6,"halftime":6,"woodwork":3,"great_save":3,"kickoff":3,"second_half":3,"yellow":2,"injury":2,"shot_high":2,"shot_wide":2,"save":2,"offside":2,"corner":1,"free_kick":1,"substitution":1,"long_shot":1,"header":1,"volley":1,"cross":1,"shot":1,"skill":0}
 # Real seconds, independent of match length and gameplay speed.
 const GAP := 6.5
 const REPEAT := {"goal":1.0,"own_goal":1.0,"red":1.0,"penalty":5.0,"woodwork":5.0,"great_save":8.0,"save":12.0,"shot_high":12.0,"shot_wide":12.0,"shot":12.0,"long_shot":14.0,"header":14.0,"volley":14.0,"cross":16.0,"corner":18.0,"free_kick":18.0,"offside":16.0,"skill":28.0,"counter":32.0,"wing_attack":50.0,"pressure":55.0,"build_up":60.0,"late_chase":65.0,"late_protect":65.0,"late_level":65.0,"fatigue":100.0,"rain":160.0}

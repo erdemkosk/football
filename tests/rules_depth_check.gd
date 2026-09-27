@@ -1,5 +1,5 @@
 extends SceneTree
-## Handball (natural vs unnatural arm, penalty area, goalkeeper) and in-match
+## Hand/arm contacts never award handball; normal fouls, keeper handling and
 ## injuries (pace, sprint, readiness, substitution priority, slider).
 const DT := 1.0/120
 var game
@@ -18,7 +18,7 @@ func scene() -> void:
 	for p in game.players:
 		p.visible=false; p.collision_layer=0; p.velocity=Vector3.ZERO; p.desired=Vector3.ZERO
 	game.dribbler=-1; game.carrier=-1; game.last_touch=1; game.last_kicker=20; game.kick_lock=0
-	game.rules.handball_age=5.0; game.foul_cooldown=0
+	game.foul_cooldown=0
 
 func pose(index: int,at: Vector3,extended: bool) -> Node3D:
 	var p=game.players[index]
@@ -36,7 +36,7 @@ func throw_at(point: Vector3) -> String:
 	game.ball.place(start,launch); await physics_frame
 	game.ball.position=start; game.ball.linear_velocity=launch
 	for n in range(60):
-		game.rules.check_handball(DT)
+		game.rules.update(DT)
 		if game.state!="playing": return game.restart_type
 		await physics_frame
 	return ""
@@ -44,26 +44,30 @@ func throw_at(point: Vector3) -> String:
 func run() -> void:
 	game=load("res://main.tscn").instantiate(); root.add_child(game); await physics_frame
 	game.match_menu.config_path="/tmp/sefc-rules-depth.cfg"
-	var forward: float=game.attack_sign(0)
-	# An arm held out away from the body is punished.
+	# Both teams and both halves: even a shot meeting an extended hand plays on.
+	for half in [1,2]:
+		for team in [0,1]:
+			for depth in [5,40]:
+				scene(); game.half=half
+				var index: int=9+team*11; var p=game.players[index]
+				var hand: Node3D=await pose(index,Vector3(4,0,-game.attack_sign(team)*depth),true)
+				game.reactions.shooter=20 if team==0 else 9
+				var awarded: String=await throw_at(hand.global_position)
+				check(awarded=="" and game.state=="playing" and p.fouls_committed==0 and p.yellow_cards==0 and not p.dismissed,"Extended hand contact keeps play running without free kick, penalty or card: team %d, half %d, depth %d" % [team,half,depth])
+				check(game.rules.allows_goal(1-team),"Hand contact does not disallow the following goal")
 	scene()
-	var hand: Node3D=await pose(9,Vector3(0,0,-forward*5),true)
-	var awarded: String=await throw_at(hand.global_position)
-	check(awarded=="SERBEST VURUŞ" and game.restart_team==1,"A ball striking an extended arm is a free kick to the other team")
-	# The same ball against an arm by the side is play on.
+	var hand: Node3D=await pose(9,Vector3(0,0,-game.attack_sign(0)*5),false)
+	check(await throw_at(hand.global_position)=="","A natural arm by the side also keeps play running")
 	scene()
-	hand=await pose(9,Vector3(0,0,-forward*5),false)
-	check(await throw_at(hand.global_position)=="","A natural arm by the side is not an offence")
-	# Inside the own penalty area it is a penalty.
-	scene()
-	hand=await pose(9,Vector3(4,0,-forward*40),true)
-	check(await throw_at(hand.global_position)=="PENALTI" and game.restart_team==1,"Handball inside the own area gives a penalty")
-	# The goalkeeper may handle inside his own area.
-	scene()
-	var keeper=game.players[0]
-	hand=await pose(0,Vector3(0,0,-forward*44),true)
-	check(await throw_at(hand.global_position)=="","The goalkeeper handling inside his area is legal")
-	keeper.visible=false
+	hand=await pose(0,Vector3(0,0,-game.attack_sign(0)*44),true)
+	check(await throw_at(hand.global_position)=="","Goalkeeper hand contact in his area does not stop play")
+	# Removing handball must not remove fouls or penalties from actual challenges.
+	for depth in [5,40]:
+		scene()
+		for index in [9,20]:
+			game.players[index].visible=true; game.players[index].position=Vector3(4,0,-game.attack_sign(0)*depth)
+		game.rules.foul(9,20,true)
+		check(game.restart_type==("PENALTI" if depth==40 else "SERBEST VURUŞ") and game.restart_team==1 and game.players[9].yellow_cards==1,"A reckless foul still awards its restart and card: depth %d" % depth)
 	# Injuries: heavy challenges can leave a knock with real consequences.
 	scene()
 	var p=game.players[7]

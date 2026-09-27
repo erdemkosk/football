@@ -92,13 +92,13 @@ Kutlamadan sonra topun durduğu son konuma en yakın oyuncu aynı fiziksel topu 
 - **Shift + 1–4 / LB + sağ analog:** yeni çalımlar. Topuktan topuğa (LB + LT + RS), çek ve kes (RS ↓), bacak arası (RS ↑) ve McGeady dönüşü (RS ← / →). Bacak arası yalnızca önünde, karşıdan bakan ve ayakta duran rakibin bacakları arasından geçer; top yine önce kapanındır. Doğrulama: `tests/controls_depth_check.gd`.
 
 **Kurallar:**
-- **Elle oynama:** Top dirsekten ele uzanan bölgeye değdiğinde kol vücuttan açıksa veya omuzun üstündeyse serbest vuruş, kendi ceza sahasında penaltı verilir. Kaleye giden şutu elle kesmek sarı karttır. Doğal kol, kafa vuruşu, kayma, kaleci uzanışı, oyuncunun kendi vücudundan seken top ve ceza sahası içindeki kaleci faul sayılmaz.
+- **El/kol teması:** Elle oynama ihlali yoktur; top oyuncunun eline veya koluna çarptığında bu temas nedeniyle serbest vuruş, penaltı ya da kart verilmez. Kalecilerin top tutması ve normal faul kuralları devam eder.
 - **Maç içi sakatlık:** Ağır müdahaleler sakatlık bırakabilir. Hafif, orta ve ciddi sakatlıkta oyuncu sırasıyla daha yavaş koşar, sprint atamaz ve hazır olma değeri düşer. Bu yüzden hem senin değişiklik önerin hem de rakip teknik direktör onu ilk sırada değiştirir. Kariyerde sakatlık gün olarak kayda geçer; oyuna giren yedek sağlıklı başlar.
 
 Doğrulama: `tests/rules_depth_check.gd`.
 
 **Spiker ve anlık tekrar:**
-- **Spiker:** Türkçe maç anlatımı işletim sisteminin kendi konuşma motoruyla yapılır; oyuna ses kaydı eklenmez ve oyuncu adları canlı okunur. Anlatılan olaylar: santra, gol, kendi kalesine gol, üstten ve yandan aut, kurtarış, direk, korner, serbest vuruş, penaltı, ofsayt, kartlar, elle oynama, sakatlık, uzaktan şut, kafa vuruşu, çalım, oyuncu değişikliği, devre ve maç sonu. Önemli olaylar araya girer, sıradan olaylar sırasını bekler ve aynı cümle üst üste tekrarlanmaz. Ayarlamak için **Ayarlar → Ses → Spiker / Spiker sesi / Spiker altyazısı** kullanılır.
+- **Spiker:** Türkçe maç anlatımı işletim sisteminin kendi konuşma motoruyla yapılır; oyuna ses kaydı eklenmez ve oyuncu adları canlı okunur. Anlatılan olaylar: santra, gol, kendi kalesine gol, üstten ve yandan aut, kurtarış, direk, korner, serbest vuruş, penaltı, ofsayt, kartlar, sakatlık, uzaktan şut, kafa vuruşu, çalım, oyuncu değişikliği, devre ve maç sonu. Önemli olaylar araya girer, sıradan olaylar sırasını bekler ve aynı cümle üst üste tekrarlanmaz. Ayarlamak için **Ayarlar → Ses → Spiker / Spiker sesi / Spiker altyazısı** kullanılır.
 - **Anlık tekrar:** Molada **ANLIK TEKRAR** son 12 saniyeyi kenardan gösterir. **Y** ağır çekimi açıp kapatır; geçince oyun aynen molaya döner. Gol tekrarı yine son 5 saniyeyi gösterir.
 
 Doğrulama: `tests/presentation_depth_check.gd`.
@@ -383,7 +383,7 @@ Yere düşen top her sekmede ileri hız ve sekme yüksekliği kaybeder. Vuruşta
 - Seremoniden maç sonuna kadar görev yapan siyah formalı orta hakem ve iki bayraklı yardımcı. Orta hakem oyunu takip eder; düdük, yön, penaltı, endirekt vuruş ve kart işaretlerini gösterir. Kart gösterimi bitmeden duran top kullanılamaz; ikinci sarıdan sonra kırmızı kart gösterilir. Endirekt vuruşta kol, başka bir oyuncunun topa temasına kadar havada kalır.
 - Yardımcı hakemler kendi taç çizgilerinde top ve ikinci son savunmacının oluşturduğu ofsayt çizgisini izler. Ofsayttaki oyuncu topa müdahale ettiğinde bayrağı kaldırıp ihlalin yakın/orta/uzak bölgesini gösterirler; taç, korner ve kale vuruşunda ilgili işareti verirler. Hakemler topa ve oyunculara fiziksel engel olmaz; antrenmanda görünmezler.
 
-Çevrimiçi çok oyunculu mod bu sürümde bulunmuyor; aynı bilgisayarda iki kişi oynanabilir. Elle oynama, kolun vücuttan açık veya omuz üstünde olmasına göre değerlendirilir. Ofsayt gövde konumu ve topa temas üzerinden değerlendirilir; kalecinin görüşünü kapatma gibi temassız müdahaleler ayrıca modellenmez. Kaleci ve top sürme yardımları oynanabilirlik için ayarlanmış oyun davranışlarıdır.
+Çevrimiçi çok oyunculu mod bu sürümde bulunmuyor; aynı bilgisayarda iki kişi oynanabilir. Elle oynama ihlali uygulanmaz; el/kol teması oyunu durdurmaz. Ofsayt gövde konumu ve topa temas üzerinden değerlendirilir; kalecinin görüşünü kapatma gibi temassız müdahaleler ayrıca modellenmez. Kaleci ve top sürme yardımları oynanabilirlik için ayarlanmış oyun davranışlarıdır.
 
 Duran top kuralları için [IFAB serbest vuruş](https://www.theifab.com/laws/latest/free-kicks/), [penaltı](https://www.theifab.com/laws/latest/the-penalty-kick/), [taç](https://www.theifab.com/laws/latest/the-throw-in/), [kale vuruşu](https://www.theifab.com/laws/latest/the-goal-kick/) ve [ofsayt](https://www.theifab.com/laws/latest/offside/) esas alındı. Mesafeler oyun sahasının metre ölçeğindedir.
 

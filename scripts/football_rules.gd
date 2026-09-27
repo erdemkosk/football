@@ -16,7 +16,6 @@ var tackles: Dictionary = {}
 var card_text := ""
 var card_red := false
 var card_time := 0.0
-var handball_age := 2.0
 
 func reset() -> void:
 	candidates.clear()
@@ -103,57 +102,6 @@ func update(delta: float) -> void:
 		var index: int=game.players.find(body)
 		if index<0 or (index==last_contact and touch_age<0.45): continue
 		if not before_touch(index,false): return
-	check_handball(delta)
-
-## Handball: the ball meets a forearm or hand held away from the body or
-## above the shoulder. A natural arm, a header, a slide or dive, a deflection
-## off the player's own body and the goalkeeper inside his area are not offences.
-func check_handball(delta: float) -> void:
-	handball_age+=delta
-	if game.training or handball_age<1.2 or game.ball.held_by!=null or game.state!="playing": return
-	var ball: Vector3=game.ball.position
-	if ball.y<.5: return
-	for index in range(game.players.size()):
-		var p=game.players[index]
-		if not p.visible or p.dismissed or game.flat_distance(p.position,ball)>1.2: continue
-		if p.pose in ["header","dive","claim","slide","rise","fall","stumble"] or p.set_piece_pose!="" or p.dummy_time>0 or p.nutmeg_time>0: continue
-		if p.keeper and own_area(p.team,ball): continue
-		if (index==last_contact and touch_age<.25) or (index==game.last_kicker and game.kick_lock>0): continue
-		if (game.ball.linear_velocity-p.velocity).length()<3.0: continue
-		for side in range(2):
-			var hand=p.left_hand if side==0 else p.right_hand
-			var elbow=p.left_elbow if side==0 else p.right_elbow
-			if not is_instance_valid(hand) or not is_instance_valid(elbow): continue
-			var closest: Vector3=Geometry3D.get_closest_point_to_segment(ball,elbow.global_position,hand.global_position)
-			if closest.distance_to(ball)>.2: continue
-			var local: Vector3=p.rig.to_local(hand.global_position)
-			if absf(local.x)<.5 and local.y<1.45: continue
-			award_handball(index,closest)
-			return
-
-func own_area(team: int,point: Vector3) -> bool:
-	var goal_side: float=-game.attack_sign(team)
-	return absf(point.x)<=20.16 and point.z*goal_side>=33.5 and point.z*goal_side<=50.5
-
-func award_handball(index: int,point: Vector3) -> void:
-	handball_age=0
-	var p=game.players[index]
-	var awarded: int=1-p.team
-	var goal_side: float=-game.attack_sign(p.team)
-	point.y=0
-	var penalty: bool=own_area(p.team,point)
-	game.foul_cooldown=4
-	p.fouls_committed+=1
-	# Stopping the other team's shot with a hand costs a caution.
-	var shooter: int=game.reactions.shooter
-	var booking: bool=shooter>=0 and game.players[shooter].team==awarded
-	game.referees.decision="ELLE OYNAMA"
-	game.referees.decision_age=0
-	if booking: book(index)
-	game.begin_restart("PENALTI" if penalty else "SERBEST VURUŞ",awarded,Vector3(0,0,goal_side*39) if penalty else point)
-	if booking: game.referees.show_card(p.position,card_red)
-	game.stadium.react("foul",p.team,point)
-	game.broadcast_event("handball",{"index":index,"penalty":penalty})
 
 func allows_goal(team: int) -> bool:
 	if restart_taker<0: return true
