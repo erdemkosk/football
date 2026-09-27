@@ -40,9 +40,13 @@ func run() -> void:
 	await capture("foreign-market")
 	tap(JOY_BUTTON_DPAD_RIGHT)
 	check(ui.nation_filter=="ES" and ui.list_ids.all(func(pid): return c.player(pid).nationality=="ES"),"A specific nationality filters the full international player market")
-	var target: String=ui.list_ids[0]; var identity: Dictionary=c.player(target).duplicate(true)
+	# Select an affordable, willing international player; fixed wages cannot
+	# bypass the market's sporting ambitions or scarce-star salary premiums.
+	var target: String=ui.list_ids.filter(func(pid): return c.sale_allowed(pid) and c.market.interest(c.player(pid),c.world.user).willing and c.market.asking_price(c.player(pid))<10000000)[0]
+	var identity: Dictionary=c.player(target).duplicate(true)
 	c.club().cash=90000000; c.club().budget=60000000; ui.selected=target; ui.negotiate(false)
-	ui.fee=World.value(c.player(target))*2; ui.submit_offer(); ui.wage=40000; ui.promised=2; ui.submit_offer()
+	ui.fee=maxi(c.market.asking_price(c.player(target)),int(c.deal.rival_fee)); ui.submit_offer()
+	ui.wage=c.market.salary(c.player(target),c.world.user); ui.promised=2; ui.submit_offer()
 	check(c.deal.stage=="sign" and c.sign_deal() and c.player(target).nationality==identity.nationality,"An international transfer preserves the player's nationality")
 	# Play a cup final through the actual 90/105/120-minute clock transitions.
 	ui.open_hub(); var f: Dictionary=c.next_fixture(); c.world.date=f.day

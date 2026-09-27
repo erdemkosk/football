@@ -43,7 +43,7 @@ func run() -> void:
 	check(go(named("İLK SÖZLEŞMENİ İMZALA")),"The first contract can be signed with the controller")
 	tap(JOY_BUTTON_A)
 	check(l.active() and ui.page=="hub" and l.player().name=="DENİZ EFSANE","Creation opens the personal career hub")
-	for page in ["hub","training","positions","league"]:
+	for page in ["hub","training","positions","league","transfers"]:
 		ui.go(page); game.controller.menus.sync()
 		var contained:=true; var reachable:=true
 		for child in ui.controls.get_children():

@@ -3,6 +3,7 @@ const World=preload("res://scripts/career_world.gd")
 const Portraits=preload("res://scripts/squad_portraits.gd")
 const Office=preload("res://scripts/career_office.gd")
 const TABS := ["MERKEZ","KADRO","TAKTİK","LİG & KUPALAR","TRANSFER","KULÜP"]
+var transfer_ui:=preload("res://scripts/transfer_offer_screen.gd").new()
 const PAGES := ["hub","squad","tactics","league","market","finance"]
 const Card=preload("res://scripts/career_card.gd")
 var art:=preload("res://scripts/career_art.gd").new()
@@ -213,6 +214,7 @@ func back() -> void:
 	elif page=="terms": page="talks"; build()
 	elif page=="comparison": page=comparison.origin; build()
 	elif page=="talks": go("market")
+	elif page=="offer": go("finance")
 	elif page=="choose": page="entry"; build()
 	elif page=="entry" or page=="hub": close()
 	else: go("hub")
@@ -273,6 +275,7 @@ func build() -> void:
 		"league": build_league()
 		"tactics": build_tactics()
 		"finance": build_finance()
+		"offer": transfer_ui.build(self)
 		"talks": build_talks()
 		"comparison": comparison.build(self)
 		"training": training_ui.build(self)
@@ -363,7 +366,7 @@ func begin() -> void:
 
 func pending_offers() -> int:
 	var c=game.career
-	return c.world.offers.filter(func(o): return not o.get("closed",false) and o.expires>=c.world.date).size()
+	return c.offers.active().size()
 
 func build_hub() -> void:
 	var c=game.career
@@ -559,13 +562,15 @@ func build_finance() -> void:
 	list_page=clampi(list_page,0,maxi(0,(entries.size()-1)/5))
 	button_at(Rect2(76,754,180,34),"← ÖNCEKİ",func(): list_page-=1; build()).disabled=list_page==0
 	button_at(Rect2(654,754,180,34),"SONRAKİ →",func(): list_page+=1; build()).disabled=(list_page+1)*5>=entries.size()
-	var offers: Array=game.career.world.offers.filter(func(o): return not o.closed and o.expires>=game.career.world.date)
+	var offers: Array=game.career.offers.active()
 	offer_page=clampi(offer_page,0,maxi(0,(offers.size()-1)/4))
 	for n in range(4):
 		if offer_page*4+n>=offers.size(): break
 		var o: Dictionary=offers[offer_page*4+n]; var index: int=game.career.world.offers.find(o)
-		button_at(Rect2(1223,405+n*80,146,32),"KABUL ET",func(): status="Anlaşma tamamlandı." if game.career.accept_sale(index) else "Anlaşma yapılamadı: kadro, dönem veya bütçe uygun değil."; build(),true)
-		button_at(Rect2(1223,443+n*80,146,30),"REDDET",func(): o.closed=true; game.career.save(); build())
+		if o.get("kind","")=="loan":
+			button_at(Rect2(1223,405+n*80,146,32),"KABUL ET",func(): status="Anlaşma tamamlandı." if game.career.accept_sale(index) else "Kadro, dönem veya bütçe uygun değil."; build(),true)
+		else: button_at(Rect2(1223,405+n*80,146,32),"PAZARLIK YAP",func(): transfer_ui.selected=o; transfer_ui.sync(); page="offer"; build(),true)
+		button_at(Rect2(1223,443+n*80,146,30),"REDDET",func(): game.career.offers.reject(o); build())
 	if offers.size()>4:
 		button_at(Rect2(910,754,175,34),"← TEKLİFLER",func(): offer_page-=1; build()).disabled=offer_page==0
 		button_at(Rect2(1190,754,175,34),"TEKLİFLER →",func(): offer_page+=1; build()).disabled=(offer_page+1)*4>=offers.size()
@@ -579,7 +584,7 @@ func finance_entries() -> Array:
 
 func negotiate(renewal: bool) -> void:
 	game.career.begin_deal(selected,renewal)
-	fee=game.career.deal.fee; wage=game.career.deal.wage; years=3; promised=1; swap=""
+	fee=game.career.deal.fee; wage=game.career.deal.wage; years=game.career.deal.years; promised=game.career.deal.role; swap=game.career.deal.swap
 	page="talks"; build()
 
 func negotiate_loan() -> void:
@@ -652,6 +657,7 @@ func _draw() -> void:
 		"league": draw_league()
 		"tactics": art.tactics(self)
 		"finance": draw_finance()
+		"offer": transfer_ui.draw(self)
 		"talks": draw_talks()
 		"comparison": comparison.draw(self)
 		"training": training_ui.draw(self)
@@ -829,7 +835,7 @@ func draw_finance() -> void:
 	center("%d / %d" % [list_page+1,maxi(1,ceili(entries.size()/5.0))],Vector2(453,778),12,MUTE)
 	box(Rect2(884,351,512,454),Color("142a3b"),10)
 	text("GELEN TRANSFER TEKLİFLERİ",Vector2(908,389),15,GOLD,true)
-	var offers: Array=c.world.offers.filter(func(o): return not o.closed and o.expires>=c.world.date)
+	var offers: Array=c.offers.active()
 	for n in range(4):
 		if offer_page*4+n>=offers.size(): break
 		var o: Dictionary=offers[offer_page*4+n]

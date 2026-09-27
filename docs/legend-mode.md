@@ -32,7 +32,13 @@ kariyerinden bağımsız üç kayıt yuvası kullanır (`sefc_legend_1.save` vb.
 Oyuncunun özellikleri doğrudan mevcut maç oyuncusuna uygulanır. Teknik direktör
 modunun pasif genç gelişimi kişisel kariyere ikinci kez ödül vermez. AI transfer
 pazarı futbolcuyu kullanıcının haberi olmadan satamaz; sözleşmesi sezon geçişinde
-korunur. Bu sürümde kullanıcıya yönelik transfer görüşmesi ekranı yoktur.
+korunur. **Teklifler** sekmesinde performansına uygun kulüplerden gelen
+teklifleri inceleyebilir, maaş, imza parası, süre ve beklenen rol için pazarlık
+yapabilirsin. En az üç maç, 90 dakika ve 5.8 form gerekir; yüksek potansiyel tek
+başına büyük kulüpten teklif getirmez. Haftada en fazla bir yeni teklif, aynı anda
+en fazla üç açık teklif vardır. İmza sonrası 45 gün yeni transfer ilgisi oluşmaz.
+İlk 11 beklentisi yine form ve mevki rekabetine bağlıdır. Yeni kulübe geçerken
+kimlik, gelişim, maç geçmişi ve mevcut sezon korunur.
 
 ## Doğrulama
 

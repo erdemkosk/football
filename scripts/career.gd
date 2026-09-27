@@ -21,12 +21,13 @@ var director:=preload("res://scripts/career_director.gd").new()
 var training:=preload("res://scripts/career_training.gd").new()
 var terms:=preload("res://scripts/career_terms.gd").new()
 var market:=preload("res://scripts/career_market.gd").new()
+var offers:=preload("res://scripts/career_offers.gd").new()
 var match_minutes: Dictionary={}
 var match_entered: Dictionary={}
 var cups:=preload("res://scripts/career_cups.gd").new()
 
 func _init() -> void:
-	contracts.career=self; cups.career=self; director.career=self; terms.career=self; training.career=self; market.career=self
+	contracts.career=self; cups.career=self; director.career=self; terms.career=self; training.career=self; market.career=self; offers.career=self
 
 func remember_quick_match() -> void:
 	if not quick_state.is_empty(): return
@@ -83,6 +84,7 @@ func valid(w) -> bool:
 		if not w.has(key): return false
 	if not w.clubs.has(w.user) or not w.clubs.size() in [36,48,92,World.CLUB_COUNT]: return false
 	if not training.valid(w): return false
+	if not offers.valid(w): return false
 	if player_mode!=w.has("legend") or not preload("res://scripts/legend_progression.gd").valid(w): return false
 	if w.has("league_prizes") and not w.league_prizes is Dictionary: return false
 	if w.version>=3:
@@ -389,8 +391,8 @@ func simulate_next() -> bool:
 		if not other.played and other.day<=world.date: simulate(other)
 	return save()
 
-func sale_allowed(pid: String) -> bool:
-	if player(pid).get("legend_player",false): return false
+func sale_allowed(pid: String,personal: bool=false) -> bool:
+	if player(pid).get("legend_player",false) and not personal: return false
 	if contracts.transfer_lock(pid)!="" or player(pid).get("academy_owner","")!="": return false
 	var p:=player(pid)
 	if p.club=="": return true
@@ -402,6 +404,7 @@ func sale_allowed(pid: String) -> bool:
 	return count>(2 if p.keeper else 3)
 
 func market_week() -> void:
+	offers.week()
 	randomize_state()
 	for iteration in range(3):
 		var buyer: String=world.clubs.keys()[rng.randi_range(0,world.clubs.size()-1)]
@@ -427,8 +430,7 @@ func market_week() -> void:
 		var salary: int=market.salary(p,buyer); var role: int=market.wanted_role(p,buyer)
 		if p.club==world.user:
 			if world.offers.any(func(o): return o.player==target and not o.get("closed",false) and o.expires>=world.date): continue
-			world.offers.push_front({"player":target,"buyer":buyer,"fee":fee,"wage":salary,"role":role,"expires":world.date+7,"closed":false,"expired":false})
-			news("TRANSFER TEKLİFİ",c.name+", "+p.name+" için "+money(fee)+" önerdi.","transfer")
+			offers.add(target,buyer,fee,salary,role)
 		else: transfer(target,buyer,fee,salary,3,role,"")
 	# Listed players attract bids at their level, including from smaller clubs.
 	for pid in club().roster:
@@ -442,13 +444,18 @@ func market_week() -> void:
 			var salary: int=market.salary(p,id); var role: int=market.wanted_role(p,id)
 			if market.refusal(p,id,salary,role,3)!="": continue
 			if bid>minf(buyer.budget,buyer.cash-(payroll(id)+salary)*2): continue
-			world.offers.push_front({"player":pid,"buyer":id,"fee":bid,"wage":salary,"role":role,"expires":world.date+7,"closed":false,"expired":false})
-			news("TRANSFER TEKLİFİ",buyer.name+", "+p.name+" için "+money(bid)+" önerdi.","transfer")
+			offers.add(pid,id,bid,salary,role)
 			break
 	remember_random()
 	contracts.market_week()
 
 func begin_deal(pid: String,renewal: bool=false) -> Dictionary:
+	var previous: Dictionary=offers.resume(pid,renewal)
+	if not previous.is_empty():
+		deal=previous
+		var lock: String=contracts.transfer_lock(pid)
+		if lock!="": deal.stage="rejected"; deal.response=lock; offers.remember()
+		return deal
 	var p:=player(pid)
 	deal={"player":pid,"renewal":renewal,"stage":"contract" if renewal or p.club=="" else "club","fee":0 if renewal or p.club=="" else market.value(p),"wage":maxi(p.wage,World.wage(p)),"years":3,"role":1,"swap":"","attempts":0,"response":"Sizi dinliyoruz. Teklifinizi sunabilirsiniz.","signed":false}
 	deal.seller=p.club
@@ -457,11 +464,17 @@ func begin_deal(pid: String,renewal: bool=false) -> Dictionary:
 		deal.response="Oyuncunun tercihi: "+str(market.interest(p,world.user).label).to_lower()+". Bonservis anlaşması tek başına yeterli değil."
 	var blocked: String=contracts.transfer_lock(pid)
 	if blocked!="": deal.stage="rejected"; deal.response=blocked
-	save()
+	offers.remember()
 	return deal
 
 func offer_deal(fee: int,wage: int,years: int,role: int,swap: String="") -> String:
+	var response:=negotiate_deal(fee,wage,years,role,swap)
+	offers.remember()
+	return response
+
+func negotiate_deal(fee: int,wage: int,years: int,role: int,swap: String="") -> String:
 	if deal.is_empty() or deal.signed or deal.stage=="rejected": return "Görüşme kapalı."
+	if world.date>int(deal.get("until",world.date)): deal.stage="rejected"; deal.response="Görüşmenin süresi doldu."; return deal.response
 	if fee<0 or wage<0 or years<1 or years>5 or role<0 or role>2: return "Teklif koşulları geçersiz."
 	var p:=player(deal.player)
 	var blocked: String=contracts.transfer_lock(p.id)
@@ -482,6 +495,7 @@ func offer_deal(fee: int,wage: int,years: int,role: int,swap: String="") -> Stri
 		minimum=roundi(minimum*(1.0-clampf(float(deal.get("terms",{}).get("sell_on",0)),0,30)*.0025))
 		if int(p.get("terms",{}).get("release",0))>0: minimum=mini(minimum,int(p.terms.release))
 		minimum=maxi(minimum,int(deal.get("rival_fee",0)))
+		minimum=offers.club_quote(p,minimum,fee+credit)
 		if fee+credit<minimum:
 			deal.fee=maxi(0,minimum-credit); deal.response="Karşı teklif: "+money(deal.fee)+(" + oyuncu takası." if swap!="" else ".")
 			if deal.attempts>=4: deal.stage="rejected"; deal.response="Kulüp görüşmeden çekildi."
@@ -502,7 +516,10 @@ func offer_deal(fee: int,wage: int,years: int,role: int,swap: String="") -> Stri
 		return deal.response
 	if not deal.renewal:
 		var refusal: String=market.refusal(p,world.user,wage,role,years,int(deal.get("terms",{}).get("signing",0)))
-		if refusal!="": deal.response=refusal; return refusal
+		if refusal!="":
+			deal.response=refusal
+			if deal.attempts>=4: deal.stage="rejected"
+			return refusal
 	var cost: int=(0 if deal.renewal else int(deal.fee))+int(deal.get("terms",{}).get("signing",0))
 	var future_payroll:=payroll(world.user)- (int(p.wage) if deal.renewal else 0)+wage
 	if deal.swap!="": future_payroll-=int(player(deal.swap).wage)
@@ -513,6 +530,7 @@ func offer_deal(fee: int,wage: int,years: int,role: int,swap: String="") -> Stri
 
 func sign_deal() -> bool:
 	if deal.is_empty() or deal.stage!="sign" or deal.signed or not world.manager.employed: return false
+	if world.date>int(deal.get("until",world.date)): error="Görüşmenin süresi doldu."; return false
 	var p:=player(deal.player)
 	error=contracts.transfer_lock(p.id)
 	if error!="": return false
@@ -536,19 +554,24 @@ func sign_deal() -> bool:
 		if not transfer(p.id,world.user,deal.fee,deal.wage,deal.years,deal.role,deal.swap,int(deal.get("terms",{}).get("signing",0))): return false
 	terms.sign(deal,p)
 	deal.signed=true; deal.stage="signed"; deal.response="İmzalar atıldı. Birlikte yeni bir sayfa."
-	return save()
+	offers.remember()
+	return error==""
 
-func transfer(pid: String,buyer: String,fee: int,wage: int,years: int,role: int,swap: String,signing: int=0) -> bool:
+func transfer(pid: String,buyer: String,fee: int,wage: int,years: int,role: int,swap: String,signing: int=0,personal_offer: Dictionary={}) -> bool:
 	if not window_open() or not world.players.has(pid) or fee<0 or wage<0: return false
 	if years<1 or years>5 or role<0 or role>2 or signing<0: return false
 	if contracts.transfer_lock(pid)!="": return false
 	var p:=player(pid); var seller: String=p.club
 	if seller==buyer or not world.clubs.has(buyer): return false
-	error=market.refusal(p,buyer,wage,role,years,signing)
+	var personal: bool=offers.authorized(personal_offer,pid,buyer,fee,wage,years,role,signing) if not personal_offer.is_empty() else false
+	if not personal_offer.is_empty() and not personal: return false
+	error="" if personal else market.refusal(p,buyer,wage,role,years,signing)
 	if error!="": return false
 	var buying: Dictionary=world.clubs[buyer]
 	if fee>minf(buying.cash,buying.budget) or (buying.roster.size()+contracts.outgoing(buyer).size()>=30 and swap==""): return false
-	if not sale_allowed(pid) and swap=="": return false
+	if p.get("legend_player",false) and not personal: return false
+	if swap!="" and world.players.has(swap) and player(swap).get("legend_player",false): return false
+	if not sale_allowed(pid,personal) and swap=="": return false
 	if swap!="" and (seller=="" or not world.players.has(swap) or player(swap).club!=buyer or player(swap).keeper!=p.keeper): return false
 	if swap!="" and contracts.transfer_lock(swap)!="": return false
 	if swap!="" and market.refusal(player(swap),seller,player(swap).wage,1,3)!="":
@@ -589,12 +612,14 @@ func assign_shirt(pid: String) -> void:
 func accept_sale(index: int) -> bool:
 	if index<0 or index>=world.offers.size(): return false
 	var o: Dictionary=world.offers[index]
-	if o.closed or o.expires<world.date or player(o.player).club!=world.user: return false
+	if in_match or o.get("kind","")=="personal" or not offers.live(o) or player(o.player).club!=world.user: return false
 	if o.get("kind","")=="loan":
 		if not contracts.sign_loan(o.player,o.buyer,o.fee,o.share,o.term,o.get("option",0)): return false
 		o.closed=true; return save()
+	var previous_cash: int=club().cash
 	if not transfer(o.player,o.buyer,o.fee,int(o.get("wage",market.salary(player(o.player),o.buyer))),3,int(o.get("role",market.wanted_role(player(o.player),o.buyer))),""): return false
-	o.closed=true; return save()
+	o.net_income=int(club().cash)-previous_cash
+	contracts.close_offers(o.player); return save()
 
 func settle_league_prizes(league: int) -> bool:
 	var key:="%d:%d" % [world.year,league]

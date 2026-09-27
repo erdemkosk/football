@@ -19,6 +19,7 @@ var portraits:=preload("res://scripts/squad_portraits.gd").new()
 var portrait: Dictionary={}
 var selected_drill:="passing"
 var learn_position:=5
+var transfer_ui:=preload("res://scripts/transfer_offer_screen.gd").new()
 
 func _ready() -> void:
 	setup_style(); hide()
@@ -100,13 +101,14 @@ func build() -> void:
 			button(Rect2(75+i*458,580,370,48),"YENİ EFSANE",choose.bind(i+1))
 	elif page=="create": build_create()
 	else:
-		var labels:=["FUTBOLCUM","ANTRENMAN","MEVKİLER","LİG & FİKSTÜR"]
-		var pages:=["hub","training","positions","league"]
-		for i in range(pages.size()): button(Rect2(52+i*338,216,322,43),labels[i],go.bind(pages[i]),page==pages[i])
+		var labels:=["FUTBOLCUM","ANTRENMAN","MEVKİLER","LİG & FİKSTÜR","TEKLİFLER (%d)" % game.career.offers.active(true).size()]
+		var pages:=["hub","training","positions","league","transfers"]
+		for i in range(pages.size()): button(Rect2(52+i*270,216,254,43),labels[i],go.bind(pages[i]),page==pages[i])
 		match page:
 			"hub": build_hub()
 			"training": build_training()
 			"positions": build_positions()
+			"transfers": transfer_ui.build(self,true)
 	button(Rect2(52,823,260,46),"← ANA MENÜ" if page in ["entry","hub"] else "← GERİ",close if page in ["entry","hub"] else go.bind("entry" if page=="create" else "hub"))
 	if game.legend.active() and page!="create": button(Rect2(1130,823,266,46),"KAYDET",save_game)
 	var items: Array=controls.get_children().filter(func(child): return child is LineEdit or (child is BaseButton and not child.disabled))
@@ -200,7 +202,7 @@ func paragraph(value: String,at: Vector2,width: float,size: int=16,color: Color=
 
 func _draw() -> void:
 	if not visible: return
-	var titles:={"entry":"BİR EFSANE DOĞUYOR","create":"SAHADAKİ HİKÂYENİ YARAT","hub":"FUTBOLCUM","training":"HER ÇALIŞMA BİR ADIM","positions":"OYUNUNU GENİŞLET","league":"SEZONUN HİKÂYESİ"}
+	var titles:={"entry":"BİR EFSANE DOĞUYOR","create":"SAHADAKİ HİKÂYENİ YARAT","hub":"FUTBOLCUM","training":"HER ÇALIŞMA BİR ADIM","positions":"OYUNUNU GENİŞLET","league":"SEZONUN HİKÂYESİ","transfers":"KARİYERİNİN SONRAKİ ADIMI"}
 	var subtitle:="Tek oyuncu. İlk sözleşmeden ilk 11'e. Kendi emeğinle yüksel."
 	if game.legend.active() and page!="create": subtitle=game.career.club().name+" · "+World.date_label(int(game.career.world.date))
 	backdrop(titles.get(page,"EFSANE"),subtitle,"E F S A N E   M O D U")
@@ -211,6 +213,7 @@ func _draw() -> void:
 		"training": draw_training()
 		"positions": draw_positions()
 		"league": draw_league()
+		"transfers": transfer_ui.draw(self)
 	if not game.legend.status.is_empty(): fit(game.legend.status,Vector2(330,850),765,14,GOLD)
 
 func draw_entry() -> void:
