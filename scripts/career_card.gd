@@ -26,13 +26,15 @@ func label(value: String,at: Vector2,points: int,color: Color,font_value: Font=n
 func _draw() -> void:
 	if screen==null: return
 	var chosen: bool=identity==screen.selected if kind in ["player","player_row"] else identity==screen.selected_club
+	if kind=="session": chosen=int(identity)==screen.training_ui.selected
 	var base:=Color("10202b").lerp(Color("253e48"),emphasis*.8)
-	var style:=StyleBoxFlat.new(); style.bg_color=base; style.set_corner_radius_all(16)
+	var style:=StyleBoxFlat.new(); style.bg_color=base; style.set_corner_radius_all(10)
 	style.set_border_width_all(3 if emphasis>.05 else 1)
 	style.border_color=accent.lerp(Color("f5ffe9"),emphasis) if chosen or emphasis>.05 else Color("304254")
 	draw_style_box(style,Rect2(Vector2.ZERO,size))
-	draw_colored_polygon(PackedVector2Array([Vector2(size.x*.49,0),Vector2(size.x,0),Vector2(size.x,size.y),Vector2(size.x*.12,size.y)]),Color(accent,.055+.055*emphasis))
-	if kind=="player_row":
+	if kind=="session":
+		screen.training_ui.draw_row(self)
+	elif kind=="player_row":
 		preload("res://scripts/career_list.gd").row(self,screen.game.career.player(identity))
 	elif kind=="player":
 		var p: Dictionary=screen.game.career.player(identity)

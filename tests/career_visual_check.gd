@@ -44,7 +44,7 @@ func run() -> void:
 	for family in ["xbox","playstation"]:
 		game.controller.family=family
 		ui.go("market"); game.controller.menus.sync()
-		check(go(named("SONRAKİ →")),family+" can page through the transfer catalogue")
+		check(go(named("İLERİ →")),family+" can page through the transfer catalogue")
 		var before_page: int=ui.list_page
 		tap(JOY_BUTTON_A)
 		check(ui.list_page==before_page+1,family+" confirms the next player-card page")

@@ -14,7 +14,7 @@ func build(s) -> void:
 	var c=s.game.career
 	s.button_at(Rect2(52,826,260,44),"← KARİYER MERKEZİ",func(): s.go("hub"))
 	if s.page=="terms": build_terms(s); return
-	for n in range(PAGES.size()): s.button_at(Rect2(52+n*270,111,256,44),TITLES[n],func(): s.page=PAGES[n]; s.build(),s.page==PAGES[n])
+	for n in range(PAGES.size()): s.navigation_at(Rect2(52+n*270,111,256,44),TITLES[n],func(): s.page=PAGES[n]; s.build(),s.page==PAGES[n])
 	match s.page:
 		"development","relations":
 			var ids: Array=c.roster(c.world.user)
@@ -24,9 +24,9 @@ func build(s) -> void:
 			var p: Dictionary=c.player(s.selected)
 			s.portraits.request(s.portrait_data(s.selected))
 			if s.page=="development":
-				s.button_at(Rect2(77,252,653,46),"HAFTALIK ANTRENMAN · OYNA / OTOMATİK",func(): s.go("training"),true)
+				s.button_at(Rect2(77,252,653,46),"HAFTALIK ANTRENMANI AÇ →",func(): s.go("training"),true)
 				s.option_at(Rect2(76,359,654,47),c.director.PLANS,int(p.development.plan),func(v): p.development.plan=v; c.save(); s.build())
-				s.option_at(Rect2(76,469,654,47),["HAFİF · TOPARLANMA","NORMAL · DENGELİ","YOĞUN · HAFTALIK KONDİSYON MALİYETİ"],p.development.intensity,func(v): p.development.intensity=v; c.save(); s.build())
+				s.option_at(Rect2(76,481,654,47),["HAFİF","NORMAL","YOĞUN"],p.development.intensity,func(v): p.development.intensity=v; c.save(); s.build())
 			else:
 				s.office=s.Office.new(); s.office.position=Vector2(76,266); s.office.size=Vector2(654,366)
 				s.office.club_data=c.club(); s.office.guest_data=p; s.controls.add_child(s.office)
@@ -74,18 +74,21 @@ func draw(s) -> void:
 			if not p.promise.is_empty(): s.wrapped("SÖZ: "+World.date_label(p.promise.due)+" tarihine kadar 180 dakika. İlerleme: "+str(maxi(0,p.minutes-int(p.promise.start)))+" dk",Vector2(795,696),554,15,s.GOLD,3)
 			if s.page=="development":
 				s.text("GELİŞİM PLANI",Vector2(77,338),12,s.GOLD,true)
-				s.text("ANTRENMAN YÜKÜ",Vector2(77,448),12,s.GOLD,true)
-				s.text("ÖZELLİK GELİŞİMİ  %d / 100" % p.development.xp,Vector2(77,573),17,s.PAPER,true)
-				s.box(Rect2(77,595,650,10),Color("304b44"),4); s.box(Rect2(77,595,650*p.development.xp/100,10),s.GOLD,4)
-				for n in range(3):
-					var x:=77+n*219
-					s.box(Rect2(x,635,207,127),Color("1c3244"),8)
-					s.text(["MAÇ SÜRESİ","POTANSİYEL","İLERLEME"][n],Vector2(x+15,662),11,s.art.MUTED,true)
-					s.text([str(p.minutes)+" dk",str(p.potential),str(roundi(p.development.xp))+" / 100"][n],Vector2(x+15,705),27,s.art.LIME,true)
-					s.text(["Sahada tecrübe kazanır","Gelişim tavanı","100 puanda gelişir"][n],Vector2(x+15,743),11,s.art.MUTED)
+				s.text(["Teknik · Pas · Dayanıklılık","Hız · İvme · Dayanıklılık","Şut · Kafa · Denge","Pas · Teknik · Denge","Savunma · Güç · Pozisyon","Refleks · Tutuş · Pozisyon"][int(p.development.plan)],Vector2(77,430),16,s.MUTE)
+				s.text("ANTRENMAN YÜKÜ",Vector2(77,466),12,s.GOLD,true)
+				s.wrapped(["Daha yavaş gelişim; ek kondisyon kaybı yok.","Dengeli gelişim; ek kondisyon kaybı yok.","Daha hızlı gelişim; A takım oyuncusu haftada 4 kondisyon puanı harcar."][int(p.development.intensity)],Vector2(77,554),650,15,s.MUTE,2)
+				var developing: bool=p.age<30 and World.ovr(p)<p.potential
+				s.text("BİR SONRAKİ ÖZELLİK ARTIŞI" if developing else "GELİŞİM DURUMU",Vector2(77,633),12,s.GOLD,true)
+				s.text("%d / 100 gelişim puanı" % p.development.xp if developing else "Potansiyeline ulaştı" if World.ovr(p)>=p.potential else "Tecrübeli oyuncu",Vector2(77,668),25,s.PAPER,true)
+				if developing:
+					s.box(Rect2(77,692,650,7),Color("304b44"),4); s.box(Rect2(77,692,650*clampf(p.development.xp/100.0,0,1),7),s.GOLD,4)
+				s.wrapped("Potansiyeline ulaştı; özellik gelişimi tamamlandı." if World.ovr(p)>=p.potential else "30 yaş ve üzerindeki oyuncular özellik gelişimi kazanmaz." if p.age>=30 else "Maç süresi ve haftalık antrenman puan kazandırır. Her 100 puan bir özelliği artırır.",Vector2(77,735),650,15,s.MUTE,2)
 		"academy":
 			s.text("YARININ İLK 11'İ",Vector2(77,220),27,s.PAPER,true)
 			s.text("AKADEMİ RAPORLARI",Vector2(793,221),24,s.PAPER,true)
+			s.text("ÜLKE",Vector2(77,245),11,s.MUTE,true)
+			s.text("ARANAN MEVKİ",Vector2(77,315),11,s.MUTE,true)
+			s.text("GÖREV SÜRESİ VE ÜCRETİ",Vector2(77,380),11,s.MUTE,true)
 			var active: Array=c.world.scouts.filter(func(j): return j.club==c.world.user and not j.done)
 			s.text("GÖREVDEKİ GÖZLEMCİLER  %d / 3" % active.size(),Vector2(77,554),14,s.GOLD,true)
 			for n in range(active.size()): s.text(active[n].nation+"  ·  "+World.date_label(active[n].due),Vector2(77,592+n*31),19,s.PAPER)
@@ -132,6 +135,8 @@ func draw(s) -> void:
 
 		"jobs":
 			s.text("YENİ BİR SAYFA",Vector2(77,224),29,s.PAPER,true)
+			s.text("LİG",Vector2(77,247),11,s.MUTE,true)
+			s.text("KULÜP",Vector2(77,323),11,s.MUTE,true)
 			s.wrapped("Başvurabileceğin kulüpler itibarına ve yönetim güvenine göre belirlenir. Takvim, diğer ligler ve transferler aynı dünyada devam eder.",Vector2(77,564),624,22,s.MUTE,5)
 			if c.world.clubs.has(job):
 				var q: Dictionary=c.world.clubs[job]

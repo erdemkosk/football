@@ -8,35 +8,44 @@ const BLUE=Style.BLUE
 func fade(s,rect: Rect2,left: Color,right: Color) -> void:
 	s.draw_polygon(PackedVector2Array([rect.position,rect.position+Vector2(rect.size.x,0),rect.end,rect.position+Vector2(0,rect.size.y)]),PackedColorArray([left,right,right,left]))
 
-func surface(s,rect: Rect2,accent: Color=LIME) -> void:
-	s.box(rect,Color("10202b"),18,Color("29404c"))
-	fade(s,Rect2(rect.position+Vector2.ONE,rect.size-Vector2(2,2)),Color(accent,.08),Color(accent,0))
-	s.draw_line(rect.position+Vector2(20,0),rect.position+Vector2(74,0),accent,3,true)
+func surface(s,rect: Rect2,_accent: Color=LIME) -> void:
+	s.box(rect,Style.PANEL,12,Style.LINE)
+
+func notice_rect(s) -> Rect2:
+	var occupied: Array=[]
+	for child in s.controls.get_children():
+		if child is BaseButton and child.visible and child.position.y>=810:
+			occupied.append(Vector2(child.position.x,child.position.x+child.size.x))
+	occupied.sort_custom(func(a,b): return a.x<b.x)
+	occupied.append(Vector2(1412,1412))
+	var cursor:=36.0; var best:=Vector2.ZERO
+	for span: Vector2 in occupied:
+		if span.x-cursor>best.y: best=Vector2(cursor,span.x-cursor)
+		cursor=maxf(cursor,span.y)
+	return Rect2(best.x+14,828,maxf(0,best.y-28),42)
 
 func background(s) -> void:
 	s.draw_rect(s.game.ui.bounds(),Color("081019"))
 	var tint: Color=Style.club_tint(s.game.career.club()) if s.game.career.exists() else BLUE
 	fade(s,s.game.ui.bounds(),Style.INK.lerp(tint,.16),Style.INK)
-	for i in range(9):
-		s.draw_line(Vector2(720+i*106,0),Vector2(100+i*106,900),Color(.5,.7,.8,.025),26,true)
-	s.draw_arc(Vector2(1160,485),460,-2.4,1.6,90,Color(.5,.8,.8,.045),2,true)
 	s.draw_rect(Rect2(0,817,1440,83),Color("081019"))
 	s.draw_line(Vector2(52,807),Vector2(1396,807),Color("314252"),1)
 	s.draw_texture_rect(s.Brand.CREST,Rect2(49,26,51,51),false)
 	s.text("SEFC",Vector2(112,51),25,WHITE,true)
-	s.text("K A R İ Y E R",Vector2(113,73),10,LIME,true)
+	s.text("KARİYER",Vector2(113,73),12,MUTED)
 	if s.game.career.exists() and not s.page in ["entry","choose"]:
 		var c: Dictionary=s.game.career.club()
 		s.badge(Vector2(300,51),c,.62)
-		s.text(c.name.to_upper(),Vector2(335,53),23,WHITE,true)
+		Style.fit(s,s.bold,c.name,Vector2(335,53),700,23,WHITE)
 		s.text(s.World.LEAGUES[int(c.league)],Vector2(337,75),11,MUTED)
 		s.text(s.World.date_label(s.game.career.world.date),Vector2(1115,45),14,WHITE,true)
 		s.text("BÜTÇE  "+s.game.career.money(c.budget),Vector2(1115,70),13,LIME,true)
 	else:
 		s.text("BİR KULÜP. SENİN HİKÂYEN.",Vector2(910,59),23,WHITE,true)
 	if s.status!="":
-		s.box(Rect2(360,828,726,42),Color("283d41"),8,Color("4f7770"))
-		s.wrapped(s.status,Vector2(375,845),696,12,LIME,2)
+		var notice:=notice_rect(s)
+		s.box(notice,Color("243b38"),8)
+		s.wrapped(s.status,notice.position+Vector2(12,16),notice.size.x-24,12,LIME,2)
 	if s.game.controller.using_gamepad:
 		var hints: Array=[["LS / D-PAD","Gez"],["A","Seç"],["B","Geri"]]
 		if s.page in s.PAGES or s.page in s.director_ui.PAGES: hints.append(["LB / RB","Bölüm"])
@@ -81,7 +90,7 @@ func hub(s) -> void:
 	if image!=null: s.draw_texture_rect(image,rect,false)
 	fade(s,rect,Color(.035,.075,.11,.98),Color(.03,.06,.1,.04))
 	s.text("MAÇ GÜNÜ" if not f.is_empty() and f.day<=c.world.date else "KARİYER MERKEZİ",Vector2(78,214),12,LIME,true)
-	s.text("SIRADAKİ MAÇ" if not f.is_empty() else "SEZON TAMAMLANDI",Vector2(77,258),32,WHITE,true)
+	s.text("Sıradaki maç" if not f.is_empty() else "Sezon tamamlandı",Vector2(77,258),34,WHITE,true)
 	s.text(s.showcase.hero_label,Vector2(596,486),12,MUTED,true)
 	Style.fit(s,s.bold,s.showcase.hero_name,Vector2(596,510),244,17,WHITE)
 	if not f.is_empty():
@@ -96,16 +105,18 @@ func hub(s) -> void:
 		s.text("YENİ BİR HEDEF.",Vector2(79,404),36,WHITE,true)
 	var table: Array=c.standings(int(c.club().league))
 	surface(s,Rect2(884,176,512,304),BLUE)
-	s.text("ŞAMPİYONLUK YARIŞI",Vector2(910,210),15,WHITE,true)
-	for n in range(mini(5,table.size())):
-		var id: String=table[n]; var y:=247+n*38
+	s.text("Ligdeki yerin",Vector2(910,212),21,WHITE,true)
+	var nearby: Array=table.slice(0,5)
+	if not c.world.user in nearby and not nearby.is_empty(): nearby[-1]=c.world.user
+	for n in range(nearby.size()):
+		var id: String=nearby[n]; var y:=247+n*38
 		if id==c.world.user: s.box(Rect2(899,y-24,481,35),Color("304a49"),4)
-		s.text("%02d" % (n+1),Vector2(911,y),12,MUTED)
+		s.text("%02d" % (table.find(id)+1),Vector2(911,y),12,MUTED)
 		s.badge(Vector2(960,y-7),c.world.clubs[id],.40)
 		s.draw_string(s.bold,Vector2(987,y),c.world.clubs[id].name,HORIZONTAL_ALIGNMENT_LEFT,320,14,WHITE)
 		s.text(str(c.world.table[id].pts),Vector2(1339,y),19,LIME,true)
 	surface(s,Rect2(884,494,512,114),Color("e7c993"))
-	s.text("KULÜP GÜNDEMİ · %d BEKLEYEN TEKLİF" % s.pending_offers(),Vector2(910,522),12,BLUE,true)
+	s.text("%d BEKLEYEN TEKLİF" % s.pending_offers() if s.pending_offers()>0 else "KULÜPTEN HABERLER",Vector2(910,522),12,BLUE,true)
 	if not c.world.news.is_empty():
 		var item: Dictionary=c.world.news[0]
 		s.draw_string(s.bold,Vector2(910,551),item.title,HORIZONTAL_ALIGNMENT_LEFT,456,19,WHITE)
@@ -124,8 +135,7 @@ func players(s) -> void:
 	var p: Dictionary=c.player(s.selected)
 	surface(s,Rect2(887,174,510,628))
 	var color: Color=Color(c.world.clubs[p.club].primary) if p.club!="" else BLUE
-	fade(s,Rect2(889,175,506,211),Color(color,.46),Color(color,.03))
-	for i in range(4): s.draw_line(Vector2(1000+i*110,177),Vector2(900+i*110,382),Color(WHITE,.045),19,true)
+	s.box(Rect2(904,191,476,194),Style.PANEL.lerp(color,.14),9)
 	var photo: Texture2D=s.portraits.photo(s.portrait_data(s.selected))
 	if photo!=null: s.draw_texture_rect(photo,Rect2(1121,165,248,248),false)
 	s.text(str(s.World.ovr(p)),Vector2(914,252),65,LIME,true)
@@ -135,14 +145,14 @@ func players(s) -> void:
 	Style.fit(s,s.bold,p.name,Vector2(912,397),460,24,WHITE)
 	s.text("%d YAŞ  /  %d cm  /  %d kg  /  %s" % [p.age,p.height_cm,p.weight_kg,s.World.International.NATIONS.get(p.get("nationality","TR"),"TÜRKİYE")],Vector2(914,421),12,MUTED)
 	var keys: Array=["pace","finishing","passing","control","defending","stamina"] if not p.keeper else ["reflexes","handling","positioning","passing","pace","stamina"]
-	var labels: Array=["HIZ","ŞUT","PAS","TEKNİK","SAVUNMA","FİZİK"] if not p.keeper else ["REFLEKS","TUTUŞ","POZİSYON","PAS","HIZ","FİZİK"]
+	var labels: Array=["HIZ","ŞUT","PAS","TEKNİK","SAVUNMA","DAYANIKLILIK"] if not p.keeper else ["REFLEKS","TUTUŞ","POZİSYON","PAS","HIZ","DAYANIKLILIK"]
 	for n in range(6):
-		var at:=Vector2(963+(n%3)*151,454+(n/3)*46)
+		var at:=Vector2(916+(n%3)*152,454+(n/3)*45)
 		var val: int=p.attributes.get(keys[n],72)
-		s.draw_arc(at,17,-PI*.8,PI*.8,28,Color("29404c"),2.4,true)
-		s.draw_arc(at,17,-PI*.8,lerpf(-PI*.8,PI*.8,val/100.0),28,LIME if val>=70 else BLUE,2.4,true)
-		s.center(str(val),at+Vector2(0,5),15,WHITE,true)
-		s.center(labels[n],at+Vector2(0,28),8,MUTED)
+		Style.fit(s,s.font,labels[n],at,102,12,MUTED)
+		s.text(str(val),at+Vector2(106,0),18,WHITE,true)
+		s.box(Rect2(at+Vector2(0,10),Vector2(131,4)),Style.LINE,2)
+		s.box(Rect2(at+Vector2(0,10),Vector2(131*val/100.0,4)),LIME if val>=70 else BLUE,2)
 	var loan: Dictionary=p.get("loan",{}); var retiring: bool=p.get("retirement_year",0)>0
 	s.text("MAAŞ  "+c.money(p.wage)+" / AY",Vector2(916,548),14,WHITE,true)
 	s.text("EMEKLİLİK  HAZİRAN "+str(p.retirement_year) if retiring else "SÖZLEŞME  HAZİRAN "+str(p.contract),Vector2(916,576),12,Color("e8bb99") if retiring else MUTED)
@@ -161,26 +171,23 @@ func players(s) -> void:
 	elif not loan.is_empty(): s.text("OPSİYON  "+c.money(loan.option) if loan.option>0 else "SATIN ALMA OPSİYONU YOK",Vector2(916,709),12,MUTED)
 
 func entry(s) -> void:
-	s.text("SENİN TAKIMIN.",Vector2(53,164),44,WHITE,true)
-	s.text("SENİN HİKÂYEN.",Vector2(53,215),44,LIME,true)
-	s.text("Alt ligden zirveye. Her karar sahaya yansır.",Vector2(760,204),21,MUTED)
+	s.text("Kariyerin",Vector2(53,167),44,WHITE,true)
+	s.text("Kaldığın yerden devam et veya yeni bir kulüple başla.",Vector2(55,211),20,MUTED)
 	for i in range(3):
 		var x:=50+i*458
 		surface(s,Rect2(x,270,418,475),[LIME,BLUE,Color("e6c299")][i])
-		pitch(s,Rect2(x+32,302,354,218),.12)
 		s.text("KARİYER   /   %02d" % (i+1),Vector2(x+26,310),12,LIME,true)
 		var saved: Dictionary=s.summaries[i] if i<s.summaries.size() else {}
 		if saved.is_empty():
 			card_icon(s,Vector2(x+322,388),"trophy",Color("778d9f"))
-			s.text("YENİ BİR",Vector2(x+25,404),31,WHITE,true)
-			s.text("BAŞLANGIÇ.",Vector2(x+25,444),31,WHITE,true)
-			s.text("Kendi futbol hikâyeni yaz.",Vector2(x+25,480),14,MUTED)
+			s.text("Yeni kariyer",Vector2(x+25,404),31,WHITE,true)
+			s.text("Bir kulüp seçerek başla.",Vector2(x+25,449),14,MUTED)
 		else:
 			s.badge(Vector2(x+327,393),saved.badge,1.2)
 			s.draw_string(s.bold,Vector2(x+25,422),saved.name,HORIZONTAL_ALIGNMENT_LEFT,269,25,WHITE)
 			s.text(s.World.LEAGUES[int(saved.league)],Vector2(x+25,453),13,LIME)
 			s.text(s.World.date_label(saved.date),Vector2(x+25,480),14,MUTED)
-		s.text("01  YÖNET     02  GELİŞTİR     03  KAZAN",Vector2(x+26,702),11,MUTED)
+		s.text("Kayıtlar birbirinden bağımsızdır.",Vector2(x+26,702),13,MUTED)
 	s.text("%d LİG     /     3 KUPA     /     %d KULÜP     /     TEK FUTBOL HİKÂYESİ" % [s.World.LEAGUES.size(),s.World.CLUB_COUNT],Vector2(54,783),14,MUTED)
 
 func pitch(s,rect: Rect2,alpha: float=1.0) -> void:

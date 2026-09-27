@@ -6,6 +6,7 @@ var game
 var mode:=""
 var completed:=0
 var points:=0
+var attempt_scores: Array[int]=[]
 var age:=0.0
 var wait:=-1.0
 var live:=false
@@ -31,7 +32,7 @@ func clear() -> void:
 	props=null; live=false; mode=""; finished=false
 
 func begin(value: String) -> void:
-	clear(); mode=value; completed=0; points=0; wait=-1; age=0; message=""
+	clear(); mode=value; completed=0; points=0; attempt_scores.clear(); wait=-1; age=0; message=""
 	career_context=not game.career.training.active.is_empty()
 
 func gate(index: int) -> Vector3:
@@ -55,7 +56,7 @@ func ring(at: Vector3,radius: float) -> void:
 
 func setup() -> void:
 	# R / retry consumes the unfinished attempt; it cannot reset career rewards.
-	if live and wait<0: completed+=1
+	if live and wait<0: completed+=1; attempt_scores.append(0)
 	if completed>=6: finish(); return
 	if is_instance_valid(props): props.queue_free()
 	props=Node3D.new(); props.name="TrainingTargets"; game.add_child(props)
@@ -151,7 +152,8 @@ func update(delta: float) -> void:
 			var hit:=crossing_point(ball)
 			var width:=2.8 if mode=="distribution" else 1.8
 			if kicked and hit!=Vector3.INF:
-				record(clampi(roundi(100-absf(hit.x-target.x)/width*30),60,100) if absf(hit.x-target.x)<width and hit.y<1.2 else 0,"PAS HEDEFİ")
+				var accurate: bool=absf(hit.x-target.x)<width and hit.y<1.2
+				record(clampi(roundi(100-absf(hit.x-target.x)/width*30),60,100) if accurate else 0,"İSABETLİ PAS" if accurate else "TOP FAZLA YÜKSEK" if hit.y>=1.2 else "KAPININ DIŞINDA")
 		"crossing":
 			if kicked and peak>1.8 and ball.y<.6 and game.ball.linear_velocity.y<0:
 				var distance:=Vector2(ball.x-target.x,ball.z-target.z).length()
@@ -193,7 +195,8 @@ func goal(team: int) -> void:
 
 func record(value: int,label: String) -> void:
 	if not live or wait>=0 or finished: return
-	points+=clampi(value,0,100); completed+=1; message=label+"  ·  +"+str(value)
+	value=clampi(value,0,100); attempt_scores.append(value)
+	points+=value; completed+=1; message=label+"  ·  "+str(value)+" / 100"
 	if completed>=6: finish(); return
 	if mode=="slalom" and value>0:
 		target=gate(completed); age=0; game.hint(message); return
@@ -205,7 +208,7 @@ func finish() -> void:
 	finished=true; live=false; game.state="training_result"; game.ball.freeze=true
 	var score:=roundi(points/6.0)
 	var reward: Dictionary=game.career.training.finish(score) if career_context else {}
-	game.training_menu.show_result({"mode":mode,"score":score,"points":points,"grade":Catalog.grade(score),"career":career_context,"reward":reward})
+	game.training_menu.show_result({"mode":mode,"score":score,"points":points,"grade":Catalog.grade(score),"career":career_context,"reward":reward,"attempts":attempt_scores.duplicate()})
 
 func draw(h) -> void:
 	if not active() or finished: return
@@ -216,11 +219,16 @@ func draw(h) -> void:
 		h.panel(Rect2(at-Vector2(51,25),Vector2(102,25)),Color("173d35"),5)
 		h.center(("ÇIKIŞ" if control_received else "KARŞILA") if mode=="control" else "HEDEF "+str(shown_attempt),at-Vector2(0,8),11,h.GOLD,true)
 	h.draw_set_transform(game.ui.edge_offset(-1,-1))
-	h.panel(Rect2(32,145,545,83),Color("102126"),7,Color(h.GOLD,.3))
-	h.text("%d / 6  ·  %d PUAN  ·  %ds" % [shown_attempt,points,maxi(0,ceili((25 if mode=="defending" else 18)-age))],Vector2(48,172),18,h.GOLD,true)
+	h.panel(Rect2(32,145,545,112),Color("102126"),9,Color(h.GOLD,.22))
+	h.text("DENEME %d / 6" % shown_attempt,Vector2(48,172),17,h.PAPER,true)
+	h.text("%d PUAN · %ds" % [points,maxi(0,ceili((25 if mode=="defending" else 18)-age))],Vector2(369,172),14,h.GOLD,true)
 	var instruction:=Catalog.detail(mode)
 	if mode=="control" and control_received: instruction="Topu ayağında tutarak çıkış kapısından geç."
-	h.text(instruction,Vector2(48,198),12,h.PAPER)
-	var context:="KARİYER ÇALIŞMASI" if career_context else "SERBEST PRATİK · KALICI GELİŞİM YOK"
-	h.text(message if wait>=0 else context,Vector2(48,218),10,h.GOLD if wait>=0 else h.MUTE)
+	h.text(instruction,Vector2(48,199),12,h.PAPER)
+	for i in range(6):
+		var color: Color=h.GOLD if i<attempt_scores.size() and attempt_scores[i]>0 else Color("efa18f") if i<attempt_scores.size() else Color("344c51")
+		h.panel(Rect2(48+i*85,211,75,4),color,2)
+	var context:="KARİYER" if career_context else "PRATİK"
+	var retry: String="Duraklat → Yeni deneme" if game.controller.using_gamepad else OS.get_keycode_string(game.match_menu.key_for(KEY_R))+" → Yeni deneme"
+	h.text(message if wait>=0 else context+" · "+retry+" (0 puan)",Vector2(48,242),12,h.GOLD if wait>=0 else h.MUTE)
 	h.draw_set_transform(Vector2.ZERO)

@@ -12,6 +12,49 @@ const SKILLS := {
 	"control":["control","balance","passing"],"penalty":["finishing","balance","control"],
 	"defending":["defending","strength","positioning"],"distribution":["passing","handling","positioning"]}
 const SCORED := ["slalom","passing","shooting","crossing","control","penalty","defending","distribution"]
+const WORKSHOPS := ["free","cross","free_kick","duel"]
+const FOCUS := {"free":"Pas · hareket · şut","cross":"Kafa · vole · zamanlama","free_kick":"Yön · güç · falso","duel":"Zamanlama · alan yaratma","slalom":"Kontrol · denge · çeviklik","passing":"Pas · yön · isabet","shooting":"Şut · denge · isabet","crossing":"Orta · mesafe · isabet","control":"İlk dokunuş · yön değiştirme","penalty":"Yön · güç · soğukkanlılık","defending":"Müdahale · topu koruma","distribution":"Uzun pas · oyun kurma"}
+const SUCCESS := {
+	"free":"Süre veya not baskısı yok. Pas açıları bul, topu taşı ve şut dene.",
+	"cross":"Ortayı takım arkadaşın açar. Topa yetişip kafa veya voleyle bitirmeyi dene.",
+	"free_kick":"Önce vuruş noktasını seç. Barajı aşarak kaleyi bulmayı dene.",
+	"duel":"İki başarılı geçişte yeni aşama açılır. Son aşamada rakip serbestçe savunur.",
+	"slalom":"Topla birlikte kapıdan geç. Topu yakın tutmak ve hızlı tamamlamak daha çok puan getirir.",
+	"passing":"Yerden pası kapının ortasına yaklaştır. Yüksek veya kapı dışına giden top puan getirmez.",
+	"shooting":"Gol at; işaretli köşeye yaklaşınca daha yüksek puan kazanırsın.",
+	"crossing":"Havadan gelen topu çemberin içine indir. Merkeze yakın iniş daha çok puan getirir.",
+	"control":"Pası işaretli alanda karşıla, sonra topu ayağında tutarak çıkış kapısından geç.",
+	"penalty":"Altı penaltıda kaleciyi geç. İşaretli köşeye yakın goller daha çok puan getirir.",
+	"defending":"Faulsüz top kazanıp üç saniye koru. Rakip çıkışa ulaşmadan müdahale et.",
+	"distribution":"Uzun pası uzak kapıya ulaştır. Kapıdan geçerken top yere yakın olmalı."}
+const TIPS := {
+	"free":"Pas verdikten sonra yeni bir açıya koş.","cross":"Top gelmeden yerini al ve şutunu hazırla.","free_kick":"Önce az güçle dene; mesafeye göre artır.","duel":"Rakip uzanırken yön değiştir, boşluğa hızlan.",
+	"slalom":"Kapıya yaklaşırken sprinti bırak; küçük yön değişimleri yap.","passing":"Vurmadan önce kapıyla aynı doğrultuya gel.","shooting":"Dengeni topla ve gücü sonuna kadar doldurmak yerine köşeyi hedefle.","crossing":"Gücü basılı tutup bırak; topun ilk inişini çemberin ortasına yaklaştır.",
+	"control":"Topu beklemek yerine karşılama alanına koş. İlk dokunuşunu çıkışa çevir.","penalty":"Köşeyi erken seç ve aşırı güçten kaçın.","defending":"Top rakibin ayağından açılınca müdahale et. Kazandıktan sonra koru.","distribution":"Hedefi ortala; pas gücünü uzaklığa göre ayarla."}
+
+static func focus(mode: String) -> String: return FOCUS.get(mode,"")
+static func success(mode: String) -> String: return SUCCESS.get(mode,"")
+static func tip(mode: String) -> String: return TIPS.get(mode,"")
+static func skill_labels(mode: String) -> String:
+	var names:={"control":"Teknik","balance":"Denge","acceleration":"İvme","passing":"Pas","finishing":"Şut","stamina":"Dayanıklılık","defending":"Savunma","strength":"Güç","positioning":"Pozisyon","handling":"Tutuş"}
+	var result: Array[String]=[]
+	for key in SKILLS.get(mode,[]): result.append(names[key])
+	return " · ".join(result)
+
+static func controls(mode: String,game) -> Array:
+	var pad: bool=game.controller.using_gamepad
+	var move: String="LS" if pad else "YÖN TUŞLARI"
+	var action: int=KEY_D
+	var verb: String="Şut: tut / bırak"
+	match mode:
+		"free","passing","distribution": action=KEY_S; verb="Pas: tut / bırak"
+		"slalom","control": action=KEY_W; verb="Sprint: tut"
+		"cross": action=KEY_D; verb="Kafa / vole"
+		"crossing": action=KEY_A; verb="Orta: tut / bırak"
+		"defending": action=KEY_G; verb="Müdahale"
+		"duel": action=KEY_W; verb="Boşluğa sprint"
+	var key: String=game.controller.label_for(action) if pad else OS.get_keycode_string(game.match_menu.key_for(action))
+	return [[move,"Yön"],[key,verb]]
 
 static func title(mode: String) -> String: return TITLES[maxi(0,MODES.find(mode))]
 static func detail(mode: String) -> String: return DETAILS[maxi(0,MODES.find(mode))]

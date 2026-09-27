@@ -100,9 +100,9 @@ func turn_page(direction: int) -> void:
 func apply_career_style() -> void:
 	for type in ["Button","OptionButton"]:
 		for state in ["normal","hover","pressed","focus","disabled"]:
-			var style:=StyleBoxFlat.new(); style.set_corner_radius_all(12)
+			var style:=StyleBoxFlat.new(); style.set_corner_radius_all(8)
 			style.content_margin_left=12; style.content_margin_right=12
-			style.bg_color=Color("152a35") if state=="normal" else Color("29404c")
+			style.bg_color=Color("1c303a") if state=="normal" else Color("29414a")
 			if state=="disabled": style.bg_color=Color("162333")
 			if state=="focus":
 				style.bg_color=Color.TRANSPARENT; style.set_border_width_all(3)
@@ -222,20 +222,31 @@ func clear_controls() -> void:
 
 func button_at(rect: Rect2,title: String,callback: Callable,primary: bool=false) -> Button:
 	var b:=make_button(controls,rect,title,callback,primary)
-	b.add_theme_font_size_override("font_size",14)
+	b.add_theme_font_size_override("font_size",15)
 	b.clip_text=true
+	b.tooltip_text=title
 	if primary:
 		for state in ["normal","hover","pressed"]:
 			var style:=StyleBoxFlat.new(); style.bg_color=art.LIME.lightened(.1) if state=="hover" else art.LIME
 			style.set_corner_radius_all(7); b.add_theme_stylebox_override(state,style)
 	return b
 
+func navigation_at(rect: Rect2,title: String,callback: Callable,active: bool) -> Button:
+	var b:=button_at(rect,title,callback)
+	var normal:=UI.surface(Color("20372f") if active else Color.TRANSPARENT,Color.TRANSPARENT,7)
+	if active:
+		normal.border_width_bottom=2; normal.border_color=art.LIME
+	b.add_theme_stylebox_override("normal",normal)
+	b.add_theme_color_override("font_color",art.LIME if active else art.MUTED)
+	return b
+
 func option_at(rect: Rect2,items: Array,index: int,callback: Callable) -> OptionButton:
 	var b:=OptionButton.new(); b.position=rect.position; b.size=rect.size
 	b.fit_to_longest_item=false; b.clip_text=true
-	b.add_theme_font_size_override("font_size",14)
+	b.add_theme_font_size_override("font_size",15)
 	for item in items: b.add_item(str(item))
 	b.select(index); b.item_selected.connect(callback); controls.add_child(b)
+	b.tooltip_text=str(items[index]) if index>=0 and index<items.size() else "Seç"
 	b.get_popup().window_input.connect(game.controller.menus.popup_input.bind(b))
 	b.get_popup().popup_hide.connect(func(): game.controller.menus.popup_option=null; b.grab_focus())
 	return b
@@ -249,7 +260,7 @@ func build() -> void:
 	if page in PAGES:
 		for i in range(6):
 			if live and PAGES[i]!="tactics": continue
-			button_at(Rect2(44+i*226,108,216,43),TABS[i],go.bind(PAGES[i]),page==PAGES[i])
+			navigation_at(Rect2(44+i*226,108,216,43),TABS[i],go.bind(PAGES[i]),page==PAGES[i])
 		button_at(Rect2(44,827,220,43),"← MAÇA DÖN" if live else "← ANA MENÜ",close)
 		button_at(Rect2(1110,827,286,43),"KARİYERİ KAYDET",save_game)
 	if page in director_ui.PAGES or page=="terms": director_ui.build(self)
@@ -298,7 +309,7 @@ func build_entry() -> void:
 		summaries.append(game.career.slot_summary(i+1))
 		var x:=50+i*458
 		button_at(Rect2(x+24,500,370,51),"KAYITTAN DEVAM ET",load_career.bind(i+1),true).disabled=not game.career.has_save(i+1)
-		button_at(Rect2(x+24,568,370,49),"YENİ KARİYER",choose.bind(i+1))
+		button_at(Rect2(x+24,568,370,49),"YENİ KARİYER",choose.bind(i+1),not game.career.has_save(i+1))
 	button_at(Rect2(50,823,260,45),"← ANA MENÜ",close)
 
 func load_career(index: int) -> void:
@@ -356,7 +367,6 @@ func pending_offers() -> int:
 func build_hub() -> void:
 	var c=game.career
 	var training_done: int=c.training.data().slots.filter(func(row): return row.done).size()
-	button_at(Rect2(77,592,490,28),"HAFTALIK ANTRENMAN  ·  %d / 5" % training_done,go.bind("training"))
 	var f: Dictionary=c.next_fixture()
 	if c.world.season_done:
 		button_at(Rect2(77,532,490,52),"YENİ SEZONA GEÇ",func(): c.next_season(); build(),true)
@@ -367,12 +377,12 @@ func build_hub() -> void:
 		button_at(Rect2(77,532,490,52),"TAKVİMİ İLERLET  →",advance_calendar,true)
 	button_at(Rect2(908,440,465,29),"PUAN DURUMU & FİKSTÜR",go.bind("league"))
 	if pending_offers()>0: button_at(Rect2(909,567,464,30),"%d TEKLİFİ İNCELE →" % pending_offers(),go.bind("finance"))
-	var a=card_at(Rect2(52,629,436,163),"TRANSFER MERKEZİ",go.bind("market"),"action","market")
-	a.caption="KADRONU GÜÇLENDİR"; a.detail="Oyuncu keşfet · Teklif yap · İmza at"; a.accent=art.BLUE
-	var b=card_at(Rect2(504,629,438,163),"TEKNİK DİREKTÖR MERKEZİ",go.bind("board"),"action","board")
-	b.caption="KULÜBÜN GELECEĞİ"; b.detail="Gelişim · Akademi · Yönetim"
-	var d=card_at(Rect2(958,629,438,163),"GELEN TEKLİFLER & BÜTÇE",go.bind("finance"),"action","finance")
-	d.caption="KULÜBÜ YÖNET"; d.detail="Kasa "+c.money(c.club().cash)+"  /  Yeni teklifler"; d.accent=Color("e9c99a")
+	var a=card_at(Rect2(52,629,436,163),"KADRONU HAZIRLA",go.bind("squad"),"action","squad")
+	a.caption="MAÇA HAZIRLIK"; a.detail="Oyuncular · Kondisyon · Sözleşmeler"; a.accent=art.BLUE
+	var b=card_at(Rect2(504,629,438,163),"HAFTALIK ANTRENMAN",go.bind("training"),"action","training")
+	b.caption="OYUNCULARINI GELİŞTİR"; b.detail="%d / 5 çalışma tamamlandı · Programı aç" % training_done
+	var d=card_at(Rect2(958,629,438,163),"TEKNİK DİREKTÖR MERKEZİ",go.bind("board"),"action","board")
+	d.caption="KULÜBÜN GELECEĞİ"; d.detail="Gelişim · Akademi · Yönetim"; d.accent=art.BLUE
 
 func play() -> void:
 	if game.career.prepare_match(): visible=false; clear_controls(); game.camera.cull_mask=world_mask; game.audio.set_process(true)
@@ -462,9 +472,13 @@ func build_players() -> void:
 	var loan: Dictionary=member.get("loan",{})
 	var blocked: String=c.contracts.transfer_lock(selected)
 	if page=="market":
-		button_at(Rect2(910,730,218,52),"GÖRÜŞMEYE BAŞLA",negotiate.bind(false),true).disabled=not c.window_open() or blocked!=""
-		button_at(Rect2(1140,730,226,52),"KİRALIK TEKLİF",negotiate_loan).disabled=c.contracts.loan_reason(selected,c.world.user)!=""
-		button_at(Rect2(910,798,456,42),"KADRONLA KARŞILAŞTIR",func(): comparison.open(self,selected,"market"))
+		var buy:=button_at(Rect2(910,724,218,38),"GÖRÜŞMEYE BAŞLA",negotiate.bind(false),true)
+		buy.disabled=not c.window_open() or blocked!=""
+		buy.tooltip_text=blocked if blocked!="" else "Transfer dönemi kapalı." if not c.window_open() else "Kulübü ve oyuncusuyla transfer görüşmesi başlat."
+		var loan_button:=button_at(Rect2(1140,724,226,38),"KİRALIK TEKLİF",negotiate_loan)
+		loan_button.disabled=c.contracts.loan_reason(selected,c.world.user)!=""
+		loan_button.tooltip_text=c.contracts.loan_reason(selected,c.world.user) if loan_button.disabled else "Kiralama süresini, maaş payını ve opsiyonu belirle."
+		button_at(Rect2(910,770,456,29),"KADRONLA KARŞILAŞTIR",func(): comparison.open(self,selected,"market")).add_theme_font_size_override("font_size",13)
 	else:
 		button_at(Rect2(910,639,218,45),"İLK 11'İ DEĞİŞTİR",promote,true).disabled=member.club!=c.world.user
 		if loan.is_empty():
@@ -794,9 +808,7 @@ func draw_finance() -> void:
 		art.card_icon(self,Vector2(x+376,252),"finance" if n!=1 else "market",art.BLUE if n==2 else art.LIME)
 		text(["KULÜP KASASI","TRANSFER BÜTÇESİ","AYLIK MAAŞ YÜKÜ"][n],Vector2(x+24,217),12,MUTE,true)
 		text(c.money([c.club().cash,c.club().budget,c.payroll(c.world.user)][n]),Vector2(x+24,279),31,art.LIME,true)
-		var amount: float=[c.club().cash,c.club().budget,c.payroll(c.world.user)][n]
-		box(Rect2(x+24,303,280,4),Color("33495a"),2)
-		box(Rect2(x+24,303,280*clampf(amount/maxf(1,c.club().cash),0,1),4),art.BLUE if n==2 else art.LIME,2)
+		text(["Kulübün toplam nakdi","Transferlere ayrılan tutar","Her ay ödenen oyuncu maaşları"][n],Vector2(x+24,308),13,MUTE)
 	box(Rect2(52,351,811,454),Color("152538"),10)
 	var entries: Array=finance_entries()
 	for n in range(5):

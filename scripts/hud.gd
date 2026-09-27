@@ -366,11 +366,11 @@ func training_scoreboard(slide: float) -> void:
 	draw_line(Vector2(372+slide,39),Vector2(372+slide,73),Color(1,1,1,0.15))
 	center(preload("res://scripts/match_clock.gd").session(game.match_time),Vector2(462+slide,64),22,GOLD)
 	var drill: String=game.training_drills.title()
-	if game.training_drills.mode!="free" and game.training_drills.attempt>0:
+	if game.training_drills.mode in game.training_menu.Catalog.WORKSHOPS and game.training_drills.mode!="free" and game.training_drills.attempt>0:
 		drill+="  ·  %d. DENEME" % game.training_drills.attempt
 	text(drill,Vector2(34+slide,104),10,Color(1,1,1,0.8),true)
-	if not game.controller.using_gamepad:
-		text("R  YENİ DENEME",Vector2(34+slide,126),11,GOLD,true)
+	if not game.controller.using_gamepad and not game.training_drills.challenges.active():
+		text(OS.get_keycode_string(game.match_menu.key_for(KEY_R))+"  YENİ DENEME",Vector2(34+slide,126),11,GOLD,true)
 
 func can_skip_to_kickoff() -> bool:
 	return game.state=="goal" or (game.state=="restart" and game.restart_type=="SANTRA" and not game.training)
