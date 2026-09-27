@@ -22,7 +22,9 @@ static func choice(identity: int,salt: int,count: int) -> int:
 	return value%count
 
 static func profile(identity: int) -> Dictionary:
-	return {"skin":choice(identity,11,SKIN_TONES.size()),"eyes":[0,0,0,1,1,2,2,2,3,3,4,4][choice(identity,37,12)],"boots":choice(identity,83,BOOT_COLORS.size())}
+	return {"skin":choice(identity,11,SKIN_TONES.size()),"eyes":[0,0,0,1,1,2,2,2,3,3,4,4][choice(identity,37,12)],"boots":choice(identity,83,BOOT_COLORS.size()),
+		"jaw":choice(identity,97,5),"nose":choice(identity,109,5),"brow":choice(identity,127,4),"beard":choice(identity,149,6),
+		"face":choice(identity,163,5),"iris":choice(identity,181,5),"movement":choice(identity,193,4),"celebration":choice(identity,211,8)}
 
 static func boot_mesh(style: int) -> ArrayMesh:
 	if boot_cache.has(style): return boot_cache[style]

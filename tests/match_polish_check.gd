@@ -88,7 +88,7 @@ func run() -> void:
 		game.camera.projection=Camera3D.PROJECTION_PERSPECTIVE; game.camera.fov=38
 		game.camera.position=p.position+Vector3(3,2.5,-5); game.camera.look_at(p.position+Vector3.UP)
 		await render("celebration-"+game.celebration.style,true)
-	check(styles.size()==5 and styles.count("fist")==1 and styles.count("badge")==1 and styles.count("heart")==1 and styles.count("wings")==1 and styles.count("crowd")==1,"Repeated goals rotate through all five scorer celebrations")
+	check(styles.size()==5 and styles.count(game.celebration.STYLES[p.appearance.celebration])==5,"Repeated goals retain the scorer's personal signature celebration")
 	game.celebration.clear()
 	check(game.players.all(func(q): return q.celebration==""),"Restart clears all celebration poses")
 	print("MATCH POLISH CHECK: %d checks, %d failures" % [count,failures])

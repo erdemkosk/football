@@ -73,6 +73,8 @@ static func shirt(colors: Dictionary,number: int,is_keeper: bool,player_name: St
 	svg+='<g transform="translate(291 44) scale(.59 .78)">'+crest_body(id,badge_primary,badge_accent)+'</g>'
 	svg+='<path d="M173 67L190 56L207 67M179 75L190 68L201 75" fill="none" stroke="%s" stroke-width="5"/>' % b
 	svg+='<path d="M82 374H430M594 374H942" stroke="%s" stroke-width="5" opacity=".65"/>' % b
+	# Shoulder, side-panel and double hem stitches are printed into the atlas.
+	svg+='<g fill="none" stroke="%s" opacity=".22"><path d="M54 0V384M458 0V384M566 0V384M970 0V384M64 45Q256 18 448 45M576 45Q768 18 960 45" stroke-width="2"/><path d="M68 365H445M578 365H958" stroke-width="1.5" stroke-dasharray="3 3"/></g>' % b
 	# Geometric athletic numerals, baked into the back instead of floating text.
 	var value := str(number)
 	var scale_x := 2.55
@@ -105,7 +107,8 @@ static func torso_mesh() -> ArrayMesh:
 			# UVs read left-to-right from outside the shirt, including its back.
 			var angle := -(u-0.25)*TAU
 			var radial := Vector3(sin(angle),0,-cos(angle))
-			vertices.append(radial*radii[row]*Vector3(1,1,.78)+Vector3(0,levels[row],0))
+			var fold:=sin(u*TAU*6+v_coords[row]*3)*.003*smoothstep(.2,.95,v_coords[row])
+			vertices.append(radial*(radii[row]+fold)*Vector3(1,1,.78)+Vector3(0,levels[row],0))
 			normals.append((radial*Vector3(1,1,1.0/.78)+Vector3(0,[2.77,.38,.20,-.18][row],0)).normalized())
 			uv.append(Vector2(u,v_coords[row]))
 	for row in range(3):

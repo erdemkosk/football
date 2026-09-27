@@ -28,11 +28,24 @@ void fragment() {
 	float dirt=smoothstep(1.0-soil*.95,1.04,patch)*zone;
 	cloth=mix(cloth,vec3(.22,.145,.072),dirt*.88);
 	// Filter the weave out at match distance to avoid crawling/moiré on shirts.
-	vec2 weave_uv=UV*vec2(150.0,110.0);
+	vec2 weave_uv=UV*(garment==2 ? vec2(72.0,95.0) : vec2(150.0,110.0));
 	float weave_filter=1.0-smoothstep(.18,.6,max(length(dFdx(weave_uv)),length(dFdy(weave_uv))));
 	float weave=sin(weave_uv.x*6.283185)*sin(weave_uv.y*6.283185)*weave_filter;
 	float fabric=garment<3 ? 1.0 : 0.0;
 	cloth*=1.0+weave*.045*fabric;
+	// Broad tension folds survive close-ups; fine sock ribbing fades with
+	// distance. Surface gradients also work on the rigidly batched limbs.
+	float close_detail=1.0-smoothstep(5.0,17.0,length(VERTEX));
+	float fold_zone=smoothstep(.28,.95,UV.y);
+	float fold=sin(UV.x*75.398+sin(UV.y*9.0)*1.4)*fold_zone;
+	float rib=sin(UV.x*150.796);
+	float height=(garment==2 ? rib*.00045*weave_filter : fold*.0014)*fabric*close_detail;
+	vec3 dpdx=dFdx(VERTEX), dpdy=dFdy(VERTEX);
+	vec3 across=cross(dpdy,NORMAL), along=cross(NORMAL,dpdx);
+	float determinant=dot(dpdx,across);
+	vec3 gradient=sign(determinant)*(dFdx(height)*across+dFdy(height)*along)/max(abs(determinant),.000001);
+	NORMAL=normalize(NORMAL-gradient);
+	cloth*=1.0+fold*.012*fabric*close_detail;
 	float damp=wetness*(.75+.25*patch);
 	cloth*=1.0-damp*.11;
 	ALBEDO = palette_color(cloth);
@@ -41,6 +54,7 @@ void fragment() {
 	RIM = .16*fabric;
 	RIM_TINT = .72;
 	EMISSION = palette_color(cloth)*.025*fabric;
-	ROUGHNESS = clamp(mix(.88,.54,damp)+weave*.045*fabric,.45,.95);
-	SPECULAR = mix(.22,.40,damp);
+	float dry_roughness=garment==1 ? .91 : (garment==2 ? .96 : .86);
+	ROUGHNESS = clamp(mix(dry_roughness,garment==3 ? .70 : .60,damp)+weave*.025*fabric,.55,.98);
+	SPECULAR = mix(garment==2 ? .16 : .23,.32,damp);
 }

@@ -7,9 +7,9 @@ var age := 0.0
 func apply(p,delta: float) -> void:
 	if p.celebration!=kind: kind=p.celebration; age=0
 	age+=delta
-	if p.action_timer>0 or kind not in ["fist","badge","crowd","heart","wings"]: return
+	if p.action_timer>0 or kind not in ["fist","badge","crowd","heart","wings","salute","point","arms_crossed"]: return
 	var weight := smoothstep(0,.24,age)
-	var pulse := sin(age*5.2+p.shirt_number*.43)
+	var pulse := sin(age*5.2+int(p.appearance.get("celebration",0))*.43)
 	var left := Vector3(.15,0,-.35)
 	var right := Vector3(.15,0,.35)
 	var elbows := Vector2(.5,.5)
@@ -33,6 +33,16 @@ func apply(p,delta: float) -> void:
 			left=Vector3(-.1,0,-1.30-pulse*.04)
 			right=Vector3(-.1,0,1.30+pulse*.04)
 			elbows=Vector2(.26,.26)
+		"salute":
+			right=Vector3(.85,-.1,1.15); elbows.y=1.4
+			p.head_joint.rotation.z=lerpf(p.head_joint.rotation.z,-.06,weight)
+		"point":
+			right=Vector3(2.7,0,.22); elbows.y=.16
+			left=Vector3(.15,0,-.35); elbows.x=.6
+			p.head_joint.rotation.x=lerpf(p.head_joint.rotation.x,.12,weight)
+		"arms_crossed":
+			left=Vector3(.6,0,.3); right=Vector3(.6,0,-.3)
+			elbows=Vector2(1.7,1.7)
 	p.left_arm.rotation=p.left_arm.rotation.lerp(left,weight)
 	p.right_arm.rotation=p.right_arm.rotation.lerp(right,weight)
 	p.left_elbow.rotation.x=lerpf(p.left_elbow.rotation.x,elbows.x,weight)
@@ -42,3 +52,8 @@ func apply(p,delta: float) -> void:
 	elif kind=="heart":
 		Arm.reach(p.left_arm,p.left_elbow,Vector3(-.055,.36,-.33),Vector3(-1,-.4,0),weight)
 		Arm.reach(p.right_arm,p.right_elbow,Vector3(.055,.36,-.33),Vector3(1,-.4,0),weight)
+	elif kind=="salute":
+		Arm.reach(p.right_arm,p.right_elbow,Vector3(.11,.87,-.18),Vector3(1,.2,0),weight)
+	elif kind=="arms_crossed":
+		Arm.reach(p.left_arm,p.left_elbow,Vector3(.13,.27,-.25),Vector3(-1,-.7,0),weight)
+		Arm.reach(p.right_arm,p.right_elbow,Vector3(-.13,.32,-.29),Vector3(1,-.7,0),weight)

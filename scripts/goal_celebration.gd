@@ -13,8 +13,7 @@ var urgent := false
 var late_winner := false
 var collection := "approach"
 var collection_age := 0.0
-const STYLES := ["fist","badge","crowd","heart","wings"]
-var sequence := 0
+const STYLES := ["fist","badge","crowd","heart","wings","salute","point","arms_crossed"]
 var style := "fist"
 
 func clear() -> void:
@@ -38,8 +37,8 @@ func begin(team: int) -> void:
 				var distance: float=game.flat_distance(p.position,game.ball.position)
 				if distance<nearest: nearest=distance; scorer=i
 	if scorer<0: return
-	style=STYLES[posmod(game.players[scorer].shirt_number+sequence,STYLES.size())]
-	sequence+=1
+	# A scorer keeps his signature gesture after a transfer or shirt change.
+	style=STYLES[int(game.players[scorer].appearance.get("celebration",0))]
 	urgent=game.match_time>game.LENGTH*.68 and game.score[team]<game.score[1-team]
 	late_winner=game.match_time>game.LENGTH*.85 and game.score[team]==game.score[1-team]+1
 	var side := -1.0 if game.players[scorer].position.x<0 else 1.0

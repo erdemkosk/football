@@ -41,6 +41,9 @@ var eye_forms: Array[Node3D] = []
 var boot_meshes: Array[MeshInstance3D] = []
 const Appearance = preload("res://scripts/player_appearance.gd")
 var appearance: Dictionary = {}
+var face_detail:=preload("res://scripts/character_face.gd").new()
+const CharacterMesh=preload("res://scripts/character_mesh.gd")
+var age:=25
 const BallActions = preload("res://scripts/ball_actions.gd")
 const ImpactMotion = preload("res://scripts/impact_motion.gd")
 const PlayerReaction = preload("res://scripts/player_reaction.gd")
@@ -55,6 +58,9 @@ var gait_cadence := 1.8
 var gait_stride := 1.0
 var gait_width := 1.0
 var gait_sway := 1.0
+var gait_arm_swing:=1.0
+var gait_elbow:=0.0
+var gait_posture:=0.0
 var kick_character := 1.0
 var tackle_foot := 1
 var tackle_target := Vector3.ZERO
@@ -302,8 +308,8 @@ func build_model() -> void:
 	shorts.set_shader_parameter("garment",1)
 	var socks := KitCloth.new(); socks.albedo_color=kit_color; socks.set_shader_parameter("garment",2)
 	kit_materials={"jersey":jersey,"trim":trim,"shorts":shorts,"socks":socks}
-	var skin = G.material(Appearance.SKIN_TONES[0])
-	var hair = G.material([Color("201e1b"),Color("32261d"),Color("6e5030")][number%3])
+	var skin = G.material(Appearance.SKIN_TONES[0],.86); skin.metallic_specular=.23
+	var hair = G.material([Color("201e1b"),Color("32261d"),Color("6e5030")][number%3],.78); hair.metallic_specular=.19; hair.vertex_color_use_as_albedo=true
 	kit_materials.skin=skin; kit_materials.hair=hair
 	var knees := KitCloth.new(); knees.albedo_color=skin.albedo_color; knees.set_shader_parameter("garment",3)
 	kit_materials.knees=knees
@@ -315,56 +321,39 @@ func build_model() -> void:
 	kit_materials["printed"]=printed
 	jersey_body=G.mesh(rig,KitGraphics.torso_mesh(),printed,Vector3(0,1.22,0))
 	jersey_body.name="JerseyCloth"
-	G.cylinder(rig,0.12,0.06,Vector3(0,1.51,0),trim)
-	G.cylinder(rig,0.235,0.27,Vector3(0,0.83,0),shorts)
-	G.cylinder(rig,0.095,0.12,Vector3(0,1.56,0),skin)
+	var collar=G.mesh(rig,CharacterMesh.limb([Vector3(-.027,.107,.101),Vector3(-.020,.116,.110),Vector3(.018,.113,.108),Vector3(.026,.106,.100)]),trim,Vector3(0,1.51,0)); collar.name="RibbedCollar"
+	G.mesh(rig,CharacterMesh.limb([Vector3(-.135,.215,.145),Vector3(-.11,.242,.153),Vector3(.08,.237,.154),Vector3(.135,.215,.145)]),shorts,Vector3(0,.83,0))
+	G.mesh(rig,CharacterMesh.limb([Vector3(-.073,.109,.086),Vector3(-.032,.087,.077),Vector3(.051,.077,.072),Vector3(.073,.083,.077)]),skin,Vector3(0,1.56,0))
 	rig.add_child(head_joint)
 	head_joint.name="Head"
 	head_joint.position=Vector3(0,1.60,0)
-	var head = G.sphere(head_joint,0.205,Vector3(0,0.16,0),skin)
-	head.scale = Vector3(0.86,1.1,0.91)
+	face_detail.build(self)
 	# A fitted scalp shell covers the head's crown; an offset squashed sphere
 	# intersected the forehead and exposed a skin-coloured patch on every player.
 	haircut = G.mesh(head_joint,scalp_mesh(),hair,Vector3(0,0.16,0))
 	haircut.name="HairCap"
 	refresh_hair()
-	var nose=G.sphere(head_joint,0.045,Vector3(0,0.15,-0.181),skin)
-	G.combine_rigid(head_joint,[head,nose],"head_skin")
-	var eye_white := G.material(Color("cbc8b8"))
-	var iris := G.material(Color("292921"))
-	for side in [-1,1]:
-		var eye := Node3D.new()
-		head_joint.add_child(eye)
-		eye.position=Vector3(side*0.071,0.19,-0.171)
-		eye_joints.append(eye)
-		var form:=Node3D.new(); form.name="EyeForm"; eye.add_child(form); eye_forms.append(form)
-		var white := G.sphere(form,0.026,Vector3.ZERO,eye_white)
-		white.scale=Vector3(1,0.42,0.25)
-		var pupil := G.sphere(form,0.012,Vector3(0,0,-0.006),iris)
-		pupil.scale=Vector3(0.85,0.62,0.30)
-		for part in [white,pupil]:
-			part.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-			part.visibility_range_end=35.0
 	for side in [-1,1]:
 		var leg = left_leg if side<0 else right_leg
 		rig.add_child(leg)
 		leg.position = Vector3(side*0.14,0.85,0)
-		G.cylinder(leg,0.10,0.30,Vector3(0,-0.14,0),shorts)
+		G.mesh(leg,CharacterMesh.limb([Vector3(-.15,.092,.092),Vector3(-.12,.104,.104),Vector3(.08,.113,.118),Vector3(.15,.097,.106)]),shorts,Vector3(0,-.14,0))
 		var knee = left_knee if side<0 else right_knee
 		leg.add_child(knee)
 		knee.position = Vector3(0,-0.33,0)
 		var kneecap=G.sphere(knee,0.084,Vector3.ZERO,knees)
 		var shin=G.cylinder(knee,0.081,0.12,Vector3(0,-0.055,0),knees)
 		G.combine_rigid(knee,[kneecap,shin],"knee_skin")
-		G.cylinder(knee,0.075,0.29,Vector3(0,-0.24,0),socks)
-		G.cylinder(knee,0.079,0.045,Vector3(0,-0.14,0),trim)
+		G.mesh(knee,CharacterMesh.limb([Vector3(-.145,.054,.059),Vector3(-.08,.063,.069),Vector3(.045,.079,.084),Vector3(.115,.074,.080)]),socks,Vector3(0,-.24,0))
+		G.mesh(knee,CharacterMesh.limb([Vector3(-.0225,.083,.089),Vector3(.0225,.083,.089)]),trim,Vector3(0,-.14,0))
 		var boot = G.mesh(knee,Appearance.boot_mesh(0),boots,Vector3(0,-0.42,-0.05))
 		boot.name="Boot"; boot_meshes.append(boot)
 		boot.scale = Vector3(0.77,0.61,1.65)
 		var arm = left_arm if side<0 else right_arm
 		rig.add_child(arm)
 		arm.position = Vector3(side*0.315,1.43,0)
-		G.cylinder(arm,0.105,0.24,Vector3(0,-0.1,0),jersey)
+		G.mesh(arm,CharacterMesh.limb([Vector3(-.12,.083,.086),Vector3(-.095,.096,.098),Vector3(.055,.108,.113),Vector3(.10,.072,.082),Vector3(.13,.002,.002)]),jersey,Vector3(0,-.1,0))
+		G.cylinder(arm,.100,.018,Vector3(0,-.205,0),trim)
 		if side<0 and not official:
 			captain_band=G.cylinder(arm,.111,.088,Vector3(0,-.155,0),G.material(Color("f7df68")))
 			captain_band.name="CaptainArmband"; captain_band.visible=false
@@ -372,13 +361,15 @@ func build_model() -> void:
 		var elbow = left_elbow if side<0 else right_elbow
 		arm.add_child(elbow)
 		elbow.position = Vector3(0,-0.24,0)
-		var elbow_cap=G.sphere(elbow,0.077,Vector3.ZERO,skin)
-		var forearm=G.cylinder(elbow,0.072,0.25,Vector3(0,-0.125,0),skin)
+		var elbow_cap=G.sphere(elbow,0.071,Vector3.ZERO,skin)
+		var forearm=G.mesh(elbow,CharacterMesh.limb([Vector3(-.125,.046,.050),Vector3(-.085,.050,.054),Vector3(.03,.068,.070),Vector3(.125,.069,.067)]),skin,Vector3(0,-.125,0))
 		var hand = G.sphere(elbow,0.103 if keeper else 0.08,Vector3(0,-0.29,0),G.material(Color("ececd7")) if keeper else skin)
+		if not keeper: hand.scale=Vector3(.74,1.10,.46)
 		if keeper:
 			G.combine_rigid(elbow,[elbow_cap,forearm],"forearm_skin")
 		else:
-			G.combine_rigid(elbow,[elbow_cap,forearm,hand],"forearm_hand_skin",[hand])
+			var thumb=G.sphere(elbow,.025,Vector3(-side*.054,-.280,-.012),skin); thumb.scale=Vector3(.65,1.20,.65)
+			G.combine_rigid(elbow,[elbow_cap,forearm,hand,thumb],"forearm_hand_skin_v2_%d" % side,[hand])
 		if keeper:
 			hand.scale=Vector3(1.05,1.3,.66)
 			gloves.append(hand); hand.name="KeeperGlove"
@@ -726,14 +717,14 @@ func begin_receive(style: String,point: Vector3=Vector3.INF,incoming: Vector3=Ve
 	ball_actions.begin_receive(self,point if point.is_finite() else position+facing*0.55+Vector3.UP*preload("res://scripts/ball_dimensions.gd").GROUND_HEIGHT,incoming,reach)
 
 func identity() -> Dictionary:
-	return {"name":display_name,"shirt":shirt_number,"height_cm":height_cm,"weight_kg":weight_kg,"keeper":keeper,"attributes":attributes.duplicate(),"career_id":career_id,"role":natural_position,"appearance_id":appearance_id,"captain":captain}
+	return {"name":display_name,"shirt":shirt_number,"height_cm":height_cm,"weight_kg":weight_kg,"keeper":keeper,"attributes":attributes.duplicate(),"career_id":career_id,"role":natural_position,"appearance_id":appearance_id,"captain":captain,"age":age}
 
 func refresh_hair() -> void:
 	if haircut==null: return
 	var identity_value: int=appearance_id if appearance_id>=0 else shirt_number-1
 	hair_style=HairStyles.style_for(identity_value)
 	haircut.mesh=HairStyles.model(hair_style,scalp_mesh())
-	kit_materials.hair.albedo_color=HairStyles.color_for(identity_value)
+	kit_materials.hair.albedo_color=HairStyles.color_for(identity_value).lerp(Color("ada9a1"),smoothstep(30,42,age)*.32)
 
 func refresh_appearance() -> void:
 	var identity_value: int=appearance_id if appearance_id>=0 else shirt_number-1
@@ -747,6 +738,7 @@ func refresh_appearance() -> void:
 		eye_forms[i].rotation.z=form.z*(-1 if i==0 else 1)
 	for boot in boot_meshes: boot.mesh=Appearance.boot_mesh(appearance.boots)
 	refresh_hair()
+	face_detail.refresh(self)
 
 func apply_identity(data: Dictionary) -> void:
 	# A new player on this body starts fit.
@@ -755,6 +747,7 @@ func apply_identity(data: Dictionary) -> void:
 	var role_value=data.get("role",-1)
 	natural_position=int(role_value) if role_value is int else int(data.get("natural_group",-1))
 	appearance_id=data.get("appearance_id",-1)
+	age=clampi(int(data.get("age",19+Appearance.choice(maxi(0,appearance_id),241,16))),16,55)
 	display_name=data.get("name",display_name)
 	shirt_number=int(data.get("shirt",shirt_number))
 	set_captain(bool(data.get("captain",shirt_number==6)))
@@ -776,7 +769,7 @@ func apply_build() -> void:
 	body_scale=Vector3(width,height,depth)
 	# Vary the build without stretching faces with the shoulders.
 	head_joint.scale=Vector3(clampf(REFERENCE_SCALE.x/width,.94,1.07),clampf(REFERENCE_SCALE.y/height,.96,1.05),clampf(REFERENCE_SCALE.z/depth,.94,1.07))
-	idle_habit=shirt_number%4
+	idle_habit=int(appearance.get("movement",0))
 	stance=0.08 if keeper else (0.055 if number in [2,3,4,5] else 0.0)
 	var agility := clampf((float(attributes.control)+float(attributes.acceleration)-144)/70,-1,1)
 	var build := clampf((weight_kg-76)/20.0+(height_cm-180)/38.0,-1,1)
@@ -784,6 +777,9 @@ func apply_build() -> void:
 	gait_stride=clampf(1+build*.09-agility*.06,.87,1.13)
 	gait_width=1+build*.3
 	gait_sway=1+build*.28-agility*.16
+	gait_arm_swing=[.84,1.12,.96,1.04][idle_habit]
+	gait_elbow=[.12,-.08,.04,.18][idle_habit]
+	gait_posture=[.025,-.025,-.012,.045][idle_habit]
 	kick_character=clampf(1+build*.12-agility*.08,.85,1.18)
 	rig.scale=body_scale
 	jersey_body.scale.x=clampf(1.0+build*.065,.95,1.07)
@@ -882,13 +878,13 @@ func animate(delta: float) -> void:
 	right_leg.rotation = Vector3(0.10-stride*0.78*gait,0,0.035*gait_width)
 	left_knee.rotation = Vector3(-0.19-maxf(0,-stride)*1.08*gait,0,0)
 	right_knee.rotation = Vector3(-0.19-maxf(0,stride)*1.08*gait,0,0)
-	left_arm.rotation = Vector3(-stride*0.55*gait-0.08-tired*0.12,0,-0.13)
-	right_arm.rotation = Vector3(stride*0.55*gait-0.08-tired*0.12,0,0.13)
+	left_arm.rotation = Vector3(-stride*0.55*gait*gait_arm_swing-0.08-tired*0.12,0,-0.13-tired*.06)
+	right_arm.rotation = Vector3(stride*0.55*gait*gait_arm_swing-0.08-tired*0.12,0,0.13+tired*.06)
 	# Start every overlay from a complete live pose. Hand IK can rotate all
 	# three axes; retaining its old yaw/roll twisted later dives and gestures.
-	left_elbow.rotation = Vector3(0.50+gait*0.34+stride*0.09+tired*0.18,0,0)
-	right_elbow.rotation = Vector3(0.50+gait*0.34-stride*0.09+tired*0.18,0,0)
-	spine.rotation = spine.rotation.lerp(Vector3(-0.065-amount*0.12-tired*0.10-stance-(0.065 if exhausted else 0.0),sin(run_phase)*gait*0.065*gait_sway,-stride*gait*0.035*gait_sway),blend)
+	left_elbow.rotation = Vector3(0.50+gait*0.34+stride*0.09+tired*0.18+gait_elbow*amount,0,0)
+	right_elbow.rotation = Vector3(0.50+gait*0.34-stride*0.09+tired*0.18+gait_elbow*amount,0,0)
+	spine.rotation = spine.rotation.lerp(Vector3(-0.065-amount*(0.12+gait_posture)-tired*0.10-match_fatigue*.06-stance-(0.065 if exhausted else 0.0),sin(run_phase)*gait*0.065*gait_sway,-stride*gait*0.035*gait_sway),blend)
 	if exhausted:
 		spine.position.y = 0.94+sin(motion_clock*5.0)*0.012
 	else: spine.position.y = 0.94
@@ -919,6 +915,10 @@ func animate(delta: float) -> void:
 		right_elbow.rotation.x=0.35+sin(motion_clock*4+number)*0.12
 	if breath<=0.14 and idle_rest>0.35 and gait<0.12 and shot_preparation<=0 and kick_timer<=0 and receive_timer<=0 and action_timer<=0 and call_timer<=0 and body_language.point_weight<=0.05 and body_language.point_cooldown<=0 and not keeper and not protecting and not jockeying:
 		var rest: float=smoothstep(0.35,0.7,idle_rest)
+		# Brief personal habits fade back to the ready stance, instead of holding
+		# a rigid pose indefinitely. Urgent ball actions bypass this layer.
+		var habit_phase: float=fmod(motion_clock+idle_habit*2.3,9.0)
+		rest*=smoothstep(0,.7,habit_phase)*(1-smoothstep(2.1,3.2,habit_phase))
 		match idle_habit:
 			1:
 				left_arm.rotation=left_arm.rotation.lerp(Vector3(0.35,0,-1.15),rest)
@@ -1118,6 +1118,7 @@ func animate(delta: float) -> void:
 	if reaction.kind!="" and reaction.weight>0: reaction.apply(self)
 	if reaction.kind=="": apply_breath(delta)
 	body_language.apply_gaze(self,delta)
+	face_detail.animate(self,delta)
 	if breath>0.08 and reaction.kind=="":
 		head_joint.rotation.x=lerpf(head_joint.rotation.x,0.36+0.07*sin(motion_clock*3.1+number),smoothstep(0.08,0.5,breath))
 	motion_transition.capture(self)
@@ -1280,6 +1281,9 @@ func stain(delta: float,sampled_mud: float=-1.0) -> void:
 
 func update_soil(wet: float) -> void:
 	shown_soil=kit_soil; shown_wetness=wet
+	kit_materials.skin.roughness=lerpf(.86,.70,wet)
+	face_detail.head.material_override.roughness=lerpf(.86,.70,wet)
+	kit_materials.hair.roughness=lerpf(.78,.65,wet)
 	kit_materials.printed.albedo_color=Color.WHITE.lerp(Color(.82,.79,.70),kit_soil*.12)
 	if not kit_clean.is_empty(): kit_materials.jersey.albedo_color=kit_clean.jersey.lerp(Color(.24,.19,.11),kit_soil*.035)
 	for part in ["jersey","printed","shorts","socks","knees"]:

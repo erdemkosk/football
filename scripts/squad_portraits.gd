@@ -10,7 +10,7 @@ var current := ""
 var frames := 0
 
 func key_for(data: Dictionary) -> String:
-	return "%s/%d/%d/%d/%d/%s/%s/%d" % [data.name,data.shirt,data.get("appearance_id",data.get("appearance_number",data.shirt)),data.height_cm,data.weight_kg,data.kit.primary.to_html(),data.kit.accent.to_html(),data.kit.get("club_id",0)]
+	return "%s/%d/%d/%d/%d/%s/%s/%d/%d" % [data.name,data.shirt,data.get("appearance_id",data.get("appearance_number",data.shirt)),data.height_cm,data.weight_kg,data.kit.primary.to_html(),data.kit.accent.to_html(),data.kit.get("club_id",0),data.get("age",25)]
 
 func request(data: Dictionary) -> String:
 	var key := key_for(data)

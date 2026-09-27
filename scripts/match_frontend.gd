@@ -482,6 +482,7 @@ func player_data(kind: String,index: int) -> Dictionary:
 		if game.career.in_match and p.career_id!="": data.ovr=World.ovr(game.career.player(p.career_id))
 		else: data.ovr=rating_of(data)
 		data.appearance_id=p.appearance_id
+		data.age=p.age
 		if game.career.in_match and p.career_id!="": data.energy=game.career.player(p.career_id).fitness if prematch else p.energy
 		if not prematch:
 			if p.dismissed: data.status="İHRAÇ"
