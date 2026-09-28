@@ -138,11 +138,20 @@ func carry(game,index: int,_delta: float) -> void:
 	var guided: bool=acquired and offset.length()<(1.45 if settling else 1.30) and incoming.length()<15.5 and absf(ball.position.x)<P.HALF_WIDTH+.2 and absf(ball.position.z)<50.2
 	if guided:
 		var technique: float=clampf((float(p.attributes.control)-45)/50,0,1)
+		var agility: float=p.Attributes.skill(p,"agility")
 		var reach: float=(lerpf(.90,.67,technique)*(.9 if p.Attributes.has_style(p,"rapid") else 1.0) if (p.active_sprint and not p.controlled_sprint) else lerpf(.60,.48,technique))+(.025 if moving else 0.0)*sin(p.run_phase*2)
+		# Agile dribblers take small touches on a cut; a straight sprint leaves
+		# room for the next long stride. Both still need real boot contacts.
+		reach+=lerpf(.07,-.035,agility)*smoothstep(.5,3,pace)
+		if p.active_sprint and not p.controlled_sprint: reach+=smoothstep(4,8,pace)*(1-agility)*.08
+		var receiving: float=(1-smoothstep(0,.30,p.receive_duration-p.receive_timer)) if p.receive_timer>0 else 0.0
+		var exposed: float=p.ball_actions.receive_error*receiving
+		reach+=exposed*.28
 		var right := aim.cross(Vector3.UP)
 		var goal: Vector3=aim*reach+right*clampf(offset.dot(right),-.13,.13)
 		if p.protecting: goal=aim*.48+right*clampf(offset.dot(right),-.16,.16)
 		var grip: float=lerpf(90,130,technique)*(0.60 if (p.active_sprint and not p.controlled_sprint) else 1.0)
+		grip*=lerpf(.84,1.12,agility)*lerpf(1.0,.42,exposed)
 		var acceleration: Vector3=(goal-offset)*grip-relative*(2*sqrt(grip))
 		ball.guide(acceleration.limit_length(85 if not (p.active_sprint and not p.controlled_sprint) else 65))
 	var needs_touch: bool=close and (moving or stopping) or (closing and offset.length()<.78) or (turn>.5 and offset.length()<1.13 and moving) or ((stopping or braking) and offset.length()<1.25)
@@ -183,6 +192,7 @@ func carry(game,index: int,_delta: float) -> void:
 		var speed: float=minf(requested_speed,travelling+2.0)
 		var technique: float=p.Attributes.technique(p.attributes.control)
 		var lead: float=(lerpf(1.0,.65,technique) if (p.active_sprint and not p.controlled_sprint) else lerpf(.55,.35,technique))+(1-p.energy)*.12
+		lead*=lerpf(1.12,.90,p.Attributes.skill(p,"agility"))
 		var lateral: Vector3=offset-aim*offset.dot(aim)
 		output=aim*(speed+lead)-lateral.limit_length(.30)*2.0
 		if p.protecting: output=horizontal+aim*.4-lateral.limit_length(.2)

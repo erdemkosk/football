@@ -57,7 +57,7 @@ func run() -> void:
 		root.add_child(player)
 		var batch=player.render_batch
 		if batch==null: batch=load("res://scripts/rigid_player_batch.gd").new(); batch.setup(player)
-		check(batch.sources.size()==21 and batch.batches[0].mesh.get_surface_count()==6,"Anatomical thighs and upper arms share the existing six material surfaces")
+		check(batch.sources.size()==5 and batch.batches[0].mesh.get_surface_count()<=6 and player.jersey_body not in batch.sources and player.left_hand not in batch.sources,"Only the collar and four cuff trims are rigidly batched; weighted anatomy and hand anchors stay live")
 		for pose in range(60):
 			player.height_cm=rng.randi_range(166,199); player.weight_kg=rng.randi_range(58,96); player.apply_build()
 			player.position=Vector3(rng.randf_range(-35,35),rng.randf_range(0,3),rng.randf_range(-55,55))

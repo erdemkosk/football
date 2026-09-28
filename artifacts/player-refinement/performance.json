@@ -1,0 +1,78 @@
+[
+	{
+		"cpu_ms": 0.535365826390479,
+		"draw_calls": 2110.0,
+		"duration": 3.001981,
+		"fps": 290.474856436466,
+		"frames": 872,
+		"gpu_ms": null,
+		"median_ms": 3.412,
+		"p95_ms": 3.63,
+		"primitives": 1526829.0,
+		"scene": "day-play"
+	},
+	{
+		"cpu_ms": 1.20754609780109,
+		"draw_calls": 1736.0,
+		"duration": 3.004052,
+		"fps": 187.746417172539,
+		"frames": 564,
+		"gpu_ms": null,
+		"median_ms": 5.31,
+		"p95_ms": 5.4,
+		"primitives": 2892381.0,
+		"scene": "night-play"
+	},
+	{
+		"cpu_ms": 0.588226315575211,
+		"draw_calls": 1923.0,
+		"duration": 3.003503,
+		"fps": 253.037869447775,
+		"frames": 760,
+		"gpu_ms": null,
+		"median_ms": 3.903,
+		"p95_ms": 4.317,
+		"primitives": 1409813.0,
+		"scene": "day-stadium"
+	},
+	{
+		"cpu_ms": 1.84914132614462,
+		"draw_calls": 3248.0,
+		"duration": 3.001539,
+		"fps": 155.586850612303,
+		"frames": 467,
+		"gpu_ms": null,
+		"median_ms": 6.162,
+		"p95_ms": 7.677,
+		"primitives": 4762515.0,
+		"scene": "night-stadium"
+	},
+	{
+		"cpu_ms": 1.24531250243837,
+		"draw_calls": 1738.0,
+		"duration": 3.002171,
+		"fps": 175.872726770061,
+		"frames": 528,
+		"gpu_ms": null,
+		"median_ms": 5.671,
+		"p95_ms": 5.758,
+		"primitives": 2912781.0,
+		"scene": "night-rain"
+	},
+	{
+		"duration": 6.005403,
+		"fps": 86.7552102664884,
+		"frames": 521,
+		"median_ms": 10.748,
+		"p95_ms": 14.217,
+		"scene": "night-live-stadium"
+	},
+	{
+		"duration": 6.001686,
+		"fps": 144.626026753149,
+		"frames": 868,
+		"median_ms": 7.372,
+		"p95_ms": 8.482,
+		"scene": "night-live-rain-match"
+	}
+]

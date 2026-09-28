@@ -143,15 +143,23 @@ func card(h,index: int,subtitle: String,kind: String,primary: bool) -> void:
 	else: icon(h,icon_at,kind,ink,small)
 	var x: float=rect.position.x+(53 if small else 78)
 	var size: int=12 if index==5 else 14 if small else 20
-	var baseline: float=rect.position.y+rect.size.y*.5+5 if small else rect.position.y+35
+	var subtitle_size:=12 if rect.size.y<=60 else 14
+	if not subtitle.is_empty() and rect.size.y<=60: size=18
+	var gap:=4.0
+	var block_height: float=h.bold.get_height(size)
+	if not subtitle.is_empty(): block_height+=gap+h.font.get_height(subtitle_size)
+	if kind=="career": block_height+=gap+h.font.get_height(11)
+	var baseline: float=rect.position.y+(rect.size.y-block_height)*.5+h.bold.get_ascent(size)
 	fitted(h,title(index),Vector2(x,baseline),size,rect.end.x-x-45,ink,true)
+	var subtitle_baseline: float=baseline+h.bold.get_descent(size)+gap+h.font.get_ascent(subtitle_size)
 	if not subtitle.is_empty():
-		fitted(h,subtitle,Vector2(x,baseline+24),14,rect.end.x-x-35,mute,kind=="career" and resume_slot>0)
+		fitted(h,subtitle,Vector2(x,subtitle_baseline),subtitle_size,rect.end.x-x-35,mute,kind=="career" and resume_slot>0)
+	var detail_baseline: float=subtitle_baseline+h.font.get_descent(subtitle_size)+gap+h.font.get_ascent(11)
 	if kind=="career" and resume_slot>0:
 		var detail: String=World.LEAGUES[int(summary.league)]+"  ·  "+World.date_label(int(summary.date))
-		fitted(h,detail,Vector2(x,baseline+47),11,rect.end.x-x-26,mute)
+		fitted(h,detail,Vector2(x,detail_baseline),11,rect.end.x-x-26,mute)
 	elif kind=="career":
-		h.text("KADRONU KUR  /  SEZONA BAŞLA",Vector2(x,baseline+47),10,mute)
+		h.text("KADRONU KUR  /  SEZONA BAŞLA",Vector2(x,detail_baseline),10,mute)
 	if focused and game.controller.using_gamepad:
 		h.draw_texture_rect(game.controller.Glyphs.icon(JOY_BUTTON_A,game.controller.family),Rect2(rect.end.x-40,rect.position.y+16,25,25),false)
 	else:

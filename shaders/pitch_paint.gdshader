@@ -1,8 +1,12 @@
 shader_type spatial;
 render_mode diffuse_burley;
 #include "res://shaders/color_space.gdshaderinc"
+#include "res://shaders/turf_noise.gdshaderinc"
+#include "res://shaders/pitch_style.gdshaderinc"
 uniform float wetness=0.0;
 uniform float play_wear=0.0;
+uniform sampler2D wear_map : hint_default_black, filter_linear, repeat_disable;
+uniform vec2 wear_half_pitch=vec2(36.0,50.0);
 varying vec2 ground;
 float hash_paint(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 float paint_noise(vec2 p){
@@ -15,11 +19,32 @@ void fragment(){
  float detail=1.0-smoothstep(.025,.10,footprint);
  float flecks=paint_noise(ground*32.0);
  float traffic=exp(-pow(ground.x/8.0,2.0)-pow((abs(ground.y)-46.0)/7.0,2.0));
- float wear=(.10+play_wear*(.10+traffic*.16));
+ float wear=(.10*turf_age+play_wear*(.10+traffic*.16));
  float chips=smoothstep(.57,.85,flecks)*detail*wear;
+ vec2 used=texture(wear_map,ground/(wear_half_pitch*2.0)+.5).rg;
+ chips+=clamp(used.r*.20+used.g*.32,0.0,.48)*(.5+.5*flecks);
  // Opaque pigment variation preserves line readability and avoids an alpha pass.
  vec3 paint=mix(vec3(.725,.784,.706),vec3(.16,.25,.12),chips);
  paint*=1.0+(paint_noise(ground*2.0)-.5)*.065-wetness*.065;
+ // The pigment coats the same blades as the surrounding grass. Shared world
+ // coordinates and gradients let its texture/light continue through the line.
+ float turf_detail=1.0-smoothstep(.06,.15,footprint);
+ vec3 tufts=wet_noise(ground*vec2(5.0,3.2));
+ vec3 cut=mowing(ground);
+ vec3 turf=mix(turf_dark,turf_light,cut.x);
+ paint=mix(paint,turf,.045+chips*.35);
+ paint*=1.0+(tufts.x-.5)*.09*turf_detail;
+ vec2 slope=tufts.yz*.028*turf_detail;
+ slope+=cut.yz*.025;
+ float close_blades=1.0-smoothstep(.025,.065,footprint);
+ if(close_blades>0.0) {
+  vec3 fibres=wet_noise(ground*vec2(32.0,11.0));
+  slope+=fibres.yz*.055*close_blades;
+  paint*=1.0+(fibres.x-.5)*.12*close_blades;
+ }
+ vec3 world_normal=normalize((INV_VIEW_MATRIX*vec4(NORMAL,0.0)).xyz);
+ world_normal=normalize(world_normal+vec3(-slope.x,0.0,-slope.y)*max(world_normal.y,0.0));
+ NORMAL=normalize((VIEW_MATRIX*vec4(world_normal,0.0)).xyz);
  ALBEDO=palette_color(paint);
  ROUGHNESS=mix(.96,.73,wetness);
  SPECULAR=mix(.12,.25,wetness);

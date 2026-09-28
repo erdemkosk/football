@@ -15,7 +15,12 @@ void fragment() {
  if(is_trail>0.5) {
   float ragged=0.88+0.1*sin(ground.x*19.0+sin(ground.y*13.0));
   edge=1.0-smoothstep(0.5,ragged,abs(uv.x));
-  tread=0.68+0.1*sin(ground.x*21.0+ground.y*15.0);
+  edge*=1.0-smoothstep(.86,1.0,abs(uv.y));
+  tread=.42+.20*sin(ground.x*21.0+ground.y*15.0)+.14*sin(uv.x*29.0);
+ } else {
+  // Paired studs and a broken sole leave a boot print, not a solid oval.
+  float studs=(1.0-smoothstep(.13,.29,abs(abs(uv.x)-.43)))*(1.0-smoothstep(.17,.43,abs(sin(UV.y*18.85))));
+  tread=.25+studs*.75;
  }
  ALBEDO=palette_color(ink.rgb);
  ALPHA=ink.a*edge*tread*(1.0-smoothstep(lifetime*0.7,lifetime,clock-born));

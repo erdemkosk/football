@@ -19,6 +19,13 @@ func build(arena) -> void:
 	shaft_material.shader=load("res://shaders/flood_shaft.gdshader")
 	shaft_material.set_shader_parameter("glow",Color("d4e4ff"))
 	shaft_material.set_shader_parameter("strength",0.0)
+	rebuild_mounts()
+
+func rebuild_mounts() -> void:
+	for light in floodlights: light.free()
+	for shaft in shafts: shaft.free()
+	floodlights.clear(); shafts.clear()
+	applied_period=-1; applied_rain=-1
 	for mount in stadium.architecture.floodlight_mounts:
 		var flood := SpotLight3D.new()
 		flood.name="RoofFloodlight"+str(floodlights.size()+1)
@@ -36,11 +43,11 @@ func build(arena) -> void:
 		flood.shadow_enabled=true
 		flood.shadow_bias=0.06
 		flood.shadow_normal_bias=0.6
-		flood.shadow_opacity=0.70
+		flood.shadow_opacity=0.62
 		floodlights.append(flood)
 		shafts.append(make_shaft(mount,aim))
 	stadium.grass.set_shader_parameter("flood_positions",PackedVector3Array(stadium.architecture.floodlight_mounts))
-	apply_weather(0)
+	apply_weather(rainfall)
 
 func build_sky() -> void:
 	var noise := FastNoiseLite.new()
@@ -107,11 +114,11 @@ func apply_weather(rain: float) -> void:
 	sun.rotation_degrees=Vector3(-32,-64,0) if evening else Vector3(-62,-38,0)
 	sun.light_color=(Color("ffc788") if evening else Color("fff5e9")).lerp(Color("d8e3ed"),rainfall)
 	sun.light_energy=0.0 if night else lerpf(1.12 if evening else 1.10,0.62,rainfall)
-	sun.shadow_opacity=lerpf(.64 if evening else .78,0.25,rainfall)
+	sun.shadow_opacity=lerpf(.61 if evening else .68,0.28,rainfall)
 	if night:
 		env.background_color=Color("081323").lerp(Color("111a27"),rainfall)
 		env.ambient_light_color=Color("8daccd")
-		env.ambient_light_energy=lerpf(0.20,0.25,rainfall)
+		env.ambient_light_energy=lerpf(0.23,0.27,rainfall)
 	elif evening:
 		env.background_color=Color("9b897e").lerp(Color("657681"),rainfall)
 		env.ambient_light_color=Color("e4cbaa").lerp(Color("a8bdcf"),rainfall)
@@ -119,7 +126,7 @@ func apply_weather(rain: float) -> void:
 	else:
 		env.background_color=Color("6f868a").lerp(Color("5a7178"),rainfall)
 		env.ambient_light_color=Color("d4e1ee").lerp(Color("a8bdcf"),rainfall)
-		env.ambient_light_energy=lerpf(0.42,0.66,rainfall)
+		env.ambient_light_energy=lerpf(0.46,0.62,rainfall)
 	var horizon := Color("839faa")
 	var zenith := Color("3c647f")
 	var cloud_light := Color("e0e4df")

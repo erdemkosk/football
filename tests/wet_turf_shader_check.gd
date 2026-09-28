@@ -1,4 +1,5 @@
 extends SceneTree
+var viewport: SubViewport
 func _initialize() -> void: call_deferred("run")
 func render_material(material: ShaderMaterial,shader: Shader,wetness: float) -> Image:
 	material.shader=shader
@@ -9,10 +10,14 @@ func render_material(material: ShaderMaterial,shader: Shader,wetness: float) -> 
 	material.set_shader_parameter("weather_clock",4.3)
 	for i in range(6): await process_frame
 	await RenderingServer.frame_post_draw
-	return root.get_texture().get_image()
+	return viewport.get_texture().get_image()
 func run() -> void:
 	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED); root.size=Vector2i(720,600)
-	var world:=Node3D.new(); root.add_child(world)
+	# An offscreen viewport avoids asynchronous macOS window-size transitions
+	# changing the pixel layout between the dry reference and revised material.
+	viewport=SubViewport.new(); viewport.size=Vector2i(720,600); viewport.own_world_3d=true
+	viewport.render_target_update_mode=SubViewport.UPDATE_ALWAYS; root.add_child(viewport)
+	var world:=Node3D.new(); viewport.add_child(world)
 	var plane:=MeshInstance3D.new(); var shape:=PlaneMesh.new(); shape.size=Vector2(88,112); plane.mesh=shape
 	var material:=ShaderMaterial.new(); plane.material_override=material; world.add_child(plane)
 	var light:=DirectionalLight3D.new(); light.rotation_degrees=Vector3(-48,-28,0); world.add_child(light)
@@ -24,10 +29,21 @@ func run() -> void:
 		var delta:=absi(int(source[i])-int(result[i])); maximum=maxi(maximum,delta); total+=delta
 	var mean:=total/source.size()
 	print("DRY SHADER mean_channel_error=",mean," max=",maximum)
-	var failed:=maximum>1 or mean>.001
+	# Dry relief is now intentional. Keep it subtle, then verify that the first
+	# hint of rain cannot abruptly replace the newly detailed dry surface.
+	var failed:=mean<.002 or mean>8.0
+	var previous:=b
 	for wet in [.01,.25,.55,1.0]:
 		var rendered:=await render_material(material,revised,wet)
 		if rendered.is_empty(): failed=true
+		var delta_sum:=0.0
+		var before:=previous.get_data(); var after:=rendered.get_data()
+		for i in range(after.size()): delta_sum+=absf(float(after[i])-float(before[i]))
+		var difference:=delta_sum/after.size()
+		if wet==.01 and difference>.5: failed=true
+		if rendered.get_pixel(360,300).get_luminance()<.01: failed=true
+		print("RAIN TRANSITION mean_channel_error=",difference)
+		previous=rendered
 		print("WET SHADER rendered wetness=",wet," size=",rendered.get_size())
 	print("WET TURF SHADER CHECK failures=",1 if failed else 0)
 	world.free(); quit(1 if failed else 0)

@@ -31,6 +31,8 @@ var support_weight := 0.0
 var receive_direction := Vector3.ZERO
 var receive_distance := 0.0
 var receive_contact := "inside"
+var receive_variant := "cushion"
+var receive_turn := 0.0
 var receive_error := 0.0
 var receive_reason := ""
 var receive_feedback_time := 0.0
@@ -38,6 +40,8 @@ var intent_direction := Vector3.ZERO
 var intent_age := 0.0
 var kick_context := "straight"
 var kick_speed := 0.0
+var kick_reach := 0.0
+var kick_offset := Vector3.ZERO
 
 func reset(p) -> void:
 	p.receiving_facing=Vector3.ZERO
@@ -47,10 +51,11 @@ func reset(p) -> void:
 	receive_start.clear()
 	contact_pending=false; support_foot=-1; support_age=1; support_weight=0; release_age=1
 	receive_direction=Vector3.ZERO; receive_distance=0
-	receive_contact="inside"; receive_error=0; receive_reason=""
+	receive_contact="inside"; receive_variant="cushion"; receive_turn=0; receive_error=0; receive_reason=""
 	receive_feedback_time=0
 	intent_direction=Vector3.ZERO; intent_age=0
 	kick_context="straight"; kick_speed=0
+	kick_reach=0; kick_offset=Vector3.ZERO
 	recovery_power=0
 	p.motion_transition.reset()
 
@@ -80,6 +85,8 @@ func prepare_kick(p,point: Vector3,direction: Vector3,pressure: float=0) -> void
 	kick_context="back" if angle>2.25 else ("open" if angle>.70 else ("running" if kick_speed>3 else "straight"))
 	kick_turn=clampf(forward.signed_angle_to(aim,Vector3.UP),-1.05,1.05) if aim.length()>0.1 else 0.0
 	var reach: float=Vector2(point.x-p.position.x,point.z-p.position.z).length()
+	kick_offset=(point-p.global_position)*Vector3(1,0,1)
+	kick_reach=smoothstep(.78,1.18,reach)
 	var balance: float=p.body_language.balance_strength if p.body_language.balance_age<0.45 else p.locomotion.cut*0.5
 	difficulty=clampf(absf(kick_turn)*0.35+pressure*0.35+balance*0.35+maxf(0,reach-0.9)*0.35+(1-p.energy)*0.15,0,1)
 	plant_support(p,1-foot,.19)
@@ -87,12 +94,33 @@ func prepare_kick(p,point: Vector3,direction: Vector3,pressure: float=0) -> void
 	# longer load-bearing step, while movement and the contact deadline stay live.
 	support_duration=lerpf(.19,.13,clampf(kick_speed/9,0,1))
 
+func receiving_foot(p,point: Vector3) -> int:
+	var selected := choose_foot(p,point)
+	var intent: Vector3=p.ball_actions.intent_direction
+	if intent.length()<.1: intent=p.desired
+	var local: Vector3=p.rig.to_local(point)
+	var opening: float=intent.dot(p.rig.global_basis.x.normalized())
+	# Only central, reachable balls allow choosing the foot that opens into
+	# space. A wide delivery still belongs to the nearest physical foot.
+	if absf(local.x)<.28 and local.z<.15 and absf(opening)>.45:
+		selected=0 if opening<0 else 1
+	return selected
+
+func configure_receive(p) -> void:
+	var front: Vector3=-p.rig.global_basis.z.normalized()
+	receive_turn=clampf(front.signed_angle_to(receive_direction,Vector3.UP),-1.25,1.25) if receive_direction.length()>.1 else 0.0
+	receive_variant="cushion"
+	if p.receive_style!="foot": return
+	if receive_offset.z>.10 and receive_speed>2: receive_variant="trailing"
+	elif stretch>.35: receive_variant="reach"
+	elif absf(receive_turn)>.45: receive_variant="half_turn"
+
 func begin_receive(p,point: Vector3,velocity: Vector3,reach: float) -> void:
-	receive_foot=choose_foot(p,point)
+	receive_foot=receiving_foot(p,point)
 	foot=receive_foot
 	receive_offset=p.rig.to_local(point)
-	receive_offset.x=clampf(receive_offset.x,-0.62,0.62)
-	receive_offset.z=clampf(receive_offset.z,-0.72,0.28)
+	receive_offset.x=clampf(receive_offset.x,-0.78,0.78)
+	receive_offset.z=clampf(receive_offset.z,-0.95,0.60)
 	incoming=velocity.rotated(Vector3.UP,-p.rig.rotation.y)
 	firmness=clampf(velocity.length()/19,0,1)
 	stretch=clampf(reach,0,1)
@@ -103,6 +131,7 @@ func begin_receive(p,point: Vector3,velocity: Vector3,reach: float) -> void:
 	receive_start.clear()
 	for joint in p.kick_joints: receive_start.append(joint.quaternion)
 	receive_direction=Vector3.ZERO; receive_distance=0
+	configure_receive(p)
 	plant_support(p,1-receive_foot,.14)
 
 func apply_receive(p) -> void:
@@ -123,6 +152,22 @@ func apply_receive(p) -> void:
 			knee.rotation.x=lerpf(knee.rotation.x,-1.24,hold)
 		else:
 			var target := receive_offset
+			if receive_variant=="half_turn":
+				p.spine.rotation.y+=receive_turn*.36*hold
+				leg.rotation.y+=receive_turn*.20*hold
+			elif receive_variant=="trailing":
+				# Reach back with one foot and cross the next support step under
+				# the hips. Character motion remains entirely under live input.
+				p.spine.rotation.y-=side*.38*hold
+				p.spine.rotation.z-=side*.12*hold
+				var other_leg: Node3D=p.right_leg if receive_foot==0 else p.left_leg
+				var other_knee: Node3D=p.right_knee if receive_foot==0 else p.left_knee
+				var crossing: Vector3=other_knee.to_global(BOOT)
+				crossing+=p.rig.global_basis.x*side*.12*hold
+				p.locomotion.solve_leg(other_leg,other_knee,p.rig.to_local(crossing)-other_leg.position,hold*.65)
+			elif receive_variant=="reach":
+				p.spine.rotation.x-=.13*stretch*hold
+				p.left_arm.rotation.z-=.20*stretch*hold; p.right_arm.rotation.z+=.20*stretch*hold
 			if receive_contact=="sole":
 				target.y+=.12*hold
 				target.z+=.08*smoothstep(.15,.65,progress)
@@ -142,6 +187,7 @@ func apply_receive(p) -> void:
 		p.spine.rotation=p.spine.rotation.lerp(Vector3(-0.12-stretch*0.18,-side*stretch*0.15,-side*stretch*0.10),hold*0.7)
 		p.left_arm.rotation.z=lerpf(p.left_arm.rotation.z,-0.40-stretch*0.45,hold)
 		p.right_arm.rotation.z=lerpf(p.right_arm.rotation.z,0.40+stretch*0.45,hold)
+	if receive_variant=="half_turn": p.spine.rotation.y+=receive_turn*.24*hold
 	if receive_direction.length_squared()>.1:
 		var turn: float=p.facing.signed_angle_to(receive_direction,Vector3.UP)
 		p.spine.rotation.y+=clampf(turn,-1.1,1.1)*.24*hold*smoothstep(0,.25,progress)
@@ -192,16 +238,19 @@ func recover_weight(p) -> void:
 	if release_age>=.62 or contact_pending or recovery_power<=0: return
 	if p.keeper or p.action_timer>0 or p.receive_timer>0 or p.shot_preparation>0 or p.set_piece_pose!="" or p.celebration!="" or not p.skill_move.is_empty(): return
 	var weight:=smoothstep(.10,.22,release_age)*(1-smoothstep(.30,.62,release_age))*recovery_power
+	# Let the chest/arms finish their strike before unwinding. The supporting
+	# knee can absorb the load earlier without pulling the whole torso backwards.
+	var settle:=smoothstep(lerpf(.13,.20,recovery_power),lerpf(.24,.34,recovery_power),release_age)*(1-smoothstep(.38,.62,release_age))*recovery_power
 	var side: float=-1 if foot==0 else 1
 	# The planted side absorbs the follow-through and the opposite shoulder
 	# unwinds into the next stride. This never changes movement or ball contact.
-	p.spine.rotation.x=lerpf(p.spine.rotation.x,-.13,weight*.55)
-	p.spine.rotation.y=lerpf(p.spine.rotation.y,-side*.20,weight)
-	p.spine.rotation.z=lerpf(p.spine.rotation.z,side*.08,weight)
+	p.spine.rotation.x=lerpf(p.spine.rotation.x,-.13,settle*.55)
+	p.spine.rotation.y=lerpf(p.spine.rotation.y,-side*.20,settle)
+	p.spine.rotation.z=lerpf(p.spine.rotation.z,side*.08,settle)
 	var support: Node3D=p.right_knee if foot==0 else p.left_knee
 	support.rotation.x-=weight*.14
-	p.left_arm.rotation.z=lerpf(p.left_arm.rotation.z,-.58,weight)
-	p.right_arm.rotation.z=lerpf(p.right_arm.rotation.z,.58,weight)
+	p.left_arm.rotation.z=lerpf(p.left_arm.rotation.z,-.58,settle)
+	p.right_arm.rotation.z=lerpf(p.right_arm.rotation.z,.58,settle)
 
 func finish_pose(p) -> void:
 	if p.action_timer>0 or p.set_piece_pose!="" or p.celebration!="" or not p.skill_move.is_empty():
@@ -213,6 +262,9 @@ func finish_pose(p) -> void:
 		var entry := smoothstep(0,contact_windup,contact_age)
 		p.rig.position.x=lerpf(p.rig.position.x,step_offset.x,entry)
 		p.rig.position.z=lerpf(p.rig.position.z,step_offset.z,entry)
+		# A reaching pass lowers the hips before the support/striking-foot IK.
+		# The live ball and the existing contact deadline still decide the kick.
+		p.rig.position.y-=kick_reach*.065*entry
 	# Support follows an absolute turf point, with an early anatomical release
 	# for a fast runner. Nothing modifies the CharacterBody or freezes input.
 	support_weight=0
@@ -235,6 +287,7 @@ func finish_pose(p) -> void:
 		var entry := smoothstep(0,contact_windup,contact_age)
 		var approach: Vector3=(contact_target-p.global_position)*Vector3(1,0,1)
 		var point := contact_target-approach.normalized()*.13
+		if p.kick_style=="backheel": point=contact_target+(-p.rig.global_basis.z.normalized())*.10
 		point.y=maxf(p.global_position.y+.12,point.y-.04)
 		point=contact_origin.lerp(point,entry)
 		p.locomotion.solve_leg(leg,knee,p.rig.to_local(point)-leg.position,1)

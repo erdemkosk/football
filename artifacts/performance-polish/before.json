@@ -1,0 +1,104 @@
+[
+	{
+		"draws": 405.72,
+		"fps": 119.982098670878,
+		"frames": 600,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.329,
+		"p95_ms": 8.865,
+		"p99_ms": 9.978,
+		"physics_hz": 119.982098670878,
+		"physics_ms": 5.42352000000001,
+		"render_cpu_ms": 0.339581667035818,
+		"scene": "day-0",
+		"states": {
+			"playing": 600
+		},
+		"valid": true
+	},
+	{
+		"draws": 499.236666666667,
+		"fps": 119.990904689425,
+		"frames": 600,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.35,
+		"p95_ms": 8.964,
+		"p99_ms": 10.007,
+		"physics_hz": 119.990904689425,
+		"physics_ms": 5.07522666666668,
+		"render_cpu_ms": 0.775419999957085,
+		"scene": "night-0",
+		"states": {
+			"playing": 600
+		},
+		"valid": true
+	},
+	{
+		"draws": 504.823333333333,
+		"fps": 119.964802326997,
+		"frames": 600,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.357,
+		"p95_ms": 8.998,
+		"p99_ms": 9.441,
+		"physics_hz": 119.964802326997,
+		"physics_ms": 4.47417333333327,
+		"render_cpu_ms": 0.786308333675067,
+		"scene": "rain-0",
+		"states": {
+			"playing": 600
+		},
+		"valid": true
+	},
+	{
+		"draws": 556.961666666667,
+		"fps": 119.970631189485,
+		"frames": 600,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.344,
+		"p95_ms": 8.99,
+		"p99_ms": 9.437,
+		"physics_hz": 119.970631189485,
+		"physics_ms": 4.67516499999995,
+		"render_cpu_ms": 0.842739999790986,
+		"scene": "rain-1",
+		"states": {
+			"playing": 600
+		},
+		"valid": true
+	},
+	{
+		"draws": 523.583333333333,
+		"fps": 119.992224503852,
+		"frames": 600,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.342,
+		"p95_ms": 8.905,
+		"p99_ms": 9.412,
+		"physics_hz": 119.992224503852,
+		"physics_ms": 4.56102500000001,
+		"render_cpu_ms": 0.825443332592646,
+		"scene": "night-1",
+		"states": {
+			"playing": 600
+		},
+		"valid": true
+	},
+	{
+		"draws": 408.813333333333,
+		"fps": 119.991864551583,
+		"frames": 600,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.329,
+		"p95_ms": 8.873,
+		"p99_ms": 10.02,
+		"physics_hz": 119.991864551583,
+		"physics_ms": 5.20389999999998,
+		"render_cpu_ms": 0.335028333365917,
+		"scene": "day-1",
+		"states": {
+			"playing": 600
+		},
+		"valid": true
+	}
+]

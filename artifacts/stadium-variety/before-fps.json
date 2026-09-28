@@ -1,0 +1,104 @@
+[
+	{
+		"draws": 408.715,
+		"fps": 119.985241815257,
+		"frames": 600,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.324,
+		"p95_ms": 11.36,
+		"p99_ms": 15.405,
+		"physics_hz": 119.985241815257,
+		"physics_ms": 5.58625333333332,
+		"render_cpu_ms": 0.338234999626875,
+		"scene": "day-0",
+		"states": {
+			"playing": 600
+		},
+		"valid": true
+	},
+	{
+		"draws": 502.288333333333,
+		"fps": 119.995056203684,
+		"frames": 600,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.329,
+		"p95_ms": 9.267,
+		"p99_ms": 14.715,
+		"physics_hz": 119.995056203684,
+		"physics_ms": 5.11150666666672,
+		"render_cpu_ms": 0.80527999718984,
+		"scene": "night-0",
+		"states": {
+			"playing": 600
+		},
+		"valid": true
+	},
+	{
+		"draws": 507.858569051581,
+		"fps": 120.025914413734,
+		"frames": 601,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.31,
+		"p95_ms": 10.592,
+		"p99_ms": 14.739,
+		"physics_hz": 120.025914413734,
+		"physics_ms": 4.6421314475874,
+		"render_cpu_ms": 0.808324458595124,
+		"scene": "rain-0",
+		"states": {
+			"playing": 601
+		},
+		"valid": true
+	},
+	{
+		"draws": 556.618333333333,
+		"fps": 119.833335796574,
+		"frames": 600,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.29,
+		"p95_ms": 11.974,
+		"p99_ms": 14.973,
+		"physics_hz": 120.033058022902,
+		"physics_ms": 4.86627666666674,
+		"render_cpu_ms": 0.871388334830602,
+		"scene": "rain-1",
+		"states": {
+			"playing": 600
+		},
+		"valid": true
+	},
+	{
+		"draws": 526.808652246256,
+		"fps": 119.999600666886,
+		"frames": 601,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.221,
+		"p95_ms": 11.66,
+		"p99_ms": 14.683,
+		"physics_hz": 119.999600666886,
+		"physics_ms": 4.49037271214645,
+		"render_cpu_ms": 0.863915143413671,
+		"scene": "night-1",
+		"states": {
+			"playing": 601
+		},
+		"valid": true
+	},
+	{
+		"draws": 419.898333333333,
+		"fps": 119.97271820388,
+		"frames": 600,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.331,
+		"p95_ms": 11.864,
+		"p99_ms": 12.429,
+		"physics_hz": 120.17267273422,
+		"physics_ms": 5.60470333333333,
+		"render_cpu_ms": 0.353489999895295,
+		"scene": "day-1",
+		"states": {
+			"playing": 600
+		},
+		"valid": true
+	}
+]

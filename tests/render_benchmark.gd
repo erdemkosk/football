@@ -36,10 +36,10 @@ func run() -> void:
 		for light in game.stadium.light_rig.floodlights: light.shadow_enabled=false
 		await measure("night-no-shadows",1,false)
 		for light in game.stadium.light_rig.floodlights: light.shadow_enabled=true
-		for node in game.stadium.get_children():
+		for node in game.stadium.venue_root.get_children():
 			if node is MultiMeshInstance3D: node.visible=false
 		await measure("night-no-crowd",1,false)
-		for node in game.stadium.get_children():
+		for node in game.stadium.venue_root.get_children():
 			if node is MultiMeshInstance3D: node.visible=true
 	await measure("day-stadium",0,true)
 	await measure("night-stadium",1,true)

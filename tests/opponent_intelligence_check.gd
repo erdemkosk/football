@@ -94,6 +94,7 @@ func run() -> void:
 	check(absf(target.x)>1,"The carrier picks space around the defender instead of running straight into him")
 	setup(); player(14,Vector3(0,0,0)); game.dribbler=-1; game.last_touch=0
 	game.ball.position=Vector3(0,.23,2); game.ball.linear_velocity=Vector3(0,0,-12)
+	game.team_tactics.observe_flight(.25)
 	check(game.ai_attack.defend(14) and game.players[14].pose=="intercept" and not game.ball.pending_kick,"Pass interception starts a real foot movement without remote ball contact")
 	setup(); game.match_time=game.LENGTH*.75
 	player(14,Vector3.ZERO); game.players[14].energy=.65; game.players[14].yellow_cards=1

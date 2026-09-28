@@ -31,12 +31,22 @@ func queue(index: int,velocity: Vector3,curve: float,kind: String) -> bool:
 	var power := clampf((velocity.length()-12)/20,.15,1)
 	var style := "chip" if velocity.y>5.2 else ("inside" if absf(curve)>.1 or (kind!="shot" and velocity.length()<16) else "laces")
 	p.begin_kick(power,.46 if kind=="shot" else .32,style,game.ball.position,velocity,game.first_touch.pressure(index))
+	if kind=="kick" and velocity.y<1.2 and velocity.length()<19 and not p.keeper:
+		var local: Vector3=p.rig.to_local(game.ball.position)
+		var front: Vector3=-p.rig.global_basis.z.normalized()
+		var angle := front.angle_to((velocity*Vector3(1,0,1)).normalized())
+		var side := -1.0 if p.ball_actions.foot==0 else 1.0
+		var outward: float=velocity.normalized().dot(p.rig.global_basis.x.normalized())*side
+		if angle>2.35 and local.z<.25 and local.z>-.85 and absf(local.x)<.42:
+			p.kick_style="backheel"
+		elif angle>.5 and angle<1.75 and outward>.45: p.kick_style="outside_pass"
+		elif velocity.length()<13.5: p.kick_style="compact"
 	game.skills.active.erase(index); p.skill_move.clear()
 	var windup: float=lerpf(.065,.045,clampf((float(p.attributes.control)-50)/45,0,1))
 	windup+=power*.012+absf(p.ball_actions.kick_turn)*.009
 	p.ball_actions.start_contact(p,game.ball.position,windup)
 	pending={"index":index,"velocity":velocity,"curve":curve,"kind":kind,"age":0.0,"windup":windup,"last_touch":game.last_kicker}
-	p.facing=(velocity*Vector3(1,0,1)).normalized()
+	if p.kick_style not in ["backheel","outside_pass"]: p.facing=(velocity*Vector3(1,0,1)).normalized()
 	p.dribble_motion.reset()
 	if controlled_ball: p.dribble_motion.begin_preparation(p,game.ball)
 	game.dribbler=-1

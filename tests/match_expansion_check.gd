@@ -93,6 +93,7 @@ func run() -> void:
 	game.rules.foul(13,9,true)
 	check(not game.rules.advantage.is_empty() and 13 in game.rules.deferred_cards,"Advantage defers an appropriate caution")
 	game.ball.position.z=-26
+	game.players[10].position.z=-26; game.dribbler=10
 	game.rules.update_advantage(3.1)
 	check(game.rules.advantage.is_empty() and game.state=="playing","Successful advantage expires without a whistle")
 	game.begin_restart("TAÇ",0,Vector3(32,0,-26))
@@ -100,9 +101,9 @@ func run() -> void:
 	game.rules.foul(14,9,true,true)
 	check(game.players[14].dismissed and game.players[14].yellow_cards==0 and game.referees.card_queue==["red"],"Severe foul produces a direct red without a fake yellow")
 	game.start_match(false,false)
-	game.state="restart"; m.update_clock(100)
-	game.state="playing"; game.match_time=111; m.update_clock(0.1)
-	check(m.added[0]>0 and m.half_end()>120,"Stoppages produce announced additional time")
+	game.match_time=10; game.state="restart"; m.update_clock(100)
+	game.state="playing"; game.match_time=game.LENGTH*.5-1; m.update_clock(0.1)
+	check(m.added[0]>0 and m.half_end()>game.LENGTH*.5,"Stoppages produce announced additional time")
 	var stop: float=m.lost_time[0]
 	game.state="paused"; m.update_clock(60)
 	check(m.lost_time[0]==stop,"Pause does not inflate added time")

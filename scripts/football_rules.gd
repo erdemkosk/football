@@ -29,6 +29,7 @@ func reset() -> void:
 	tackles.clear()
 
 func restart_taken(kind: String,team: int,taker: int) -> void:
+	game.referee_flow.taking(kind,team,taker)
 	if kind=="SANTRA" and game.match_time<.5: game.broadcast_event("kickoff")
 	elif kind=="SANTRA" and absf(game.match_time-game.LENGTH*.5)<.5: game.broadcast_event("second_half")
 	reset()
@@ -39,6 +40,7 @@ func restart_taken(kind: String,team: int,taker: int) -> void:
 
 func before_touch(index: int,deliberate: bool=true) -> bool:
 	if game.training: return true
+	if not game.referee_flow.before_touch(index): return false
 	if first_kick and index==restart_taker: return true
 	if index in candidates:
 		game.begin_restart("ENDİREKT VURUŞ",1-game.players[index].team,game.players[index].position)
@@ -104,6 +106,8 @@ func update(delta: float) -> void:
 		if not before_touch(index,false): return
 
 func allows_goal(team: int) -> bool:
+	if not advantage.is_empty() and team!=int(advantage.team):
+		recall_advantage(); return false
 	if restart_taker<0: return true
 	if team!=restart_team:
 		game.begin_restart("KORNER",team,Vector3(signf(game.ball.position.x+0.001)*(P.HALF_WIDTH-.4),0,signf(game.ball.position.z)*49.6))
@@ -122,18 +126,24 @@ func foul(offender: int,victim: int,reckless: bool=false,severe: bool=false) -> 
 	game.foul_cooldown=4
 	offender_player.fouls_committed+=1
 	var booking: bool=reckless or severe or offender_player.fouls_committed%3==0
-	# Only play advantage when an upright teammate already has a clear ball.
-	var owner: int=game.nearest_to_ball(1.5)
-	var clear_attack: bool=owner>=0 and owner!=victim and game.state=="playing" and game.players[owner].team==p.team and game.players[owner].action_timer<=0 and game.ball.linear_velocity.length()<16
+	# Staying on one's feet can preserve the advantage too. Proximity to a
+	# fast pass alone does not establish possession or a useful continuation.
+	var owner := advantage_owner()
+	var clear_attack: bool=owner>=0 and game.state=="playing" and game.players[owner].team==p.team and advantage_open(owner,point)
 	if not penalty and not severe and clear_attack and (not booking or offender_player.yellow_cards==0):
-		if booking: deferred_cards.append(offender)
-		advantage={"team":p.team,"point":point,"age":0.0}
+		if booking and offender not in deferred_cards: deferred_cards.append(offender)
+		# A second foul cannot erase the earlier, better free-kick position.
+		if not advantage.is_empty() and int(advantage.team)==p.team and advantage.point.z*game.attack_sign(p.team)>point.z*game.attack_sign(p.team): point=advantage.point
+		advantage={"team":p.team,"point":point,"age":0.0,"controlled":0.0}
 		game.referees.decision="AVANTAJ"
 		game.referees.decision_age=0
 		game.referees.signal_time=2.0
 		game.referees.actors[0].signal_pose("advantage")
 		return
 	if booking: book(offender,severe,victim)
+	# During the last attack, fouling in shooting range must not buy an
+	# immediate final whistle. Give the attacking side its awarded kick.
+	if not penalty and point.z*game.attack_sign(p.team)>=26: game.referee_flow.allow_recalled_foul(p.team)
 	game.begin_restart("PENALTI" if penalty else "SERBEST VURUŞ",p.team,Vector3(0,0,goal_side*39) if penalty else point)
 	if booking: game.referees.show_card(offender_player.position,card_red,severe)
 	game.stadium.react("foul",offender_player.team,point)
@@ -166,20 +176,69 @@ func book(offender: int,direct: bool=false,victim: int=-1) -> void:
 		p.marker.visible=false
 		if game.controlled==offender: game.switch_player()
 
-func update_advantage(delta: float) -> void:
+func advantage_owner() -> int:
+	if game.ball.held_by!=null: return game.players.find(game.ball.held_by)
+	var owner: int=game.dribbler
+	if owner>=0:
+		var p=game.players[owner]
+		if p.visible and not p.dismissed and p.action_timer<=0 and game.flat_distance(p.position,game.ball.position)<1.65: return owner
+	if game.ball.pending_kick or game.ball.position.y>.8: return -1
+	owner=game.nearest_to_ball(1.1)
+	if owner<0: return -1
+	var p=game.players[owner]
+	if not p.visible or p.dismissed or p.action_timer>0 or (game.ball.linear_velocity-p.velocity).length()>8: return -1
+	return owner
+
+func advantage_open(owner: int,point: Vector3) -> bool:
+	var p=game.players[owner]
+	var f: float=game.attack_sign(p.team)
+	if p.keeper or p.position.z*f< -28: return false
+	var heading := Vector3(0,0,f)
+	var progress: float=(p.position.z-point.z)*f
+	if progress<2 and p.velocity.z*f<.8 and p.position.z*f<30: return false
+	for q in game.players:
+		if not q.visible or q.dismissed or q.team==p.team or q.action_timer>0: continue
+		var gap: Vector3=(q.position-p.position)*Vector3(1,0,1)
+		if gap.dot(heading)>.1 and gap.length()<2.0: return false
+	return true
+
+func advantage_strike(index: int,velocity: Vector3,shot: bool) -> void:
+	if advantage.is_empty() or game.players[index].team!=int(advantage.team) or not shot: return
+	var team: int=advantage.team
+	var goal := Vector3(0,0,game.attack_sign(team)*50)
+	var toward: Vector3=(goal-game.ball.position)*Vector3(1,0,1)
+	# A real shooting opportunity consumes the advantage even if it is missed
+	# or saved. The foul is not a free second attempt after taking that shot.
+	if toward.length()<34 and (velocity*Vector3(1,0,1)).normalized().dot(toward.normalized())>.55: advantage.clear()
+
+func advantage_restart(kind: String,team: int,point: Vector3) -> Dictionary:
+	var pending: Dictionary=advantage.duplicate()
+	advantage.clear()
+	var awarded: int=pending.team
+	var better: bool=team==awarded and (kind=="PENALTI" or kind=="SERBEST VURUŞ" and point.z*game.attack_sign(team)>pending.point.z*game.attack_sign(team))
+	game.referee_flow.allow_recalled_foul(awarded)
+	return {"kind":kind if better else "SERBEST VURUŞ","team":awarded,"point":point if better else pending.point}
+
+func recall_advantage() -> void:
 	if advantage.is_empty(): return
+	var decision: Dictionary=advantage.duplicate()
+	advantage.clear()
+	game.referee_flow.allow_recalled_foul(decision.team)
+	game.begin_restart("SERBEST VURUŞ",decision.team,decision.point)
+	game.stadium.react("foul",1-int(decision.team),decision.point)
+
+func update_advantage(delta: float) -> void:
+	if advantage.is_empty() or game.state!="playing": return
 	advantage.age+=delta
-	var owner: int=game.nearest_to_ball(1.8)
-	var lost: bool=owner>=0 and game.players[owner].team!=int(advantage.team)
-	var forward: float=game.attack_sign(advantage.team)
-	var progressed: bool=(game.ball.position.z-advantage.point.z)*forward>4.0
-	if lost or (advantage.age>=3.0 and not progressed):
-		var decision: Dictionary=advantage.duplicate()
-		advantage.clear()
-		game.begin_restart("SERBEST VURUŞ",decision.team,decision.point)
-		game.stadium.react("foul",1-int(decision.team),decision.point)
-	elif advantage.age>=3.0:
-		advantage.clear()
+	var owner := advantage_owner()
+	if owner>=0 and game.players[owner].team!=int(advantage.team): recall_advantage(); return
+	var progressed := false
+	if owner>=0:
+		advantage.controlled=float(advantage.get("controlled",0.0))+delta
+		var f: float=game.attack_sign(advantage.team)
+		progressed=(game.players[owner].position.z-advantage.point.z)*f>4.0 and advantage.controlled>=.25 and advantage_open(owner,advantage.point)
+	if progressed: advantage.clear()
+	elif advantage.age>=3.0: recall_advantage()
 
 func show_deferred_cards() -> void:
 	for offender in deferred_cards:
@@ -212,6 +271,10 @@ func resolve_tackles() -> void:
 		for j in range(game.players.size()):
 			var q=game.players[j]
 			if q.team==p.team or not q.visible: continue
+			# Only actual raised boots clear the sliding leg; late hops still trip.
+			if q.pose=="hurdle" and q.action_timer>0:
+				var boots: float=minf(q.left_knee.to_global(q.ball_actions.BOOT).y,q.right_knee.to_global(q.ball_actions.BOOT).y)
+				if boots>.34 and q.position.y>.08: continue
 			var q_point: Vector3=q.position*Vector3(1,0,1)
 			var near=Geometry3D.get_closest_point_to_segment(q_point,start,end)
 			if near.distance_to(q_point)<0.48 and near.distance_to(start)<first:

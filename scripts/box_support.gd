@@ -67,6 +67,11 @@ func update(game,owner: int,possession: int,support) -> void:
 				var score := space*.8-travel*.22-absf(shift)*.18
 				var midfield: bool=game.management.slot_role(i)==2
 				score+=3.0 if midfield==(role=="cutback") else 0.0
+				if not midfield:
+					var style: String=p.Attributes.forward_style(p)
+					if style=="poacher": score+=4.5 if role=="near" else (-2.0 if role=="cutback" else 0.0)
+					elif style=="target" and role=="far": score+=3.5
+					elif style=="runner" and role in ["near","far"]: score+=1.5
 				# Hysteresis keeps two runners from swapping jobs every frame.
 				if jobs.get(role,-1)==i: score+=2.5
 				if score>best: best=score; chosen=i; destination=point

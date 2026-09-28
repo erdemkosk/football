@@ -50,6 +50,7 @@ func net_contact(point: Vector3,direction: Vector3,strength: float) -> void:
 	if scored: game.controller.net_rumble(strength,game.goal_team==0)
 
 func contact(kind: String,index: int,point: Vector3,direction: Vector3,strength: float,victim: int=-1,heavy: bool=false) -> void:
+	if is_instance_valid(game.visual_identity): game.visual_identity.contact(kind,point,direction,heavy)
 	last_kind=kind
 	event_count+=1
 	strength=clampf(strength,0,1)
@@ -97,6 +98,7 @@ func nearest_woodwork(point: Vector3) -> Dictionary:
 
 func woodwork(point: Vector3,direction: Vector3,strength: float) -> void:
 	if game.menu_match.running or game.state!="playing": return
+	if is_instance_valid(game.visual_identity): game.visual_identity.woodwork(point,direction,strength)
 	strength=clampf(strength,0,1)
 	last_kind="woodwork"
 	event_count+=1

@@ -1,0 +1,152 @@
+extends RefCounted
+## Contextual footwork follows live intent. Only a measured evasive hop changes
+## the body; receiving, blocking and marking poses never steer a player.
+const Arm = preload("res://scripts/arm_pose.gd")
+var preparation := 0.0
+var opening := 0.0
+var receive_side := 1.0
+var block := ""
+var block_age := 1.0
+var block_target := Vector3.ZERO
+var block_foot := 1
+var block_cooldown := 0.0
+var run_kind := ""
+var run_weight := 0.0
+var run_side := 1.0
+var hurdle_age := 1.0
+var hurdle_cooldown := 0.0
+
+func reset() -> void:
+	preparation=0; opening=0; block=""; block_age=1; block_cooldown=0
+	run_kind=""; run_weight=0; hurdle_age=1; hurdle_cooldown=0
+
+func available(p) -> bool:
+	return p.visible and not p.dismissed and not p.keeper and not p.aerial_preparing and not p.prematch and not p.saluting and p.action_timer<=0 and p.kick_timer<=0 and p.receive_timer<=0 and p.shot_preparation<=0 and p.skill_move.is_empty() and p.set_piece_pose=="" and p.celebration=="" and p.discipline_pose=="" and p.dummy_time<=0
+
+func active() -> bool:
+	return preparation>.01 or block_age<.42 or run_weight>.01 or hurdle_age<.48
+
+func observe(game,index: int,delta: float) -> void:
+	var p=game.players[index]
+	block_age+=delta; block_cooldown=maxf(0,block_cooldown-delta)
+	hurdle_age+=delta; hurdle_cooldown=maxf(0,hurdle_cooldown-delta)
+	var ready := 0.0
+	var run := ""
+	if available(p) and game.ball.held_by==null:
+		var offset: Vector3=(game.ball.position-p.position)*Vector3(1,0,1)
+		var relative: Vector3=(game.ball.linear_velocity-p.velocity)*Vector3(1,0,1)
+		var time := -offset.dot(relative)/maxf(.01,relative.length_squared())
+		var arrival := (offset+relative*clampf(time,0,.6)).length()
+		if game.dribbler<0 and game.last_touch==p.team and game.last_kicker!=index and time>.06 and time<.6 and arrival<1.2 and game.ball.position.y<1.2:
+			var intent: Vector3=p.ball_actions.intent_direction
+			var front: Vector3=-p.rig.global_basis.z.normalized()
+			if intent.length_squared()>.1:
+				opening=clampf(front.signed_angle_to(intent,Vector3.UP),-1.2,1.2)
+				receive_side=signf(intent.dot(p.rig.global_basis.x))
+				ready=smoothstep(.6,.24,time)*smoothstep(.2,.7,absf(opening))
+		if game.last_touch!=p.team and relative.length()>16 and time>.035 and time<.25 and arrival<.95 and block_cooldown<=0 and game.dribbler<0:
+			var point: Vector3=game.ball.position+game.ball.linear_velocity*time-Vector3.UP*4.905*time*time
+			if point.y>.12 and point.y<p.body_scale.y*1.65:
+				block="leg" if point.y<.65 and arrival>.42 else "body"
+				block_target=point; block_foot=p.ball_actions.choose_foot(p,point)
+				block_age=0; block_cooldown=.7
+		var moves=game.support.movements
+		if not moves.active.is_empty():
+			var action: Dictionary=moves.active
+			if action.runner==index:
+				run=action.phase
+				run_side=signf(p.rig.global_basis.x.dot(action.target-p.position))
+			elif action.marker==index and action.phase=="burst":
+				var runner=game.players[action.runner]
+				if game.flat_distance(p.position,runner.position)<5 and p.desired.length()>.1:
+					run="track"; run_side=signf(p.rig.global_basis.x.dot(runner.position-p.position))
+		try_hurdle(game,index)
+	else:
+		block=""; block_age=1
+	preparation=lerpf(preparation,ready,1-exp(-delta*16))
+	if run!="": run_kind=run
+	run_weight=move_toward(run_weight,1.0 if run!="" else 0.0,delta*8)
+
+func try_hurdle(game,index: int) -> void:
+	var p=game.players[index]
+	if hurdle_cooldown>0 or not p.is_on_floor() or p.energy<.18 or p.desired.length()<.4 or Vector2(p.velocity.x,p.velocity.z).length()<3: return
+	for other in game.rules.tackles.keys():
+		var q=game.players[other]
+		if q.team==p.team or q.pose!="slide" or q.action_timer<=q.slide_rise: continue
+		var offset: Vector3=(p.position-q.position)*Vector3(1,0,1)
+		var relative: Vector3=(p.velocity-q.velocity)*Vector3(1,0,1)
+		var time := -offset.dot(relative)/maxf(.01,relative.length_squared())
+		var clearance := (offset+relative*time).length()
+		# A moving sidestep already clears the tackler's centre. Lift the trailing
+		# foot over the leg; a head-on/late challenge still causes a normal foul.
+		if offset.length()>2.5 or time<.10 or time>.26 or clearance<.52 or clearance>.95: continue
+		if p.desired.normalized().dot(offset.normalized())<.12: continue
+		p.pose="hurdle"; p.action_timer=.40; p.velocity.y=3.2
+		p.header_airborne=true; p.energy=maxf(0,p.energy-.012)
+		hurdle_age=0; hurdle_cooldown=1.4
+		block=""; block_age=1; preparation=0
+		return
+
+func apply(p) -> void:
+	if p.pose=="hurdle" and p.action_timer>0:
+		var phase := clampf(hurdle_age/.40,0,1)
+		var tuck := sin(PI*phase)
+		p.left_leg.rotation=Vector3(.65*tuck,0,-.12*tuck)
+		p.right_leg.rotation=Vector3(.90*tuck,0,.12*tuck)
+		p.left_knee.rotation.x=-1.25*tuck-.2
+		p.right_knee.rotation.x=-1.60*tuck-.2
+		p.spine.rotation.x=-.12-.12*tuck
+		p.left_arm.rotation.z=-.55-.35*tuck; p.right_arm.rotation.z=.55+.35*tuck
+		return
+	if not available(p) or not active(): return
+	if block_age<.42 and block!="":
+		var weight := smoothstep(0,.07,block_age)*(1-smoothstep(.20,.42,block_age))
+		var side := -1.0 if block_foot==0 else 1.0
+		p.spine.rotation=p.spine.rotation.lerp(Vector3(-.25,side*.62,side*.12),weight)
+		if block=="leg":
+			var leg: Node3D=p.left_leg if block_foot==0 else p.right_leg
+			var knee: Node3D=p.left_knee if block_foot==0 else p.right_knee
+			var point := block_target
+			point.y=maxf(p.position.y+.13,point.y-.06)
+			p.locomotion.solve_leg(leg,knee,p.rig.to_local(point)-leg.position,weight)
+		else:
+			p.left_knee.rotation.x-=.32*weight; p.right_knee.rotation.x-=.22*weight
+		Arm.reach(p.left_arm,p.left_elbow,Vector3(-.10,.22,-.22),Vector3(-1,-1,0),weight)
+		Arm.reach(p.right_arm,p.right_elbow,Vector3(.10,.12,-.22),Vector3(1,-1,0),weight)
+	elif preparation>.01:
+		p.spine.rotation.y+=opening*.40*preparation
+		var leg: Node3D=p.left_leg if receive_side<0 else p.right_leg
+		leg.rotation.y+=opening*.22*preparation
+		p.left_arm.rotation.z-=.18*preparation; p.right_arm.rotation.z+=.18*preparation
+	elif run_weight>.01 and not p.protecting and not p.jockeying:
+		var weight := run_weight
+		if run_kind=="check":
+			p.spine.rotation.z+=run_side*.14*weight
+			p.spine.rotation.y-=run_side*.24*weight
+			p.left_knee.rotation.x-=.14*weight; p.right_knee.rotation.x-=.14*weight
+		elif run_kind=="burst":
+			p.spine.rotation.x-=.10*weight
+			p.spine.rotation.y+=run_side*.18*weight
+			p.left_elbow.rotation.x+=.15*weight; p.right_elbow.rotation.x+=.15*weight
+		elif run_kind=="track":
+			p.spine.rotation.y+=run_side*.35*weight
+			p.left_leg.rotation.y+=run_side*.13*weight; p.right_leg.rotation.y+=run_side*.13*weight
+	# Keep the lowest boot above the pitch after knee and torso changes.
+	var lowest: float=minf(p.left_knee.to_global(p.ball_actions.BOOT).y,p.right_knee.to_global(p.ball_actions.BOOT).y)
+	p.rig.position.y+=maxf(0,p.global_position.y+p.boot_ground_height()-lowest)
+
+func resolve_block(game,index: int) -> void:
+	var p=game.players[index]
+	if block!="leg" or block_age<.055 or block_age>.22 or not available(p): return
+	if game.ball.pending_kick or game.ball.pending_touch or game.ball.held_by!=null or game.last_touch==p.team: return
+	var boot: Vector3=(p.left_knee if block_foot==0 else p.right_knee).to_global(p.ball_actions.BOOT)
+	if boot.distance_to(game.ball.position)>.30 or game.ball.linear_velocity.length()<16: return
+	if not game.rules.before_touch(index,false): return
+	var normal: Vector3=(game.ball.position-boot).normalized()
+	var velocity: Vector3=game.ball.linear_velocity
+	if velocity.dot(normal)>=0: return
+	game.ball.touch(velocity.bounce(normal)*.48,game.ball.mass*velocity.length()*1.6)
+	game.last_touch=p.team; game.last_kicker=index; game.dribbler=-1
+	p.touch_cooldown=.24; block_age=.23
+	game.team_control.touched(index)
+	game.feedback.contact("ball_tackle",index,game.ball.position,normal,.65)

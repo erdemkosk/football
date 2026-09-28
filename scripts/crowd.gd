@@ -42,10 +42,17 @@ var session_fill := 1.0
 var published: Dictionary = {}
 var upload_age := 0.0
 var upload_group := 0
+var section_age:=-1.0
+var section_origin:=0.0
 
 static func visiting(position: Vector3) -> bool:
 	# Opposite long stand, +z half: the sideline camera actually sees this block.
 	return position.x<-18.0 and position.z>12.0
+
+static func cluster(position: Vector3,row: int,section: int) -> float:
+	# Stable neighbouring seat groups, without consuming the animation RNG.
+	var cell:=Vector3i(floori(position.x/2.4),row/2,floori(position.z/2.4))
+	return float(absi(hash([cell,section]))%10000)/10000.0
 
 func context(score: Array,time: float,length: float) -> void:
 	progress=clampf(time/maxf(1,length),0,1)
@@ -99,19 +106,23 @@ func seat(position: Vector3, angle: float, row: int, section: int) -> void:
 	chairs.append(transform)
 	chair_marks.append(mark)
 	chair_colors.append(seat_tint(mark))
-	# Small contiguous gaps replace a regular checkerboard of occupied seats.
-	var occupancy := 0.97 if section%3!=0 else 0.93
+	var group:=cluster(position,row,section)
+	var block:=cluster(position*0.21,row/4,section)
+	# Families arrive together. Quiet upper blocks have clustered empty seats;
+	# the lower singing sections are denser and more often on their feet.
+	var occupancy:=lerpf(.83,.98,block)
+	if group<.055: occupancy*=.38
+	if row>7: occupancy-=.035
 	if rng.randf()>occupancy: return
 	var pose := 0
-	var random := rng.randf()
+	var random := clampf(rng.randf()+(.5-block)*.20+(group-.5)*.18,0,1)
 	if random>0.88: pose = 3
 	elif random>0.70: pose = 2
 	elif random>0.47: pose = 1
-	var scale_value := rng.randf_range(0.90,1.08)
-	var person := Transform3D(Basis(Vector3.UP,angle+rng.randf_range(-0.13,0.13)).scaled(Vector3(rng.randf_range(0.91,1.10),scale_value,1)),position+Vector3(rng.randf_range(-0.07,0.07),0,rng.randf_range(-0.07,0.07)))
-	var shirt: Color = cloth[rng.randi()%cloth.size()]
-	if section%4==0 and rng.randf()>0.55: shirt = Color("31584b")
-	if away: shirt = Color("88584f").lerp(shirt,0.45)
+	var scale_value := rng.randf_range(0.85,1.11)
+	var person := Transform3D(Basis(Vector3.UP,angle+rng.randf_range(-0.21,0.21)).scaled(Vector3(rng.randf_range(0.82,1.18),scale_value,rng.randf_range(.88,1.12))),position+Vector3(rng.randf_range(-0.095,0.095),0,rng.randf_range(-0.105,0.105)))
+	var shirt: Color = cloth[int(group*cloth.size())%cloth.size()]
+	if rng.randf()<.35: shirt=cloth[rng.randi()%cloth.size()]
 	var perimeter := fposmod(atan2(position.z/60,position.x/45)/TAU,1.0)
 	fans.append({"transform":person,"pose":pose,"cloth":shirt.darkened(rng.randf()*0.13),"skin":skins[rng.randi()%skins.size()],"hair":hairs[rng.randi()%hairs.size()],"pants":Color("293234").lerp(Color("4f5450"),rng.randf()*0.65),"phase":Color(rng.randf(),(0.5 if away else 0.0)+rng.randf()*0.49,float(row)/12,perimeter)})
 
@@ -151,7 +162,14 @@ func build(parent: Node3D) -> void:
 			for i in range(vertices.size()):
 				var offset := target[i]-vertices[i]
 				xy.append(Vector2(offset.x,offset.y))
-				z.append(Vector2(offset.z,0))
+				# Anatomical masks let the shader vary head and jacket silhouettes
+				# without multiplying pose batches or allocating more fan nodes.
+				var head_height:=1.60 if pose>=2 else 1.34
+				var shape:=0.0
+				if part=="hair": shape=2.0
+				elif part=="skin" and absf(vertices[i].x)<.18 and vertices[i].y>head_height-.19: shape=1.0
+				elif part=="cloth": shape=3.0
+				z.append(Vector2(offset.z,shape))
 			arrays[Mesh.ARRAY_TEX_UV] = xy
 			arrays[Mesh.ARRAY_TEX_UV2] = z
 			instances(parent,"Fans_%s_%d" % [part,pose],lod_mesh(arrays),transforms,colors[part],phases,cloth_material if part=="cloth" else material)
@@ -221,6 +239,7 @@ func reset() -> void:
 	wave_age = 100
 	wave_cooldown = 0
 	danger = 0
+	section_age=-1; section_origin=0
 	excitement = 0
 	follow = 0
 	ball_focus = Vector3.ZERO
@@ -231,6 +250,9 @@ func reset() -> void:
 	material.set_shader_parameter("hush_team",0.0)
 	material.set_shader_parameter("surge",0.0)
 	material.set_shader_parameter("danger",0.0)
+	material.set_shader_parameter("section_age",-1.0)
+	material.set_shader_parameter("section_origin",0.0)
+	material.set_shader_parameter("event_origin",0.0)
 	material.set_shader_parameter("follow",0.0)
 	material.set_shader_parameter("ball_focus",Vector3.ZERO)
 	material.set_shader_parameter("event_duration",0.0)
@@ -287,6 +309,7 @@ func react(kind: String,team: int,location: Vector3) -> void:
 	event_kind = kind
 	event_side=team
 	event_age = 0
+	material.set_shader_parameter("event_origin",fposmod(atan2(location.z/60,location.x/45)/TAU,1.0))
 	event_duration = {"entrance":6.0,"goal":19.0,"shot":3.8,"save":4.5,"miss":3.5,"tackle":2.8}.get(kind,2.5)
 	material.set_shader_parameter("event_style",{"shot":1,"save":2,"miss":3,"tackle":4}.get(kind,0))
 	material.set_shader_parameter("event_team",float(team))
@@ -330,6 +353,11 @@ func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int
 			target=maxf(target,clampf((ball_position.z*forward-28)/19,0,1))
 		if ball_velocity.z*forward< -3: target*=0.35
 	danger = lerpf(danger,target,1-exp(-delta*(3.5 if target>danger else 1.3)))
+	if target>.48 and section_age<0:
+		section_age=0
+		section_origin=fposmod(atan2(ball_position.z/60,ball_position.x/45)/TAU,1.0)
+	elif target<.18 and danger<.25: section_age=-1
+	if section_age>=0: section_age+=delta
 	var home_push: float=danger if team==0 else 0.0
 	surge=lerpf(surge,home_push,1-exp(-delta*(3.2 if home_push>surge else 1.4)))
 	if playing and late_close_match and team==0 and danger>0.65 and event_age>3:
@@ -342,12 +370,14 @@ func update(delta: float,ball_position: Vector3,ball_velocity: Vector3,team: int
 	publish("crowd_time",clock)
 	publish("event_age",event_age)
 	publish("wave_age",wave_age)
+	publish("section_age",section_age)
 	upload_age+=delta
 	if upload_age<1.0/30.0: return
 	upload_age=fmod(upload_age,1.0/30.0)
 	if upload_group==0:
 		publish("danger",danger)
 		publish("danger_team",float(team))
+		publish("section_origin",section_origin)
 		publish("follow",follow)
 		publish("ball_focus",ball_focus)
 	else:

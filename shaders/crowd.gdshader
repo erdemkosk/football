@@ -8,8 +8,9 @@ void fragment(){
   float away=step(.5,supporter.y);
   vec3 main=mix(home_color.rgb,away_color.rgb,away);
   vec3 accent=mix(home_accent.rgb,away_accent.rgb,away);
-  vec3 club=mix(main,accent,step(.70,supporter.x));
-  fabric=mix(club*(.72+supporter.x*.20),fabric,step(.91,supporter.x));
+  float family=fract(supporter.x*7.13+supporter.y*11.71);
+  vec3 club=mix(main,accent,step(.72,family));
+  fabric=mix(club*(.76+family*.24),fabric,step(.66,supporter.x));
  }
  ALBEDO=palette_color(fabric);
  ROUGHNESS=0.98;

@@ -14,4 +14,8 @@ void fragment() {
 	COLOR=mix(COLOR,vec4(.015,.025,.029,1.0),border);
 	COLOR.a*=replay_amount;
 	COLOR=mix(COLOR,vec4(.015,.025,.029,1.0),transition);
+	float slash_axis=(UV.x-.5)+(UV.y-.5)*.28;
+	float slash=min(abs(slash_axis-.035),min(abs(slash_axis),abs(slash_axis+.035)));
+	float mark=(1.0-smoothstep(.009,.011,slash))*(1.0-smoothstep(.07,.075,abs(UV.y-.5)));
+	COLOR.rgb=mix(COLOR.rgb,vec3(.39,.93,.85),mark*smoothstep(.4,.85,transition));
 }

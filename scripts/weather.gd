@@ -23,6 +23,7 @@ var ball_last := Vector3.ZERO
 var rng := RandomNumberGenerator.new()
 var sound: AudioStreamPlayer
 var presence: Node3D
+var wear:=preload("res://scripts/turf_wear.gd").new()
 
 func _ready() -> void:
 	rng.seed=8201
@@ -60,6 +61,7 @@ func _ready() -> void:
 	audio_script.free()
 	sound.volume_db=-80
 	sound.play()
+	wear.setup(game.stadium.grass,game.stadium.chalk)
 	apply_look()
 	presence=preload("res://scripts/pitch_presence.gd").new()
 	presence.game=game; add_child(presence)
@@ -95,6 +97,7 @@ func reset_match() -> void:
 	mark_cursor=0
 	marks.multimesh.visible_instance_count=0
 	foot_state.clear()
+	wear.reset()
 	ball_last=Vector3.ZERO
 	for i in range(SPRAY_LIMIT):
 		spray_data[i].life=0
@@ -136,6 +139,7 @@ func ball_bounce(point: Vector3) -> float:
 
 func update(delta: float) -> void:
 	clock+=delta
+	wear.update(delta)
 	rain=move_toward(rain,[0.0,0.45,1.0][preset],delta*0.2)
 	wetness=clampf(wetness+delta*(rain*0.025-(0.003 if rain<0.05 else 0.0)),0,1)
 	apply_look()
@@ -182,7 +186,8 @@ func apply_look() -> void:
 	game.stadium.light_rig.apply_weather(rain)
 
 func player_step(player, _delta: float) -> void:
-	if not player.visible or game.state in ["menu","paused","finished","replay"]: return
+	if not player.visible or game.state not in ["playing","restart","set_piece"] or game.menu_match.running:
+		foot_state.erase(player.get_instance_id()); return
 	var id: int=player.get_instance_id()
 	var here: Vector3=player.position
 	if not foot_state.has(id): foot_state[id]={"last":here,"distance":0.0,"side":1.0}
@@ -225,6 +230,7 @@ func trail(from: Vector3,to: Vector3,width: float,color: Color) -> void:
 
 func stamp(at: Vector3,direction: Vector3,size: Vector2,color: Color,is_trail: bool=false) -> void:
 	if absf(at.x)>P.HALF_WIDTH or absf(at.z)>50: return
+	wear.press(at,direction,size,wetness,is_trail,clampf(size.x/.44,.1,1) if is_trail else 1.0)
 	var basis := Basis(Vector3.UP,atan2(direction.x,direction.z))*Basis.from_scale(Vector3(size.x,1,size.y))
 	marks.multimesh.set_instance_transform(mark_cursor,Transform3D(basis,Vector3(at.x,0.023+float(mark_cursor%5)*0.0002,at.z)))
 	marks.multimesh.set_instance_color(mark_cursor,color)

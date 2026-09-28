@@ -1,0 +1,49 @@
+{
+  "tests": {
+    "turf_keeper_check": {
+      "passed": 39,
+      "failures": [],
+      "complete": true
+    },
+    "weather_check": {
+      "passed": 19,
+      "failures": [],
+      "complete": true
+    },
+    "keeper_handling_check": {
+      "passed": 22,
+      "failures": [],
+      "complete": true
+    },
+    "high_save_contact_check": {
+      "passed": 8,
+      "failures": [],
+      "complete": true
+    },
+    "keeper_possession_check": {
+      "passed": 56,
+      "failures": [],
+      "complete": true
+    },
+    "keeper_balance_check": {
+      "passed": 18,
+      "failures": [],
+      "complete": true
+    },
+    "keeper_readiness_check": {
+      "passed": 5,
+      "failures": [],
+      "complete": true
+    },
+    "motion_contact_check": {
+      "passed": 76,
+      "failures": [],
+      "complete": true
+    }
+  },
+  "total_passed": 243,
+  "shader_render_passed": true,
+  "stills": 9,
+  "video_frames": 60,
+  "video_fps": 30
+}

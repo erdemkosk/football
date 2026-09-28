@@ -14,6 +14,19 @@ const BOOT_COLORS := [
 	[Color("d86291"),Color("492d51")],[Color("8561b3"),Color("ecebe4")],
 	[Color("273d63"),Color("df705a")],[Color("43474a"),Color("be936f")]]
 static var boot_cache: Dictionary={}
+# Local coordinates keep the existing ankle/contact anchor and sole height.
+# Each section is (longitudinal Z, half-width, upper height). A lower toe box
+# rises into the instep, then a narrower heel cup instead of an ellipsoid.
+const BOOT_SECTIONS := [
+	Vector3(-.110,.006,-.054),Vector3(-.108,.015,-.040),Vector3(-.099,.050,-.020),
+	Vector3(-.080,.083,-.012),Vector3(-.045,.098,.009),
+	Vector3(-.006,.094,.045),Vector3(.025,.082,.080),
+	Vector3(.050,.072,.083),Vector3(.074,.071,.072),
+	Vector3(.087,.058,.038),Vector3(.091,.032,.010)]
+const BOOT_SECTORS := 16
+const BOOT_SOLE_Y := -.115
+const BOOT_OUTSOLE_Y := -.101
+const BOOT_SOLE_TOP := -.079
 
 static func choice(identity: int,salt: int,count: int) -> int:
 	var value: int=posmod(identity,2147483647)
@@ -28,23 +41,83 @@ static func profile(identity: int) -> Dictionary:
 
 static func boot_mesh(style: int) -> ArrayMesh:
 	if boot_cache.has(style): return boot_cache[style]
-	# Keep the original boot shape/contact points and one draw per foot. Vertex
-	# colours provide the upper, sole and inset side accent without extra pieces.
-	var sphere:=SphereMesh.new(); sphere.radius=.115; sphere.height=.23
-	sphere.radial_segments=16; sphere.rings=8
-	var arrays:=sphere.surface_get_arrays(0)
-	var colors:=PackedColorArray()
+	# All colourways share the same fitted shell and remain one surface per foot.
+	var surface:=SurfaceTool.new(); surface.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var upper: Color=BOOT_COLORS[style][0]; var accent: Color=BOOT_COLORS[style][1]
-	for point: Vector3 in arrays[Mesh.ARRAY_VERTEX]:
-		var color:=upper
-		if point.y<-.046: color=Color("242b32")
-		elif absf(point.x)>.077 and point.y<.051 and point.z>-.070 and point.z<.054:
-			color=accent
-		elif point.y>.076 and point.z<-.025 and point.z>-.077:
-			color=upper.lerp(accent,.35)
-		# Vertex colours are linear; the hand-picked palette above is sRGB.
-		colors.append(color.srgb_to_linear())
-	arrays[Mesh.ARRAY_COLOR]=colors
-	var mesh:=ArrayMesh.new(); mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES,arrays)
+	var points: Array[Vector3]=[]
+	for row in range(BOOT_SECTIONS.size()):
+		var section: Vector3=BOOT_SECTIONS[row]
+		for sector in range(BOOT_SECTORS+1):
+			var angle:=TAU*sector/BOOT_SECTORS
+			var arch:=cos(angle)
+			var y:=lerpf(BOOT_SOLE_TOP,section.z,pow(maxf(arch,0),.78)) if arch>=0 else lerpf(BOOT_SOLE_TOP,BOOT_OUTSOLE_Y,minf(-arch/.38,1))
+			var point:=Vector3(sin(angle)*section.y,y,section.x)
+			points.append(point)
+			var color:=upper
+			if arch<0: color=Color("242b32")
+			elif (row==4 and sector in [3,13]) or (row==5 and sector in [2,14]): color=accent
+			elif row in [5,6,7] and sector in [0,1,15,16]: color=upper.darkened(.20)
+			elif row>=9: color=upper.darkened(.12)
+			surface.set_color(color.srgb_to_linear())
+			surface.set_uv(Vector2(float(sector)/BOOT_SECTORS,float(row)/(BOOT_SECTIONS.size()-1)))
+			surface.add_vertex(point)
+	var columns:=BOOT_SECTORS+1
+	for row in range(BOOT_SECTIONS.size()-1):
+		for sector in range(BOOT_SECTORS):
+			var a:=row*columns+sector
+			for index in [a,a+1,a+columns,a+1,a+columns+1,a+columns]: surface.add_index(index)
+	# Close toe and heel with separate smoothing groups; neither end is a sphere.
+	for end in range(2):
+		var row:=0 if end==0 else BOOT_SECTIONS.size()-1
+		var first:=points.size()+end*(columns+1)
+		surface.set_smooth_group(end+1)
+		for sector in range(columns):
+			var point:=points[row*columns+sector]
+			surface.set_color((Color("242b32") if point.y<BOOT_SOLE_TOP else upper.darkened(.12)).srgb_to_linear())
+			surface.set_uv(Vector2.ZERO); surface.add_vertex(point)
+		surface.set_color(upper.darkened(.12).srgb_to_linear())
+		surface.add_vertex(Vector3(0,(BOOT_SECTIONS[row].z+BOOT_OUTSOLE_Y)*.5,BOOT_SECTIONS[row].x))
+		for sector in range(BOOT_SECTORS):
+			var triangle: Array=[first+columns,first+sector+1,first+sector] if end==0 else [first+columns,first+sector,first+sector+1]
+			for index in triangle: surface.add_index(index)
+	var first:=points.size()+2*(columns+1)
+	# Small, flat-ended studs retain the original turf contact height. They are
+	# baked into the same mesh, without additional nodes or material passes.
+	for z in [-.058,-.010,.060]:
+		for side in [-1,1]:
+			var x: float=side*(.042 if z>0 else .056)
+			surface.set_smooth_group(3)
+			for level in range(2):
+				for sector in range(6):
+					var angle:=sector*TAU/6; var radius:=1.0 if level==0 else .78
+					surface.set_color(Color("323b40").srgb_to_linear()); surface.set_uv(Vector2.ZERO)
+					surface.add_vertex(Vector3(x+sin(angle)*.014*radius,BOOT_OUTSOLE_Y if level==0 else BOOT_SOLE_Y,z+cos(angle)*.007*radius))
+			for sector in range(6):
+				var next: int=(sector+1)%6
+				for index in [first+sector,first+next,first+6+sector,first+next,first+6+next,first+6+sector]: surface.add_index(index)
+			surface.set_smooth_group(4)
+			for sector in range(6):
+				var angle:=sector*TAU/6
+				surface.add_vertex(Vector3(x+sin(angle)*.014*.78,BOOT_SOLE_Y,z+cos(angle)*.007*.78))
+			surface.add_vertex(Vector3(x,BOOT_SOLE_Y,z))
+			for sector in range(6):
+				for index in [first+18,first+12+sector,first+12+(sector+1)%6]: surface.add_index(index)
+			first+=19
+	# Three short lace bars follow the instep. Geometry keeps their edges clean
+	# at close range while the vertex palette supplies each colourway's tint.
+	for z in [-.002,.010,.022]:
+		surface.set_smooth_group(5)
+		for corner in [Vector2(-1,-1),Vector2(0,-1),Vector2(1,-1),Vector2(-1,1),Vector2(0,1),Vector2(1,1)]:
+			var at: float=z+corner.y*.0015
+			var amount:=inverse_lerp(-.006,.025,at)
+			var width:=lerpf(.094,.082,amount); var top:=lerpf(.045,.080,amount)
+			var x: float=corner.x*.022
+			var y:=lerpf(BOOT_SOLE_TOP,top,pow(sqrt(1-pow(x/width,2)),.78))+.001
+			surface.set_color(accent.lerp(upper,.25).srgb_to_linear()); surface.set_uv(Vector2.ZERO)
+			surface.add_vertex(Vector3(x,y,at))
+		for index in [first,first+1,first+3,first+1,first+4,first+3,first+1,first+2,first+4,first+2,first+5,first+4]: surface.add_index(index)
+		first+=6
+	surface.generate_normals()
+	var mesh:=surface.commit()
 	boot_cache[style]=mesh
 	return mesh

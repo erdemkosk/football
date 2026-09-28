@@ -19,6 +19,9 @@ var point_left := false
 var balance_age := BALANCE_TIME
 var balance_strength := 0.0
 var balance_direction := Vector3.ZERO
+var balance_foot := 0
+var balance_speed := 0.0
+var balance_load := 0.0
 var contact_cooldown := 0.0
 var contact_count := 0
 var shielding := 0.0
@@ -39,6 +42,7 @@ func reset(p) -> void:
 	scan_side=-1.0 if p.number%2==0 else 1.0
 	balance_age=BALANCE_TIME
 	balance_strength=0
+	balance_direction=Vector3.ZERO; balance_foot=0; balance_speed=0; balance_load=0
 	contact_cooldown=0
 	contact_count=0
 	shielding=0; shield_seen=false
@@ -172,9 +176,19 @@ func update(p,delta: float) -> void:
 
 func contact(p,direction: Vector3,strength: float) -> void:
 	if not can_balance(p) or contact_cooldown>0: return
+	direction*=Vector3(1,0,1)
+	if direction.length_squared()<.001: return
 	balance_age=0
 	balance_strength=clampf(strength,0.18,0.85)
+	# Keep the existing contact strength for kick difficulty; only the visual
+	# recovery load depends on balance, so this layer cannot change strike timing.
+	balance_load=clampf(balance_strength*p.Attributes.multiplier(144-p.attributes.balance,.20),.18,.95)
 	balance_direction=direction.normalized()
+	balance_speed=clampf(Vector2(p.velocity.x,p.velocity.z).length()/9,0,1)
+	var local: Vector3=balance_direction.rotated(Vector3.UP,-p.rig.rotation.y)
+	# Sideways shoves catch with the outside foot; a forward/backward bump
+	# carries the foot already swinging into the next recovery step.
+	balance_foot=(0 if local.x<0 else 1) if absf(local.x)>.35 else (0 if sin(p.run_phase)<0 else 1)
 	contact_cooldown=0.95
 	contact_count+=1
 	point_age=POINT_TIME
@@ -208,18 +222,16 @@ func apply_pose(p) -> void:
 			var toward: Vector3=(p.spine.global_basis.inverse()*(contest_target-arm.global_position)).normalized()
 			arm.quaternion=arm.quaternion.slerp(Quaternion(Vector3.DOWN,toward),weight*.72)
 		else: arm.rotation=arm.rotation.lerp(brace,weight)
-		elbow.rotation.x=lerpf(elbow.rotation.x,1.05 if contest_shoulder else .8,weight)
+		var stride: float=sin(p.run_phase)*smoothstep(.5,5,Vector2(p.velocity.x,p.velocity.z).length())
+		elbow.rotation.x=lerpf(elbow.rotation.x,1.05+stride*contest_side*.10 if contest_shoulder else .8,weight)
 		var counter: Node3D=p.right_arm if contest_side<0 else p.left_arm
 		counter.rotation.z=lerpf(counter.rotation.z,-contest_side*.65,weight*.65)
+		# Keep the free shoulder swinging while the inside arm takes pressure.
+		counter.rotation.x+=stride*contest_side*weight*.12
 		p.spine.rotation.z=lerpf(p.spine.rotation.z,-local.x*.19,weight)
 		p.spine.rotation.x=lerpf(p.spine.rotation.x,local.z*.12,weight)
 		p.spine.rotation.y=lerpf(p.spine.rotation.y,-contest_side*.14,weight)
-		# Shoulder bracing must not mask the impact/recovery already recorded by
-		# collision detection while the two players remain in contact.
-		if balance_age<BALANCE_TIME:
-			var recoil:=sin(clampf(balance_age/BALANCE_TIME,0,1)*PI)*balance_strength
-			p.spine.rotation.z+=contest_side*recoil*.14
-			p.left_knee.rotation.x-=recoil*.10; p.right_knee.rotation.x-=recoil*.10
+		apply_balance(p,weight)
 		point_cancelled=true
 		return
 	if shielding>0:
@@ -231,22 +243,14 @@ func apply_pose(p) -> void:
 		arm.rotation=arm.rotation.lerp(Vector3(-.32,side*.28,side*1.03),shielding)
 		elbow.rotation.x=lerpf(elbow.rotation.x,.92,shielding)
 		p.spine.rotation.y=lerpf(p.spine.rotation.y,-side*.14,shielding*.65)
+		var local: Vector3=(shield_target-p.global_position).rotated(Vector3.UP,-p.rig.rotation.y).normalized()
+		p.spine.rotation.x=lerpf(p.spine.rotation.x,local.z*.14,shielding*.6)
+		p.spine.rotation.z=lerpf(p.spine.rotation.z,-local.x*.16,shielding*.6)
+		apply_balance(p,shielding)
 		point_cancelled=true
 		return
 	if balance_age<BALANCE_TIME:
-		var hit := smoothstep(0,0.075,balance_age)*(1-smoothstep(0.15,BALANCE_TIME,balance_age))*balance_strength
-		var settle := sin(clampf((balance_age-0.18)/0.4,0,1)*PI)*0.20*balance_strength
-		var local: Vector3=balance_direction.rotated(Vector3.UP,-p.rig.rotation.y)
-		# The shoulders yield, then counterbalance while the knees absorb contact.
-		# Blend to bounded poses rather than adding to last frame's torso rotation.
-		p.spine.rotation=p.spine.rotation.lerp(Vector3(local.z*0.25,-local.x*0.13,-local.x*0.28),hit)
-		p.spine.rotation.z=lerpf(p.spine.rotation.z,local.x*0.12,settle)
-		p.left_arm.rotation=p.left_arm.rotation.lerp(Vector3(0.22,0,-1.12),hit)
-		p.right_arm.rotation=p.right_arm.rotation.lerp(Vector3(0.32,0,1.12),hit)
-		p.left_elbow.rotation.x=lerpf(p.left_elbow.rotation.x,0.35,hit)
-		p.right_elbow.rotation.x=lerpf(p.right_elbow.rotation.x,0.45,hit)
-		p.left_knee.rotation.x-=hit*0.15
-		p.right_knee.rotation.x-=hit*0.15
+		apply_balance(p)
 		return
 	if not arms_clear(p) or point_age>=POINT_TIME: return
 	var weight := point_weight
@@ -258,6 +262,42 @@ func apply_pose(p) -> void:
 	arm.quaternion=arm.quaternion.slerp(Quaternion(Vector3.DOWN,direction),weight)
 	elbow.rotation.x=lerpf(elbow.rotation.x,0.12,weight)
 
+func apply_balance(p,brace: float=0.0) -> void:
+	if balance_age>=BALANCE_TIME: return
+	var hit := smoothstep(0,.075,balance_age)*(1-smoothstep(.15,BALANCE_TIME,balance_age))*balance_load
+	var settle := sin(clampf((balance_age-.18)/.4,0,1)*PI)*.20*balance_load
+	var local: Vector3=balance_direction.rotated(Vector3.UP,-p.rig.rotation.y)
+	# Recoil is shared by free running, shoulder contests and shielding. The
+	# inside forearm keeps its brace while the torso and free arm absorb the hit.
+	p.spine.rotation=p.spine.rotation.lerp(Vector3(local.z*.25,-local.x*.13,-local.x*.28),hit)
+	p.spine.rotation.z=lerpf(p.spine.rotation.z,local.x*.12,settle)
+	for i in range(2):
+		var arm: Node3D=p.left_arm if i==0 else p.right_arm
+		var elbow: Node3D=p.left_elbow if i==0 else p.right_elbow
+		var side: float=-1 if i==0 else 1
+		var inside: bool=(side==contest_side) if contest_weight>0 else ((i==0)==shield_left)
+		var weight := hit*(1-brace*.8 if inside else 1.0)
+		arm.rotation=arm.rotation.lerp(Vector3(.27+local.z*.15,0,side*(1.02+absf(local.x)*.18)),weight)
+		elbow.rotation.x=lerpf(elbow.rotation.x,.40,weight)
+	p.left_knee.rotation.x-=hit*.15; p.right_knee.rotation.x-=hit*.15
+	# Receives, dribbles and sharp plants own their boot contact. Only free feet
+	# take catch steps, relative to this frame's stride, so running never freezes.
+	if p.receive_timer>0 or p.dribble_motion.freshness>0 or p.locomotion.plant_age<p.locomotion.PLANT_TIME or not p.is_on_floor(): return
+	catch_step(p,balance_foot,.05,.30,1.0)
+	if balance_load>.48:
+		catch_step(p,1-balance_foot,.25,.53,.55)
+
+func catch_step(p,foot: int,start: float,end: float,amount: float) -> void:
+	if balance_age<=start or balance_age>=end: return
+	var phase := (balance_age-start)/(end-start)
+	var weight := pow(sin(phase*PI),2)*balance_load*amount
+	var leg: Node3D=p.left_leg if foot==0 else p.right_leg
+	var knee: Node3D=p.left_knee if foot==0 else p.right_knee
+	var point: Vector3=knee.to_global(p.locomotion.BOOT)
+	point+=balance_direction*(.13+balance_speed*.09)*weight
+	point.y=maxf(point.y,p.global_position.y+p.boot_ground_height())+.07*weight
+	p.locomotion.solve_leg(leg,knee,p.rig.to_local(point)-leg.position,1.0)
+
 func apply_gaze(p,delta: float) -> void:
 	var yaw := 0.0
 	var pitch := 0.0
@@ -268,7 +308,12 @@ func apply_gaze(p,delta: float) -> void:
 		# Keep the same shoulder when a ball directly behind crosses the centre.
 		if absf(yaw)>2.5 and absf(p.head_joint.rotation.y)>0.2: yaw=absf(yaw)*signf(p.head_joint.rotation.y)
 		yaw=clampf(yaw,-1.20,1.20)
-		pitch=clampf(atan2(local.y,Vector2(local.x,local.z).length()),-0.48,0.36)
+		# A ball at the runner's feet stays in peripheral vision; staring straight
+		# down held the neck at its stop for the entire dribble. Distant/aerial
+		# balls retain the full tracking range, including reception glances.
+		var distance: float=Vector2(ball_target.x-p.global_position.x,ball_target.z-p.global_position.z).length()
+		var down_limit:=lerpf(-.27,-.48,smoothstep(1.2,2.4,distance))
+		pitch=clampf(atan2(local.y,Vector2(local.x,local.z).length()),down_limit,0.36)
 		if scan_age<SCAN_TIME and not urgent:
 			var glance := smoothstep(0,0.09,scan_age)*(1-smoothstep(0.23,SCAN_TIME,scan_age))
 			yaw=lerpf(yaw,scan_side*1.12,glance)
@@ -285,8 +330,20 @@ func apply_gaze(p,delta: float) -> void:
 			var toward: Vector3=p.spine.to_local(p.reaction.focus)-p.head_joint.position
 			yaw=lerpf(yaw,clampf(atan2(-toward.x,-toward.z),-1.0,1.0),hold)
 			pitch=lerpf(pitch,0.06,hold)
-	p.head_joint.rotation.y=move_toward(p.head_joint.rotation.y,yaw,delta*5.4)
-	p.head_joint.rotation.x=lerpf(p.head_joint.rotation.x,pitch,1-exp(-delta*13))
+		elif p.reaction.kind in ["acknowledge","encourage"]:
+			var toward: Vector3=p.spine.to_local(p.reaction.focus)-p.head_joint.position
+			yaw=lerpf(yaw,clampf(atan2(-toward.x,-toward.z),-.9,.9),hold)
+			pitch=lerpf(pitch,-.06-.08*maxf(0,sin(p.reaction.age*7)),hold)
+	# Ease into a gaze instead of stopping a constant-speed neck turn abruptly.
+	var yaw_step: float=(yaw-p.head_joint.rotation.y)*(1-exp(-delta*14))
+	p.head_joint.rotation.y+=clampf(yaw_step,-delta*5.4,delta*5.4)
+	var pitch_step: float=(pitch-p.head_joint.rotation.x)*(1-exp(-delta*13))
+	p.head_joint.rotation.x+=clampf(pitch_step,-delta*3.2,delta*3.2)
+	if ready:
+		var level: float=clampf(-p.spine.rotation.z*.65-p.rig.rotation.z*.35,-.10,.10)
+		p.head_joint.rotation.z=lerpf(p.head_joint.rotation.z,level,1-exp(-delta*12))
+	elif p.celebration=="" and p.action_timer<=0:
+		p.head_joint.rotation.z=lerpf(p.head_joint.rotation.z,0,1-exp(-delta*12))
 	var eye_rotation := Vector3.ZERO
 	if ready:
 		var direction: Vector3=p.head_joint.to_local(ball_target)-Vector3(0,0.19,-0.17)

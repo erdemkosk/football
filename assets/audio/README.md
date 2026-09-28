@@ -18,3 +18,5 @@ Kullanıcı tarafından bu proje için sağlanan kayıtlar:
 - `menu-theme.mp3`: `Estadio Explosivo.mp3` — ana menü müziği.
 
 Dosyalar değiştirilmeden kopyalanmıştır; ses düzeyleri ve yumuşak geçişler çalışma zamanında uygulanır.
+
+`commentary/` altındaki 171 WAV ise bu kayıtların dışındadır: özgün maç repliklerinden iki Türkçe yapay sesle üretilmiş spiker/yorumcu paketidir. Kaynak, ses kimlikleri ve yeniden üretim bilgisi [paket notlarında](commentary/README.md) bulunur.

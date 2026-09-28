@@ -37,6 +37,8 @@ static func draw(front) -> void:
 	front.draw_line(Vector2(1300,55),Vector2(1352,55),LINE,2)
 	front.text("03",Vector2(1365,63),22,MUTE,true)
 	front.text("TARAFINI SEÇ." if front.pick_step==0 else ("RAKİBİN KİM?" if front.pick_step==1 else "SAHAYA HAZIR."),Vector2(48,164),43,PAPER,true)
+	var venue:=preload("res://scripts/stadium_catalog.gd").assignment(front.game.clubs.data(0),front.game.clubs.match_id(0))
+	front.text("STADYUM · "+str(venue.name),Vector2(48,190),10,MUTE)
 	var derby: Dictionary=front.game.clubs.rivalry.preview(front.game.clubs)
 	if not derby.is_empty(): front.center(derby.title,Vector2(720,199),12,GOLD,true)
 	for side in range(2):

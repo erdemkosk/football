@@ -16,6 +16,14 @@ func capture(label: String) -> void:
 	await process_frame; RenderingServer.force_draw(false)
 	root.get_texture().get_image().save_png("res://tests/kit-"+label+".png")
 
+func shirt_uv(geometry: Array,at: Vector3) -> Vector2:
+	var points: PackedVector3Array=geometry[Mesh.ARRAY_VERTEX]
+	var closest:=0; var distance:=INF
+	for i in range(points.size()):
+		var candidate:=points[i].distance_squared_to(at)
+		if candidate<distance: distance=candidate; closest=i
+	return geometry[Mesh.ARRAY_TEX_UV][closest]
+
 func run() -> void:
 	visual="--visual" in OS.get_cmdline_user_args()
 	game=load("res://main.tscn").instantiate(); root.add_child(game); await physics_frame
@@ -46,8 +54,11 @@ func run() -> void:
 	var texture: Texture2D=p.kit_materials.printed.albedo_texture
 	check(texture!=null and texture.get_width()==512 and texture.get_image().has_mipmaps(),"Crest, trim and number use a compact mipmapped cloth texture")
 	var geometry: Array=p.jersey_body.mesh.surface_get_arrays(0)
-	var positions: PackedVector3Array=geometry[Mesh.ARRAY_VERTEX]
-	check(positions[7].x>positions[9].x and positions[23].x<positions[25].x,"Front and back UVs read left-to-right from outside the shirt")
+	var front_left:=shirt_uv(geometry,Vector3(.1,.2,-.16))
+	var front_right:=shirt_uv(geometry,Vector3(-.1,.2,-.16))
+	var back_left:=shirt_uv(geometry,Vector3(-.1,.2,.14))
+	var back_right:=shirt_uv(geometry,Vector3(.1,.2,.14))
+	check(front_left.x<front_right.x and front_right.x<.5 and back_left.x<back_right.x and back_left.x>.5,"Front and back UVs read left-to-right from outside the shirt")
 	check(p.jersey_body.get_parent()==p.spine and p.jersey_body.mesh.get_surface_count()==1,"The printed shirt follows the torso through one mesh surface")
 	check(p.kit_materials.printed is ShaderMaterial and p.kit_materials.printed.has_method("set_bend"),"The printed shirt is a spine-driven cloth shader, not a rigid standard material")
 	p.spine.rotation.x=-0.48

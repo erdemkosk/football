@@ -11,6 +11,7 @@ const Architecture = preload("res://scripts/stadium_architecture.gd")
 var architecture: Node3D
 const GoalNet = preload("res://scripts/goal_net.gd")
 var nets: Array[Node3D] = []
+var goal_posts: Array[MeshInstance3D]=[]
 var white := G.material(Color("e9ebe0"))
 var concrete := G.material(Color("484f49"))
 var chalk := ShaderMaterial.new()
@@ -25,10 +26,54 @@ const PitchBurst = preload("res://scripts/pitch_burst.gd")
 var light_rig: Node3D
 var pitch_burst: Node3D
 var static_batch_stats: Dictionary = {}
+var field_batch_stats: Dictionary = {}
 var supporter_banners: Array[Dictionary] = []
 var supporters: Node3D
+const Venues=preload("res://scripts/stadium_catalog.gd")
+const Variants=preload("res://scripts/stadium_variants.gd")
+const PitchAppearance=preload("res://scripts/pitch_appearance.gd")
+var pitch_profile: Dictionary={}
+var venue: Dictionary={"kind":"modern","name":"SEFC ARENA","owner":"","label":"MODERN ARENA"}
+var venue_root: Node3D
+var venue_batch_stats: Dictionary={}
+var venue_builds:=0
+var practice_session:=false
+
+func select_home(club: Dictionary,id: String,practice: bool=false) -> void:
+	var next:=Venues.assignment(club,id)
+	var rebuild: bool=next.kind!=venue.kind
+	venue=next
+	if rebuild:
+		build_venue()
+		if is_instance_valid(light_rig): light_rig.rebuild_mounts()
+	architecture.set_club_identity(venue.name,Color(club.primary),Color(club.accent))
+	apply_pitch_appearance()
+	set_session(practice)
+
+func apply_pitch_appearance() -> void:
+	pitch_profile=PitchAppearance.profile(venue)
+	PitchAppearance.apply(grass,chalk,pitch_profile)
+
+func build_venue() -> void:
+	if is_instance_valid(venue_root):
+		if is_instance_valid(supporters): supporters.cover_props(false)
+		venue_root.free()
+	crowd=Crowd.new(); supporter_banners.clear()
+	venue_root=Node3D.new(); venue_root.name="ActiveVenue"; add_child(venue_root)
+	concrete.albedo_color=Color("928f80") if venue.kind=="town" else Color("70675c") if venue.kind=="historic" else Color("484f49")
+	stands()
+	venue_batch_stats=preload("res://scripts/static_geometry.gd").batch(venue_root,[architecture.district])
+	supporters=preload("res://scripts/supporter_display.gd").new()
+	supporters.terrace_layout=Variants.terrace(venue.kind)
+	venue_root.add_child(supporters)
+	venue_builds+=1
+	update_batch_stats()
+
+func update_batch_stats() -> void:
+	static_batch_stats={"sources":int(field_batch_stats.get("sources",0))+int(venue_batch_stats.get("sources",0)),"batches":int(field_batch_stats.get("batches",0))+int(venue_batch_stats.get("batches",0))}
 
 func set_session(practice: bool) -> void:
+	practice_session=practice
 	crowd.set_session(practice)
 	for banner in supporter_banners:
 		banner.label.get_parent().visible = not (practice and banner.away)
@@ -37,18 +82,17 @@ func _ready() -> void:
 	rng.seed = 913
 	lighting()
 	pitch()
-	stands()
+	build_venue()
 	details()
 	boundary_walls()
 	# Nets and sideline people animate independently; only architecture is baked.
-	static_batch_stats=preload("res://scripts/static_geometry.gd").batch(self,nets+[sidelines,architecture.district])
+	field_batch_stats=preload("res://scripts/static_geometry.gd").batch(self,nets+goal_posts+[sidelines,venue_root])
+	update_batch_stats()
 	light_rig=MatchLighting.new()
 	add_child(light_rig)
 	light_rig.build(self)
 	pitch_burst=PitchBurst.new()
 	add_child(pitch_burst)
-	supporters=preload("res://scripts/supporter_display.gd").new()
-	add_child(supporters)
 
 func lighting() -> void:
 	var environment = WorldEnvironment.new()
@@ -81,6 +125,7 @@ func pitch() -> void:
 
 	grass.shader = load("res://shaders/grass.gdshader")
 	grass.set_shader_parameter("half_pitch",Vector2(P.HALF_WIDTH,P.HALF_LENGTH))
+	apply_pitch_appearance()
 	# Flat ground receives player/roof shadows, but has nothing below it to shade.
 	# Excluding these large coplanar slabs avoids grazing-light shadow acne.
 	for area in [Vector3(P.WIDTH+14,0.12,115),Vector3(P.WIDTH,0.1,P.LENGTH)]:
@@ -105,7 +150,9 @@ func pitch() -> void:
 
 func line(a: Vector2, b: Vector2, thickness: float = 0.12) -> void:
 	var delta = b-a
-	var node = G.block(self,Vector3(thickness,0.012,delta.length()),Vector3((a.x+b.x)*0.5,0.012,(a.y+b.y)*0.5),chalk)
+	var paint:=PlaneMesh.new()
+	paint.size=Vector2(thickness,delta.length())
+	var node = G.mesh(self,paint,chalk,Vector3((a.x+b.x)*0.5,0.002,(a.y+b.y)*0.5))
 	node.rotation.y = -delta.angle()+PI*0.5
 	node.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
@@ -122,12 +169,24 @@ func arc(center: Vector2,radius: float,start: float,end: float) -> void:
 		line(center+Vector2(cos(a),sin(a))*radius,center+Vector2(cos(b),sin(b))*radius,0.105)
 
 func spot(p: Vector2) -> void:
-	G.cylinder(self,0.16,0.017,Vector3(p.x,0.02,p.y),chalk)
+	# A single flat cap has no raised rim, side wall or shadow on the turf.
+	var paint:=SurfaceTool.new()
+	paint.begin(Mesh.PRIMITIVE_TRIANGLES)
+	paint.set_normal(Vector3.UP)
+	for i in range(48):
+		var a:=float(i)*TAU/48
+		var b:=float(i+1)*TAU/48
+		for point: Vector3 in [Vector3.ZERO,Vector3(cos(a),0,sin(a))*.16,Vector3(cos(b),0,sin(b))*.16]:
+			paint.set_uv(Vector2(point.x,point.z)/.32+Vector2.ONE*.5)
+			paint.add_vertex(point)
+	paint.index()
+	var node:=G.mesh(self,paint.commit(),chalk,Vector3(p.x,.002,p.y))
+	node.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 
 func goal_frame(side: int) -> void:
 	var z = side*50.0
 	for x in [-3.66,3.66]:
-		G.rod(self,Vector3(x,0,z),Vector3(x,2.44,z),0.065,white)
+		goal_posts.append(G.rod(self,Vector3(x,0,z),Vector3(x,2.44,z),0.065,white))
 		G.collision_box(self,Vector3(0.13,2.5,0.13),Vector3(x,1.22,z),0.65)
 		G.rod(self,Vector3(x,2.44,z),Vector3(x,1.9,z+side*2.4),0.04,steel)
 		G.rod(self,Vector3(x,0.05,z+side*2.4),Vector3(x,1.9,z+side*2.4),0.04,steel)
@@ -136,7 +195,7 @@ func goal_frame(side: int) -> void:
 		for depth in [.6,1.2,1.8,2.4]:
 			G.cylinder(self,.065,.028,Vector3(x,.022,z+side*depth),steel)
 		G.rod(self,Vector3(x,1.9,z+side*2.4),Vector3(x,.06,z+side*2.4),.012,white)
-	G.rod(self,Vector3(-3.66,2.44,z),Vector3(3.66,2.44,z),0.065,white)
+	goal_posts.append(G.rod(self,Vector3(-3.66,2.44,z),Vector3(3.66,2.44,z),0.065,white))
 	G.collision_box(self,Vector3(7.5,0.13,0.13),Vector3(0,2.44,z),0.65)
 	var net = GoalNet.new()
 	add_child(net)
@@ -148,60 +207,63 @@ func stands() -> void:
 	var rail = G.material(Color("707b71"))
 	var front = G.material(Color("263d36"))
 	var stair_edge = G.material(Color("828579"))
-	for side in [-1,1]:
-		for row in range(12):
-			var y = row*0.56+0.25
-			var x = side*(39.5+P.SIDE_SHIFT+row*0.95)
-			if side>0 and row<6:
-				for end in [-1,1]: G.block(self,Vector3(1.0,0.55,53),Vector3(x,y,end*29.5),concrete)
-			else: G.block(self,Vector3(1.0,0.55,112),Vector3(x,y,0),concrete)
-			for col in range(133):
-				var z = -54+col*0.82
-				if side>0 and row<6 and absf(z)<3.3: continue
-				if col%22==0:
-					G.block(self,Vector3(0.07,0.025,0.82),Vector3(x-side*0.39,y+0.29,z),stair_edge)
-					continue
-				crowd.seat(Vector3(x,y+0.275,z+(row%2)*0.13),side*PI*0.5,row,col/22)
-		for aisle in range(1,6):
-			var z = -54+aisle*22*0.82+0.41
-			if side>0 and absf(z)<3.3: continue
-			for edge in [-0.56,0.56]:
-				G.rod(self,Vector3(side*(39.5+P.SIDE_SHIFT),1.2,z+edge),Vector3(side*(49.95+P.SIDE_SHIFT),7.36,z+edge),0.035,rail)
-				for row in [0,4,8,11]:
-					var x = side*(39.5+P.SIDE_SHIFT+row*0.95)
-					G.rod(self,Vector3(x,row*0.56+0.5,z+edge),Vector3(x,row*0.56+1.2,z+edge),0.03,rail)
-		if side>0:
-			for end in [-1,1]:
-				G.block(self,Vector3(0.18,0.65,53),Vector3(side*(38.8+P.SIDE_SHIFT),0.35,end*29.5),front)
-				G.rod(self,Vector3(side*(38.8+P.SIDE_SHIFT),0.95,end*3),Vector3(side*(38.8+P.SIDE_SHIFT),0.95,end*56),0.045,rail)
-		else:
-			G.block(self,Vector3(0.18,0.65,112),Vector3(side*(38.8+P.SIDE_SHIFT),0.35,0),front)
-			G.rod(self,Vector3(side*(38.8+P.SIDE_SHIFT),0.95,-56),Vector3(side*(38.8+P.SIDE_SHIFT),0.95,56),0.045,rail)
-		for row in range(9):
-			var y = row*0.56+0.25
-			var z = side*(58.5+row*0.95)
-			G.block(self,Vector3(99+P.EXTRA_WIDTH,0.55,1),Vector3(0,y,z),concrete)
-			for col in range(117):
-				var x = (-48+col*0.82)*(99+P.EXTRA_WIDTH)/99
-				if col%23==0:
-					G.block(self,Vector3(0.82,0.025,0.07),Vector3(x,y+0.29,z-side*0.39),stair_edge)
-					continue
-				crowd.seat(Vector3(x+(row%2)*0.13,y+0.275,z),PI if side<0 else 0,row,col/23)
-		for aisle in range(1,5):
-			var x = (-48+aisle*23*0.82+0.41)*(99+P.EXTRA_WIDTH)/99
-			for edge in [-0.56,0.56]:
-				G.rod(self,Vector3(x+edge,1.2,side*58.5),Vector3(x+edge,5.68,side*66.1),0.035,rail)
-		G.block(self,Vector3(99+P.EXTRA_WIDTH,0.65,0.18),Vector3(0,0.35,side*57.8),front)
-		G.rod(self,Vector3(-49-P.SIDE_SHIFT,0.95,side*57.8),Vector3(49+P.SIDE_SHIFT,0.95,side*57.8),0.045,rail)
+	if venue.kind!="modern":
+		Variants.lower(venue_root,crowd,venue.kind,concrete,front)
+	else:
+		for side in [-1,1]:
+			for row in range(12):
+				var y = row*0.56+0.25
+				var x = side*(39.5+P.SIDE_SHIFT+row*0.95)
+				if side>0 and row<6:
+					for end in [-1,1]: G.block(venue_root,Vector3(1.0,0.55,53),Vector3(x,y,end*29.5),concrete)
+				else: G.block(venue_root,Vector3(1.0,0.55,112),Vector3(x,y,0),concrete)
+				for col in range(133):
+					var z = -54+col*0.82
+					if side>0 and row<6 and absf(z)<3.3: continue
+					if col%22==0:
+						G.block(venue_root,Vector3(0.07,0.025,0.82),Vector3(x-side*0.39,y+0.29,z),stair_edge)
+						continue
+					crowd.seat(Vector3(x,y+0.275,z+(row%2)*0.13),side*PI*0.5,row,col/22)
+			for aisle in range(1,6):
+				var z = -54+aisle*22*0.82+0.41
+				if side>0 and absf(z)<3.3: continue
+				for edge in [-0.56,0.56]:
+					G.rod(venue_root,Vector3(side*(39.5+P.SIDE_SHIFT),1.2,z+edge),Vector3(side*(49.95+P.SIDE_SHIFT),7.36,z+edge),0.035,rail)
+					for row in [0,4,8,11]:
+						var x = side*(39.5+P.SIDE_SHIFT+row*0.95)
+						G.rod(venue_root,Vector3(x,row*0.56+0.5,z+edge),Vector3(x,row*0.56+1.2,z+edge),0.03,rail)
+			if side>0:
+				for end in [-1,1]:
+					G.block(venue_root,Vector3(0.18,0.65,53),Vector3(side*(38.8+P.SIDE_SHIFT),0.35,end*29.5),front)
+					G.rod(venue_root,Vector3(side*(38.8+P.SIDE_SHIFT),0.95,end*3),Vector3(side*(38.8+P.SIDE_SHIFT),0.95,end*56),0.045,rail)
+			else:
+				G.block(venue_root,Vector3(0.18,0.65,112),Vector3(side*(38.8+P.SIDE_SHIFT),0.35,0),front)
+				G.rod(venue_root,Vector3(side*(38.8+P.SIDE_SHIFT),0.95,-56),Vector3(side*(38.8+P.SIDE_SHIFT),0.95,56),0.045,rail)
+			for row in range(9):
+				var y = row*0.56+0.25
+				var z = side*(58.5+row*0.95)
+				G.block(venue_root,Vector3(99+P.EXTRA_WIDTH,0.55,1),Vector3(0,y,z),concrete)
+				for col in range(117):
+					var x = (-48+col*0.82)*(99+P.EXTRA_WIDTH)/99
+					if col%23==0:
+						G.block(venue_root,Vector3(0.82,0.025,0.07),Vector3(x,y+0.29,z-side*0.39),stair_edge)
+						continue
+					crowd.seat(Vector3(x+(row%2)*0.13,y+0.275,z),PI if side<0 else 0,row,col/23)
+			for aisle in range(1,5):
+				var x = (-48+aisle*23*0.82+0.41)*(99+P.EXTRA_WIDTH)/99
+				for edge in [-0.56,0.56]:
+					G.rod(venue_root,Vector3(x+edge,1.2,side*58.5),Vector3(x+edge,5.68,side*66.1),0.035,rail)
+			G.block(venue_root,Vector3(99+P.EXTRA_WIDTH,0.65,0.18),Vector3(0,0.35,side*57.8),front)
+			G.rod(venue_root,Vector3(-49-P.SIDE_SHIFT,0.95,side*57.8),Vector3(49+P.SIDE_SHIFT,0.95,side*57.8),0.045,rail)
 	architecture = Architecture.new()
-	add_child(architecture)
-	architecture.build(crowd)
-	crowd.build(self)
+	venue_root.add_child(architecture)
+	architecture.build(crowd,venue.kind)
+	crowd.build(venue_root)
 	# Fabric banners add recognisable supporter sections without glowing signage.
 	for side in [-1,1]:
 		for section in range(3):
 			var banner = Node3D.new()
-			add_child(banner)
+			venue_root.add_child(banner)
 			banner.position = Vector3((-33+section*33)*P.WIDTH_RATIO,1.12,side*57.55)
 			if side>0: banner.rotation.y = PI
 			G.block(banner,Vector3(12,0.95,0.035),Vector3.ZERO,front)

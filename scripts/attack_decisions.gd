@@ -35,7 +35,8 @@ func value(index: int,choice: Dictionary,context: Dictionary={}) -> float:
 	var danger: Dictionary=context.danger
 	var isolated: bool=context.isolated
 	if kind in ["shield","invite"]:
-		return 35+minf(4,pressure)*1.2+(float(p.attributes.balance)-72)*.1-danger.urgency*maxf(0,danger.closing-2)*4
+		var hold_bonus := 5.0 if kind=="shield" and game.management.slot_role(index)==3 and p.Attributes.forward_style(p)=="target" else 0.0
+		return 35+hold_bonus+minf(4,pressure)*1.2+(float(p.attributes.balance)-72)*.1-danger.urgency*maxf(0,danger.closing-2)*4
 	if kind in ["carry","push","feint","roll","stop_go","knock_around","roulette","elastico","scoop","rainbow","heel","flick","heel_to_heel","ball_roll_cut","nutmeg","spin"]:
 		# Keep carry_target's cache update even when the option has its own exit.
 		var at: Vector3=choice.get("exit",brain.carry_target(index))
@@ -92,6 +93,12 @@ func value(index: int,choice: Dictionary,context: Dictionary={}) -> float:
 	score+=(float(p.attributes.get("passing",p.attributes.control))-72)*.07
 	score+=(float(q.attributes.control)-72)*.06
 	score+=destination_quality*24
+	# Value the chance created by a safe layoff, not just its forward metres.
+	# A clear central finish can beat an isolated but narrow-angle shot. This
+	# bonus cannot rescue an unsafe/unreachable pass rejected above.
+	var improvement: float=destination_quality-brain.shot_quality(p.position,p.team)
+	if destination_quality>.55 and improvement>.18 and game.flat_distance(p.position,destination)<24:
+		score+=minf(.6,improvement-.12)*32*smoothstep(1.5,4.0,free_space)*(1-read.risk)
 	# A nominally open destination is useless if the receiver cannot reach it.
 	var arrival: float=game.flat_distance(q.position,destination)
 	var pace: float=minf(6.2,q.movement_speed())

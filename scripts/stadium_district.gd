@@ -28,9 +28,11 @@ var mesh_count := 0
 var detail_count := 0
 var night := false
 var traffic_time := 0.0
+var venue_kind:="modern"
 var body_transform := Transform3D.IDENTITY
 
-func build() -> void:
+func build(kind: String="modern") -> void:
+	venue_kind=kind
 	name="StadiumDistrict"
 	var solid := StandardMaterial3D.new()
 	solid.vertex_color_use_as_albedo=true
@@ -104,7 +106,7 @@ func neighbourhood() -> void:
 		for other in [-1,1]:
 			building(Vector3(side*148,-0.72,other*151),Vector2(32,29),5 if side<0 or other<0 else 3,3,0)
 		# A second street creates depth, without a wall of tall buildings in front.
-		for i in range(7):
+		for i in range(0 if venue_kind=="town" else 7):
 			var along: float=[-272,-154,-56,0,56,154,272][i]
 			building(Vector3(along,-0.72,side*237),Vector2(36,35),6+i%4 if side<0 else 3+i%3,(i+1)%4,PI if side>0 else 0)
 			building(Vector3(side*224,-0.72,along),Vector2(36,34),7+i%3 if side<0 else 3+i%3,i%4,-side*PI*0.5)
@@ -114,6 +116,9 @@ func neighbourhood() -> void:
 		for z in range(-90,91,22): tree(Vector3(side*168,-0.72,z),1.05)
 
 func building(at: Vector3,footprint: Vector2,floors: int,style: int,angle: float) -> void:
+	if venue_kind=="town": floors=1+building_count%2; style=building_count%3
+	elif venue_kind=="historic": floors=mini(floors,4); style=1 if building_count%3!=0 else 0
+	elif venue_kind=="compact": floors=mini(floors,6)
 	var previous := body_transform
 	body_transform=Transform3D(Basis(Vector3.UP,angle),at)
 	var w := footprint.x; var d := footprint.y

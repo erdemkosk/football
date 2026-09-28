@@ -184,10 +184,8 @@ func draw(hud) -> void:
 			var x := 415+i*258
 			hud.panel(Rect2(x,722,244,43),hud.GOLD if i==plan else Color("27463b"),6)
 			hud.center(["←  ","↑  ","→  "][i]+TITLES[i],Vector2(x+122,749),14,hud.INK if i==plan else hud.PAPER)
-	else:
-		hud.draw_set_transform(game.ui.edge_offset(-1,-1))
-		hud.panel(Rect2(32,139,148,27),Color(.04,.10,.10,.86),4)
-		hud.text(TITLES[plan],Vector2(43,157),10,hud.GOLD,true)
+	# The open selector shows the active plan; a change already has a timed
+	# notice below. A permanent duplicate badge competes with live play.
 	if notice_time>0:
 		hud.draw_set_transform(game.ui.edge_offset(0,1))
 		hud.panel(Rect2(395,635,810,34),Color(.06,.15,.13,.94),5)

@@ -1,0 +1,138 @@
+[
+	{
+		"draws": 543.55592654424,
+		"fps": 119.660810545174,
+		"frames": 599,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.315,
+		"p95_ms": 11.484,
+		"p99_ms": 12.168,
+		"physics_hz": 120.060345805759,
+		"physics_ms": 4.77202671118528,
+		"render_cpu_ms": 0.87475292183123,
+		"scene": "modern-before",
+		"states": {
+			"playing": 599
+		},
+		"valid": true
+	},
+	{
+		"draws": 552.158333333333,
+		"fps": 119.895570957696,
+		"frames": 600,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.337,
+		"p95_ms": 9.405,
+		"p99_ms": 11.864,
+		"physics_hz": 119.895570957696,
+		"physics_ms": 5.09590833333332,
+		"render_cpu_ms": 0.88382166604201,
+		"scene": "modern-after",
+		"states": {
+			"playing": 600
+		},
+		"valid": true
+	},
+	{
+		"draws": 522.95,
+		"fps": 119.894636593362,
+		"frames": 600,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.334,
+		"p95_ms": 9.235,
+		"p99_ms": 12.238,
+		"physics_hz": 119.894636593362,
+		"physics_ms": 5.20126,
+		"render_cpu_ms": 0.890154999196529,
+		"scene": "town-after",
+		"states": {
+			"playing": 600
+		},
+		"valid": true
+	},
+	{
+		"draws": 526.628333333333,
+		"fps": 119.805938341075,
+		"frames": 600,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.307,
+		"p95_ms": 9.443,
+		"p99_ms": 11.803,
+		"physics_hz": 120.005614904977,
+		"physics_ms": 4.85658000000007,
+		"render_cpu_ms": 0.882883334358533,
+		"scene": "town-before",
+		"states": {
+			"playing": 600
+		},
+		"valid": true
+	},
+	{
+		"draws": 538.165551839465,
+		"fps": 119.459276971727,
+		"frames": 598,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.364,
+		"p95_ms": 9.199,
+		"p99_ms": 11.825,
+		"physics_hz": 119.858806326148,
+		"physics_ms": 5.13056856187294,
+		"render_cpu_ms": 0.923697323304754,
+		"scene": "compact-before",
+		"states": {
+			"playing": 598
+		},
+		"valid": true
+	},
+	{
+		"draws": 486.108153078203,
+		"fps": 120.006884920785,
+		"frames": 601,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.344,
+		"p95_ms": 9.065,
+		"p99_ms": 10.911,
+		"physics_hz": 120.006884920785,
+		"physics_ms": 5.05105823627294,
+		"render_cpu_ms": 0.845447586003238,
+		"scene": "compact-after",
+		"states": {
+			"playing": 601
+		},
+		"valid": true
+	},
+	{
+		"draws": 541.919866444073,
+		"fps": 119.704021315709,
+		"frames": 599,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.346,
+		"p95_ms": 9.169,
+		"p99_ms": 11.631,
+		"physics_hz": 119.903861084183,
+		"physics_ms": 5.03803338898162,
+		"render_cpu_ms": 0.912906511399105,
+		"scene": "historic-after",
+		"states": {
+			"playing": 599
+		},
+		"valid": true
+	},
+	{
+		"draws": 532.118530884808,
+		"fps": 119.717873538752,
+		"frames": 599,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.336,
+		"p95_ms": 9.1,
+		"p99_ms": 11.481,
+		"physics_hz": 119.917736432807,
+		"physics_ms": 5.43443405676124,
+		"render_cpu_ms": 0.913098497760913,
+		"scene": "historic-before",
+		"states": {
+			"playing": 599
+		},
+		"valid": true
+	}
+]

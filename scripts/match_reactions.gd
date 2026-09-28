@@ -5,14 +5,17 @@ var pass_age := 10.0
 var shooter := -1
 var shot_age := 10.0
 var shot_counted := false
+var social_cooldown:=0.0
 
 func reset() -> void:
 	passer=-1; shooter=-1; pass_age=10; shot_age=10
 	shot_counted=false
+	social_cooldown=0
 	for p in game.players: p.reaction.reset()
 
 func update(delta: float) -> void:
 	pass_age+=delta; shot_age+=delta
+	social_cooldown=maxf(0,social_cooldown-delta)
 	for p in game.players:
 		p.reaction.live=game.state=="playing"
 		p.reaction.ball_position=game.ball.position
@@ -26,12 +29,24 @@ func received(index: int) -> void:
 	if passer<0 or pass_age>5 or passer==index: return
 	if game.players[passer].team!=game.players[index].team:
 		game.players[passer].reaction.begin("sorry",game.ball.position)
+	elif social_cooldown<=0 and game.flat_distance(game.players[passer].position,game.players[index].position)>9:
+		# The passer acknowledges the receiver after a completed delivery.
+		# The receiver stays free to control the ball and make the next action.
+		game.players[passer].reaction.begin("acknowledge",game.players[index].position)
+		social_cooldown=4.0
 	passer=-1
 
 func out(team: int) -> void:
 	if shooter>=0 and shot_age<6:
 		game.players[shooter].reaction.begin("miss",game.ball.position)
 		game.broadcast.offer("miss",shooter)
+		var teammate:=-1; var nearest:=14.0
+		for i in range(game.players.size()):
+			var p=game.players[i]
+			if i==shooter or not p.visible or p.keeper or p.team!=game.players[shooter].team: continue
+			var gap: float=game.flat_distance(p.position,game.players[shooter].position)
+			if gap<nearest: nearest=gap; teammate=i
+		if teammate>=0: game.players[teammate].reaction.begin("encourage",game.players[shooter].position)
 	elif passer>=0 and pass_age<5 and game.players[passer].team!=team:
 		game.players[passer].reaction.begin("sorry",game.ball.position)
 	shooter=-1; passer=-1

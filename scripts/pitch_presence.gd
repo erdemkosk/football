@@ -70,7 +70,7 @@ func update_visuals() -> void:
 		for side in range(2):
 			var knee: Node3D=p.left_knee if side==0 else p.right_knee
 			var foot: Vector3=knee.to_global(Vector3(0,-.42,-.05))
-			shadow(count,foot,Vector2(.27,.43),.42*(1-smoothstep(.10,.65,foot.y)),p.rig.rotation.y); count+=1
+			shadow(count,foot,Vector2(.29,.46),.47*(1-smoothstep(.10,.65,foot.y)),p.rig.rotation.y); count+=1
 		if not reflections.visible: continue
 		var kit: Color=p.kit_materials.jersey.albedo_color
 		var shorts: Color=p.kit_materials.shorts.albedo_color

@@ -18,14 +18,21 @@ func framed(at: Vector3) -> bool:
 	var screen: Vector2=game.camera.unproject_position(at)
 	return screen.x>48 and screen.x<view.x-48 and screen.y>48 and screen.y<view.y-48
 func run() -> void:
+	# Headless macOS reports a square 64-pixel window. Use the game's actual
+	# logical aspect ratio for screen-edge assertions.
+	root.content_scale_aspect=Window.CONTENT_SCALE_ASPECT_IGNORE
+	root.content_scale_size=Vector2i(1440,900)
 	game=load("res://main.tscn").instantiate()
 	root.add_child(game)
 	await physics_frame
+	game.match_menu.config_path="res://tests/camera-rig-settings.tmp"
+	game.match_camera.defaults()
+	game.match_camera.select("pitch"); game.update_camera(0)
 	check(game.match_camera.id()=="pitch" and game.camera.projection==Camera3D.PROJECTION_ORTHOGONAL,"The game boots on the original pitch camera")
 	game.start_match(false,false)
 	game.set_physics_process(false)
 	game.update_camera(0)
-	check(game.match_camera.is_sideline() and game.camera.projection==Camera3D.PROJECTION_PERSPECTIVE and absf(game.camera.position.x-(P.HALF_WIDTH+8))<0.05,"A match starts on the east sideline")
+	check(game.match_camera.is_sideline() and game.camera.projection==Camera3D.PROJECTION_PERSPECTIVE and game.camera.position.x>20 and game.camera.position.x<40 and game.camera.position.y>25,"A match starts in the closer elevated sideline view")
 	var seen: PackedStringArray=[]
 	for _i in range(5):
 		key(KEY_C)
@@ -52,7 +59,7 @@ func run() -> void:
 	check(game.tactical and game.camera.size>100 and game.camera_focus.length()<0.2,"The tactical setter still opens the full-pitch view")
 	game.tactical=false
 	game.update_camera(0)
-	check(game.match_camera.is_sideline(),"Leaving tactical returns to the default sideline")
+	check(game.match_camera.id()==game.match_camera.preferred,"Leaving tactical restores the user's preferred camera")
 	game.controller.device=0
 	game.controller.stick=Vector2(0,-1)
 	game.match_camera.select("pitch")
@@ -102,7 +109,8 @@ func run() -> void:
 	game.controller.stick=Vector2.ZERO
 	game.start_match(false,false)
 	game.update_camera(0)
-	check(game.match_camera.is_sideline() and game.camera.projection==Camera3D.PROJECTION_PERSPECTIVE,"A new match forgets the last angle and starts on the sideline")
+	check(game.match_camera.id()==game.match_camera.preferred and game.camera.projection==Camera3D.PROJECTION_PERSPECTIVE,"A new match preserves the chosen starting camera")
 	print("CAMERA RIG CHECK: %d failures" % failures)
+	DirAccess.remove_absolute(game.match_menu.config_path)
 	game.free()
 	quit(0 if failures==0 else 1)

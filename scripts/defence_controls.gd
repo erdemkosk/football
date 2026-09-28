@@ -57,14 +57,15 @@ func update(delta: float) -> void:
 	p.energy=maxf(0,p.energy-delta*.023)
 	p.recovery_delay=maxf(p.recovery_delay,.4)
 
-func shoulder(index: int) -> bool:
+func shoulder(index: int,opponent: int=-1) -> bool:
 	var p=game.players[index]
 	if p.action_timer>0 or p.tackle_cooldown>0 or p.keeper: return false
 	var victim := -1
 	var nearest := 1.2
 	for i in range(game.players.size()):
+		if opponent>=0 and i!=opponent: continue
 		var q=game.players[i]
-		if not q.visible or q.team==p.team or q.keeper: continue
+		if not q.visible or q.dismissed or q.team==p.team or q.keeper: continue
 		var gap: float=game.flat_distance(p.position,q.position)
 		if gap<nearest: nearest=gap; victim=i
 	if victim<0: return false

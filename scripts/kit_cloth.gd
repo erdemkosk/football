@@ -8,6 +8,7 @@ func _init() -> void:
 	set_shader_parameter("albedo_tex",ImageTexture.create_from_image(blank))
 	set_shader_parameter("albedo",Color.WHITE)
 	set_shader_parameter("bend",Vector3.ZERO)
+	set_shader_parameter("waist_unbend",Basis.IDENTITY)
 
 var albedo_color: Color:
 	set(value): set_shader_parameter("albedo",value)
@@ -23,3 +24,4 @@ var albedo_texture: Texture2D:
 
 func set_bend(value: Vector3) -> void:
 	set_shader_parameter("bend",value)
+	set_shader_parameter("waist_unbend",Basis.from_euler(value).inverse())

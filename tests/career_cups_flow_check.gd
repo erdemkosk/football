@@ -57,18 +57,22 @@ func run() -> void:
 	game.match_time=game.LENGTH+.01; game.players[9].energy=.51; game.players[9].yellow_cards=1
 	game._physics_process(.01)
 	check(c.cups.extra_phase==1 and game.state=="restart" and f.extra_time and not f.played,"A tied final enters playable first-half extra time instead of finishing")
-	check(is_equal_approx(game.players[9].energy,.51) and game.players[9].yellow_cards==1,"Extra time preserves fatigue and discipline")
-	game.state="playing"; game.match_time=game.LENGTH*7.0/6.0+.01
-	game._physics_process(.01)
-	check(c.cups.extra_phase==2 and game.half==2 and game.state=="restart","At 105 minutes the extra-time second half changes ends")
+	# The final live tick is resolved before the whistle, including its tiny
+	# stamina change; changing periods must not reset the player's fatigue.
+	check(absf(game.players[9].energy-.51)<.005 and game.players[9].yellow_cards==1,"Extra time preserves fatigue and discipline")
+	game.state="playing"; game.match_time=game.LENGTH*7.0/6.0+.01; game.management.added[2]=0
+	game.goal(0)
+	check(game.state=="goal" and game.referee_flow.period_complete,"An extra-time goal at expiry is celebrated before changing periods")
+	game.celebration.skip()
+	check(c.cups.extra_phase==2 and game.half==2 and game.state in ["restart","set_piece"],"At 105 minutes the extra-time second half changes ends")
 	await capture("cups-extra-time")
-	game.state="playing"; game.match_time=game.LENGTH*4.0/3.0+.01
-	game._physics_process(.01)
+	game.state="playing"; game.match_time=game.LENGTH*4.0/3.0+.01; game.management.added[3]=0
+	game.goal(1); game.celebration.skip()
 	check(game.state=="shootout","A tied cup final enters a playable shootout after 120 minutes")
 	game.finale.attempts=[[true,true,true],[false,false,false]]; game.finale.totals=[3,0]; game.finale.phase="result"; game.finale.age=3
 	game.finale.update(.01)
 	game._process(0)
-	check(not c.in_match and f.played and not f.penalties.is_empty() and game.score==[0,0],"Full time records the played shootout and preserves the actual match score")
+	check(not c.in_match and f.played and not f.penalties.is_empty() and game.score==[1,1],"Full time records the played shootout and preserves the actual match score")
 	check(game.ending_reason.contains("PENALTILAR") and game.ending_reason.contains("KUPAYI KAZANDI"),"The result screen names the shootout winner and trophy")
 	check(c.world.table==table,"Playing a cup final does not change domestic league points")
 	await capture("cups-final")

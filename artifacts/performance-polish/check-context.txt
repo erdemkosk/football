@@ -1,0 +1,103 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:1035)
+PASS: Context pass queues at 30 Hz: compact
+PASS: Angle selects compact without changing the intended pass
+PASS: Exactly one physical compact contact at 30 Hz
+PASS: Pass animation preserves aim and does not move the body
+PASS: Context pass queues at 30 Hz: outside_pass
+PASS: Angle selects outside_pass without changing the intended pass
+PASS: Exactly one physical outside_pass contact at 30 Hz
+PASS: Pass animation preserves aim and does not move the body
+PASS: Context pass queues at 30 Hz: backheel
+PASS: Angle selects backheel without changing the intended pass
+PASS: Exactly one physical backheel contact at 30 Hz
+PASS: Pass animation preserves aim and does not move the body
+PASS: Context pass queues at 60 Hz: compact
+PASS: Angle selects compact without changing the intended pass
+PASS: Exactly one physical compact contact at 60 Hz
+PASS: Pass animation preserves aim and does not move the body
+PASS: Context pass queues at 60 Hz: outside_pass
+PASS: Angle selects outside_pass without changing the intended pass
+PASS: Exactly one physical outside_pass contact at 60 Hz
+PASS: Pass animation preserves aim and does not move the body
+PASS: Context pass queues at 60 Hz: backheel
+PASS: Angle selects backheel without changing the intended pass
+PASS: Exactly one physical backheel contact at 60 Hz
+PASS: Pass animation preserves aim and does not move the body
+PASS: Context pass queues at 120 Hz: compact
+PASS: Angle selects compact without changing the intended pass
+PASS: Exactly one physical compact contact at 120 Hz
+PASS: Pass animation preserves aim and does not move the body
+PASS: Context pass queues at 120 Hz: outside_pass
+PASS: Angle selects outside_pass without changing the intended pass
+PASS: Exactly one physical outside_pass contact at 120 Hz
+PASS: Pass animation preserves aim and does not move the body
+PASS: Context pass queues at 120 Hz: backheel
+PASS: Angle selects backheel without changing the intended pass
+PASS: Exactly one physical backheel contact at 120 Hz
+PASS: Pass animation preserves aim and does not move the body
+PASS: Receive selects half_turn
+PASS: Reception pose preserves input, momentum and physical ball
+PASS: Receiving boot stays close to the real half_turn contact
+PASS: Receive selects trailing
+PASS: Reception pose preserves input, momentum and physical ball
+PASS: Receiving boot stays close to the real trailing contact
+PASS: Receive selects reach
+PASS: Reception pose preserves input, momentum and physical ball
+PASS: Receiving boot stays close to the real reach contact
+PASS: Half-turn selects the opening foot for a central delivery
+PASS: A wide delivery retains the physically nearer foot
+PASS: Incoming pass visibly opens the body before contact
+PASS: Incoming shot selects a height-aware block on either side
+PASS: Block animation adds no automatic lunge or movement lock
+PASS: A visible block cannot deflect a distant ball
+PASS: Only a measured boot collision deflects the shot with energy loss
+PASS: Incoming shot selects a height-aware block on either side
+PASS: Block animation adds no automatic lunge or movement lock
+PASS: A visible block cannot deflect a distant ball
+PASS: Incoming shot selects a height-aware block on either side
+PASS: Block animation adds no automatic lunge or movement lock
+PASS: A visible block cannot deflect a distant ball
+PASS: Only a measured boot collision deflects the shot with energy loss
+PASS: Incoming shot selects a height-aware block on either side
+PASS: Block animation adds no automatic lunge or movement lock
+PASS: A visible block cannot deflect a distant ball
+PASS: An early moving sidestep can lift over a sliding leg
+PASS: Hop uses real gravity and keeps horizontal control and collisions
+PASS: Hop lands and accepts a direction change without waiting for a cutscene
+PASS: A head-on tackle grants no automatic escape
+PASS: Marked runner shows a loaded checking step
+PASS: Burst and defender hip opening follow the existing marking decision
+PASS: Marking animation never moves or stuns the defender
+PASS: Run gesture fades after the tactical movement ends
+PASS: High save has a distinct punch pose on team 0
+PASS: High save cannot reach a remote ball
+PASS: High save requires physical glove proximity
+PASS: Actual punch contact deflects once without accidentally catching
+PASS: Punch clears forward; fingertips redirect up and behind
+PASS: High save has a distinct tip pose on team 0
+PASS: High save cannot reach a remote ball
+PASS: High save requires physical glove proximity
+PASS: Actual tip contact deflects once without accidentally catching
+PASS: Punch clears forward; fingertips redirect up and behind
+PASS: High save has a distinct punch pose on team 1
+PASS: High save cannot reach a remote ball
+PASS: High save requires physical glove proximity
+PASS: Actual punch contact deflects once without accidentally catching
+PASS: Punch clears forward; fingertips redirect up and behind
+PASS: High save has a distinct tip pose on team 1
+PASS: High save cannot reach a remote ball
+PASS: High save requires physical glove proximity
+PASS: Actual tip contact deflects once without accidentally catching
+PASS: Punch clears forward; fingertips redirect up and behind
+PASS: Live trajectory automatically chooses punch for team 0
+PASS: Live trajectory automatically chooses tip for team 0
+PASS: Live trajectory automatically chooses punch for team 1
+PASS: Live trajectory automatically chooses tip for team 1
+PASS: Pause preserves and freezes contextual animation state
+PASS: Restart clears every contextual pose
+CONTEXTUAL ANIMATION CHECK: 96 checks, 0 failures
+WARNING: 5 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

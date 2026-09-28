@@ -26,7 +26,12 @@ func update(delta: float) -> void:
 			if distance<.05 or distance>1.12 or absf(p.position.y-q.position.y)>1.3: continue
 			var air: bool=game.heading.active(a) or game.heading.active(b) or p.pose=="header" or q.pose=="header"
 			var shielding: bool=(p.protecting and game.dribbler==a) or (q.protecting and game.dribbler==b)
-			if not air and not shielding and (p.velocity.length()<1 or q.velocity.length()<1 or p.facing.dot(q.facing)<.3 or absf(gap.normalized().dot(p.facing))>.65): continue
+			if not air and not shielding:
+				var travel: Vector3=p.velocity*Vector3(1,0,1)
+				var other_travel: Vector3=q.velocity*Vector3(1,0,1)
+				# Jockeys can look at the ball while running shoulder to shoulder.
+				# Require parallel travel and a side gap, never a head-on collision.
+				if travel.length()<1 or other_travel.length()<1 or travel.normalized().dot(other_travel.normalized())<.5 or absf(gap.normalized().dot(travel.normalized()))>.65: continue
 			var normal := gap.normalized()
 			p.contest_direction=-normal if p.contest_direction.length()<.1 else p.contest_direction.slerp(-normal,1-exp(-delta*18)).normalized()
 			q.contest_direction=-p.contest_direction

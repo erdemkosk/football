@@ -9,14 +9,24 @@ var scan_in := 0.0
 var attacking_team := 0
 var source := ""
 var jobs: Dictionary = {}
+var duelists: Array[int]=[]
 
 func reset() -> void:
 	targets.clear(); roles.clear(); remaining=0; previous_velocity=Vector3.ZERO; scan_in=0; source=""
 	jobs.clear()
+	duelists.clear()
 
 func alert(kind: String,attack: int) -> void:
 	if game.state!="playing": return
 	remaining=2.8; scan_in=0; attacking_team=attack; source=kind
+	duelists.clear(); jobs.clear()
+
+func challenged(winner: int,previous_owner: int) -> void:
+	if game.state!="playing": return
+	alert("tackle",1-game.players[winner].team)
+	remaining=1.8
+	duelists.append(winner)
+	if previous_owner>=0 and previous_owner!=winner: duelists.append(previous_owner)
 
 func landing() -> Vector3:
 	var ball=game.ball
@@ -44,7 +54,7 @@ func update(delta: float) -> void:
 	previous_velocity=velocity
 	remaining=maxf(0,remaining-delta)
 	if remaining<=0 or game.dribbler>=0:
-		targets.clear(); roles.clear(); jobs.clear(); remaining=0; return
+		targets.clear(); roles.clear(); jobs.clear(); duelists.clear(); remaining=0; return
 	scan_in-=delta
 	if scan_in>0: return
 	scan_in=.12; targets.clear(); roles.clear()
@@ -53,7 +63,8 @@ func update(delta: float) -> void:
 		var candidates: Array[int]=[]
 		for i in range(team*11+1,team*11+11):
 			var p=game.players[i]
-			if p.visible and not p.dismissed and p.action_timer<=0: candidates.append(i)
+			var recovering: bool=source=="tackle" and i in duelists and p.pose=="poke" and p.action_timer<=.20
+			if p.visible and not p.dismissed and (p.action_timer<=0 or recovering): candidates.append(i)
 		var previous: Array=jobs.get(team,[])
 		candidates.sort_custom(func(a,b): return arrival(a,point)-(.22 if not previous.is_empty() and a==previous[0] else 0.0)<arrival(b,point)-(.22 if not previous.is_empty() and b==previous[0] else 0.0))
 		if candidates.is_empty() or arrival(candidates[0],point)>3.8: continue
@@ -62,6 +73,12 @@ func update(delta: float) -> void:
 		# Keep the runner through small landing changes, but yield to a clearly
 		# earlier arrival. Never erase a physical stumble to manufacture urgency.
 		jobs[team]=[first]
+		# A tackle starts a race between one player on each side; the rest of
+		# the team keeps its shape. Reserve the winner's job through the short
+		# planting recovery, without cancelling it or taking over human input.
+		if source=="tackle":
+			roles[first]="follow_tackle" if not duelists.is_empty() and first==duelists[0] else "recover_ball"
+			continue
 		if candidates.size()>1:
 			var next: int=candidates[1]
 			var forward: float=game.attack_sign(team)
@@ -88,4 +105,9 @@ func assign(index: int,point: Vector3,role: String) -> void:
 
 func arrival(index: int,point: Vector3) -> float:
 	var p=game.players[index]
-	return game.flat_distance(p.position,point)/maxf(3,p.movement_speed())+p.touch_cooldown*.4
+	var time: float=game.flat_distance(p.position,point)/maxf(3,p.movement_speed())+p.touch_cooldown*.4
+	if source=="tackle": time+=p.action_timer-(.16 if index in duelists else 0.0)
+	elif p.team==attacking_team and game.management.slot_role(index)==3 and p.Attributes.forward_style(p)=="poacher":
+		# Earlier recognition wins a close race, not an unreachable rebound.
+		time-=.24*p.Attributes.skill(p,"reactions")
+	return time

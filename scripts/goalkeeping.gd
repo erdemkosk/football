@@ -130,8 +130,27 @@ func safe_parry(index: int) -> Vector3:
 		if space>best_space: best_space=space; best=direction
 	return best*clampf(game.ball.linear_velocity.length()*0.65,12,19)+Vector3.UP*2.6
 
+func crowded_cross(index: int,point: Vector3) -> bool:
+	var p=game.players[index]
+	for other in game.players:
+		if other.visible and not other.dismissed and other.team!=p.team and game.flat_distance(other.position,point)<1.8: return true
+	return false
+
+func high_parry(index: int) -> Vector3:
+	var p=game.players[index]
+	var forward: float=game.attack_sign(p.team)
+	if p.keeper_motion.kind=="punch":
+		var away := Vector3(clampf(game.ball.position.x*.06,-.6,.6),0,forward).normalized()
+		return away*clampf(game.ball.linear_velocity.length()*.7,12,18)+Vector3.UP*5
+	# The fingertips redirect a high ball up and beyond the bar. Sideward
+	# momentum survives; no target snap or guaranteed out-of-play outcome.
+	return Vector3(game.ball.linear_velocity.x*.40,4.6,-forward*clampf(absf(game.ball.linear_velocity.z)*.32,4,8))
+
 func update(index: int,delta: float) -> Vector3:
 	var p=game.players[index]
+	# A directing gesture is cancelled before any close-ball/save decision.
+	if game.state!="playing" or game.ball.held_by!=null or game.flat_distance(p.position,game.ball.position)<15 or game.ball.linear_velocity.length()>13:
+		p.keeper_motion.direct_defence(p,Vector3.ZERO,false)
 	if index==0 and rush_requested and not can_call(): stop_rush()
 	var called := is_rushing(index)
 	var ball: Vector3=game.ball.position
@@ -156,10 +175,10 @@ func update(index: int,delta: float) -> Vector3:
 		modes[index]="hold"
 		hold_age+=delta
 		if game.keeper_distribution.active(index): return p.position
-		p.set_piece_pose="" if p.pose.begins_with("keeper_") and p.action_timer>0 else "carry"
+		p.set_piece_pose="" if p.action_timer>0 and (p.pose.begins_with("keeper_") or p.pose in ["dive","claim"]) else "carry"
 		if not game.is_user_player(index) or (not game.charging and not game.pass_charging and p.desired.length()<0.05):
 			p.facing=Vector3(0,0,forward)
-		game.ball.hold_target=p.hand_center()
+		game.ball.hold_target=p.keeper_motion.grip_target(p)
 		if hold_age>1.15+game.management.reaction(p.team)*.35 and game.autonomous_kicks(p.team) and not (game.legend.match_active() and game.is_user_player(index)):
 			game.ai_attack.distribute(index)
 		return p.position
@@ -184,6 +203,16 @@ func update(index: int,delta: float) -> Vector3:
 			rush_requested=false; returning=false
 		return p.position
 	var read := shot_read(index,delta)
+	var can_direct: bool=game.state=="playing" and read.is_empty() and game.ball.held_by==null and not called and p.action_timer<=0 and p.set_piece_pose=="" and bv.length()<13 and game.flat_distance(p.position,ball)>15 and depth<70
+	var defender: Vector3=Vector3.ZERO
+	var nearest:=INF
+	if can_direct:
+		for i in range(index+1,index+5):
+			var other=game.players[i]
+			if not other.visible or other.dismissed: continue
+			var gap: float=game.flat_distance(other.position,ball)
+			if gap<nearest: nearest=gap; defender=other.position
+	p.keeper_motion.direct_defence(p,defender,can_direct and nearest<INF)
 	var reacting: bool=not read.is_empty() and read.age<read.delay
 	# Come off the line for a reachable through ball or an isolated attacker.
 	if in_box and ball.y<1.05 and game.last_touch!=p.team and bv.length()<17 and not (index==0 and returning):
@@ -209,6 +238,7 @@ func update(index: int,delta: float) -> Vector3:
 			modes[index]="cross"
 			if time<=0.5 and travel<1.35 and p.is_on_floor() and p.tackle_cooldown<=0:
 				p.start_claim(predicted.y,time)
+				if p.pose=="claim" and crowded_cross(index,predicted): p.keeper_motion.high_save(p,"punch",predicted)
 			break
 	var look: Vector3=(ball-p.position)*Vector3(1,0,1)
 	if look.length()>0.1 and p.action_timer<=0: p.facing=look.normalized()
@@ -226,12 +256,16 @@ func update(index: int,delta: float) -> Vector3:
 			var reach: float=predicted-p.position.x
 			# Central high shots need raised gloves too, even without a lateral dive.
 			if absf(reach)<1.05 and time<.42 and time>.10 and height>=1.65 and height<2.65 and p.is_on_floor():
+				var free: bool=p.action_timer<=0 and p.tackle_cooldown<=0
 				p.start_claim(height,time)
+				if free and p.pose=="claim" and height>2.08 and bv.length()>19: p.keeper_motion.high_save(p,"tip",Vector3(predicted,height,p.position.z))
 			if absf(reach)<1.15 and time<.30 and time>.04 and height<1.65:
 				var style := "smother" if height<.65 and bv.length()<18 and time>.14 else ("foot" if height<.55 else ("catch" if height<1.65 and bv.length()<21 else "spread"))
 				p.keeper_motion.start(p,style,Vector3(predicted,height,p.position.z))
 			if absf(reach)>1.05 and absf(reach)<3.9 and time<0.52 and height<2.65:
+				var free: bool=p.action_timer<=0 and p.tackle_cooldown<=0
 				p.start_dive(reach,height,time)
+				if free and p.pose=="dive" and height>1.7 and absf(reach)>1.8: p.keeper_motion.high_save(p,"tip",Vector3(predicted,height,p.position.z))
 	if called and p.action_timer<=0:
 		var anticipation: float=clampf(game.flat_distance(p.position,ball)/12,0.12,0.65)
 		target=ball+bv.limit_length(25)*anticipation
@@ -267,7 +301,7 @@ func update(index: int,delta: float) -> Vector3:
 		# scoop, claim or dive too; the pose name alone must not force a parry.
 		var catch_speed: float=(15.5 if p.pose=="dive" else 18.5)*p.Attributes.multiplier(p.attributes.get("handling",72),.15)
 		var relative_speed: float=(bv-p.velocity).length()
-		if opponent and in_box and relative_speed<catch_speed and glove_distance<0.65 and not spill:
+		if opponent and in_box and relative_speed<catch_speed and glove_distance<0.65 and not spill and not p.keeper_motion.special(p):
 			if not game.rules.before_touch(index,false): return target
 			game.playtest.strike(index,bv,"catch",true)
 			game.feedback.contact("glove",index,ball,bv.normalized(),clampf(bv.length()/25,.18,1))
@@ -289,11 +323,12 @@ func update(index: int,delta: float) -> Vector3:
 				rush_requested=false; returning=false
 			p.sprinting=false
 			modes[index]="hold"
-			p.set_piece_pose="" if p.pose.begins_with("keeper_") and p.action_timer>0 else "carry"
+			p.set_piece_pose="" if p.action_timer>0 and (p.pose.begins_with("keeper_") or p.pose in ["dive","claim"]) else "carry"
 			game.hint("KALECİ TOPU KONTROL ETTİ")
 			return p.position
 		elif opponent:
-			if not game.strike(index,loose_parry(index) if spill else safe_parry(index),0,true): return target
+			var parry := high_parry(index) if p.keeper_motion.special(p) else (loose_parry(index) if spill else safe_parry(index))
+			if not game.strike(index,parry,0,true): return target
 			game.feedback.contact("glove",index,ball,bv.normalized(),clampf(bv.length()/25,.18,1))
 			game.saves[p.team]+=1
 			game.broadcast_event("great_save" if p.pose=="dive" else "save",{"index":index})

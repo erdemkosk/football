@@ -1,0 +1,93 @@
+{
+  "kickoff": [
+    ["Ve maç başlıyor! Güzel bir mücadele olsun.", "İlk dakikalarda iki takımın baskıya nasıl cevap vereceğini göreceğiz."],
+    ["Düdük geldi, top oyunda!", "Evet, şimdi sahada söz oyuncularda. İyi seyirler."]
+  ],
+  "second_half": [
+    ["İkinci yarı başladı. Yeniden birlikteyiz.", "Bakalım devre arasındaki hamleler oyuna nasıl yansıyacak."],
+    ["Takımlar döndü, ikinci yarının ilk pası verildi.", "Şimdi oyunun ritmini yeniden bulmak gerekiyor."]
+  ],
+  "goal": [
+    ["Gol! Top ağlarda!", "Böyle anlarda bütün emek o son vuruşa bakıyor."],
+    ["Ve gol! Ağlar havalandı!", "Gol geldi. Şimdi iki takımın vereceği tepki önemli."],
+    ["Gol! Bitirdi işi!", "Evet, bu pozisyonun sonunda gülen taraf hücum eden takım."]
+  ],
+  "goal_level": [
+    ["Gol! Yeniden eşitlik!", "Maça yeniden ortak oldular. Şimdi psikolojik denge de değişebilir."],
+    ["Top ağlarda! Skora denge geliyor!", "Evet, bu golle her şey yeniden başlıyor."],
+    ["Ve gol! Beraberliği yakalıyorlar!", "Artık iki takım da galibiyet golünü düşünecek."]
+  ],
+  "goal_lead": [
+    ["Gol! Öne geçiyorlar!", "Şimdi rakibin biraz daha risk alması gerekecek."],
+    ["Ve gol! Skor üstünlüğünü alıyorlar!", "Evet, avantaj onlarda. Ama oyundan kopmamak gerekiyor."],
+    ["Top ağlarda! Üstünlük geliyor!", "Bu gol maçın gidişatını değiştirebilir."]
+  ],
+  "goal_extend": [
+    ["Gol! Farkı açıyorlar!", "Rakip için geri dönüş artık biraz daha zor."],
+    ["Ve gol! Avantaj büyüyor!", "Evet, skor rahatlatıyor ama disiplin hâlâ önemli."]
+  ],
+  "goal_reply": [
+    ["Gol! Fark azalıyor!", "Geri dönüş için ihtiyaç duydukları moral bu olabilir."],
+    ["Top ağlarda! Arayı kapatıyorlar!", "Henüz eşitlik yok ama yeniden umutlandılar."]
+  ],
+  "goal_late_lead": [
+    ["Gol! Son bölümde öne geçiyorlar!", "Rakibin cevap vermek için çok az zamanı var."],
+    ["Ve gol! Bitime doğru çok önemli bir gol!", "Evet, şimdi kalan dakikaları çok akıllı oynamak gerekiyor."]
+  ],
+  "goal_late_level": [
+    ["Gol! Son bölümde eşitlik!", "Tam da umutlar azalırken geldi bu gol."],
+    ["Top ağlarda! Bitime doğru beraberlik!", "Evet, son dakikalarda maç yeniden açıldı."]
+  ],
+  "own_goal": [
+    ["Kendi kalesine! Çok talihsiz bir an.", "Böyle bir anda takım arkadaşlarının desteği çok önemli."],
+    ["Top kendi ağlarına gidiyor!", "İstemediği bir sonuç. Şimdi bu pozisyonu geride bırakmalı."]
+  ],
+  "shot": [["Vurdu!", ""], ["Kaleyi deniyor!", ""], ["Şut geliyor!", ""], ["Vuruşunu yaptı!", ""]],
+  "shot_high": [
+    ["Top üstten dışarıda.", "Bu kez vuruşun yüksekliğini ayarlayamadı."],
+    ["Yükseldi top, aut.", "Kaleyi bulsa tehlike yaratabilirdi."],
+    ["Çerçevenin üzerinden dışarıya.", ""]
+  ],
+  "shot_wide": [
+    ["Top yandan dışarıda.", "Son vuruşta istediği yönü bulamadı."],
+    ["Direğin yanından auta gidiyor.", "Biraz daha isabetli bir vuruş gerekiyordu."],
+    ["Kaleyi bulamadı.", ""]
+  ],
+  "save": [
+    ["Kaleci yerinde!", "Vuruşu karşıladı, takımını oyunda tutuyor."],
+    ["Kaleciden kurtarış!", "Evet, bu kez kaleciyi geçemediler."],
+    ["Kaleci gole izin vermiyor!", ""],
+    ["Vuruşu kaleci karşılıyor!", ""]
+  ],
+  "great_save": [
+    ["Müthiş kurtarış! Kaleci harika uzandı!", "Gerçekten önemli bir top çıkardı. Takımına nefes aldırdı."],
+    ["Ne kurtarış ama! Gole izin vermedi!", "Böyle kurtarışlar takımın güvenini de artırır."]
+  ],
+  "woodwork": [["Direk! Top geri geldi!", "Küçücük bir farkla gol kaçtı."], ["Direğe takıldı!", "Evet, çerçeve bu kez golü önledi."], ["Top direkten dönüyor!", ""]],
+  "corner": [["Korner. Duran toptan gelecekler.", "Ceza sahasında paylaşım çok önemli olacak."], ["Köşe vuruşu kazanıldı.", "İlk top kadar seken topa da hazır olmak gerekiyor."], ["Top kornere çıktı.", ""]],
+  "free_kick": [["Serbest vuruş. Topun başına geçiyorlar.", "Duran toplar oyunun dengesini değiştirebilir."], ["Düdük çaldı, serbest vuruş.", ""]],
+  "penalty": [["Penaltı! Hakem beyaz noktayı gösteriyor!", "Şimdi bütün baskı topun başına gelecek oyuncuda."], ["Karar penaltı!", "Vuran oyuncuyla kaleci arasında bir sinir mücadelesi olacak."]],
+  "offside": [["Bayrak havada. Ofsayt.", "Koşunun zamanlaması belirleyici oldu."], ["Hücum ofsaytla kesiliyor.", ""]],
+  "yellow": [["Sarı kart çıktı.", "Artık müdahalelerinde daha dikkatli olmak zorunda."], ["Hakem sarı kartını gösteriyor.", "Bir kart daha görme riskini düşünerek oynamalı."]],
+  "red": [["Kırmızı kart! Takım eksik kalıyor!", "Şimdi sahadaki yerleşimi yeniden düşünmeleri gerekecek."], ["Oyundan atılıyor! Karar kırmızı kart!", "Bir kişi eksik oynamak kalan oyuncuların yükünü artıracak."]],
+  "handball": [["Elle oynama! Düdük geliyor.", ""], ["Hakem el temasını gördü, oyun duruyor.", ""]],
+  "injury": [["Bir sakatlık işareti var.", "Sağlık durumunu görmeden devamı için bir şey söylemek zor."], ["Rahat hareket edemiyor. Bir sıkıntısı var.", "Teknik ekip oyuncunun durumunu yakından izleyecektir."]],
+  "halftime": [["İlk yarı sona erdi. Kısa bir ara.", "İki teknik ekip için de oyunu yeniden değerlendirme zamanı."], ["Devre arası düdüğü geldi.", "Bakalım ikinci yarıya nasıl dönecekler."]],
+  "fulltime": [["Son düdük! Maç sona erdi.", "Sahadaki mücadele burada bitti. Bizimle olduğunuz için teşekkürler."], ["Ve maç bitti!", "Bir karşılaşmayı daha geride bıraktık. Görüşmek üzere."]],
+  "substitution": [["Kenardan bir oyuncu değişikliği geliyor.", "Taze bir oyuncu oyunun temposunu değiştirebilir."], ["Oyuncu değişikliği. Yeni bir isim sahada.", "Bakalım bu hamle oyuna nasıl yansıyacak."]],
+  "substitution_named": [["Oyuncu değişikliği yapılıyor.", "Yeni giren oyuncunun maça hemen uyum sağlaması önemli."], ["Yedek kulübesinden bir hamle geliyor.", "Taze kuvvetle oyuna yeni bir yön vermek istiyorlar."]],
+  "long_shot": [["Uzaktan deniyor!", ""], ["Mesafeye bakmadan vurdu!", ""], ["Uzaklardan bir şut!", ""]],
+  "header": [["Kafa vuruşu!", ""], ["Kafayla kaleyi deniyor!", ""], ["Yükseldi, kafayı vurdu!", ""]],
+  "volley": [["Gelişine vurdu!", ""], ["Bekletmeden kaleye!", ""], ["Topu kontrol etmeden vuruyor!", ""]],
+  "cross": [["Orta geliyor!", ""], ["Ceza sahasına bir orta!", ""], ["Topu içeriye gönderdi!", ""]],
+  "skill": [["Şık bir hareket!", ""], ["Topla güzel bir hareket deniyor.", ""], ["Bileklerini kullanıyor.", ""]],
+  "counter": [["Topu kazandılar, hızla çıkıyorlar!", "Savunma yerleşmeden boş alanı kullanmak isteyecekler."], ["Şimdi hızlı hücum fırsatı!", "İlk pasın yönü bu hücum için çok önemli."]],
+  "wing_attack": [["Hücumu kanada taşıdılar.", "Evet, buradan savunmayı genişletip içeride alan arayabilirler."], ["Bu kez kenardan geliyorlar.", "Ceza sahasındaki koşularla pasın zamanlaması örtüşmeli."]],
+  "pressure": [["Ceza sahası çevresinde çoğaldılar.", "Savunma için asıl mesele oyuncular arasındaki boşlukları kapatmak."], ["Hücumda destek var, baskıyı sürdürüyorlar.", "Evet, topu kaybederlerse arkalarında bırakacakları alana da dikkat etmeliler."]],
+  "build_up": [["Topu tutuyorlar. Sakin bir hazırlık var.", "Bazen doğru pas için bir an daha beklemek gerekir."], ["Acele etmiyorlar, boşluk arıyorlar.", "Evet, topu dolaştırarak rakibi yerinden çıkarmaya çalışabilirler."]],
+  "late_chase": [["Son bölümde eşitlik arıyorlar.", "Risk almaları gerekiyor ama topu aceleyle kaybetmemeliler."], ["Tek gol gerideler, süre azalıyor.", "Evet, kalan her hücumu iyi değerlendirmek zorundalar."]],
+  "late_protect": [["Son bölümde top öndeki takımda.", "Topu saklamak kadar güvenli pas seçmek de değerli."], ["Skor avantajı onlarda, topu tutuyorlar.", "Evet, böyle anlarda gereksiz bir top kaybı pahalıya çıkabilir."]],
+  "late_level": [["Son bölümde skor eşit. Her atak önemli.", "Bir gol bütün hesabı değiştirebilir. Sabırla cesareti dengelemek gerekiyor."], ["Bitime yaklaşıyoruz, denge henüz bozulmadı.", "Evet, küçük bir hata bile sonucu belirleyebilir."]],
+  "fatigue": [["Yorgunluk belirginleşiyor.", "Taze bir oyuncu özellikle savunmaya dönüşlerde fark yaratabilir."], ["Kalan enerjiyi iyi kullanmak gerekiyor.", "Evet, artık hangi koşuyu yapacaklarına daha dikkatli karar vermeliler."]],
+  "rain": [["Yağmurda pasın şiddeti daha da önemli.", "Top yerde hız kaybediyor. Kısa kalan pas baskı getirebilir."], ["Islak zeminde topu iyi hesaplamak gerekiyor.", "Evet, pası alan oyuncunun da topa doğru hareketlenmesi önemli."]]
+}

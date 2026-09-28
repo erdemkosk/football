@@ -1,6 +1,7 @@
 extends RefCounted
 ## Connected hair caps with restrained surface texture; one draw per haircut.
 const Meshes=preload("res://scripts/character_mesh.gd")
+const Body=preload("res://scripts/player_body_mesh.gd")
 const NAMES := ["Kısa kesim","Kısa dokulu","Öne kabarık","Yana ayrık","Dik saç","Kıvırcık","Afro","Düz üst","Mohawk","Örgü","Kısa burgu","Uzun burgu","Topuz","At kuyruğu","Dağınık uzun","Dalgalı","Kıvırcık üst","Geri taralı"]
 const COLORS := [Color("171816"),Color("29221e"),Color("483526"),Color("785332"),Color("b9955f"),Color("bda67e"),Color("763f2d")]
 static var cache: Dictionary={}
@@ -19,14 +20,20 @@ static func model(style: int,_scalp: ArrayMesh) -> ArrayMesh:
 			var around:=(sector%48)*TAU/48.0
 			var front_edge: float=[1.00,1.06,1.08,1.00,1.06,1.18,1.20,1.00,1.08,1.02,1.16,1.16,.98,.98,1.15,1.10,1.13,.97][style]
 			var edge:=lerpf(front_edge,1.78,(1-cos(around))*.5)
+			# Unequal temples and a broad swept part keep the outline asymmetric.
+			edge+=sin(around+style*.71)*.038+sin(around*3+style*.43)*.015
+			# A shallow irregular hairline breaks the helmet-like rim without gaps.
+			edge+=(sin(around*11+style*.73)*.020+sin(around*23)*.009)*(0.45 if style==0 else 1.0)
 			if style in [0,3,17]: edge-=pow(maxf(0,sin(around)*cos(around)),2)*.20
 			var angle:=edge*(1.0-row/18.0)
 			var normal:=Vector3(sin(angle)*sin(around),cos(angle),-sin(angle)*cos(around))
 			var at:=normal*Vector3(.190,.246,.203)
-			# Follow the face's flattened forehead, including its temple corners.
-			# An ellipsoid alone would cut through those corners in side-part styles.
-			if cos(around)>0: at.z=-sin(angle)*pow(cos(around),.55)*.203
+			# Follow the same rounded temples as the face beneath the hairline.
+			at.z=-sin(angle)*Body.head_front_curve(cos(around))*.203
 			var fitted:=at
+			# Taper the first few rows to the real skull. A thick ellipsoid rim
+			# previously hovered over the temples like the edge of a helmet.
+			var root:=Body.head_point(1-angle/PI,around/TAU,1.06,1.055)+normal*.0025
 			var top:=smoothstep(.11,.22,at.y)
 			var grain:=sin(around*17+sin(angle*13))*sin(angle*24)
 			var amplitude:=.0015
@@ -46,14 +53,16 @@ static func model(style: int,_scalp: ArrayMesh) -> ArrayMesh:
 				15: at.y+=top*(.022+sin(at.x*64+at.z*10)*.006)
 				16: at.y+=top*.045; amplitude=.007*top
 				17: at.z+=top*.022; at.y+=top*.012
-			at+=normal*grain*amplitude
+			var locks:=pow(maxf(0,cos(around*(9 if style in [5,6,16] else 13)+angle*(5 if style in [3,15,17] else 2))),3)
+			at+=normal*(grain*amplitude+locks*(.007 if style!=0 else .0015)*sin(angle))
 			# Styling can add volume or sweep outward, but never shave through the
 			# fitted forehead/crown. This also holds for ponytails and swept hair.
 			at.x=signf(fitted.x)*maxf(absf(at.x),absf(fitted.x))
 			at.z=signf(fitted.z)*maxf(absf(at.z),absf(fitted.z))
 			if fitted.y>0: at.y=maxf(at.y,fitted.y)
+			at=root.lerp(at,smoothstep(0,.25,row/18.0))
 			points.append(at)
-			tints.append(Color.WHITE*(.95+grain*.025))
+			tints.append(Color.WHITE*(.91+grain*.035+locks*.055))
 	builder.grid(points,49,tints)
 	# Buns, tails and locks emerge from the cap as overlapping tapered shapes;
 	# curls themselves are a single continuous surface rather than beads.

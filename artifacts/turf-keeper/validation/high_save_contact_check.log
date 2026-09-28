@@ -1,0 +1,17 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:1035)
+CROSS team=0 side=-1.0 punch=true saves=1 glove_gap=0.336286008358
+PASS: A real crowded cross reaches the punching gloves on team 0 / side -1.0
+PASS: The contacted cross is cleared forward without a grip or teleport
+CROSS team=0 side=1.0 punch=true saves=1 glove_gap=0.33668693900108
+PASS: A real crowded cross reaches the punching gloves on team 0 / side 1.0
+PASS: The contacted cross is cleared forward without a grip or teleport
+CROSS team=1 side=-1.0 punch=true saves=1 glove_gap=0.3691546022892
+PASS: A real crowded cross reaches the punching gloves on team 1 / side -1.0
+PASS: The contacted cross is cleared forward without a grip or teleport
+CROSS team=1 side=1.0 punch=true saves=1 glove_gap=0.3637555539608
+PASS: A real crowded cross reaches the punching gloves on team 1 / side 1.0
+PASS: The contacted cross is cleared forward without a grip or teleport
+HIGH SAVE CONTACT CHECK: 8 checks, 0 failures

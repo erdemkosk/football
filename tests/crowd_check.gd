@@ -20,6 +20,10 @@ func run() -> void:
 	game=load("res://main.tscn").instantiate()
 	root.add_child(game)
 	await physics_frame
+	# This check exercises the modern arena's upper tier; smaller venues have none.
+	game.clubs.ensure_world()
+	var home: Dictionary=game.clubs.exhibition.clubs[game.clubs.club_id(0)]
+	home.stadium_kind="modern"; home.stadium_owner=game.clubs.club_id(0)
 	game.start_match(true)
 	game.set_physics_process(false)
 	game.set_process(false)
@@ -31,7 +35,7 @@ func run() -> void:
 	game.camera.position=Vector3(23,14,-24)
 	game.camera.look_at(Vector3(44,3.8,-24))
 	game.camera.size=21
-	var seated=game.stadium.get_node("Fans_skin_0")
+	var seated=game.stadium.venue_root.get_node("Fans_skin_0")
 	var arrays=seated.multimesh.mesh.surface_get_arrays(0)
 	var morph:PackedVector2Array=arrays[Mesh.ARRAY_TEX_UV]
 	var reach := 0.0

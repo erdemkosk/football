@@ -17,7 +17,9 @@ func eligible(index: int,owner: int,support) -> bool:
 	var p=game.players[index]
 	if not p.visible or p.dismissed or p.keeper or p.team!=team or index==owner: return false
 	if game.ai_receivers[team]==index and game.ai_pass_time[team]>0: return false
-	if index==game.controlled and not game.menu_match.running: return false
+	if game.is_user_player(index): return false
+	var order: Dictionary=game.management.instruction(index)
+	if not order.is_empty() and int(order.get("attack",1))==0: return false
 	# Preserve explicit runs, overlapping fullbacks, box runs and the cover pair.
 	if support.roles.get(index,"")!="support": return false
 	return game.management.slot_role(index)>=2
@@ -90,8 +92,14 @@ func plan(owner: int,support) -> void:
 			if jobs.has(role) and jobs[role]!=i: continue
 			if i in jobs.values() and jobs.get(role,-1)!=i: continue
 			var p=game.players[i]
+			var group: int=game.management.slot_role(i)
+			var style: String=p.Attributes.forward_style(p) if group==3 else ""
 			for offset in [Vector3.ZERO,Vector3(-3,0,0),Vector3(3,0,0),Vector3(0,0,-forward*3)]:
 				var at: Vector3=anchors[role]+offset
+				# A target forward offers feet ahead of the carrier, with his
+				# back toward goal; the channel runner stretches the same attack.
+				if style=="target" and role in ["short_outlet","link_outlet"]:
+					at.z=ball.z+forward*3+offset.z
 				at.x=clampf(at.x,-(P.HALF_WIDTH-3),(P.HALF_WIDTH-3))
 				at.z=forward*minf(clampf(at.z*forward,-42,44),offside_limit)
 				var overlaps := false
@@ -109,7 +117,6 @@ func plan(owner: int,support) -> void:
 						lane=minf(lane,game.flat_distance(near,opponent.position))
 					space_scores[at]=minf(8,game.ai_attack.clearance(at,team))*1.1+lane*1.5
 				var score: float=space_scores[at]-travel*.42-offset.length()*.25
-				var group: int=game.management.slot_role(i)
 				if role in ["short_outlet","link_outlet"]: score+=3 if group==2 else 0
 				elif role=="channel_run": score+=(3 if group==3 else 0)-(1-p.energy)*7
 				else: score+=minf(3,absf(p.home.x)*.14)
@@ -117,6 +124,9 @@ func plan(owner: int,support) -> void:
 				# channel, using the actual lineup rather than shirt numbers.
 				if role in ["short_outlet","link_outlet"]: score+=(float(p.attributes.get("passing",p.attributes.control))-72)*.10
 				elif role=="channel_run": score+=(float(p.attributes.pace)+float(p.attributes.acceleration)-144)*.07
+				if style=="target" and role in ["short_outlet","link_outlet"]: score+=4.5
+				elif style=="runner" and role=="channel_run": score+=4.5
+				elif style=="poacher" and role=="channel_run" and ball.z*forward>20: score+=2.0
 				if score>best: best=score; chosen=i; destination=at
 		if chosen>=0:
 			jobs[role]=chosen; points[role]=destination; reserved.append(destination)

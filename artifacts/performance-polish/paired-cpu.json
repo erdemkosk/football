@@ -1,0 +1,38 @@
+[
+	{
+		"after_us": 1.41666666666667,
+		"before_us": 5.13541666666667,
+		"case": "paused-pose",
+		"reduction_percent": 72.4137931034483
+	},
+	{
+		"after_us": 1.43541666666667,
+		"before_us": 5.91458333333333,
+		"case": "moving-fixed-pose",
+		"reduction_percent": 75.7308911588588
+	},
+	{
+		"after_us": 2.9625,
+		"before_us": 5.9625,
+		"case": "running-pose-30hz",
+		"reduction_percent": 50.314465408805
+	},
+	{
+		"after_us": 7.26041666666667,
+		"before_us": 6.39791666666667,
+		"case": "running-pose-120hz",
+		"reduction_percent": -13.4809508303484
+	},
+	{
+		"after_us": 1.667,
+		"before_us": 2.99675,
+		"case": "context-carried-ball",
+		"reduction_percent": 44.373070826729
+	},
+	{
+		"after_us": 2.196,
+		"before_us": 3.03475,
+		"case": "context-free-ball",
+		"reduction_percent": 27.6381909547739
+	}
+]

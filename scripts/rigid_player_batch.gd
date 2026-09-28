@@ -21,7 +21,10 @@ func setup(player: Node3D) -> void:
 		allowed.append(actor.kit_materials[key])
 	for item in actor.rig.find_children("*","MeshInstance3D",true,false):
 		var part: MeshInstance3D=item
+		# Hands remain live attachment nodes for saves, carries and finger poses.
+		if part==actor.left_hand or part==actor.right_hand: continue
 		if part.mesh==null or part.get_child_count()>0 or part.get_parent()==actor.head_joint: continue
+		if part.mesh is ArrayMesh and part.mesh.get_blend_shape_count()>0: continue
 		if part.material_override not in allowed or part.visibility_range_end>0: continue
 		if not part.visible or part.mesh.get_surface_count()!=1: continue
 		var material: Material=part.material_override

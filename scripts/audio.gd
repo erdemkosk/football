@@ -1,4 +1,5 @@
 extends Node
+signal silence_commentary
 const Contact=preload("res://scripts/contact_profile.gd")
 const AMBIENCE = preload("res://assets/audio/stadium-ambience.mp3")
 const CHEERING = preload("res://assets/audio/crowd-cheering.mp3")
@@ -79,6 +80,9 @@ var derby_heat := 0.0
 var home_team := 0
 var chant_order: Array=[0,1,2]
 var chant_tempos: Array=[1.0,1.0,1.0]
+var commentary_active := false
+var commentary_duck := 1.0
+var stadium_bus := -1
 
 func crowd_context(home: float,danger: float,hush: float,margin: int,progress: float,attack_team: int=0) -> void:
 	crowd_lift=clampf(danger*.7+maxf(0,home-.35)*.6,0,1)
@@ -208,6 +212,14 @@ func _ready() -> void:
 		add_child(channel)
 		steps.append(channel)
 	effects.volume_db = -11
+	stadium_bus=AudioServer.get_bus_index("Stadium")
+	if stadium_bus<0:
+		AudioServer.add_bus()
+		stadium_bus=AudioServer.bus_count-1
+		AudioServer.set_bus_name(stadium_bus,"Stadium")
+	for player in [ambience,cheering,roar,walkout,replay_chant,drums]+chants+swells+packed:
+		player.bus="Stadium"
+	AudioServer.set_bus_volume_db(stadium_bus,0)
 
 func synth(kind: String, duration: float,variant: int=0) -> AudioStreamWAV:
 	var sample_rate = 22050
@@ -293,6 +305,7 @@ func net_contact(strength: float,scored: bool) -> void:
 func toggle() -> void:
 	muted = not muted
 	if muted:
+		silence_commentary.emit()
 		ambience.volume_db=-80
 		drums.stop()
 		drum_duration=0
@@ -339,6 +352,9 @@ func start_match(enabled: bool) -> void:
 		stop_menu()
 
 func stop_atmosphere() -> void:
+	silence_commentary.emit()
+	commentary_active=false; commentary_duck=1.0
+	if stadium_bus>=0: AudioServer.set_bus_volume_db(stadium_bus,0)
 	for channel in contacts+steps:
 		channel.stop()
 		channel.stream_paused=false
@@ -630,6 +646,10 @@ func react(kind: String,_team: int,_location: Vector3) -> void:
 	cheer_cooldown=cheer_duration+1.5
 
 func update_atmosphere(delta: float,state: String) -> void:
+	# Clear room for the voices without cutting crowd reactions or field sounds.
+	var duck_target := .56 if commentary_active and not muted else 1.0
+	commentary_duck=move_toward(commentary_duck,duck_target,delta*(3.5 if duck_target<commentary_duck else .65))
+	if stadium_bus>=0: AudioServer.set_bus_volume_db(stadium_bus,linear_to_db(commentary_duck))
 	paused=state=="paused"
 	ambience.stream_paused=paused
 	cheering.stream_paused=paused

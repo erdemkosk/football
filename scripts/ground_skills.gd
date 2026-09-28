@@ -126,6 +126,7 @@ static func resolve(game,index: int,s: Dictionary) -> void:
 	velocity.y=.05
 	game.ball.touch(velocity,game.ball.mass*18)
 	s.contacts+=1; s.last_contact_age=age
+	if is_instance_valid(game.visual_identity): game.visual_identity.skill_contact(index,s)
 	s.exit_offset=(game.ball.position-p.position)*Vector3(1,0,1)
 	s.hit_gap=s.contact_gap
 	p.ball_actions.control_grace=0

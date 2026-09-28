@@ -1,0 +1,132 @@
+ERROR: Failed to open 'user://logs/godot2026-09-28T15.38.00.log'.
+   at: copy (core/io/dir_access.cpp:429)
+ERROR: Failed to open log file for writing: user://logs/godot.log
+   at: rotate_file (core/io/logger.cpp:169)
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:1035)
+PASS: Continuous right curve loads the outside leg at 30 Hz
+PASS: A curved sprint retains grounded, advancing strides at 30 Hz
+PASS: Straightening the run releases the curved stance at 30 Hz
+PASS: A wide pass starts on either foot/team at 30 Hz
+PASS: Reaching still produces one measured boot contact within 100 ms at 30 Hz
+PASS: A wide pass leans toward its actual striking side at 30 Hz
+PASS: The support boot stays above turf and intended pass direction is preserved
+PASS: The reaching pass releases straight into the next run
+PASS: A wide pass starts on either foot/team at 30 Hz
+PASS: Reaching still produces one measured boot contact within 100 ms at 30 Hz
+PASS: A wide pass leans toward its actual striking side at 30 Hz
+PASS: The support boot stays above turf and intended pass direction is preserved
+PASS: The reaching pass releases straight into the next run
+PASS: Continuous left curve loads the outside leg at 30 Hz
+PASS: A curved sprint retains grounded, advancing strides at 30 Hz
+PASS: Straightening the run releases the curved stance at 30 Hz
+PASS: A wide pass starts on either foot/team at 30 Hz
+PASS: Reaching still produces one measured boot contact within 100 ms at 30 Hz
+PASS: A wide pass leans toward its actual striking side at 30 Hz
+PASS: The support boot stays above turf and intended pass direction is preserved
+PASS: The reaching pass releases straight into the next run
+PASS: A wide pass starts on either foot/team at 30 Hz
+PASS: Reaching still produces one measured boot contact within 100 ms at 30 Hz
+PASS: A wide pass leans toward its actual striking side at 30 Hz
+PASS: The support boot stays above turf and intended pass direction is preserved
+PASS: The reaching pass releases straight into the next run
+PASS: Recovery preserves the full physical path and immediate input at 30 Hz / (-1.0, 0.0, 0.0)
+PASS: Contact visibly opens the balance arm while feet stay above turf
+PASS: A visible catch step travels in the shove direction instead of only moving the arms
+PASS: Recovery preserves the full physical path and immediate input at 30 Hz / (1.0, 0.0, 0.0)
+PASS: Contact visibly opens the balance arm while feet stay above turf
+PASS: A visible catch step travels in the shove direction instead of only moving the arms
+PASS: Recovery preserves the full physical path and immediate input at 30 Hz / (0.0, 0.0, -1.0)
+PASS: Contact visibly opens the balance arm while feet stay above turf
+PASS: A visible catch step travels in the shove direction instead of only moving the arms
+PASS: Recovery preserves the full physical path and immediate input at 30 Hz / (0.0, 0.0, 1.0)
+PASS: Contact visibly opens the balance arm while feet stay above turf
+PASS: A visible catch step travels in the shove direction instead of only moving the arms
+PASS: Continuous right curve loads the outside leg at 60 Hz
+PASS: A curved sprint retains grounded, advancing strides at 60 Hz
+PASS: Straightening the run releases the curved stance at 60 Hz
+PASS: A wide pass starts on either foot/team at 60 Hz
+PASS: Reaching still produces one measured boot contact within 100 ms at 60 Hz
+PASS: A wide pass leans toward its actual striking side at 60 Hz
+PASS: The support boot stays above turf and intended pass direction is preserved
+PASS: The reaching pass releases straight into the next run
+PASS: A wide pass starts on either foot/team at 60 Hz
+PASS: Reaching still produces one measured boot contact within 100 ms at 60 Hz
+PASS: A wide pass leans toward its actual striking side at 60 Hz
+PASS: The support boot stays above turf and intended pass direction is preserved
+PASS: The reaching pass releases straight into the next run
+PASS: Continuous left curve loads the outside leg at 60 Hz
+PASS: A curved sprint retains grounded, advancing strides at 60 Hz
+PASS: Straightening the run releases the curved stance at 60 Hz
+PASS: A wide pass starts on either foot/team at 60 Hz
+PASS: Reaching still produces one measured boot contact within 100 ms at 60 Hz
+PASS: A wide pass leans toward its actual striking side at 60 Hz
+PASS: The support boot stays above turf and intended pass direction is preserved
+PASS: The reaching pass releases straight into the next run
+PASS: A wide pass starts on either foot/team at 60 Hz
+PASS: Reaching still produces one measured boot contact within 100 ms at 60 Hz
+PASS: A wide pass leans toward its actual striking side at 60 Hz
+PASS: The support boot stays above turf and intended pass direction is preserved
+PASS: The reaching pass releases straight into the next run
+PASS: Recovery preserves the full physical path and immediate input at 60 Hz / (-1.0, 0.0, 0.0)
+PASS: Contact visibly opens the balance arm while feet stay above turf
+PASS: A visible catch step travels in the shove direction instead of only moving the arms
+PASS: Recovery preserves the full physical path and immediate input at 60 Hz / (1.0, 0.0, 0.0)
+PASS: Contact visibly opens the balance arm while feet stay above turf
+PASS: A visible catch step travels in the shove direction instead of only moving the arms
+PASS: Recovery preserves the full physical path and immediate input at 60 Hz / (0.0, 0.0, -1.0)
+PASS: Contact visibly opens the balance arm while feet stay above turf
+PASS: A visible catch step travels in the shove direction instead of only moving the arms
+PASS: Recovery preserves the full physical path and immediate input at 60 Hz / (0.0, 0.0, 1.0)
+PASS: Contact visibly opens the balance arm while feet stay above turf
+PASS: A visible catch step travels in the shove direction instead of only moving the arms
+PASS: Continuous right curve loads the outside leg at 120 Hz
+PASS: A curved sprint retains grounded, advancing strides at 120 Hz
+PASS: Straightening the run releases the curved stance at 120 Hz
+PASS: A wide pass starts on either foot/team at 120 Hz
+PASS: Reaching still produces one measured boot contact within 100 ms at 120 Hz
+PASS: A wide pass leans toward its actual striking side at 120 Hz
+PASS: The support boot stays above turf and intended pass direction is preserved
+PASS: The reaching pass releases straight into the next run
+PASS: A wide pass starts on either foot/team at 120 Hz
+PASS: Reaching still produces one measured boot contact within 100 ms at 120 Hz
+PASS: A wide pass leans toward its actual striking side at 120 Hz
+PASS: The support boot stays above turf and intended pass direction is preserved
+PASS: The reaching pass releases straight into the next run
+PASS: Continuous left curve loads the outside leg at 120 Hz
+PASS: A curved sprint retains grounded, advancing strides at 120 Hz
+PASS: Straightening the run releases the curved stance at 120 Hz
+PASS: A wide pass starts on either foot/team at 120 Hz
+PASS: Reaching still produces one measured boot contact within 100 ms at 120 Hz
+PASS: A wide pass leans toward its actual striking side at 120 Hz
+PASS: The support boot stays above turf and intended pass direction is preserved
+PASS: The reaching pass releases straight into the next run
+PASS: A wide pass starts on either foot/team at 120 Hz
+PASS: Reaching still produces one measured boot contact within 100 ms at 120 Hz
+PASS: A wide pass leans toward its actual striking side at 120 Hz
+PASS: The support boot stays above turf and intended pass direction is preserved
+PASS: The reaching pass releases straight into the next run
+PASS: Recovery preserves the full physical path and immediate input at 120 Hz / (-1.0, 0.0, 0.0)
+PASS: Contact visibly opens the balance arm while feet stay above turf
+PASS: A visible catch step travels in the shove direction instead of only moving the arms
+PASS: Recovery preserves the full physical path and immediate input at 120 Hz / (1.0, 0.0, 0.0)
+PASS: Contact visibly opens the balance arm while feet stay above turf
+PASS: A visible catch step travels in the shove direction instead of only moving the arms
+PASS: Recovery preserves the full physical path and immediate input at 120 Hz / (0.0, 0.0, -1.0)
+PASS: Contact visibly opens the balance arm while feet stay above turf
+PASS: A visible catch step travels in the shove direction instead of only moving the arms
+PASS: Recovery preserves the full physical path and immediate input at 120 Hz / (0.0, 0.0, 1.0)
+PASS: Contact visibly opens the balance arm while feet stay above turf
+PASS: A visible catch step travels in the shove direction instead of only moving the arms
+PASS: A live shoulder brace still yields to the impact instead of masking recovery
+PASS: Both inside forearms keep their brace during recoil
+PASS: Shielding recovery keeps control and grounded footwork
+PASS: Pause freezes the added recovery motion
+PASS: The contact response settles completely
+PASS: A heavy tackle still overrides subtle recovery
+PASS: Restart clears the added motion state
+NATURAL MOTION CHECK: 121 checks, 0 failures
+WARNING: 2 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

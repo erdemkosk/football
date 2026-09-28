@@ -1,5 +1,6 @@
 extends SceneTree
 const P = preload("res://scripts/pitch_dimensions.gd")
+const BallSize = preload("res://scripts/ball_dimensions.gd")
 const Guide = preload("res://scripts/ball_landing_guide.gd")
 var game
 var failures := 0
@@ -32,9 +33,9 @@ func run() -> void:
 	for side in [-1,1]:
 		probe(Vector3(side*34,.23,0))
 		check(game.state=="playing","Old touchline no longer ends play, side="+str(side))
-		probe(Vector3(side*36.2,.23,0))
+		probe(Vector3(side*(P.HALF_WIDTH+BallSize.RADIUS-.005),BallSize.GROUND_HEIGHT,0))
 		check(game.state=="playing","The whole ball must cross the new touchline, side="+str(side))
-		probe(Vector3(side*36.24,.23,8))
+		probe(Vector3(side*(P.HALF_WIDTH+BallSize.RADIUS+.005),BallSize.GROUND_HEIGHT,8))
 		check(game.state=="restart" and game.restart_type=="TAÇ" and is_equal_approx(game.restart_point.x,side*36),"Throw-in is placed on the new line, side="+str(side))
 		check(is_equal_approx(game.set_pieces.targets[game.set_pieces.taker].x,side*36.32),"Thrower stands outside the new touchline, side="+str(side))
 		probe(Vector3(side*34,.23,-50.3),1)
@@ -42,6 +43,13 @@ func run() -> void:
 		check(Guide.on_pitch(Vector3(side*35,1,0)) and not Guide.on_pitch(Vector3(side*36.1,1,0)),"Landing guide recognises the added wing space, side="+str(side))
 		var route: Dictionary=game.Passing.plan(Vector3(side*24,.23,0),Vector3(side*34,0,-12),Vector3.ZERO,false,game.weather)
 		check(absf(route.target.x)>33.5,"Assisted pass can target the expanded wing, side="+str(side))
+	# Width expansion is measured with actual fullbacks and neutral tactics,
+	# independently of the club/formation selected in the user's saved settings.
+	game.management.formation=0; game.management.opponent_formation=0; game.management.width=1
+	game.clubs.ensure_world()
+	var opponent: Dictionary=game.clubs.data(1)
+	opponent.plan=opponent.get("plan",{}).duplicate(true)
+	opponent.plan.width=1
 	game.management.apply_formation()
 	check(absf(game.players[1].home.x)>25 and absf(game.players[12].home.x)>25,"Both teams spread their fullbacks into the new width")
 	check(game.players.all(func(p): return absf(p.home.x)<36),"All formation positions remain on the pitch")

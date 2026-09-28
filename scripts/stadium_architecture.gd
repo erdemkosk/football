@@ -1,7 +1,7 @@
 extends Node3D
 const P = preload("res://scripts/pitch_dimensions.gd")
 var team_captions: Array[Label3D] = []
-## One continuous stadium shell, with the playing surface kept unobstructed.
+## One active club stadium shell, with the playing surface kept unobstructed.
 const G = preload("res://scripts/geometry.gd")
 var stone := G.material(Color("626e6c"))
 var frame := G.material(Color("7b8986"),0.60)
@@ -18,8 +18,15 @@ var floodlight_mounts: Array[Vector3] = []
 var hedge := G.material(Color("40594a"))
 var city_blocks := 0
 var district: Node3D
+var venue_kind:="modern"
+var venue_titles: Array[Label3D]=[]
 
-func build(crowd) -> void:
+func build(crowd,kind: String="modern") -> void:
+	venue_kind=kind
+	if kind=="historic":
+		stone.albedo_color=Color("815d49"); roof.albedo_color=Color("575d59"); frame.albedo_color=Color("625b4c")
+	elif kind=="town":
+		stone.albedo_color=Color("9b998b"); roof.albedo_color=Color("61736e")
 	name = "StadiumArchitecture"
 	# Thin roof sheets still shade the seating below, without self-shadow banding.
 	roof.disable_receive_shadows=true
@@ -27,10 +34,13 @@ func build(crowd) -> void:
 	var paving=G.block(self,Vector3(154+P.EXTRA_WIDTH,0.3,196),Vector3(0,-0.63,0),G.material(Color("555d58")))
 	forecourt.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	paving.cast_shadow=GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	for side in [-1,1]:
-		grandstand(crowd,side*PI*0.5,112,53+P.SIDE_SHIFT,8.6,63+P.SIDE_SHIFT,47+P.SIDE_SHIFT,164)
-		grandstand(crowd,0 if side>0 else PI,99+P.EXTRA_WIDTH,69,6.9,82,65,126+P.EXTRA_WIDTH)
-		for other in [-1,1]: corner(Vector3(side*(57+P.SIDE_SHIFT),0,other*62))
+	if kind=="modern":
+		for side in [-1,1]:
+			grandstand(crowd,side*PI*0.5,112,53+P.SIDE_SHIFT,8.6,63+P.SIDE_SHIFT,47+P.SIDE_SHIFT,164)
+			grandstand(crowd,0 if side>0 else PI,99+P.EXTRA_WIDTH,69,6.9,82,65,126+P.EXTRA_WIDTH)
+			for other in [-1,1]: corner(Vector3(side*(57+P.SIDE_SHIFT),0,other*62))
+	else:
+		preload("res://scripts/stadium_variants.gd").shell(self,crowd,kind)
 	player_tunnel()
 	broadcast_positions()
 	exterior()
@@ -121,6 +131,7 @@ func grandstand(crowd,angle: float,width: float,start: float,base: float,back: f
 		scoreboard(stand,Vector3(0,12.8,lip+0.25))
 		for x in [-5,5]: G.rod(stand,Vector3(x,15,lip+0.25),Vector3(x,16.1,lip+0.25),0.07,frame)
 	var title = label(stand,"K I Y I   A R E N A",Vector3(0,15.3,back+0.37),0.034,Color("e5dfc8"))
+	venue_titles.append(title)
 	title.outline_size = 0
 	title.double_sided = false
 
@@ -172,6 +183,7 @@ func player_tunnel() -> void:
 	G.block(tunnel,Vector3(0.15,3.3,6),Vector3(59.65,1.65,0),charcoal)
 	G.block(tunnel,Vector3(0.26,0.6,6.6),Vector3(38.65,3.32,0),trim)
 	var sign = label(tunnel,"SEFC ARENA",Vector3(38.49,3.32,0),0.015,Color("e5dfc8"))
+	venue_titles.append(sign)
 	sign.rotation.y = -PI*0.5
 	for x in [39.1,41.8,44.5]:
 		for z in [-2.85,2.85]: G.block(tunnel,Vector3(0.1,0.08,0.1),Vector3(x,2.6,z),frame)
@@ -235,7 +247,7 @@ func exterior() -> void:
 func cityscape() -> void:
 	district=preload("res://scripts/stadium_district.gd").new()
 	add_child(district)
-	district.build()
+	district.build(venue_kind)
 	city_blocks=district.building_count
 
 func label(parent: Node3D,text: String,pos: Vector3,pixel: float,color: Color) -> Label3D:
@@ -248,3 +260,12 @@ func label(parent: Node3D,text: String,pos: Vector3,pixel: float,color: Color) -
 	parent.add_child(node)
 	node.position = pos
 	return node
+
+func set_club_identity(title: String,primary: Color,accent: Color) -> void:
+	trim.albedo_color=primary.darkened(.25).lerp(Color("263332"),.25)
+	for sign in venue_titles:
+		sign.text=title
+		sign.modulate=accent.lerp(Color("eee7d5"),.65)
+		# Fit long fictional city/venue names inside the tunnel header.
+		var tunnel: bool=sign.get_parent().name=="PlayerTunnel"
+		sign.pixel_size=minf(.015 if tunnel else .034,(6.0 if tunnel else 38.0)/maxf(1,title.length()*40.0))

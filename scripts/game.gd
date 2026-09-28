@@ -51,10 +51,13 @@ var referees := Referees.new()
 const SendOff = preload("res://scripts/send_off.gd")
 var send_off := SendOff.new()
 var feedback := ImpactFeedback.new()
+var visual_identity
+var club_entrance: Node3D
 var ceremony := Ceremony.new()
 var weather: Node3D
 var set_pieces := SetPieces.new()
 var rules := Rules.new()
+var referee_flow := preload("res://scripts/referee_flow.gd").new()
 const Management = preload("res://scripts/match_management.gd")
 const MatchMenu = preload("res://scripts/match_menu.gd")
 const Clubs = preload("res://scripts/club_catalog.gd")
@@ -283,6 +286,10 @@ func _ready() -> void:
 	humans.setup()
 	management.setup()
 	clubs.apply()
+	visual_identity=preload("res://scripts/match_visual_identity.gd").new()
+	visual_identity.setup(self)
+	club_entrance=preload("res://scripts/club_entrance.gd").new()
+	club_entrance.setup(self)
 	replay.setup()
 	frontend=Frontend.new()
 	frontend.game=self
@@ -352,8 +359,10 @@ func start_match(practice: bool = false,show_ceremony: bool = true,background: b
 	management.reset()
 	rules.advantage.clear()
 	rules.deferred_cards.clear()
+	referee_flow.game=self; referee_flow.reset()
 	celebration.clear()
 	feedback.reset()
+	if is_instance_valid(visual_identity): visual_identity.reset()
 	ceremony.clear()
 	set_pieces.clear()
 	rules.reset()
@@ -533,7 +542,9 @@ func reset_advanced_play(preserve_contact: bool=false) -> void:
 	pass_buffer.reset()
 	if not preserve_contact: kick_contact.reset()
 	for feature in [skills,defending,finishing,ai_attack.finishing,keeper_distribution,advanced_controls]: feature.reset()
-	for p in players: p.dribble_motion.reset()
+	for p in players:
+		p.dribble_motion.reset()
+		if state not in ["paused","replay"]: p.contextual_motion.reset()
 
 func hint(_text: String) -> void:
 	pass
@@ -908,22 +919,6 @@ func simulate_match(delta: float) -> void:
 		interval.update(delta)
 	elif state=="playing":
 		match_time += delta
-		if not training and career.cups.extra_active():
-			if match_time>=LENGTH*(7.0/6.0 if career.cups.extra_phase==1 else 4.0/3.0):
-				if not career.cups.period_end():
-					match_time=LENGTH*4.0/3.0; state="finished"; ball.active=false; referees.finish_match()
-				return
-		if not training and not career.cups.extra_active() and half==1 and match_time>=management.half_end():
-			interval.begin()
-			return
-		if not training and not career.cups.extra_active() and half==2 and match_time>=management.half_end():
-			if career.cups.period_end(): return
-			match_time=LENGTH
-			state = "finished"
-			ball.active = false
-			referees.finish_match()
-			broadcast_event("fulltime")
-			return
 		kick_lock = maxf(0,kick_lock-delta)
 		boundary_grace = maxf(0,boundary_grace-delta)
 		foul_cooldown = maxf(0,foul_cooldown-delta)
@@ -950,7 +945,9 @@ func simulate_match(delta: float) -> void:
 		keeper_distribution.update(delta)
 		physical_contests.update(delta)
 		kick_contact.prepare(delta)
-		for i in range(players.size()): players[i].body_language.observe(self,i)
+		for i in range(players.size()):
+			players[i].body_language.observe(self,i)
+			players[i].contextual_motion.observe(self,i,delta)
 		for i in range(players.size()):
 			var p = players[i]
 			p.chosen = is_user_player(i)
@@ -975,6 +972,9 @@ func simulate_match(delta: float) -> void:
 		keeper_distribution.resolve()
 		kick_contact.resolve()
 		if state!="playing": return
+		for i in range(players.size()):
+			players[i].contextual_motion.resolve_block(self,i)
+			if state!="playing": return
 		update_contacts(delta)
 		if state!="playing": return
 		if not menu_match.running: humans.each(func(): pass_buffer.try_execute())
@@ -1017,6 +1017,8 @@ func simulate_match(delta: float) -> void:
 		else:
 			celebration.update(delta)
 			if state=="goal" and not menu_match.running: replay.capture_goal(delta)
+	# Contacts, fouls and goal-line crossings get their decision before time.
+	referee_flow.update(delta)
 
 var marker_materials: Array = []
 
@@ -1437,6 +1439,7 @@ func strike(index: int,velocity: Vector3,curve: float=0,is_save: bool=false,kind
 
 func commit_strike(index: int,velocity: Vector3,curve: float=0,is_save: bool=false,kind: String="kick",animated_contact: bool=false) -> bool:
 	if not rules.before_touch(index,not is_save): return false
+	var contact_timing: float=players[index].strike_timing
 	if players[index].keeper and not is_save:
 		players[index].keeper_motion.saved_at=-10
 		players[index].keeper_motion.secured=false
@@ -1465,6 +1468,11 @@ func commit_strike(index: int,velocity: Vector3,curve: float=0,is_save: bool=fal
 	players[index].touch_cooldown = 0.38
 	players[index].kick_power=clampf((velocity.length()-12)/20,0.15,1)
 	var is_shot := kind in ["shot","header","volley","half_volley","finish"]
+	if is_shot and not is_save:
+		if kind=="shot" and absf(curve)>.1: ball.power_trail.begin("finesse")
+		if contact_timing>1.0 and is_instance_valid(visual_identity): visual_identity.perfect(ball.position)
+	referee_flow.kicked(index)
+	if not is_save: rules.advantage_strike(index,velocity,is_shot)
 	if is_shot: replay.mark_shot(index)
 	if is_shot and not is_save:
 		if kind=="header": broadcast_event("header",{"index":index})
@@ -1489,7 +1497,9 @@ func commit_strike(index: int,velocity: Vector3,curve: float=0,is_save: bool=fal
 	if is_shot: players[index].facing=(velocity*Vector3(1,0,1)).normalized()
 	players[index].ai_think = 0
 	kick_lock = 0.16
-	if is_save: second_balls.alert("save",1-players[index].team)
+	if kind=="ball_tackle": second_balls.challenged(index,previous_owner)
+	elif is_save: second_balls.alert("save",1-players[index].team)
+	elif second_balls.source=="tackle": second_balls.reset()
 	if is_shot or is_header or kind=="ball_tackle":
 		var heavy: bool=kind in ["finish","shot"] and (players[index].volley_motion.kind=="power" or finishing.style=="power")
 		feedback.contact("header" if is_header else ("shot" if is_shot else kind),index,ball.position,velocity.normalized(),players[index].kick_power,-1,heavy)
@@ -1913,7 +1923,7 @@ func update_ai(_delta: float) -> void:
 			var gap: Vector3=ball.position-p.position
 			gap.y=0
 			var poke_at: float=1.58 if duels.ball_opened(owner) else 1.35
-			if gap.length()<poke_at and ball.position.y<0.75 and p.tackle_cooldown<=0 and p.ai_think>management.reaction(p.team,i,true) and duels.ai_can_challenge(i,owner) and duels.ai_poke_window(i,owner):
+			if gap.length()<poke_at and ball.position.y<0.75 and p.tackle_cooldown<=0 and p.ai_think>duels.reaction_time(i) and duels.ai_can_challenge(i,owner) and duels.ai_poke_window(i,owner):
 				duels.standing_tackle(i)
 				if p.pose=="poke": continue
 			elif gap.length()<2.2 and gap.length()>1 and p.tackle_cooldown<=0 and p.ai_think>1.5 and duels.ai_can_challenge(i,owner,true) and rng.randf()<0.28*_delta:
@@ -1926,6 +1936,8 @@ func update_ai(_delta: float) -> void:
 		var forward = attack_sign(p.team)
 		var target: Vector3 = training_drills.station_for(p)
 		var has_ball: bool=dribbler==i or ((owner==i or owner<0) and can_touch(i,1.05) and ball.linear_velocity.length()<16 and p.receive_timer<=0 and p.touch_cooldown<=0)
+		var tackle_follow: bool=second_balls.source=="tackle" and second_balls.targets.has(i) and dribbler<0
+		if tackle_follow: has_ball=false
 		var receiving_pass: bool=not has_ball and ai_receivers[p.team]==i and last_touch==p.team
 		var assigned: int=ai_receivers[p.team] if last_touch==p.team and ai_pass_time[p.team]>0 else -1
 		var receiver_priority: bool=assigned>=0 and assigned!=i and players[assigned].visible and not players[assigned].dismissed and players[assigned].action_timer<=0
@@ -1977,16 +1989,16 @@ func update_ai(_delta: float) -> void:
 				target.z = clampf(target.z,-43,43)
 		if not p.keeper and i in support.targets and not has_ball and not receiving_pass and not chasing_ball:
 			target=support.targets[i]
-			p.sprinting=support.roles[i] in ["give_go","one_two","directed_run","set_piece_run","overlap","channel_run","counter_run","commit"] and p.energy>0.35 and not p.exhausted
+			p.sprinting=support.roles[i] in ["give_go","one_two","directed_run","set_piece_run","overlap","channel_run","burst_run","counter_run","commit"] and p.energy>0.35 and not p.exhausted
 		var defensive_duty: bool=i in team_tactics.targets and not p.keeper and not has_ball
 		if defensive_duty:
 			target=team_tactics.targets[i]
 			var duty: String=team_tactics.roles[i]
 			p.sprinting=(duty in ["press","press_support","track"] and team_tactics.press_level(p.team)==2 or duty=="recover") and p.energy>.3 and not p.exhausted
 		elif i!=nearest[p.team] and ai_receivers[p.team]!=i and not can_touch(i,1.05) and not support.targets.has(i): target=management.adjust_target(i,target)
-		if i in second_balls.targets and not p.keeper and not can_touch(i,1.05):
-			target=second_balls.targets[i]
-			p.sprinting=p.energy>.25
+		if i in second_balls.targets and not p.keeper and (tackle_follow or not can_touch(i,1.05)):
+			target=ai_attack.receiving_target(i) if tackle_follow else second_balls.targets[i]
+			p.sprinting=p.energy>.25 and (not tackle_follow or flat_distance(p.position,target)>2.5)
 			p.protecting=false
 			defensive_duty=false
 		var offset: Vector3 = target-p.position
@@ -1995,8 +2007,9 @@ func update_ai(_delta: float) -> void:
 		if has_ball and not p.keeper: p.desired=ai_attack.carry_movement(i,target)
 		if receiving_pass and not defensive_duty and not (i in second_balls.targets): p.desired=ai_attack.receiving_movement(i,target)
 		if defensive_duty: p.desired=team_tactics.defensive_movement(i,target)
+		if tackle_follow: p.desired=ai_attack.receiving_movement(i,target)
 		var duty: String=team_tactics.roles.get(i,"") if defensive_duty else support.roles.get(i,"")
-		var shape_only: bool=not p.keeper and not has_ball and not receiving_pass and not chasing_ball and not p.sprinting and duty not in ["press","press_support","contain","track","recover","give_go","one_two","directed_run","come_short","set_piece_run","overlap","channel_run","counter_run","commit"] and not second_balls.targets.has(i)
+		var shape_only: bool=not p.keeper and not has_ball and not receiving_pass and not chasing_ball and not p.sprinting and duty not in ["press","press_support","contain","track","recover","give_go","one_two","directed_run","come_short","set_piece_run","overlap","channel_run","check_run","burst_run","decoy_run","counter_run","commit"] and not second_balls.targets.has(i)
 		if shape_only: p.desired=ai_attack.positional_movement(i,target,decision_delta)
 		else: ai_attack.positioning.erase(i)
 		if p.protecting: p.desired*=0.45
@@ -2011,7 +2024,8 @@ func separate_ai_player(index: int,positions: PackedVector3Array,visible: Packed
 		var gap: Vector3=here-positions[j]
 		if absf(gap.x)>=1.2 or absf(gap.z)>=1.2: continue
 		gap.y=0
-		if gap.length()<1.2 and gap.length()>0.01: p.desired+=gap.normalized()*(1.2-gap.length())*.55
+		var radius: float=duels.spacing_radius(index,j)
+		if gap.length()<radius and gap.length()>0.01: p.desired+=gap.normalized()*(radius-gap.length())*.55
 	p.desired=p.desired.limit_length(1)
 
 func update_contacts(delta: float) -> void:
@@ -2137,6 +2151,7 @@ func goal(team: int) -> void:
 	clear_pass_request()
 	cancel_pass()
 	score[team] += 1
+	referee_flow.scored()
 	match_report.goal(team)
 	if training: practice_goals += 1
 	goal_team = team
@@ -2174,19 +2189,19 @@ func skip_to_kickoff() -> void:
 	skip_sequence()
 
 func begin_restart(kind: String,team: int,point: Vector3) -> void:
+	referee_flow.sync_period()
+	if kind=="SANTRA" and state=="goal" and referee_flow.period_complete:
+		referee_flow.finish(); return
+	if not rules.advantage.is_empty():
+		var recalled: Dictionary=rules.advantage_restart(kind,team,point)
+		kind=recalled.kind; team=recalled.team; point=recalled.point
+	referee_flow.restarting(kind,team)
 	var call: String={"KORNER":"corner","PENALTI":"penalty","SERBEST VURUŞ":"free_kick","ENDİREKT VURUŞ":"offside"}.get(kind,"")
 	if call!="" and state=="playing": broadcast_event(call,{"team":team})
 	team_tactics.clear_transition()
 	if kind in ["TAÇ","KALE VURUŞU"]: reactions.out(team)
 	second_balls.reset(); physical_contests.reset()
 	replay.goal_tail=0
-	if not rules.advantage.is_empty():
-		var pending: Dictionary=rules.advantage.duplicate()
-		rules.advantage.clear()
-		if team!=int(pending.team):
-			kind="SERBEST VURUŞ"
-			team=pending.team
-			point=pending.point
 	management.prepare_substitutions()
 	support.reset()
 	duels.reset()

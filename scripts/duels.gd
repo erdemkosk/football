@@ -67,6 +67,80 @@ func ball_exposed(challenger: int,owner: int) -> bool:
 	var near := Geometry3D.get_closest_point_to_segment(body,a,b)
 	return near.distance_to(body)>0.48 or a.distance_to(b)<a.distance_to(body)
 
+func pressure_target(index: int,owner: int) -> Vector3:
+	# Go around a shielding body, or stay alongside a runner. The ordinary
+	# goal-side target still handles frontal pressure and distant recovery.
+	if owner<0 or owner==index: return Vector3.INF
+	var p=game.players[index]
+	var q=game.players[owner]
+	var offset: Vector3=(p.position-q.position)*Vector3(1,0,1)
+	if p.team==q.team or offset.length()>3.2 or q.keeper: return Vector3.INF
+	var motion: Vector3=q.velocity*Vector3(1,0,1)
+	# Short walking turns are handled by the close-ball target. Orbiting a
+	# slowly circling carrier would keep chasing his hip instead of the ball.
+	if not q.protecting and motion.length()>.6 and motion.length()<2.2: return Vector3.INF
+	var forward: Vector3=motion.normalized() if motion.length()>1.2 and not q.protecting else q.facing
+	var right := forward.cross(Vector3.UP).normalized()
+	var lateral := offset.dot(right)
+	var body: Vector3=q.position*Vector3(1,0,1)
+	var start: Vector3=p.position*Vector3(1,0,1)
+	var ball: Vector3=game.ball.position*Vector3(1,0,1)
+	var blocked := Geometry3D.get_closest_point_to_segment(body,start,ball).distance_to(body)<.48 and offset.length()+.12<start.distance_to(ball)
+	var alongside := motion.length()>1.2 and absf(offset.dot(forward))<1.1 and absf(lateral)>.45
+	if not blocked and not alongside: return Vector3.INF
+	var side := signf(lateral) if absf(lateral)>.12 else (-1.0 if index%2==0 else 1.0)
+	# Get the tackling foot level with the next touch after closing the side
+	# gap. Merely matching the hip leaves a 120 ms poke behind a moving ball.
+	var style := pressure_profile(p)
+	var lead: float=lerpf(.58,.36,style.body) if motion.length()>1.2 and not q.protecting else .18
+	return q.position+right*side*lerpf(.96,.82,style.body)+forward*lead
+
+func pressure_profile(p) -> Dictionary:
+	var strength: float=p.Attributes.value(p,"strength")
+	var agility: float=p.Attributes.value(p,"agility")
+	var reading: float=p.Attributes.technique(p.Attributes.value(p,"tackling")*.65+p.Attributes.value(p,"reactions")*.35)
+	return {"body":clampf((strength-agility+14)/42.0,0,1),"reading":reading}
+
+func reaction_time(index: int) -> float:
+	var p=game.players[index]
+	return game.management.reaction(p.team,index,true)*lerpf(1.10,.82,pressure_profile(p).reading)
+
+func prefers_shoulder(index: int,owner: int) -> bool:
+	if not ai_can_shoulder(index,owner): return false
+	# Nimble markers wait for the foot opening; stronger markers can lean on
+	# a protected runner. Both still obey the same safe angle and speed gates.
+	return pressure_profile(game.players[index]).body>=.35 or ball_opened(owner)
+
+func spacing_radius(a: int,b: int) -> float:
+	var owner: int=game.dribbler
+	if owner<0 or (a!=owner and b!=owner): return 1.2
+	var challenger: int=b if a==owner else a
+	var p=game.players[challenger]
+	if p.team==game.players[owner].team or p.keeper or p.dismissed: return 1.2
+	if game.ball.held_by!=null or game.flat_distance(game.players[owner].position,game.ball.position)>1.65: return 1.2
+	var pressing: bool=game.team_tactics.pressers[p.team]==challenger or game.defending.presser==challenger or game.is_user_player(challenger)
+	# Let the actual opponents meet, while keeping teammate spacing and a
+	# minimum body gap. Character collisions and paired pressure remain active.
+	return .82 if pressing else 1.2
+
+func ai_can_shoulder(index: int,owner: int) -> bool:
+	if owner<0 or owner==index: return false
+	var p=game.players[index]
+	var q=game.players[owner]
+	if p.team==q.team or q.keeper or not q.visible or q.dismissed: return false
+	var offset: Vector3=(p.position-q.position)*Vector3(1,0,1)
+	if offset.length()<.1 or offset.length()>1.10 or game.flat_distance(q.position,game.ball.position)>1.4: return false
+	var side := offset.normalized()
+	var angle := side.dot(q.facing)
+	var closing: float=maxf(0,(p.velocity-q.velocity).dot(-side))
+	var cautious: bool=p.yellow_cards>0 or q.position.z*game.attack_sign(p.team)<-30
+	# A legal, controlled side challenge remains available near our own goal.
+	# Never turn rear pressure or a head-on charge into an automatic shove.
+	if absf(angle)>(.30 if cautious else .48) or closing>(1.5 if cautious else 2.8): return false
+	var motion: Vector3=q.velocity*Vector3(1,0,1)
+	var following: Vector3=p.velocity*Vector3(1,0,1)
+	return motion.length()>1 and following.length()>1 and motion.normalized().dot(following.normalized())>.65 and ball_exposed(index,owner)
+
 func feint(index: int,chosen_side: float=0) -> void:
 	var p=game.players[index]
 	if game.dribbler!=index or p.action_timer>0 or p.skill_cooldown>0 or p.energy<0.06: return
@@ -181,14 +255,18 @@ func ai_poke_window(index: int,owner: int) -> bool:
 	var slow_ball: bool=game.ball.linear_velocity.length()<5
 	var start: Vector3=p.position*Vector3(1,0,1)+p.velocity*Vector3(1,0,1)*(.02 if slow_ball else .065)
 	var now: Vector3=game.ball.position*Vector3(1,0,1)
-	var future: Vector3=now+game.ball.linear_velocity*Vector3(1,0,1)*.12
+	# Less composed readers stab at where the ball is now. Better readers
+	# allow for the boot's 120 ms approach, so a cut can punish an early poke.
+	var reading: float=pressure_profile(p).reading
+	var future: Vector3=now+game.ball.linear_velocity*Vector3(1,0,1)*lerpf(.045,.12,reading)
 	var aim: Vector3=(now-p.position*Vector3(1,0,1)).normalized()
 	var reach: float=poke_reach(owner)*tackle_reach(p)
 	var end: Vector3=start+aim*reach
 	# Against a slow ball, step into the boot's reach before committing. The
 	# wider sweep tolerance is for a moving ball, not extra stationary leg length.
 	if slow_ball and future.distance_to(start)>reach: return false
-	return Geometry3D.get_closest_point_to_segment(future,start,end).distance_to(future)<poke_ball_radius(owner)*.9
+	var confidence: float=lerpf(.88,.96,reading)
+	return Geometry3D.get_closest_point_to_segment(future,start,end).distance_to(future)<poke_ball_radius(owner)*confidence
 
 static func tackle_reach(p) -> float:
 	var reach: float=p.Attributes.multiplier(float(p.attributes.get("defending",72))*.4+p.Attributes.value(p,"tackling")*.6,.075)

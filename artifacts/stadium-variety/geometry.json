@@ -1,0 +1,42 @@
+[
+	{
+		"batches": 196,
+		"build_ms": 7.912,
+		"city_blocks": 52,
+		"fans": 8381,
+		"kind": "modern",
+		"seats": 9660
+	},
+	{
+		"batches": 75,
+		"build_ms": 186.48,
+		"city_blocks": 24,
+		"fans": 2280,
+		"kind": "town",
+		"seats": 2580
+	},
+	{
+		"batches": 100,
+		"build_ms": 466.596,
+		"city_blocks": 52,
+		"fans": 6671,
+		"kind": "compact",
+		"seats": 7728
+	},
+	{
+		"batches": 109,
+		"build_ms": 439.326,
+		"city_blocks": 52,
+		"fans": 4812,
+		"kind": "historic",
+		"seats": 5505
+	},
+	{
+		"batches": 196,
+		"build_ms": 525.024,
+		"city_blocks": 52,
+		"fans": 8381,
+		"kind": "modern",
+		"seats": 9660
+	}
+]

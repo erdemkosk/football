@@ -133,7 +133,7 @@ func receive(index: int,extended: bool) -> bool:
 	var stability: float=p.Attributes.multiplier(p.attributes.balance,.2)
 	difficulty=clampf(difficulty+(72-float(p.attributes.control))*.0045+p.contest_weight*.16/stability,0,1)
 	var technique := clampf((float(p.attributes.control)-45)/50,0,1)
-	var foot: int=p.ball_actions.choose_foot(p,ball.position)
+	var foot: int=p.ball_actions.receiving_foot(p,ball.position)
 	var weaker: float=1.0-p.Attributes.foot_quality(p,foot)
 	var preparation: float=smoothstep(.03,.16,p.ball_actions.intent_age)*technique
 	# A prepared opening uses the instep with less recovery. A weak-foot,
@@ -153,19 +153,30 @@ func receive(index: int,extended: bool) -> bool:
 	spill=spill or (extended and speed>20+technique*4) or (reach>.90 and speed>13+technique*6)
 	spill=spill or (p.contest_weight>.65 and difficulty>.72 and speed>13)
 	p.begin_receive(style,ball.position,relative,reach)
+	# The technician releases the receiving foot sooner. This is the actual
+	# receive-to-carry recovery, not just a shorter visual overlay.
+	p.receive_duration*=lerpf(1.16,.78,technique)+difficulty*.12
+	p.receive_timer=p.receive_duration
 	p.ball_actions.receive_error=difficulty if not spill else maxf(.65,difficulty)
 	p.ball_actions.receive_reason="ARKADA KALAN TOP" if behind else ("UZANARAK KONTROL" if reach>.6 else ("SERT GELEN TOP" if speed>20 else ("BASKI ALTINDA" if pressure(index)>.55 else "")))
 	if spill:
 		p.ball_actions.receive_feedback_time=1.2
 		if p.ball_actions.receive_reason=="": p.ball_actions.receive_reason="DENGE KAYBI"
 	p.ball_actions.control_grace=0.04 if style=="foot" else 0.22
-	p.ball_actions.contact_cooldown=0.32 if spill else 0.25
+	p.ball_actions.contact_cooldown=0.32 if spill else lerpf(.29,.17,technique)
 	p.ball_actions.settle_time=0 if spill else (.5 if style=="foot" else .8)
 	# One bounded impulse cushions the real rigid body. Hard, stretched touches
 	# retain more incoming momentum; no transform snap or guaranteed possession.
 	var retain := lerpf(0.025,0.14,difficulty)
 	if spill: retain=maxf(retain,0.40)
 	var output: Vector3=p.velocity*Vector3(1,0,1)+relative*retain
+	if style=="foot" and not spill:
+		# A stiff receiving foot rebounds a hard pass out in front. Merely
+		# retaining incoming speed sent a poor touch inward under the body,
+		# where the carry guide immediately hid the control error.
+		var stiff: float=smoothstep(10,25,speed)*pow(1-technique,1.4)
+		var rebound: Vector3=p.velocity*Vector3(1,0,1)+offset.normalized()*lerpf(1.8,4.8,difficulty)
+		output=output.lerp(rebound,stiff)
 	var intent := control_intent(index)
 	var knock: bool=knocks.has(index) and not spill and style=="foot" and intent.length_squared()>.1
 	knocks.erase(index)
@@ -180,6 +191,7 @@ func receive(index: int,extended: bool) -> bool:
 		p.ball_actions.receive_distance=clampf(opening*.42,.45,3.0 if knock else 1.65)
 		p.receive_duration*=1-preparation*.18
 		p.receive_timer=p.receive_duration
+	p.ball_actions.configure_receive(p)
 	if spill:
 		var side := -1.0 if p.ball_actions.receive_foot==0 else 1.0
 		output+=p.rig.global_basis.x.normalized()*side*(0.8+difficulty*1.2)

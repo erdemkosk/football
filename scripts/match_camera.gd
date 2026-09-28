@@ -159,10 +159,11 @@ func pose(focus: Vector3,zoom: float) -> Dictionary:
 			# Camera lives on +x. Near throw-ins lean back so the ball stays framed.
 			# Corners and free kicks ease behind the taker and look into the play.
 			var near := 0.0 if kick_restart() else smoothstep(16.0,P.HALF_WIDTH-.5,track.x)
-			# A higher broadcast angle separates human-sized players and passing lanes.
-			eye=Vector3(P.HALF_WIDTH+8+near*5.5,22.0+near*6.0,clampf(lerpf(focus.z,track.z,near*0.55),-42,42))
-			look=Vector3(lerpf(clampf(focus.x,-10,10),track.x,near*0.94),lerpf(0.80,0.22,near),lerpf(focus.z,clampf(track.z,-48,48),near))
-			fov=lerpf(42.0,39.0,near)
+			# Follow the active side of the pitch. A steeper, nearer view spends
+			# pixels on feet and passing lanes instead of the opposite terrace.
+			look=Vector3(lerpf(clampf(focus.x,-26,26),track.x,lerpf(.52,.94,near)),lerpf(.70,.22,near),lerpf(focus.z,clampf(track.z,-48,48),near))
+			eye=look+Vector3(lerpf(30.0,16.0,near),lerpf(26.0,31.0,near),0)
+			fov=lerpf(38.0,43.0,near)
 			var inset := set_piece_inset()
 			if inset>0.0:
 				var piece: Dictionary=behind_kick_pose()
@@ -214,6 +215,33 @@ func orient(raw: Vector3) -> Vector3:
 	if planar.length_squared()<0.0001: return Vector3.ZERO
 	return (ground_right()*planar.x-ground_forward()*planar.z).normalized()*planar.length()
 
+func passing_frame(view: Dictionary) -> float:
+	# Only local, playable choices affect the lens. Distant forwards cannot
+	# pull the entire view away from the current duel. No aim/AI inputs change.
+	var anchor: Vector3=game.ball.position
+	var points: Array[Vector3]=[anchor,anchor+Vector3.UP*.5]
+	var selected: int=game.controlled
+	var options: Array=[]
+	for i in range(game.players.size()):
+		var p=game.players[i]
+		if not p.visible or p.dismissed: continue
+		var gap: float=(p.position-anchor).length_squared()
+		if i==selected:
+			if gap<32*32: points.append(p.position+Vector3.UP*1.7)
+		elif p.team==game.players[selected].team and not p.keeper and gap<18*18:
+			options.append({"point":p.position+Vector3.UP,"gap":gap})
+	options.sort_custom(func(a,b): return a.gap<b.gap)
+	for i in range(mini(2,options.size())): points.append(options[i].point)
+	var inverse:=Transform3D(Basis.looking_at(view.look-view.eye),view.eye).affine_inverse()
+	var size: Vector2=game.get_viewport().get_visible_rect().size
+	var aspect:=size.x/maxf(1,size.y)
+	var tangent:=tan(deg_to_rad(view.fov)*.5)
+	for point in points:
+		var local: Vector3=inverse*point
+		if local.z>=-.1: continue
+		tangent=maxf(tangent,maxf(absf(local.y)/(-local.z*.82),absf(local.x)/(-local.z*aspect*.86)))
+	return clampf(rad_to_deg(2*atan(tangent)),view.fov,view.fov+6.0)
+
 func apply(focus: Vector3,zoom: float,delta: float) -> Dictionary:
 	if game.state=="paused" and has_pose and not snap:
 		return {eye=current_eye,look=current_look,projection=game.camera.projection,size=game.camera.size,fov=game.camera.fov}
@@ -259,6 +287,7 @@ func apply(focus: Vector3,zoom: float,delta: float) -> Dictionary:
 	if game.state=="playing" and not is_tactical():
 		next.size*=1+attack_width*.06
 		next.fov+=attack_width*2.5
+		if is_sideline(): next.fov=passing_frame(next)
 	var cam: Camera3D=game.camera
 	cam.projection=next.projection
 	var rate := 1.15 if set_piece_inset()>0.02 else 3.0

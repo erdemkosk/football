@@ -1,0 +1,1206 @@
+{
+  "source": "Synthetic speech via Microsoft Edge TTS / edge-tts 7.2.8",
+  "voices": {
+    "spiker": "tr-TR-AhmetNeural",
+    "yorumcu": "tr-TR-EmelNeural"
+  },
+  "clips": {
+    "kickoff_01_spiker.wav": {
+      "text": "Ve maç başlıyor! Güzel bir mücadele olsun.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "f2c5b86f025b9c2cc9aa6d835f19f1ae9645b199cd6dce6675e32eee7ba3ba43"
+    },
+    "kickoff_01_yorumcu.wav": {
+      "text": "İlk dakikalarda iki takımın baskıya nasıl cevap vereceğini göreceğiz.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "4948be0b7a48ed06045b3d910e7955758750927af8e2843886bff173f4b418a9"
+    },
+    "kickoff_02_spiker.wav": {
+      "text": "Düdük geldi, top oyunda!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "c2364dc080067100004b8b71b5f7479665274fedccb15564eedfda163d2c5ee7"
+    },
+    "kickoff_02_yorumcu.wav": {
+      "text": "Evet, şimdi sahada söz oyuncularda. İyi seyirler.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "78cea8649f770597f422c0579eaef573f0ec481ccc1e1e8663c012fd4ed582af"
+    },
+    "second_half_01_spiker.wav": {
+      "text": "İkinci yarı başladı. Yeniden birlikteyiz.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "c0fc8aee7edfa7311bca17690b7f2e6179e26e5667df287f9e061cd7bbb77ebc"
+    },
+    "second_half_01_yorumcu.wav": {
+      "text": "Bakalım devre arasındaki hamleler oyuna nasıl yansıyacak.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "a88600433aed528610052ba47cb893b58e68e5e0bf267072ed5d3601abe36af6"
+    },
+    "second_half_02_spiker.wav": {
+      "text": "Takımlar döndü, ikinci yarının ilk pası verildi.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "aab9774ae47266fe04da85e8ce291674806484d2536ae64a141868fd0161ec94"
+    },
+    "second_half_02_yorumcu.wav": {
+      "text": "Şimdi oyunun ritmini yeniden bulmak gerekiyor.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "e708ba20340f9b8cd6aa4796615bb83a71dad2fdc19fe6851f92bebf264b547a"
+    },
+    "goal_01_spiker.wav": {
+      "text": "Gol! Top ağlarda!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "9820afdd23537ca0bf577363b226e5748d1aa78e3ca3065d432cc6256172b2f4"
+    },
+    "goal_01_yorumcu.wav": {
+      "text": "Böyle anlarda bütün emek o son vuruşa bakıyor.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "b504f9e20434beae6ad55e43053bd23d19f1dc381aac9ce2012da37b4c2ef71a"
+    },
+    "goal_02_spiker.wav": {
+      "text": "Ve gol! Ağlar havalandı!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "bc400373ecc43307e96e37d4744a30b268f87133ad16c78b9ae3487faba758e5"
+    },
+    "goal_02_yorumcu.wav": {
+      "text": "Gol geldi. Şimdi iki takımın vereceği tepki önemli.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "b1ca952f58bc4f95609d45ec709c8ee4b570ae36e796929d8389f3a1a743468e"
+    },
+    "goal_03_spiker.wav": {
+      "text": "Gol! Bitirdi işi!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "715186f0ae0cc8562288fb518f8427f56d772c1a95cbffb42e6ed4bd442c4702"
+    },
+    "goal_03_yorumcu.wav": {
+      "text": "Evet, bu pozisyonun sonunda gülen taraf hücum eden takım.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "be67fb06f1fb7012cc13bdb62ded7af1e14fe279a6b43fd3c999588ac8da3de8"
+    },
+    "goal_level_01_spiker.wav": {
+      "text": "Gol! Yeniden eşitlik!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "4e31603765b4bb1cb1d3a1792556636f57b1b1614925ce0040e61c8806156d6d"
+    },
+    "goal_level_01_yorumcu.wav": {
+      "text": "Maça yeniden ortak oldular. Şimdi psikolojik denge de değişebilir.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "6234b8c94faae50a0e98d09b4a91fb99cb789a5ee0670fbbc73845f8172f13f5"
+    },
+    "goal_level_02_spiker.wav": {
+      "text": "Top ağlarda! Skora denge geliyor!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "d54bd7608664caefbeb7632e4a67db475ae399da91efa9dd3a04827b87d9c4ef"
+    },
+    "goal_level_02_yorumcu.wav": {
+      "text": "Evet, bu golle her şey yeniden başlıyor.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "81b3037ecb56085ed406ae05af20bba7939c8c85b479179d36229dc8a5c1761e"
+    },
+    "goal_level_03_spiker.wav": {
+      "text": "Ve gol! Beraberliği yakalıyorlar!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "82116d0b2b9612700d1e932921a2081db2fbc87fbd098697c86fb9f7bef70097"
+    },
+    "goal_level_03_yorumcu.wav": {
+      "text": "Artık iki takım da galibiyet golünü düşünecek.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "19e9715e0b3e1d6fa0a303dea40854f13dc4e9cc1ea6585f556282c75c74db49"
+    },
+    "goal_lead_01_spiker.wav": {
+      "text": "Gol! Öne geçiyorlar!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "04359d4b6c25dbbc929b7e3ca3017a7bda5d6ccca86d170233bd7f2ab79556f9"
+    },
+    "goal_lead_01_yorumcu.wav": {
+      "text": "Şimdi rakibin biraz daha risk alması gerekecek.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "f3a673046eb3012f6ac7d0b233c90c1aab41a289560e96661e7b56e05000e162"
+    },
+    "goal_lead_02_spiker.wav": {
+      "text": "Ve gol! Skor üstünlüğünü alıyorlar!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "a257c359627e04c1f374295231cc5f5dd9117048f59ef97f8c6859a79aa4d905"
+    },
+    "goal_lead_02_yorumcu.wav": {
+      "text": "Evet, avantaj onlarda. Ama oyundan kopmamak gerekiyor.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "4d00f9b640f99f75605079c485f7d835eda09a5ef3f8aabae317bd5d59cf1930"
+    },
+    "goal_lead_03_spiker.wav": {
+      "text": "Top ağlarda! Üstünlük geliyor!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "57af4b0302ecccd16831676a6028cf6cd0b6a1371e538761f2a6693741614239"
+    },
+    "goal_lead_03_yorumcu.wav": {
+      "text": "Bu gol maçın gidişatını değiştirebilir.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "d0c1bfe016fe90df85b2a5e3f2d44e5113321c7e2067a66e45345aced37ff0a3"
+    },
+    "goal_extend_01_spiker.wav": {
+      "text": "Gol! Farkı açıyorlar!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "80f641e9adaf0f8360dd3a93037e94a885e8ace6ed14c993125a84cfdc7fb904"
+    },
+    "goal_extend_01_yorumcu.wav": {
+      "text": "Rakip için geri dönüş artık biraz daha zor.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "588afc4ca994b9aa83f2255d81d82e3f131a30db138b0c86d04d3182ae49f59e"
+    },
+    "goal_extend_02_spiker.wav": {
+      "text": "Ve gol! Avantaj büyüyor!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "79a7f76b2f4f2ecb7051b43faa87c799a467da2f34b6192ad6fec0157aa06eda"
+    },
+    "goal_extend_02_yorumcu.wav": {
+      "text": "Evet, skor rahatlatıyor ama disiplin hâlâ önemli.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "f77fa3b944d4d061aea8e1db40f6c1e0d5b05bb51b4af40a31c3b316c867a8db"
+    },
+    "goal_reply_01_spiker.wav": {
+      "text": "Gol! Fark azalıyor!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "d5da02370ee90c462d5f03878037f3906def8ca908b2d937a4044375a2401472"
+    },
+    "goal_reply_01_yorumcu.wav": {
+      "text": "Geri dönüş için ihtiyaç duydukları moral bu olabilir.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "3953a44930a5979742150ef960aa042d1de9c8d408938dab0d0fe4d35b0174cf"
+    },
+    "goal_reply_02_spiker.wav": {
+      "text": "Top ağlarda! Arayı kapatıyorlar!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "06cd07ee0d446d3dbbe256bbeff9e4c4f5b65acc3d1f90072bb179d28ef1cbb9"
+    },
+    "goal_reply_02_yorumcu.wav": {
+      "text": "Henüz eşitlik yok ama yeniden umutlandılar.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "c616ad82f73e51fc144655deb4cc61a26a6c4b640d33f7f766ceeef92a944d03"
+    },
+    "goal_late_lead_01_spiker.wav": {
+      "text": "Gol! Son bölümde öne geçiyorlar!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "2bd3e3e29a24c1cebdb3e27eb41da3e3d6c9e8429443d6cbd31f952f41de287c"
+    },
+    "goal_late_lead_01_yorumcu.wav": {
+      "text": "Rakibin cevap vermek için çok az zamanı var.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "31a4a5feffe63f6fc71730bbdae5c12ab5d9ab982a551ea2642fef500dc315a3"
+    },
+    "goal_late_lead_02_spiker.wav": {
+      "text": "Ve gol! Bitime doğru çok önemli bir gol!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "9538f08eeaabd0b0498d693df0cfbcd193a815fabf8bc24e7ce4cc10c9c19fcb"
+    },
+    "goal_late_lead_02_yorumcu.wav": {
+      "text": "Evet, şimdi kalan dakikaları çok akıllı oynamak gerekiyor.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "981b331c0261b1942956c20f5c25cb3ec393ca89ec22062316e96cdb07aac4db"
+    },
+    "goal_late_level_01_spiker.wav": {
+      "text": "Gol! Son bölümde eşitlik!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "3618801d0af3787ba5a71e5b7e9e8efb5b6c4943960f6fbf0a3bce9b8854db0e"
+    },
+    "goal_late_level_01_yorumcu.wav": {
+      "text": "Tam da umutlar azalırken geldi bu gol.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "44a2836b47587ee0953aecff11f8ec76523d4e364f59ad122b34dd87848fd4a0"
+    },
+    "goal_late_level_02_spiker.wav": {
+      "text": "Top ağlarda! Bitime doğru beraberlik!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "c9b18eadd289cb3c6b675dcbe17a8c7f0c4af5783da0b6bb62abc34f4bbed7f5"
+    },
+    "goal_late_level_02_yorumcu.wav": {
+      "text": "Evet, son dakikalarda maç yeniden açıldı.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "8afc36131ccf872bacb0d5aadfa56e725ff96ea4f7d685fab017de9fffffefbd"
+    },
+    "own_goal_01_spiker.wav": {
+      "text": "Kendi kalesine! Çok talihsiz bir an.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "ab023d2ed80e60f7d17f23d4249f6267300b63e56f05d9515e2187bb4398e26d"
+    },
+    "own_goal_01_yorumcu.wav": {
+      "text": "Böyle bir anda takım arkadaşlarının desteği çok önemli.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "48caaf7b34326c88a4f2ad1ef97d1df4dfff54b24fadd6e1d61ec60fd2944798"
+    },
+    "own_goal_02_spiker.wav": {
+      "text": "Top kendi ağlarına gidiyor!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "8696a8e4b67a6865c5da0405d0c1b5961eaa6ae1762c2f4127e0d5ab01b36bfe"
+    },
+    "own_goal_02_yorumcu.wav": {
+      "text": "İstemediği bir sonuç. Şimdi bu pozisyonu geride bırakmalı.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "2e27421165eb1559b58a2037359dfc27de74431b0f93407853df8c9650f0b8b6"
+    },
+    "shot_01_spiker.wav": {
+      "text": "Vurdu!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "45ba7f81354542c64ef1ae66294fd44ca3534caa1f7a194857d737a1816b580d"
+    },
+    "shot_02_spiker.wav": {
+      "text": "Kaleyi deniyor!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "e4032c5f8efa65fd7e0770d0dbf27370b1c58d8125da3c39dd04495bfd90b731"
+    },
+    "shot_03_spiker.wav": {
+      "text": "Şut geliyor!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "72006aa672cea7d35e249e4efe7e225f17cb06dd61f8e2a92b52f518dff1251a"
+    },
+    "shot_04_spiker.wav": {
+      "text": "Vuruşunu yaptı!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "997195739398c0c439606b5c851a8486e1bedf701be036575d300852ad8a07d1"
+    },
+    "shot_high_01_spiker.wav": {
+      "text": "Top üstten dışarıda.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "564aa649279db3300bec6cdfa2693b3b0fba0253feeb4a0b38260798d949e33d"
+    },
+    "shot_high_01_yorumcu.wav": {
+      "text": "Bu kez vuruşun yüksekliğini ayarlayamadı.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "894e1d89399ad3b68d5084e597dc084db2c04332b8635aa8f7593522a30436ec"
+    },
+    "shot_high_02_spiker.wav": {
+      "text": "Yükseldi top, aut.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "127bafe23731f165924445974bd76dce00ff80b2bbffaa3064520c2fcb8f098b"
+    },
+    "shot_high_02_yorumcu.wav": {
+      "text": "Kaleyi bulsa tehlike yaratabilirdi.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "fe756dbec75ec43f3e9500760bf2070dd04d127cc0d57bbe564ee230b75f1c99"
+    },
+    "shot_high_03_spiker.wav": {
+      "text": "Çerçevenin üzerinden dışarıya.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "054fb2667a3f80973dcca117a1dfb73f21d14cb2f2fc2ef43e7453ebb7127c6c"
+    },
+    "shot_wide_01_spiker.wav": {
+      "text": "Top yandan dışarıda.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "267fe3a62e5328746f7718bcef652f0a491708f80f43363ea832dab61a15fa61"
+    },
+    "shot_wide_01_yorumcu.wav": {
+      "text": "Son vuruşta istediği yönü bulamadı.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "4ea63d15d4e245fd1976a2cd116d85a4409810ee336b50d88cbf8ab8c7a7a31d"
+    },
+    "shot_wide_02_spiker.wav": {
+      "text": "Direğin yanından auta gidiyor.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "9913f3c52ad77c63eed8aabec9da100091329f909409f4378ef16460590fdc48"
+    },
+    "shot_wide_02_yorumcu.wav": {
+      "text": "Biraz daha isabetli bir vuruş gerekiyordu.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "0890fed85e9c9d8a1f86b2968368bd74ddf8a3c368b42da0907851b759bfd76f"
+    },
+    "shot_wide_03_spiker.wav": {
+      "text": "Kaleyi bulamadı.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "c43c3a21c2cd236bbad904a644e2ed2520260307a6d9f4e40d94c3430fff2b8a"
+    },
+    "save_01_spiker.wav": {
+      "text": "Kaleci yerinde!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "681fc1b6252420b15033d2f683b726003259c09346a36cd457f66b1c2c8430f7"
+    },
+    "save_01_yorumcu.wav": {
+      "text": "Vuruşu karşıladı, takımını oyunda tutuyor.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "3c46e2aee29b2fc18f8024328fa8fa937373c3204e81d28cf498d176c81e9db1"
+    },
+    "save_02_spiker.wav": {
+      "text": "Kaleciden kurtarış!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "045985d57feb7f791a580d0991376710023d495bf94ab9a8b5a4dda561d05bdb"
+    },
+    "save_02_yorumcu.wav": {
+      "text": "Evet, bu kez kaleciyi geçemediler.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "6e5eeddfe61a70de60ee1b5a141eabde59ff5065cea5bef785478ea1e3db8a22"
+    },
+    "save_03_spiker.wav": {
+      "text": "Kaleci gole izin vermiyor!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "dd4fe1f3a6ceeb1de8b77c741d2de823cedb8bd2c6385287f98c1fb31b576576"
+    },
+    "save_04_spiker.wav": {
+      "text": "Vuruşu kaleci karşılıyor!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "591f5640d0b21c538bdb1be5b4047cde8283fb3cc6a70643e04aab433c85a803"
+    },
+    "great_save_01_spiker.wav": {
+      "text": "Müthiş kurtarış! Kaleci harika uzandı!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "411e1b20879866a93e61f7dbfd0208bc38159e21cfea4dad5eef8edaaebed618"
+    },
+    "great_save_01_yorumcu.wav": {
+      "text": "Gerçekten önemli bir top çıkardı. Takımına nefes aldırdı.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "c369edd8f1c31d7e5881d4a622ae31c59becbcd1aa17e99e18b52e764e56410f"
+    },
+    "great_save_02_spiker.wav": {
+      "text": "Ne kurtarış ama! Gole izin vermedi!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "fbe4af7bbfdfe18bb6cf3e7cf9fd853cd0db328f768dca58a197b5439427c56e"
+    },
+    "great_save_02_yorumcu.wav": {
+      "text": "Böyle kurtarışlar takımın güvenini de artırır.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "2573b01a6fc9c52ce329ac20240ad3ef939cdd9432c7f05bd6d9c546196e0645"
+    },
+    "woodwork_01_spiker.wav": {
+      "text": "Direk! Top geri geldi!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "5b7ab2e34305dda50cb4a94423c1890bf833afc4fd20e54fa4d7460395c5ad51"
+    },
+    "woodwork_01_yorumcu.wav": {
+      "text": "Küçücük bir farkla gol kaçtı.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "0fdbde3ab778ec5f3d7a240823f71cc0acde8caa1071cef78af55ca61ce0419c"
+    },
+    "woodwork_02_spiker.wav": {
+      "text": "Direğe takıldı!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "3fb774acdf335ea4180801e2df6d6df48cacc4faddccc4c07548ea5dd10d2b94"
+    },
+    "woodwork_02_yorumcu.wav": {
+      "text": "Evet, çerçeve bu kez golü önledi.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "995e4c46122e304caf615685fdf163664fc2ca40e002dfb340fef5437821a6d7"
+    },
+    "woodwork_03_spiker.wav": {
+      "text": "Top direkten dönüyor!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "3f6f0ef7ac4125b43ff12b74c276670e213929e1f4e251f8174e6010aaf1afce"
+    },
+    "corner_01_spiker.wav": {
+      "text": "Korner. Duran toptan gelecekler.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "d6256859b650fac2da477617068e25bb2750c86d42f58eabc031651c15834267"
+    },
+    "corner_01_yorumcu.wav": {
+      "text": "Ceza sahasında paylaşım çok önemli olacak.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "3b202d8a3dd8c279c390d68ecf26ded17658698f105cdbdb4c40e5e050dc12a3"
+    },
+    "corner_02_spiker.wav": {
+      "text": "Köşe vuruşu kazanıldı.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "3c8af96596a3d2d547ead3b19276720ae855acf6651392f74872a8df9959e04e"
+    },
+    "corner_02_yorumcu.wav": {
+      "text": "İlk top kadar seken topa da hazır olmak gerekiyor.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "01364af51784c6d5f659bac74250084c55215822a549ab54afe397ccf81b5610"
+    },
+    "corner_03_spiker.wav": {
+      "text": "Top kornere çıktı.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "d80ee2393a415afe26a5a506e10d99bf5b3a317e34d0adfa50e89794d6549114"
+    },
+    "free_kick_01_spiker.wav": {
+      "text": "Serbest vuruş. Topun başına geçiyorlar.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "5da821d6ef5a7cd62f1710e9f87a76ff15dd8998301b03dc30fe7107217bf515"
+    },
+    "free_kick_01_yorumcu.wav": {
+      "text": "Duran toplar oyunun dengesini değiştirebilir.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "d97a76c1f940844779e481f41cf85a9bddbbdd84380ffef54847ba7530520712"
+    },
+    "free_kick_02_spiker.wav": {
+      "text": "Düdük çaldı, serbest vuruş.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "d54c0ce1d73463f52de6d41c0d9578de9748fea9944ade32b89434c6827641e7"
+    },
+    "penalty_01_spiker.wav": {
+      "text": "Penaltı! Hakem beyaz noktayı gösteriyor!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "4259d6be25e06773dc0ff50657870dcbf730fb6fa3bd7f36b0a6aa8c1378b7c2"
+    },
+    "penalty_01_yorumcu.wav": {
+      "text": "Şimdi bütün baskı topun başına gelecek oyuncuda.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "7405626f9ee173115e6317466f91d17c0a5859fce89d6255ef993e0f31029b1f"
+    },
+    "penalty_02_spiker.wav": {
+      "text": "Karar penaltı!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+12%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "85bfe7fccbf0f95238dbfef35089bd721e4dd1aa6c91f83c75921daa723604c8"
+    },
+    "penalty_02_yorumcu.wav": {
+      "text": "Vuran oyuncuyla kaleci arasında bir sinir mücadelesi olacak.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "15bff0830317e76f43b4a15910f250efc4b8b9b0861edddb5ba55c57adfd68ae"
+    },
+    "offside_01_spiker.wav": {
+      "text": "Bayrak havada. Ofsayt.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "9942362f2d333442467ed280d6e6e18a3c26b6fc4461d5cf31191092d4418231"
+    },
+    "offside_01_yorumcu.wav": {
+      "text": "Koşunun zamanlaması belirleyici oldu.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "eed082095b7e575daf5879b37e8d010e3ed098155d5cb47e9c6c2343f3b15975"
+    },
+    "offside_02_spiker.wav": {
+      "text": "Hücum ofsaytla kesiliyor.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "73c3c557723b642907093b344696e44fa96800747b9a04e349ce356cbe8ce5ab"
+    },
+    "yellow_01_spiker.wav": {
+      "text": "Sarı kart çıktı.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "e4fd68f540a300effa1955dd6993004ca15645bf2021e6299ed6ae5192e5a035"
+    },
+    "yellow_01_yorumcu.wav": {
+      "text": "Artık müdahalelerinde daha dikkatli olmak zorunda.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "a29bf25040ae50f164cb496b538cee4b6d439a6243d66b06ad2d2552cca6aa85"
+    },
+    "yellow_02_spiker.wav": {
+      "text": "Hakem sarı kartını gösteriyor.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "330cd407f3cb4f95c046e9f570952eac8aea3096b1833affbc656892c8ad4872"
+    },
+    "yellow_02_yorumcu.wav": {
+      "text": "Bir kart daha görme riskini düşünerek oynamalı.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "0d9efb6ae99af771328b52d918fbcb1f7f9d881a408ca7bfa64e3ce9167c4385"
+    },
+    "red_01_spiker.wav": {
+      "text": "Kırmızı kart! Takım eksik kalıyor!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "cab89966b78a2f63c8b5addd7cb53f4693b209c10491ddbfd5f151c6c12f9514"
+    },
+    "red_01_yorumcu.wav": {
+      "text": "Şimdi sahadaki yerleşimi yeniden düşünmeleri gerekecek.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "e51105bdfc5cb776fed162a9c3959c6b7ee2c1bdc9a74d3ef3b2c6c7d6dd0767"
+    },
+    "red_02_spiker.wav": {
+      "text": "Oyundan atılıyor! Karar kırmızı kart!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "7848680c64543d9eebc3301a767965c10786f5daebd7b232531dbaad7303b40f"
+    },
+    "red_02_yorumcu.wav": {
+      "text": "Bir kişi eksik oynamak kalan oyuncuların yükünü artıracak.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "b93b306b8ef567e4f31f721e1e1b468cccd780ad760232af9d942d1c2249f8ed"
+    },
+    "handball_01_spiker.wav": {
+      "text": "Elle oynama! Düdük geliyor.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "0cc9546c5f94ba11c04f61a99408a1b926f4ed0291ad39b2ae0e6584b29f4193"
+    },
+    "handball_02_spiker.wav": {
+      "text": "Hakem el temasını gördü, oyun duruyor.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "5887f83d4698ebe4f4eb5445300faf9a9ad9b2ab67c04d9d80cf96b1c9babb2d"
+    },
+    "injury_01_spiker.wav": {
+      "text": "Bir sakatlık işareti var.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "f674690e485048831ff51513dcbb366c25f0400d75e49e7a7b413a6e86959dce"
+    },
+    "injury_01_yorumcu.wav": {
+      "text": "Sağlık durumunu görmeden devamı için bir şey söylemek zor.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "ccb2bfa250234d75108a01651b284dabdee52ae5da0faebe7866abebe40f2db0"
+    },
+    "injury_02_spiker.wav": {
+      "text": "Rahat hareket edemiyor. Bir sıkıntısı var.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "70b0438036cd1410eb0cf989ffe6b3290cc90737720edd59aa71fa6bb0748116"
+    },
+    "injury_02_yorumcu.wav": {
+      "text": "Teknik ekip oyuncunun durumunu yakından izleyecektir.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "03030dc275aadcdfcb22480ceca472fac76b738e36eb697c76af1d58a32b16f1"
+    },
+    "halftime_01_spiker.wav": {
+      "text": "İlk yarı sona erdi. Kısa bir ara.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "185febbc1844485ef373699898c0e3e178400bfb0b8ed4b903a0a397543bd265"
+    },
+    "halftime_01_yorumcu.wav": {
+      "text": "İki teknik ekip için de oyunu yeniden değerlendirme zamanı.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "c2f62471960df437ae8990c57eac28d5b2c9a8a06d9b68210db5788c7081c279"
+    },
+    "halftime_02_spiker.wav": {
+      "text": "Devre arası düdüğü geldi.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "94b93c2545e30b0b3a83a7f3c0567636eb4afc3d81aa17fef9f7337977faecca"
+    },
+    "halftime_02_yorumcu.wav": {
+      "text": "Bakalım ikinci yarıya nasıl dönecekler.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "36b9b7862a977fe27d505d66ef65a0e1892de9f8bf5d29cc8ee2636a0ef28d92"
+    },
+    "fulltime_01_spiker.wav": {
+      "text": "Son düdük! Maç sona erdi.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "4651de9a869a3f2b7a36ed7f540d1c79b858e66d32d49eef42d7c875ddf3e9a4"
+    },
+    "fulltime_01_yorumcu.wav": {
+      "text": "Sahadaki mücadele burada bitti. Bizimle olduğunuz için teşekkürler.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "e1aa9ecaba72b37734ed9a14e0b701219facb00c7f85a9acd8b403a93a07bae3"
+    },
+    "fulltime_02_spiker.wav": {
+      "text": "Ve maç bitti!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "376e169dde61ef5866f934c7b98a09f8a6c9127f3d8b94634be603ae9803c7bd"
+    },
+    "fulltime_02_yorumcu.wav": {
+      "text": "Bir karşılaşmayı daha geride bıraktık. Görüşmek üzere.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "79d6b01bfa1ce30cee5c04936e15669f0d7876d4855c12ebbe86bcb3c8bb0258"
+    },
+    "substitution_01_spiker.wav": {
+      "text": "Kenardan bir oyuncu değişikliği geliyor.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "1ef7700e6898be7cd936e3d3d79144caa4ef84f93fa2654a1587d649b679591a"
+    },
+    "substitution_01_yorumcu.wav": {
+      "text": "Taze bir oyuncu oyunun temposunu değiştirebilir.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "9136476ef78dde9e45402c2c0fc1b0cfc1ea8666a23ea18ba024681ef712a54e"
+    },
+    "substitution_02_spiker.wav": {
+      "text": "Oyuncu değişikliği. Yeni bir isim sahada.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "83c2b35486a45e99cdb523d2fdd4d47db9cb116807153ad59a99990c83484822"
+    },
+    "substitution_02_yorumcu.wav": {
+      "text": "Bakalım bu hamle oyuna nasıl yansıyacak.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "fa6e33908c812ed0e719038e9c39a4424414006537899ed7372a000bbe35e704"
+    },
+    "substitution_named_01_spiker.wav": {
+      "text": "Oyuncu değişikliği yapılıyor.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "674ba8f76b26ca2447a8e1144d833d90250bf162610361c011c28acd50679301"
+    },
+    "substitution_named_01_yorumcu.wav": {
+      "text": "Yeni giren oyuncunun maça hemen uyum sağlaması önemli.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "0271be9bc2d48c804b7061eea750336f25f3153009fdb75cfe979d72999c4c46"
+    },
+    "substitution_named_02_spiker.wav": {
+      "text": "Yedek kulübesinden bir hamle geliyor.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "89da93511d89ed2ee7c97a6c187d3dc96f87adc56f67eb8dcbd0e47b5a7d3e67"
+    },
+    "substitution_named_02_yorumcu.wav": {
+      "text": "Taze kuvvetle oyuna yeni bir yön vermek istiyorlar.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "45bc7c0f7d3f44b54d2b4b148c6a3936301ab37bc530fadbe7deb3341ec4d421"
+    },
+    "long_shot_01_spiker.wav": {
+      "text": "Uzaktan deniyor!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "20f7db9ef4a24d968ee3a548e392845c2b7348f65eabd9e80bfbb3597c7ead02"
+    },
+    "long_shot_02_spiker.wav": {
+      "text": "Mesafeye bakmadan vurdu!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "fca13a0be8a0d1cdcc41ed852a1192da6d2908464a0d2715b455bf9adb1a4cbb"
+    },
+    "long_shot_03_spiker.wav": {
+      "text": "Uzaklardan bir şut!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "6e5bad00d353e5be48e5c916caacf8ab6663af20472ab215a04ba0654f62d583"
+    },
+    "header_01_spiker.wav": {
+      "text": "Kafa vuruşu!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "d20cd93a60123d3e945d3f6ff68569b8fdcafe677a085dbbf3ee9d90c37c0d03"
+    },
+    "header_02_spiker.wav": {
+      "text": "Kafayla kaleyi deniyor!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "a6ef49a72a5b99f6600b84e4eaead210581b6f1ef9379f01d9eb4c35e530cb40"
+    },
+    "header_03_spiker.wav": {
+      "text": "Yükseldi, kafayı vurdu!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "ab972555ef3c49af7dba4531f76de1d1b36466fa0b3a024737110256387e2e1d"
+    },
+    "volley_01_spiker.wav": {
+      "text": "Gelişine vurdu!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "fe4c8d2d2a020c7134c1fdff841b7009ba2258481f16dedb4ab7b4d31241343a"
+    },
+    "volley_02_spiker.wav": {
+      "text": "Bekletmeden kaleye!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "f05bcba953f823e0fa79b6f61fac92a23f8dc00faf4fbbbf831c012bf52cf6ef"
+    },
+    "volley_03_spiker.wav": {
+      "text": "Topu kontrol etmeden vuruyor!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "ac319596f2e169d432b24d295299bd87280d78ad22898a0b38c14cb12accb3e7"
+    },
+    "cross_01_spiker.wav": {
+      "text": "Orta geliyor!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "015d8cc1e739f51f09b18e012374fc067a9e602f4237b26634116fad583448d0"
+    },
+    "cross_02_spiker.wav": {
+      "text": "Ceza sahasına bir orta!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "032aebce92a554d336e5adee3acdd343c13e2448bf9e267f4b84a6b9c3568e18"
+    },
+    "cross_03_spiker.wav": {
+      "text": "Topu içeriye gönderdi!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "7d2cffeca64a66c9a78a2d792921507e63ad16e1d45b7756511abfacf81eba9a"
+    },
+    "skill_01_spiker.wav": {
+      "text": "Şık bir hareket!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "41a05b6ad96a84f94bfe374a0ddf001f4b9367c43927f3701dad98ced8969a7b"
+    },
+    "skill_02_spiker.wav": {
+      "text": "Topla güzel bir hareket deniyor.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "c8a883ab6a056a7a421689b68de4480828b2d3aa412c15c312aea203cd274538"
+    },
+    "skill_03_spiker.wav": {
+      "text": "Bileklerini kullanıyor.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "675e8c683e9e1446acc70e0931a00d7dd773b092c636fb0c152b12a099fe62cd"
+    },
+    "counter_01_spiker.wav": {
+      "text": "Topu kazandılar, hızla çıkıyorlar!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "ebdc4b0d129142439ebe9e20395487129e8e265c654f49ea32b830579066b6ba"
+    },
+    "counter_01_yorumcu.wav": {
+      "text": "Savunma yerleşmeden boş alanı kullanmak isteyecekler.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "66b36b774cbbadf8baa80547d83d0a9d2282e5bfdf64013e1ea475f569694173"
+    },
+    "counter_02_spiker.wav": {
+      "text": "Şimdi hızlı hücum fırsatı!",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "ca7572fa256b6c18164dc8d871b6792843124d7543608db1ee86a3ea9d9d470f"
+    },
+    "counter_02_yorumcu.wav": {
+      "text": "İlk pasın yönü bu hücum için çok önemli.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "ff8e37d4e83019b8a72c0f7d52f955e82d2b888a41e8aae694f665bfa7640dcc"
+    },
+    "wing_attack_01_spiker.wav": {
+      "text": "Hücumu kanada taşıdılar.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "411c21c44c742904f80a2c9905d7cfe3bd9e24fa8733b128f51e25f38c3a2253"
+    },
+    "wing_attack_01_yorumcu.wav": {
+      "text": "Evet, buradan savunmayı genişletip içeride alan arayabilirler.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "7213c311e39a2c43647ba348e48adace3b0ff08a57334be5bad43c636c693206"
+    },
+    "wing_attack_02_spiker.wav": {
+      "text": "Bu kez kenardan geliyorlar.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "e5bf508b6f5c7a808fc7c05f2583d494d1b194cfc5a45e94fec6ea072375e231"
+    },
+    "wing_attack_02_yorumcu.wav": {
+      "text": "Ceza sahasındaki koşularla pasın zamanlaması örtüşmeli.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "7435e5f0ab562c8d177ed424e292ac54a81e2120a381f10299b14b3632d3feee"
+    },
+    "pressure_01_spiker.wav": {
+      "text": "Ceza sahası çevresinde çoğaldılar.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "20420cb4e5e30697f31304e9b06c9e29c3ba63ac0487d4641e75b803ce4d174b"
+    },
+    "pressure_01_yorumcu.wav": {
+      "text": "Savunma için asıl mesele oyuncular arasındaki boşlukları kapatmak.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "b2eb218c83534f21f5f3d99dea3aeab8cc532c754253464c4755c8fcc23b971b"
+    },
+    "pressure_02_spiker.wav": {
+      "text": "Hücumda destek var, baskıyı sürdürüyorlar.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "13765f5176d4c3e509d4c94737584da1317b5ad8e3281109024e480c951bfaaa"
+    },
+    "pressure_02_yorumcu.wav": {
+      "text": "Evet, topu kaybederlerse arkalarında bırakacakları alana da dikkat etmeliler.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "f101fa05d9dc56a0cb04f91d2cdebe352438ae0f09e2ef1fd182dd0f6892d1bb"
+    },
+    "build_up_01_spiker.wav": {
+      "text": "Topu tutuyorlar. Sakin bir hazırlık var.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "e608f5147b1ffd1be823a174deb36c94660a4393d3a448a57234929c3f2a7565"
+    },
+    "build_up_01_yorumcu.wav": {
+      "text": "Bazen doğru pas için bir an daha beklemek gerekir.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "1486f8393503d932582bc0b5d76bda5f8035f06fd98e0b53a8ee42c686bbaacb"
+    },
+    "build_up_02_spiker.wav": {
+      "text": "Acele etmiyorlar, boşluk arıyorlar.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "3c6c252ec685162ba0d1c777334353dd20c60439b6063f7aaca79b6c74a44997"
+    },
+    "build_up_02_yorumcu.wav": {
+      "text": "Evet, topu dolaştırarak rakibi yerinden çıkarmaya çalışabilirler.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "ccce3759326fe55909d7a481c12d034e02aa074c44741a169b4ae6bca9d678d0"
+    },
+    "late_chase_01_spiker.wav": {
+      "text": "Son bölümde eşitlik arıyorlar.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "350e86450d221fdeab425ddc5d7ffdbc06887a73f3fc1612a412560e61a23b04"
+    },
+    "late_chase_01_yorumcu.wav": {
+      "text": "Risk almaları gerekiyor ama topu aceleyle kaybetmemeliler.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "b94f7cfb65c13fccef476e9e4bd25e0efe0abd23dc9a491b82c80c76765745bd"
+    },
+    "late_chase_02_spiker.wav": {
+      "text": "Tek gol gerideler, süre azalıyor.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "c9a0c84899ca373edf19efb4171aaafa7dba7784886707c2555b1f10e4167581"
+    },
+    "late_chase_02_yorumcu.wav": {
+      "text": "Evet, kalan her hücumu iyi değerlendirmek zorundalar.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "cae81775781254a0e2a8c6191e0fd3837d864a4fc1bc4c04a622739eef70c53b"
+    },
+    "late_protect_01_spiker.wav": {
+      "text": "Son bölümde top öndeki takımda.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "5087a7d4c6db32c321dffdeeb547f763a2086e67ffdc89e088b0e69e7e9a66e6"
+    },
+    "late_protect_01_yorumcu.wav": {
+      "text": "Topu saklamak kadar güvenli pas seçmek de değerli.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "5dd3ed742524a8d211bba6ddc14c2dd9bff34c470440f208ee6f3a90a56cdc06"
+    },
+    "late_protect_02_spiker.wav": {
+      "text": "Skor avantajı onlarda, topu tutuyorlar.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "c4eabeccfd4141ed1d7c683aa0210929caf1ab6ebe80fdd079e90021c035e8f8"
+    },
+    "late_protect_02_yorumcu.wav": {
+      "text": "Evet, böyle anlarda gereksiz bir top kaybı pahalıya çıkabilir.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "ba3f48f15c267c29847c351858177ec65db6e174fd49660e8a842ffb6f0f12d0"
+    },
+    "late_level_01_spiker.wav": {
+      "text": "Son bölümde skor eşit. Her atak önemli.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "de805a2e149d875b4c1e675001d5972cdb5585388b27798ce289d8a80eb33d88"
+    },
+    "late_level_01_yorumcu.wav": {
+      "text": "Bir gol bütün hesabı değiştirebilir. Sabırla cesareti dengelemek gerekiyor.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "6196677d4094893aeeb956a94881717cd212295f5ec5fd3735e9b6f2e415b09b"
+    },
+    "late_level_02_spiker.wav": {
+      "text": "Bitime yaklaşıyoruz, denge henüz bozulmadı.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "dcdcad0c020143f4d1a999125bfd60cfc43c14ae2dd6267c4111f7f6ef1b488c"
+    },
+    "late_level_02_yorumcu.wav": {
+      "text": "Evet, küçük bir hata bile sonucu belirleyebilir.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "b0d732f8bec29bed1102ee1758589dc1ec01b3a1c3df14bd83d37b57e97e61bb"
+    },
+    "fatigue_01_spiker.wav": {
+      "text": "Yorgunluk belirginleşiyor.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "fb689e9d758490ed3779a7f2dac10e980ebb8bf24037c9c2d52594c02dedcf3c"
+    },
+    "fatigue_01_yorumcu.wav": {
+      "text": "Taze bir oyuncu özellikle savunmaya dönüşlerde fark yaratabilir.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "e2b700927ac997fde3fea37511379d2fc3e23aebab5cea120106b46dc6cdbd8d"
+    },
+    "fatigue_02_spiker.wav": {
+      "text": "Kalan enerjiyi iyi kullanmak gerekiyor.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "a6377828037b5383a08540ec5339bf57e4f16b8130c54edf2a5ff1f56739c718"
+    },
+    "fatigue_02_yorumcu.wav": {
+      "text": "Evet, artık hangi koşuyu yapacaklarına daha dikkatli karar vermeliler.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "42ff4565e8f1e419926c44557e3312450f6d8e004dc3f2309e3a187056763053"
+    },
+    "rain_01_spiker.wav": {
+      "text": "Yağmurda pasın şiddeti daha da önemli.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "fbac11b248d897592efa8e5e169ff6eb30fc599f41e7baa9b0b3b2bca00a9d58"
+    },
+    "rain_01_yorumcu.wav": {
+      "text": "Top yerde hız kaybediyor. Kısa kalan pas baskı getirebilir.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "bbe8982a0b526661b55b317111654592e37e51d1bef5ed164cf9b96e37420935"
+    },
+    "rain_02_spiker.wav": {
+      "text": "Islak zeminde topu iyi hesaplamak gerekiyor.",
+      "voice": "tr-TR-AhmetNeural",
+      "rate": "+6%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "c764c8ebdbdf1c822a492964459918a7d373b56fafea07999bbbab6e64bf364b"
+    },
+    "rain_02_yorumcu.wav": {
+      "text": "Evet, pası alan oyuncunun da topa doğru hareketlenmesi önemli.",
+      "voice": "tr-TR-EmelNeural",
+      "rate": "-3%",
+      "filter": "silenceremove=start_periods=1:start_duration=0.015:start_threshold=-48dB,areverse,silenceremove=start_periods=1:start_duration=0.04:start_threshold=-48dB,areverse,highpass=f=85,loudnorm=I=-18:TP=-2:LRA=7,afade=t=in:d=0.008,areverse,afade=t=in:d=0.025,areverse,apad=pad_dur=0.08",
+      "fingerprint": "1a5c659a311a4634e71179dee95200c6e36b16f1728b8fad7035f59a17437480"
+    }
+  }
+}

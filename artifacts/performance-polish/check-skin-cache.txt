@@ -1,0 +1,16 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:1035)
+PASS: Initial skin matches the original world-space deformation
+PASS: World translation, facing and rig motion reuse every unchanged local bone
+PASS: A head turn updates only the upper neck, with scale removed
+PASS: An elbow bend updates its bone and volume corrective
+PASS: A shoulder change propagates to its elbow and corrective
+PASS: Joint offsets and nonuniform scale invalidate the cached pose
+PASS: A mesh-local transform change refreshes every dependent bone
+PASS: 540 running, kicking and raised-arm poses across three physiques retain their deformation
+PASS: Restoring recorded joint transforms refreshes the skin immediately
+PASS: A hidden player's changed pose remains correct on return
+PASS: Skin synchronization never modifies the physical boot, glove or head anchors
+SKIN CACHE CHECK: 11 checks, 0 failures; maximum reference error=0.00000570

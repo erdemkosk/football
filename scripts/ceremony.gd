@@ -62,6 +62,7 @@ func begin() -> void:
 		ref.collision_layer=16
 		ref.collision_mask=1
 	game.state="ceremony"
+	if is_instance_valid(game.club_entrance): game.club_entrance.configure()
 	game.ball.active=false
 	game.ball.visible=false
 	game.toast_timer=0
@@ -115,13 +116,13 @@ func update(delta: float) -> void:
 		for p in game.players:
 			p.desired=Vector3.ZERO
 			p.facing=Vector3.RIGHT
-			p.saluting=age>0.3+p.number*0.03 and age<2.4
+			p.saluting=p==game.players[featured_player()] and fmod(age,3.6)>.25 and fmod(age,3.6)<3.1
 			p.step(delta)
 		for ref in officials:
 			ref.desired=Vector3.ZERO
 			ref.facing=Vector3.RIGHT
 			ref.step(delta)
-		if age>=3:
+		if age>=7.2:
 			phase="formation"
 			age=0
 			game.ball.visible=true
@@ -180,6 +181,11 @@ func update_camera(delta: float) -> void:
 		# Stay in front of the stand and tunnel roof for an unobstructed lineup.
 		eye=Vector3(32+P.SIDE_SHIFT,10,2-age*0.6)
 		size=22
+		if not game.experience.reduce_motion:
+			var featured=game.players[featured_player()]
+			target=featured.position+Vector3.UP*.95
+			eye=featured.position+Vector3(7,2.7,4)
+			size=9.5
 	elif phase=="formation":
 		target=Vector3.ZERO
 		eye=Vector3(0,70,37)
@@ -198,3 +204,8 @@ func update_camera(delta: float) -> void:
 func caption() -> String:
 	var title: String="TAKIMLAR SAHAYA ÇIKIYOR" if phase=="walkout" else ("SEFC ARENA'YA HOŞ GELDİNİZ" if phase=="presentation" else "İLK DÜDÜĞE HAZIR")
 	return game.clubs.rivalry.caption()+" · "+title if game.clubs.rivalry.active else title
+
+func featured_player() -> int:
+	if phase!="presentation": return -1
+	# Two adjacent lineup ends keep the introduction camera travel short.
+	return 10 if age<3.6 else 21

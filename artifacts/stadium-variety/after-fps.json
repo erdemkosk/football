@@ -1,0 +1,206 @@
+[
+	{
+		"draws": 464.188019966722,
+		"fps": 120.002116509875,
+		"frames": 601,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.338,
+		"p95_ms": 9.03,
+		"p99_ms": 9.5,
+		"physics_hz": 120.002116509875,
+		"physics_ms": 4.91976372712146,
+		"render_cpu_ms": 0.402841929885591,
+		"scene": "modern-day",
+		"states": {
+			"playing": 601
+		},
+		"valid": true
+	},
+	{
+		"draws": 528.584026622296,
+		"fps": 120.002883263951,
+		"frames": 601,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.338,
+		"p95_ms": 8.967,
+		"p99_ms": 9.426,
+		"physics_hz": 120.002883263951,
+		"physics_ms": 4.52392179700501,
+		"render_cpu_ms": 0.87003327794559,
+		"scene": "modern-night",
+		"states": {
+			"playing": 601
+		},
+		"valid": true
+	},
+	{
+		"draws": 540.736666666667,
+		"fps": 119.810579473852,
+		"frames": 600,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.35,
+		"p95_ms": 9.146,
+		"p99_ms": 10.835,
+		"physics_hz": 120.010263772975,
+		"physics_ms": 5.29771000000001,
+		"render_cpu_ms": 0.886506666143735,
+		"scene": "modern-rain",
+		"states": {
+			"playing": 600
+		},
+		"valid": true
+	},
+	{
+		"draws": 397.405,
+		"fps": 119.998008033067,
+		"frames": 600,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.327,
+		"p95_ms": 9.007,
+		"p99_ms": 9.7,
+		"physics_hz": 119.998008033067,
+		"physics_ms": 5.02115999999998,
+		"render_cpu_ms": 0.327241666316986,
+		"scene": "town-day",
+		"states": {
+			"playing": 600
+		},
+		"valid": true
+	},
+	{
+		"draws": 511.715474209651,
+		"fps": 120.003673989353,
+		"frames": 601,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.331,
+		"p95_ms": 8.953,
+		"p99_ms": 9.592,
+		"physics_hz": 120.003673989353,
+		"physics_ms": 4.37912312811981,
+		"render_cpu_ms": 0.858502495804563,
+		"scene": "town-night",
+		"states": {
+			"playing": 601
+		},
+		"valid": true
+	},
+	{
+		"draws": 495.549084858569,
+		"fps": 120.018004697676,
+		"frames": 601,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.357,
+		"p95_ms": 9.006,
+		"p99_ms": 9.576,
+		"physics_hz": 120.018004697676,
+		"physics_ms": 4.72661064891843,
+		"render_cpu_ms": 0.828211315360522,
+		"scene": "town-rain",
+		"states": {
+			"playing": 601
+		},
+		"valid": true
+	},
+	{
+		"draws": 431.405,
+		"fps": 119.805459894224,
+		"frames": 600,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.34,
+		"p95_ms": 9.02,
+		"p99_ms": 10.653,
+		"physics_hz": 120.005135660714,
+		"physics_ms": 4.36404833333332,
+		"render_cpu_ms": 0.35875999952356,
+		"scene": "compact-day",
+		"states": {
+			"playing": 600
+		},
+		"valid": true
+	},
+	{
+		"draws": 514.628951747088,
+		"fps": 120.005183584968,
+		"frames": 601,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.331,
+		"p95_ms": 8.962,
+		"p99_ms": 9.568,
+		"physics_hz": 120.005183584968,
+		"physics_ms": 4.32662229617305,
+		"render_cpu_ms": 0.869898502917932,
+		"scene": "compact-night",
+		"states": {
+			"playing": 601
+		},
+		"valid": true
+	},
+	{
+		"draws": 514.116666666667,
+		"fps": 119.848870574206,
+		"frames": 600,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.362,
+		"p95_ms": 9.15,
+		"p99_ms": 9.589,
+		"physics_hz": 120.04861869183,
+		"physics_ms": 5.159755,
+		"render_cpu_ms": 0.872436667879423,
+		"scene": "compact-rain",
+		"states": {
+			"playing": 600
+		},
+		"valid": true
+	},
+	{
+		"draws": 423.787021630616,
+		"fps": 120.008801976691,
+		"frames": 601,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.328,
+		"p95_ms": 9.143,
+		"p99_ms": 9.503,
+		"physics_hz": 120.008801976691,
+		"physics_ms": 4.38227121464227,
+		"render_cpu_ms": 0.356247920140054,
+		"scene": "historic-day",
+		"states": {
+			"playing": 601
+		},
+		"valid": true
+	},
+	{
+		"draws": 516.425956738769,
+		"fps": 120.004009451763,
+		"frames": 601,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.357,
+		"p95_ms": 8.969,
+		"p99_ms": 9.297,
+		"physics_hz": 120.004009451763,
+		"physics_ms": 4.55663560732112,
+		"render_cpu_ms": 0.886589019449301,
+		"scene": "historic-night",
+		"states": {
+			"playing": 601
+		},
+		"valid": true
+	},
+	{
+		"draws": 643.429292929293,
+		"fps": 118.770687394351,
+		"frames": 594,
+		"gpu_ms": 0.0,
+		"p50_ms": 8.372,
+		"p95_ms": 9.177,
+		"p99_ms": 11.439,
+		"physics_hz": 119.970391307425,
+		"physics_ms": 4.82917508417511,
+		"render_cpu_ms": 0.939698654995221,
+		"scene": "historic-rain",
+		"states": {
+			"playing": 594
+		},
+		"valid": true
+	}
+]

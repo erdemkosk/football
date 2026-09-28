@@ -7,6 +7,11 @@ var age := 0.0
 func apply(p,delta: float) -> void:
 	if p.celebration!=kind: kind=p.celebration; age=0
 	age+=delta
+	if kind=="high_five" and p.action_timer<=0:
+		var lift:=smoothstep(0,.22,age)*(1-smoothstep(.62,1.02,age))
+		preload("res://scripts/impact_motion.gd").reach_hand(p,false,p.celebration_hand_target,lift,true)
+		p.left_arm.rotation=p.left_arm.rotation.lerp(Vector3(.1,0,-.48),lift)
+		return
 	if p.action_timer>0 or kind not in ["fist","badge","crowd","heart","wings","salute","point","arms_crossed"]: return
 	var weight := smoothstep(0,.24,age)
 	var pulse := sin(age*5.2+int(p.appearance.get("celebration",0))*.43)

@@ -267,19 +267,20 @@ func defend(index: int) -> bool:
 	var p=game.players[index]
 	var gap: float=game.flat_distance(p.position,game.ball.position)
 	if gap>=2.7: return false
-	if p.keeper or p.dismissed or p.action_timer>0 or p.tackle_cooldown>0 or p.ai_think<game.management.reaction(p.team,index,true) or game.ball.held_by!=null or game.ball.pending_kick or game.foul_cooldown>0: return false
+	if p.keeper or p.dismissed or p.action_timer>0 or p.tackle_cooldown>0 or p.ai_think<game.duels.reaction_time(index) or game.ball.held_by!=null or game.ball.pending_kick or game.foul_cooldown>0: return false
 	var speed: float=game.ball.linear_velocity.length()
 	if level(p.team)>0 and game.last_touch!=p.team and game.dribbler<0 and gap<2.7 and speed>6 and game.ball.position.y<.7:
+		if not game.team_tactics.read_ready(index): return false
 		var future: Vector3=game.ball.position+game.ball.linear_velocity*.14
 		if game.flat_distance(p.position,future)<1.15 and game.flat_distance(p.position,future)<gap:
 			if game.defending.intercept(index): record("intercept"); return true
 	var owner: int=game.dribbler
 	if level(p.team)<1 or owner<0 or game.players[owner].team==p.team or gap>1.4: return false
-	var q=game.players[owner]
-	if p.yellow_cards>0 or q.position.z*game.attack_sign(p.team)<-30: return false
-	var side: Vector3=((p.position-q.position)*Vector3(1,0,1)).normalized()
-	if game.flat_distance(p.position,q.position)<1.05 and absf(side.dot(q.facing))<.3 and p.velocity.dot(q.velocity)>6 and game.duels.ball_exposed(index,owner):
-		if game.defending.shoulder(index): record("shoulder"); return true
+	# Take an available foot contact before bracing again; repeated shoulders
+	# must not consume every recovery window and suppress the actual tackle.
+	if game.duels.ai_can_challenge(index,owner) and game.duels.ai_poke_window(index,owner): return false
+	if game.duels.prefers_shoulder(index,owner):
+		if game.defending.shoulder(index,owner): record("shoulder"); return true
 	return false
 
 func distribute(index: int) -> bool:
@@ -442,7 +443,8 @@ func skill_choice(index: int,read: Dictionary) -> Dictionary:
 func hold_choice(index: int,read: Dictionary) -> Dictionary:
 	var p=game.players[index]
 	if game.dribbler!=index or hold_cooldown.get(index,0.0)>0 or p.energy<.2 or read.opponent<0: return {}
-	if read.gap<1.2 or read.gap>4.0 or read.closing>5 or p.position.z*game.attack_sign(p.team)<-28: return {}
+	var target: bool=game.management.slot_role(index)==3 and p.Attributes.forward_style(p)=="target"
+	if read.gap<(.85 if target else 1.2) or read.gap>4.0 or read.closing>5 or p.position.z*game.attack_sign(p.team)<-28: return {}
 	var behind: Vector3=(game.players[read.opponent].position-p.position)*Vector3(1,0,1)
 	# Wait only when a teammate is actually moving into a useful outlet.
 	var outlet := -1
@@ -465,7 +467,8 @@ func holding_action(index: int) -> bool:
 	var near := 0
 	for q in game.players:
 		if q.visible and q.team!=p.team and game.flat_distance(q.position,p.position)<3: near+=1
-	if game.dribbler!=index or h.age>.65 or read.gap<1.15 or read.closing>4 or near>1:
+	var duration := .85 if game.management.slot_role(index)==3 and p.Attributes.forward_style(p)=="target" else .65
+	if game.dribbler!=index or h.age>duration or read.closing>4 or near>1:
 		holds.erase(index); think_in[index]=0; return false
 	p.protecting=true; p.sprinting=false
 	p.facing=game.duels.shield_direction(index)

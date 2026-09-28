@@ -36,8 +36,9 @@ var pending: Array = []
 var originals: Array = []
 var reserve_originals: Array = [[],[]]
 var transit: Dictionary = {}
-var lost_time := [0.0,0.0]
-var added := [-1.0,-1.0]
+var lost_time := [0.0,0.0,0.0,0.0]
+var added := [-1.0,-1.0,-1.0,-1.0]
+var after_announcement := [0.0,0.0,0.0,0.0]
 const FORMATIONS := ["4-4-2","4-3-3","3-5-2","4-2-3-1","4-1-2-1-2","5-3-2","3-4-3","4-1-4-1","4-4-1-1"]
 const SHAPES := [
 	[Vector2(0,46),Vector2(-23,28),Vector2(-8,31),Vector2(8,31),Vector2(23,28),Vector2(-20,7),Vector2(-6,13),Vector2(9,10),Vector2(22,5),Vector2(-5,-1),Vector2(9,-7)],
@@ -77,8 +78,9 @@ func reset() -> void:
 	used=[0,0]
 	pending.clear()
 	transit.clear()
-	lost_time=[0.0,0.0]
-	added=[-1.0,-1.0]
+	lost_time=[0.0,0.0,0.0,0.0]
+	added=[-1.0,-1.0,-1.0,-1.0]
+	after_announcement=[0.0,0.0,0.0,0.0]
 	for team in range(2):
 		for j in range(7):
 			bench[team].append({"name":(["EFE","UMUT","TUNA","OZAN","BARAN","YİĞİT","ATA"] if team==0 else ["JOEL","MIRO","NOAH","LARS","LUIS","ADAM","FINN"])[j],"shirt":12+j,"keeper":j==0,"used":false})
@@ -375,17 +377,31 @@ func detail(team: int,key: String) -> int:
 	return value
 
 func update_clock(delta: float) -> void:
-	if game.career.cups.extra_active(): return
 	if game.training: return
-	# Waiting for the opening kickoff is before play, not injury time.
-	if game.match_time<=0: return
-	var half_index: int=game.half-1
-	# Active-play time is retained; stoppages earn a bounded extra period.
-	if game.state in ["restart","set_piece","goal"] and added[half_index]<0:
+	if game.referee_flow.period_complete: return
+	var half_index := period_index()
+	# Waiting for a period's opening kickoff is before play, not injury time.
+	var period_start: float=game.LENGTH*([0.0,.5,1.0,7.0/6.0][half_index])
+	if game.match_time<=period_start: return
+	# Once the allowed time has elapsed, a final penalty/incident completes
+	# that period; its dead-ball preparation must not start another allowance.
+	if added[half_index]>=0 and game.match_time>=half_end(): return
+	# This game's main clock counts active play. Retain its compressed
+	# stoppage allowance, including delays after the minimum is announced.
+	if game.state in ["restart","set_piece","goal"]:
 		lost_time[half_index]+=delta*0.08
-	if game.state=="playing" and game.match_time>=game.LENGTH*game.half*0.5-10 and added[half_index]<0:
+		if added[half_index]>=0: after_announcement[half_index]+=delta*.08
+	if game.state=="playing" and game.match_time>=period_end_base()-10 and added[half_index]<0:
 		var minute: float=game.LENGTH/90.0
 		added[half_index]=clampf(ceilf(lost_time[half_index]/minute)*minute,0,minute*6)
 
+func period_index() -> int:
+	return 1+game.career.cups.extra_phase if game.career.cups.extra_active() else game.half-1
+
+func period_end_base() -> float:
+	if game.career.cups.extra_active(): return game.LENGTH*(7.0/6.0 if game.career.cups.extra_phase==1 else 4.0/3.0)
+	return game.LENGTH*game.half*.5
+
 func half_end() -> float:
-	return game.LENGTH*game.half*0.5+maxf(0,added[game.half-1])
+	var index := period_index()
+	return period_end_base()+maxf(0,added[index])+after_announcement[index]

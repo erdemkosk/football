@@ -79,6 +79,7 @@ static func upgrade(w: Dictionary) -> void:
 		p.potential=maxi(int(p.potential),ovr(p))
 	Rivalries.ensure(w)
 	Rankings.ensure(w)
+	preload("res://scripts/stadium_catalog.gd").ensure(w)
 	Equipment.ensure(w)
 	w.version=VERSION
 

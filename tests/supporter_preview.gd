@@ -21,8 +21,8 @@ func run() -> void:
 		else: banners+=1
 	print("SUPPORTER PROPS: ",flags," flags, ",banners," banners / ",crowd.fans.size()," fans")
 	assert(flags==banners and flags>0 and crowd.prop_fans.size()<=96)
-	assert(game.stadium.find_children("Supporter_flare*","",false,false).is_empty())
-	assert(game.stadium.find_children("Supporter_smoke*","",false,false).is_empty())
+	assert(game.stadium.find_children("Supporter_flare*","",true,false).is_empty())
+	assert(game.stadium.find_children("Supporter_smoke*","",true,false).is_empty())
 	for mat in crowd.prop_materials: assert(mat.get_shader_parameter("supporter_prop")==true)
 	var holder: Transform3D=crowd.prop_fans[0].transform
 	game.camera.projection=Camera3D.PROJECTION_ORTHOGONAL

@@ -15,12 +15,16 @@ var collection := "approach"
 var collection_age := 0.0
 const STYLES := ["fist","badge","crowd","heart","wings","salute","point","arms_crossed"]
 var style := "fist"
+var greeting_age:=-1.0
+var greeting_done:=false
+var partner:=-1
 
 func clear() -> void:
 	age=0
 	gathered_age=0
 	urgent=false; late_winner=false; collection="approach"; collection_age=0
 	scorer=-1
+	partner=-1; greeting_age=-1; greeting_done=false
 	targets.clear()
 	group.clear()
 	next_jump.clear()
@@ -67,6 +71,9 @@ func begin(team: int) -> void:
 		var angle := TAU*(j if inner else j-5)/(5.0 if inner else maxf(1,teammates.size()-5))+ (0.0 if inner else 0.4)
 		targets[index]=gathering+Vector3(cos(angle),0,sin(angle))*(1.65 if inner else 3.05)
 	for i in group: next_jump[i]=2.0+(i%5)*0.23
+	if group.size()>1:
+		partner=group[1]
+		targets[partner]=gathering+Vector3(0,0,-signf(gathering.z)*1.12)
 	if urgent:
 		for i in targets:
 			targets[i]=game.players[i].home
@@ -82,6 +89,15 @@ func update(delta: float) -> void:
 	if urgent:
 		update_urgent(delta)
 		return
+	if partner>=0 and not greeting_done:
+		var lead=game.players[scorer]; var mate=game.players[partner]
+		if greeting_age<0 and game.flat_distance(lead.position,targets[scorer])<.45 and game.flat_distance(mate.position,targets[partner])<.45 and lead.is_on_floor() and mate.is_on_floor():
+			greeting_age=0
+			if next_jump[scorer]>=0: next_jump[scorer]=age+1.2
+			if next_jump[partner]>=0: next_jump[partner]=age+1.2
+		if greeting_age>=0:
+			greeting_age+=delta
+			if greeting_age>=1.05: greeting_done=true
 	var arrived := 0
 	for i in targets:
 		var p=game.players[i]
@@ -95,6 +111,9 @@ func update(delta: float) -> void:
 			elif close:
 				p.celebration=["embrace","applaud","fist","crowd"][posmod(group.find(i),4)]
 			else: p.celebration="cheer" if i%3==0 else "applaud"
+			if i in [scorer,partner] and greeting_age>=0 and not greeting_done:
+				p.celebration="high_five"
+				p.celebration_hand_target=(game.players[scorer].position+game.players[partner].position)*.5+Vector3.UP*1.50
 			if close:
 				arrived+=1
 				if next_jump[i]>=0 and age>float(next_jump[i]) and p.is_on_floor() and p.action_timer<=0 and ((i==scorer and style=="fist") or (late_winner and group.find(i)<3)):
@@ -112,6 +131,8 @@ func update(delta: float) -> void:
 		p.step(delta)
 		if offset.length()<1.0:
 			var look: Vector3=(Vector3(signf(gathering.x)*(42+P.SIDE_SHIFT),0,gathering.z)-p.position) if i==scorer else gathering-p.position
+			if i in [scorer,partner] and greeting_age>=0 and not greeting_done:
+				look=game.players[partner if i==scorer else scorer].position-p.position
 			look.y=0
 			if look.length()>0.1:
 				p.facing=look.normalized()

@@ -1,0 +1,24 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:1035)
+game preparation mean_us=225.410833333333
+game ai mean_us=510.8975
+game contact-preparation mean_us=112.011666666667
+game body-context-observe mean_us=113.880833333333
+game players-step mean_us=1235.64083333333
+game resolve mean_us=6.09583333333333
+game contacts mean_us=48.4808333333333
+game replay-boundaries mean_us=1.865
+pose base-locomotion mean_us=10.1089292747426 calls=17773
+pose actions-footplant mean_us=9.42463287008384 calls=17773
+pose transition mean_us=1.99960614415124 calls=17773
+pose contact-dribble-gait mean_us=2.57502953918866 calls=17773
+pose dribble-context mean_us=2.26410847915377 calls=17773
+pose keeper-gaze mean_us=5.53660046137399 calls=17773
+pose face mean_us=3.58268159567884 calls=17773
+pose hands mean_us=3.53322455409891 calls=17773
+pose capture-footfalls-cloth mean_us=4.60248691835931 calls=17773
+skin_22_us=135.7 batch_22_us=1.17583333333333
+WARNING: 20 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

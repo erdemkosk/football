@@ -42,9 +42,16 @@ var shot_at := -1.0
 var shot_serial := -1
 var sample_serial := 0
 var shooter := -1
+var shot_record: Dictionary={}
+var goal_record: Dictionary={}
+var freeze_left:=0.0
+var freeze_done:=false
 
 func mark_shot(index: int) -> void:
 	shooter=index; shot_serial=sample_serial
+	var player=game.players[index]
+	var goal:=Vector3(0,0,game.attack_sign(player.team)*P.HALF_LENGTH)
+	shot_record={"index":index,"name":player.display_name,"team":player.team,"speed":game.ball.kick_velocity.length()*3.6,"distance":game.flat_distance(game.ball.position,goal)}
 
 func setup() -> void:
 	for p in game.players:
@@ -62,10 +69,18 @@ func snapshot() -> Dictionary:
 	var transforms: Array[Transform3D] = []
 	for node in nodes: transforms.append(node.transform)
 	var visibility: Array[bool] = []
+	var hands: Array[Vector4]=[]
 	for p in game.players: visibility.append(p.visible)
+	for p in game.players: hands.append(p.hand_pose.snapshot())
 	var net_poses: Array=[]
 	for net in game.stadium.nets: net_poses.append(net.capture_pose())
-	return {"transforms":transforms,"visible":visibility,"ball":game.ball.position,"nets":net_poses,"seconds":game.match_time,"score":game.score.duplicate(),"serial":sample_serial}
+	return {"transforms":transforms,"visible":visibility,"hands":hands,"ball":game.ball.position,"nets":net_poses,"seconds":game.match_time,"score":game.score.duplicate(),"serial":sample_serial}
+
+func apply_hands(a: Dictionary,b: Dictionary,blend: float=0.0) -> void:
+	if not a.has("hands") or not b.has("hands"): return
+	for i in range(game.players.size()):
+		var pose: Vector4=a.hands[i].lerp(b.hands[i],blend)
+		game.players[i].hand_pose.restore(game.players[i],pose)
 
 func capture(delta: float) -> void:
 	if not enabled or game.training: return
@@ -82,11 +97,16 @@ func origin() -> void:
 	frames.clear()
 	sample_age=0
 	shot_serial=-1; shooter=-1; shot_at=-1
+	shot_record.clear(); goal_record.clear()
 	restart_clip=true
 	frames.append(snapshot())
 
 func queue_goal() -> void:
 	# Keep the ball live until it has reached and stretched the net.
+	var own_goal: bool=game.last_kicker>=0 and game.players[game.last_kicker].team!=game.goal_team
+	goal_record=shot_record.duplicate() if not own_goal and shooter>=0 and shot_record.get("team",-1)==game.goal_team and shot_serial>=sample_serial-int(RATE*SECONDS) else {}
+	if goal_record.is_empty():
+		goal_record={"name":game.players[game.last_kicker].display_name if game.last_kicker>=0 else game.team_name(game.goal_team),"team":game.goal_team}
 	if enabled and frames.size()>=(8 if restart_clip else 20): goal_tail=1.15
 
 func capture_goal(delta: float) -> void:
@@ -99,6 +119,7 @@ func begin() -> bool:
 	goal_tail=0
 	if not enabled or frames.size()<(8 if restart_clip else 20): return false
 	instant=false
+	freeze_left=0; freeze_done=false
 	if frames.size()>int(RATE*GOAL_SECONDS): frames=frames.slice(frames.size()-int(RATE*GOAL_SECONDS))
 	if game.experience.short_presentation and shot_serial>=0:
 		for i in range(frames.size()):
@@ -132,8 +153,14 @@ func begin() -> bool:
 			shot_at=index/RATE; break
 	for index in range(frames.size()):
 		var point: Vector3=frames[index].ball
-		if point.z*goal_end>=P.HALF_LENGTH and absf(point.x)<4.2 and point.y<3:
-			goal_at=index/RATE; break
+		var line: float=P.HALF_LENGTH+game.ball.RADIUS
+		if point.z*goal_end>=line and absf(point.x)<4.2 and point.y<3:
+			goal_at=index/RATE
+			if index>0:
+				var previous: Vector3=frames[index-1].ball
+				var span: float=(point.z-previous.z)*goal_end
+				if span>.0001: goal_at=(index-1+clampf((line-previous.z*goal_end)/span,0,1))/RATE
+			break
 	var first: Dictionary=frames[0]
 	camera_side=-1.0 if first.ball.x< -14 else 1.0
 	previous_point=first.ball
@@ -142,6 +169,7 @@ func begin() -> bool:
 	for p in game.players: p.reset_physics_interpolation()
 	game.ball.reset_physics_interpolation()
 	for i in range(game.players.size()): game.players[i].visible=first.visible[i]
+	apply_hands(first,first)
 	game.broadcast.show_graphic("goal",game.broadcast.goal_caption())
 	place_camera(0)
 	return true
@@ -151,6 +179,7 @@ func begin() -> bool:
 func begin_instant() -> bool:
 	if not enabled or game.training or game.state!="paused" or frames.size()<int(RATE*2): return false
 	instant=true; slow=false
+	freeze_left=0; freeze_done=false
 	instant_return=game.before_pause
 	saved=snapshot()
 	saved.velocity=game.ball.linear_velocity
@@ -178,13 +207,22 @@ func begin_instant() -> bool:
 	for p in game.players: p.reset_physics_interpolation()
 	game.ball.reset_physics_interpolation()
 	for i in range(game.players.size()): game.players[i].visible=first.visible[i]
+	apply_hands(first,first)
 	place_camera(0)
 	return true
 
 func update(delta: float) -> void:
+	if game.state!="replay": return
 	entry_left=maxf(0,entry_left-delta)
+	if freeze_left>0:
+		freeze_left=maxf(0,freeze_left-delta)
+		return
 	cut_age+=delta
+	var previous_age:=age
 	age+=delta*playback_speed()
+	if not instant and not freeze_done and goal_at>=0 and previous_age<=goal_at and age>=goal_at:
+		age=goal_at; freeze_done=true
+		freeze_left=.38 if game.experience.short_presentation else (.55 if game.experience.reduce_motion else .85)
 	var frame_index := age*RATE
 	if frame_index>=frames.size()-1: finish(); return
 	var a: Dictionary=frames[int(frame_index)]
@@ -193,6 +231,7 @@ func update(delta: float) -> void:
 	display_score=a.score
 	for i in range(nodes.size()): nodes[i].transform=a.transforms[i].interpolate_with(b.transforms[i],fmod(frame_index,1.0))
 	for i in range(game.players.size()): game.players[i].visible=a.visible[i]
+	apply_hands(a,b,fmod(frame_index,1.0))
 	for i in range(game.stadium.nets.size()): game.stadium.nets[i].show_replay(a.nets[i],b.nets[i],fmod(frame_index,1.0))
 	if cut_transition>=0:
 		cut_transition+=delta
@@ -221,6 +260,7 @@ func choose_cut() -> void:
 		pending_cut=next; cut_transition=0
 
 func playback_speed() -> float:
+	if freeze_left>0: return 0
 	if instant: return .35 if slow else 1.0
 	var normal: float=.95 if game.experience.short_presentation else .8
 	if goal_at<0: return normal
@@ -276,6 +316,7 @@ func update_outro(delta: float) -> void:
 	if game.state!="paused": exit_left=maxf(0,exit_left-delta)
 
 func finish() -> void:
+	freeze_left=0
 	if not instant: game.audio.release_replay_chant()
 	if saved.is_empty(): return
 	exit_left=.28; entry_left=0; cut_transition=-1; pending_cut=-1
@@ -283,6 +324,7 @@ func finish() -> void:
 	for p in game.players: p.reset_physics_interpolation()
 	game.ball.reset_physics_interpolation()
 	for i in range(game.players.size()): game.players[i].visible=saved.visible[i]
+	apply_hands(saved,saved)
 	game.ball.freeze=saved.freeze
 	game.ball.active=saved.active
 	game.ball.linear_velocity=saved.velocity
@@ -313,5 +355,9 @@ func reset() -> void:
 	frames.clear()
 	sample_age=0
 	shot_at=-1; shot_serial=-1; shooter=-1; sample_serial=0
+	shot_record.clear(); goal_record.clear(); freeze_left=0; freeze_done=false
 	cut=0
 	entry_left=0; exit_left=0; cut_transition=-1; pending_cut=-1; camera_ready=false
+
+func show_finish_card() -> bool:
+	return game.state=="replay" and not instant and freeze_done and goal_at>=0 and age<=goal_at+.5 and not goal_record.is_empty()

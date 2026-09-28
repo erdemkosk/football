@@ -35,6 +35,10 @@ func run() -> void:
 	game=load("res://main.tscn").instantiate(); root.add_child(game)
 	await physics_frame
 	game.set_process(false); game.set_physics_process(false)
+	# The original dense district belongs to the modern arena.
+	var club: Dictionary=game.clubs.data(0).duplicate(true)
+	club.stadium_kind="modern"; club.stadium_owner="district-test"
+	game.stadium.select_home(club,"district-test")
 	game.elapsed=0; game.update_camera(0)
 	if DisplayServer.get_name()!="headless":
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)

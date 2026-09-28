@@ -21,6 +21,7 @@ func run() -> void:
 	game.match_menu.config_path="/tmp/sefc-presentation-depth.cfg"
 	live_match()
 	var c=game.commentary
+	c.recorded=false # This suite covers live player names in system-speech mode.
 	var name: String=String(game.players[9].display_name).capitalize()
 	game.broadcast_event("goal",{"index":9,"team":0})
 	check(not c.history.is_empty() and name in c.history.back(),"A goal is called with the scorer's name: "+str(c.history.back() if not c.history.is_empty() else ""))

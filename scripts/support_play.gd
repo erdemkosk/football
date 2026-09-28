@@ -6,6 +6,7 @@ var targets: Dictionary = {}
 var roles: Dictionary = {}
 var shape := preload("res://scripts/attack_shape.gd").new()
 var box := preload("res://scripts/box_support.gd").new()
+var movements := preload("res://scripts/attacking_runs.gd").new()
 const ONE_TWO_DISTANCE := 12.0
 const ONE_TWO_TIME := 3.0
 const PLAN_INTERVAL := .10
@@ -21,6 +22,7 @@ func reset() -> void:
 	roles.clear()
 	shape.reset()
 	box.reset()
+	movements.reset()
 	plan_age=0; plan_elapsed=0; plan_owner=-2; plan_settings.clear()
 
 func passed(passer: int,receiver: int,one_two: bool=false) -> void:
@@ -109,7 +111,7 @@ func update(delta: float) -> void:
 	for i in runs:
 		if runs[i].get("explicit",false) and game.players[i].team==team: explicit_run=true; break
 	if game.state!="playing" or owner<0 and game.ai_pass_time[team]<=0 and not explicit_run:
-		targets.clear(); roles.clear(); shape.reset(); box.reset(); plan_age=0; plan_elapsed=0; return
+		targets.clear(); roles.clear(); shape.reset(); box.reset(); movements.active.clear(); plan_age=0; plan_elapsed=0; return
 	var ball: Vector3=game.ball.position
 	var forward: float = game.attack_sign(team)
 	var line: float=game.rules.offside_line(team)-0.8
@@ -245,6 +247,8 @@ func update(delta: float) -> void:
 	box.update(game,owner,team,self)
 	shape.game=game
 	shape.update(elapsed,owner,team,self)
+	movements.game=game
+	movements.update(elapsed,owner,team,self)
 
 func return_option(holder: int) -> int:
 	for i in runs:

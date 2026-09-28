@@ -1,0 +1,22 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:1035)
+game preparation mean_us=228.368333333333
+game ai mean_us=514.274166666667
+game contact-preparation mean_us=112.035
+game body-context-observe mean_us=103.880833333333
+game players-step mean_us=1234.71166666667
+game resolve mean_us=6.31666666666667
+game contacts mean_us=47.755
+game replay-boundaries mean_us=1.725
+pose base-locomotion mean_us=10.1584425814438 calls=17773
+pose actions-footplant mean_us=9.33742193214426 calls=17773
+pose transition mean_us=2.01401001519158 calls=17773
+pose contact-dribble-gait mean_us=2.57592978112868 calls=17773
+pose dribble-context mean_us=1.46778821808361 calls=17773
+pose keeper-gaze mean_us=5.59072750801778 calls=17773
+pose face mean_us=3.62437405052608 calls=17773
+pose hands mean_us=3.5537050582344 calls=17773
+pose capture-footfalls-cloth mean_us=4.65087492263546 calls=17773
+skin_22_us=123.808333333333 batch_22_us=1.195

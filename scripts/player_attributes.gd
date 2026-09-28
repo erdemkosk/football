@@ -30,7 +30,19 @@ static func foot_quality(p,foot: int) -> float:
 static func turning(p) -> float:
 	# Technique governs a quick change of feet; balance controls the plant and
 	# agility the speed of the hips over it.
-	return multiplier(float(p.attributes.control)*.45+float(p.attributes.balance)*.25+value(p,"agility")*.30,.22)
+	return multiplier(float(p.attributes.control)*.30+float(p.attributes.balance)*.20+value(p,"agility")*.50,.32)
+
+static func forward_style(p) -> String:
+	# Match roles follow the current player's skills, including substitutions
+	# and training. No shirt number, new save field or exclusive ability gate.
+	var target: float=value(p,"strength")*.45+value(p,"balance")*.20+value(p,"heading")*.35
+	var runner: float=value(p,"pace")*.55+value(p,"acceleration")*.45
+	var poacher: float=value(p,"finishing")*.45+value(p,"positioning")*.30+value(p,"reactions")*.25
+	if target>runner and target>poacher: return "target"
+	return "runner" if runner>poacher else "poacher"
+
+static func defensive_read(p) -> float:
+	return technique(value(p,"interceptions")*.50+value(p,"positioning")*.25+value(p,"reactions")*.25)
 
 ## Detailed techniques. They derive from the stored core ratings plus a stable
 ## per-player signature, so saves need no migration and training a core rating

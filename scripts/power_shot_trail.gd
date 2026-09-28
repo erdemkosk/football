@@ -12,6 +12,8 @@ var born: Array[float] = []
 var clock := 0.0
 var remaining := 0.0
 var strength := 1.0
+var style := "power"
+var reduced_motion := false
 
 func setup(owner: Node3D) -> void:
 	ball=owner
@@ -35,8 +37,10 @@ func clear() -> void:
 	if mesh!=null: mesh.clear_surfaces()
 	if node!=null: node.hide()
 
-func begin() -> void:
+func begin(kind: String="power") -> void:
 	clear()
+	style=kind
+	node.material_override.set_shader_parameter("finesse",kind=="finesse")
 	remaining=EMIT_TIME
 	strength=lerpf(.72,1.0,clampf((ball.kick_velocity.length()-28)/18,0,1))
 	points.append(ball.global_position); born.append(clock)
@@ -70,7 +74,7 @@ func update(delta: float) -> void:
 
 func draw() -> void:
 	mesh.clear_surfaces()
-	node.visible=points.size()>=2
+	node.visible=points.size()>=2 and not reduced_motion
 	if not node.visible: return
 	var camera: Camera3D=ball.get_viewport().get_camera_3d()
 	if camera==null: node.hide(); return
@@ -82,7 +86,7 @@ func draw() -> void:
 		if side.length_squared()<.01: side=camera.global_basis.x
 		var life := clampf(1-(clock-born[i])/LIFETIME,0,1)
 		var progress := float(i)/float(points.size()-1)
-		var width := .16*strength*pow(life,.6)*smoothstep(0,.25,progress)
+		var width := (.22 if style=="power" else .20)*strength*pow(life,.6)*smoothstep(0,.25,progress)
 		# Leave the ball's front and silhouette clear at the head of the ribbon.
 		var center: Vector3=points[i]-tangent*ball.RADIUS*.7
 		mesh.surface_set_color(Color(1,1,1,life*strength))

@@ -224,8 +224,16 @@ func show_page(index: int) -> void:
 				game.commentary.enabled=v==1
 				if v==0: game.commentary.stop())
 			slider("Spiker sesi",game.commentary.volume,0,1,func(v): game.commentary.volume=v)
+			option("Anlatım sesi",["Sistem sesi","Seslendirme"],int(game.commentary.recorded),func(v):
+				game.commentary.recorded=v==1
+				game.commentary.stop())
+			option("Yorumcu diyalogları",["Kapalı","Açık"],int(game.commentary.analyst_enabled),func(v):
+				game.commentary.analyst_enabled=v==1
+				if v==0:
+					game.commentary.cancel_reply()
+					if game.commentary.current_role=="yorumcu": game.commentary.stop())
 			option("Spiker altyazısı",["Kapalı","Açık"],int(game.commentary.subtitles),func(v): game.commentary.subtitles=v==1)
-			label("Spiker, işletim sisteminin Türkçe konuşma sesini kullanır; ses kaydı indirilmez. Türkçe ses yoksa altyazıyı açabilirsin.")
+			label("Seslendirme: iki farklı Türkçe yapay sesle çevrimdışı anlatım ve yorum. Sistem sesi: oyuncu adlarını da okuyan tek sesli anlatım.")
 			label("Stadyum, alkış ve davul birbirinden bağımsız çalar. Maça döndüğünde yeni ses dengesi uygulanır.")
 		1:
 			slider("Analog hassasiyeti",game.controller.sensitivity,0.6,1.8,func(v): game.controller.sensitivity=v)
@@ -519,7 +527,7 @@ func save_settings() -> void:
 	cfg.set_value("audio","muted",game.audio.muted)
 	game.sliders.save(cfg)
 	cfg.set_value("match","players",game.humans.preferred)
-	for name in ["enabled","volume","subtitles"]: cfg.set_value("commentary",name,game.commentary.get(name))
+	for name in ["enabled","volume","subtitles","recorded","analyst_enabled"]: cfg.set_value("commentary",name,game.commentary.get(name))
 	var error := cfg.save(config_path)
 	if error!=OK: game.announce("Ayarlar bu oturumda uygulandı; diske kaydedilemedi.")
 
@@ -594,5 +602,7 @@ func load_settings() -> void:
 	game.commentary.enabled=bool(cfg.get_value("commentary","enabled",true))
 	game.commentary.volume=clampf(float(cfg.get_value("commentary","volume",1.0)),0,1)
 	game.commentary.subtitles=bool(cfg.get_value("commentary","subtitles",false))
+	game.commentary.recorded=bool(cfg.get_value("commentary","recorded",true))
+	game.commentary.analyst_enabled=bool(cfg.get_value("commentary","analyst_enabled",true))
 	display.load_config(cfg)
 	game.management.apply_formation()

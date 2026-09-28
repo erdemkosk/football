@@ -83,6 +83,7 @@ func assess(index: int,velocity: Vector3,kind: String,effort: float=-1.0,timing:
 	var tired: float=clampf((1.0-p.energy)*.6+p.match_fatigue,0,1)
 	var over: float=overhit(effort,Attributes.has_style(p,"power_shot")) if shot and not header else 0.0
 	var challenge: float=pressure*(1.25*(1.0-composure)+.25)+across*1.1+sprint*.45+first_time*.7+height*.8+weak*2.2+duel*.6+tired*.35+over*.45
+	if not shot and not header: challenge+=smoothstep(1.8,6.0,pace)*.30*(1-skill*.7)
 	if timing>1.0: challenge*=.6
 	# Spread of the launch direction in degrees: shots always carry some,
 	# ordinary short passes only when something makes the contact difficult.
@@ -108,8 +109,10 @@ func assess(index: int,velocity: Vector3,kind: String,effort: float=-1.0,timing:
 		lift_limit=lerpf(1.3,.3,skill)*(1.0+challenge*.8)*tier*scale
 		if not header: bias=pow(over,1.6)*lerpf(4.0,1.6,skill)*smoothstep(8,18,range_to_goal)*scale
 	elif lofted: lift_limit=lerpf(.9,.12,skill)*challenge*tier*scale
-	# Weight of pass: only lofted or long balls can be over- or under-hit.
-	var speed_limit: float=0.0 if shot or not (lofted or speed>20) else lerpf(.05,.01,skill)*minf(challenge,1.5)*tier*scale
+	# Weight matters on a hurried ground pass too. A good passer preserves
+	# the planned meeting pace; an awkward contact can leave a runner waiting
+	# or chasing. Clean standing passes remain exact and flight stays physical.
+	var speed_limit: float=0.0 if shot else minf(.22,lerpf(.14,.02,skill)*minf(challenge,1.5)*tier*scale*(.4+.6*smoothstep(8,22,speed)))
 	# Deterministic contact noise: the same body, ball and strike reproduce the
 	# same launch, including in tests and replays.
 	var noise := RandomNumberGenerator.new()

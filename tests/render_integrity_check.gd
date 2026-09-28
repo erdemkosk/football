@@ -49,6 +49,9 @@ func run() -> void:
 	var game=load("res://main.tscn").instantiate()
 	root.add_child(game); await physics_frame
 	game.set_physics_process(false); game.set_process(false)
+	var club: Dictionary=game.clubs.data(0).duplicate(true)
+	club.stadium_kind="modern"; club.stadium_owner="render-test"
+	game.stadium.select_home(club,"render-test")
 	var crowd=game.stadium.crowd
 	var expected: Dictionary={}
 	for fan in crowd.fans: expected[fan.transform.origin]=fan
@@ -56,7 +59,7 @@ func run() -> void:
 	var seats := 0
 	var exact := true
 	var local_bounds := true
-	for node in game.stadium.get_children():
+	for node in game.stadium.venue_root.get_children():
 		if not node is MultiMeshInstance3D: continue
 		if str(node.name).begins_with("Seats"): seats+=node.multimesh.instance_count
 		if not str(node.name).begins_with("Fans_skin_"): continue

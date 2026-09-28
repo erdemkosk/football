@@ -3,6 +3,7 @@ extends RefCounted
 ## up to the first landing or goal line. Rendering is read-only.
 const INK := Color("10272b")
 const PAPER := Color("fff5dc")
+const Identity=preload("res://scripts/match_identity_style.gd")
 
 func screen_path(hud,points: PackedVector3Array,power: float) -> PackedVector2Array:
 	var path := PackedVector2Array()
@@ -139,7 +140,8 @@ func draw_meter(hud,power: float,label: String,color: Color,warning: String="",l
 	hud.draw_set_transform(hud.game.ui.edge_offset(0,1))
 	var rect := Rect2(598,803,244,60)
 	hud.panel(Rect2(rect.position+Vector2(0,2),rect.size),Color(0,0,0,.15),8)
-	hud.panel(rect,Color("0b2026",.92),8,Color(color,.28))
+	Identity.ribbon(hud,rect,Color("0b2026",.94))
+	Identity.slashes(hud,rect.position+Vector2(5,9),Color(color,.18),38)
 	hud.draw_line(rect.position+Vector2(14,1),rect.position+Vector2(230,1),Color(color,.66),1,true)
 	var center := rect.position+Vector2(24,22)
 	if lob:

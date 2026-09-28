@@ -1,0 +1,23 @@
+ERROR: Failed to open 'user://logs/godot2026-09-28T12.14.11.log'.
+   at: copy (core/io/dir_access.cpp:429)
+ERROR: Failed to open log file for writing: user://logs/godot.log
+   at: rotate_file (core/io/logger.cpp:169)
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:1035)
+PASS: Independent jaw, nose, cheek and brow families occur across the roster
+PASS: Facial hair, eyes and personal movements have stable variety
+PASS: Each complete sculpted face uses one bounded mesh surface
+PASS: Age-band shading is independent of cache creation order
+PASS: Young and mature versions retain identity while changing face details
+PASS: All eighteen haircuts use a closed connected cap within the mesh budget
+PASS: A shirt change preserves both facial anatomy and running mannerisms
+PASS: Match goal flow selects the scorer's personal gesture
+PASS: All eight gestures animate finite hand positions without changing collision geometry
+PASS: Eyelids blink without replacing the player's inherited eye shape
+PASS: Wet skin retains a restrained highlight consistent between face and body
+PASS: Portraits carry match age and refresh when the player ages
+CHARACTER DETAIL CHECK: 12 checks, 0 failures
+WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

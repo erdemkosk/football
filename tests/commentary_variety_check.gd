@@ -35,6 +35,7 @@ func run() -> void:
 	game.match_menu.config_path="/tmp/sefc-commentary-variety.cfg"
 	live_match()
 	c=TestCommentary.new(); c.game=game; game.commentary=c
+	c.recorded=false # Exercise dynamic names and the system-speech fallback.
 	quiet_fixture()
 	var line_count := 0
 	var no_repeats := true

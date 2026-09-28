@@ -10,7 +10,7 @@ func run() -> void:
 	check(game.ai_attack.act(20) and game.ai_attack.holds.has(20),"AI chooses to protect a ball while the immediate passing outlet is marked")
 	check(game.players[20].protecting and not game.players[20].sprinting and game.players[20].facing.z>0,"Holding keeps the body between rear pressure and the ball")
 	# The receiver opens and the attacker must reassess a real passing lane.
-	player(18,Vector3(-10,0,12)); game.ai_attack.update(.7)
+	player(18,Vector3(-10,0,12)); game.ai_attack.update(.9)
 	check(not game.ai_attack.holding_action(20),"Holding has a bounded duration rather than trapping the AI in an animation")
 	check(game.ai_attack.hold_choice(20,game.ai_attack.pressure_read(20)).is_empty(),"Cooldown prevents repetitive stop-and-hold loops")
 	check(kind() in ["pass","through","driven_pass","one_two"],"The opened outlet becomes a pass after drawing pressure")

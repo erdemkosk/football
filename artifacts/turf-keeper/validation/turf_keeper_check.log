@@ -1,0 +1,50 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:1035)
+PASS: Real dry footsteps write match-long turf wear
+PASS: A stationary player cannot churn the turf each frame
+PASS: Traffic accumulates at the contacted goalmouth, not across untouched grass
+PASS: The same number of contacts leaves stronger wear in rain
+PASS: Drying preserves wear and visual scarring does not alter traction
+PASS: Old wear survives both tread lifetime and mark-pool recycling
+PASS: Long matches retain fixed mark and texture budgets
+PASS: A physical slide leaves torn sod along its actual path
+PASS: Replay poses cannot write fresh pitch damage
+PASS: Pausing freezes surface events
+PASS: A new match restores the surface memory
+RECOVERY team=0 side=-1.0 wet=0 slide=0.42166638374329 palm=0.05499386787415 grip=0.47818237543106 shoulder=0.56013166904449
+PASS: Dive landing has a short physical slide on team 0 / side -1.0
+PASS: A recovery palm reaches the turf while the torso remains above it
+PASS: The secured ball stays at the chest while the free hand braces
+PASS: The keeper completes the rise and returns to a responsive stance
+PASS: Deliberate distribution releases the new grip normally
+RECOVERY team=0 side=1.0 wet=2 slide=0.58559715747833 palm=0.05499304831028 grip=0.47085121273994 shoulder=0.56013166904449
+PASS: Dive landing has a short physical slide on team 0 / side 1.0
+PASS: A recovery palm reaches the turf while the torso remains above it
+PASS: The secured ball stays at the chest while the free hand braces
+PASS: The keeper completes the rise and returns to a responsive stance
+PASS: Deliberate distribution releases the new grip normally
+LOW RECOVERY team=0 palm=0.05145758390427 grip_gap=0.0089780157432
+PASS: A low scoop also places its recovery hand on the ground, team 0
+PASS: Both gloves return around the held ball after a low recovery
+RECOVERY team=1 side=-1.0 wet=0 slide=0.42166662216187 palm=0.05499747395515 grip=0.48522508144379 shoulder=0.53723609447479
+PASS: Dive landing has a short physical slide on team 1 / side -1.0
+PASS: A recovery palm reaches the turf while the torso remains above it
+PASS: The secured ball stays at the chest while the free hand braces
+PASS: The keeper completes the rise and returns to a responsive stance
+PASS: Deliberate distribution releases the new grip normally
+RECOVERY team=1 side=1.0 wet=2 slide=0.58559226989746 palm=0.05499941110611 grip=0.47783342003822 shoulder=0.53723609447479
+PASS: Dive landing has a short physical slide on team 1 / side 1.0
+PASS: A recovery palm reaches the turf while the torso remains above it
+PASS: The secured ball stays at the chest while the free hand braces
+PASS: The keeper completes the rise and returns to a responsive stance
+PASS: Deliberate distribution releases the new grip normally
+LOW RECOVERY team=1 palm=0.0510918200016 grip_gap=0.00908439233899
+PASS: A low scoop also places its recovery hand on the ground, team 1
+PASS: Both gloves return around the held ball after a low recovery
+PASS: A safe phase prompts a gesture toward an actual defender
+PASS: Repeated AI frames do not restart the directing gesture
+PASS: An approaching ball cancels the gesture immediately
+PASS: A whistle clears recovery and directing state
+TURF KEEPER CHECK: 39 checks, 0 failures

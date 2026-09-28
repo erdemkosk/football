@@ -14,8 +14,8 @@ func reset() -> void:
 
 func begin(value: String,point: Vector3) -> void:
 	kind=value; focus=point; age=0; weight=0
-	duration={"appeal":1.5,"captain":1.35,"miss":1.25,"sorry":0.85}.get(kind,1.0)
-	# Let the wide/over finish be seen before the hands-on-hips pose.
+	duration={"appeal":1.5,"captain":1.35,"miss":1.25,"sorry":0.85,"acknowledge":.7,"encourage":1.1}.get(kind,1.0)
+	# Let the wide/over finish be seen before the hands-on-head pose.
 	hold=1.45 if kind=="miss" and live else 0.0
 
 func available(p) -> bool:
@@ -46,10 +46,8 @@ func apply(p) -> void:
 	if kind=="" or weight<=0 or not available(p): return
 	var w := smoothstep(0,1,weight)
 	if kind=="miss":
-		p.left_arm.rotation=p.left_arm.rotation.lerp(Vector3(0.58,0.32,-1.18),w)
-		p.right_arm.rotation=p.right_arm.rotation.lerp(Vector3(0.58,-0.32,1.18),w)
-		p.left_elbow.rotation.x=lerpf(p.left_elbow.rotation.x,1.38,w)
-		p.right_elbow.rotation.x=lerpf(p.right_elbow.rotation.x,1.38,w)
+		for side in [-1,1]:
+			preload("res://scripts/arm_pose.gd").reach(p.left_arm if side<0 else p.right_arm,p.left_elbow if side<0 else p.right_elbow,Vector3(side*.17,.80,-.17),Vector3(side,.2,0),w)
 		p.spine.rotation.x=lerpf(p.spine.rotation.x,-0.22,w)
 	elif kind=="appeal":
 		p.left_arm.rotation=p.left_arm.rotation.lerp(Vector3(0.12,0.08,-2.08),w)
@@ -67,6 +65,18 @@ func apply(p) -> void:
 	elif kind=="sorry":
 		p.right_arm.rotation=p.right_arm.rotation.lerp(Vector3(0.30,0,2.4),w)
 		p.right_elbow.rotation.x=lerpf(p.right_elbow.rotation.x,0.35,w)
+	elif kind=="acknowledge":
+		var toward: Vector3=(focus-p.position)*Vector3(1,0,1)
+		var left: bool=p.rig.to_local(focus).x<0
+		var arm: Node3D=p.left_arm if left else p.right_arm
+		var target: Vector3=arm.global_position+toward.normalized()*.38+Vector3.UP*.12
+		Impact.reach_hand(p,left,target,w,true)
+	elif kind=="encourage":
+		var tap: float=.5+.5*sin(age*8)
+		var toward: Vector3=(focus-p.position)*Vector3(1,0,1)
+		var left: bool=p.rig.to_local(focus).x<0
+		var arm: Node3D=p.left_arm if left else p.right_arm
+		Impact.reach_hand(p,left,arm.global_position+toward.normalized()*.40+Vector3.UP*(.06+tap*.10),w,true)
 	else:
 		# Bring the palms together in front of the chest, then separate them.
 		var gap := 0.058+0.11*(0.5+0.5*cos(age*21))

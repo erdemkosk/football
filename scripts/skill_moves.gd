@@ -132,6 +132,7 @@ func update(delta: float) -> void:
 			p.facing=forward.rotated(Vector3.UP,-float(s.side)*PI*.44)
 			if game.is_user_player(i) and game.movement_input().length()<.1: game.last_direction=p.facing
 		game.ball.touch(velocity,impulse,vertical_touch)
+		if t>.14 and s.kind not in ["fake_shot","fake_pass"] and is_instance_valid(game.visual_identity): game.visual_identity.skill_contact(i,s)
 		p.ball_actions.control_grace=.12
 		# The planted foot and body follow the ball's exit. This is ordinary
 		# movement through the shared acceleration/collision solver, not a dash.

@@ -1,6 +1,9 @@
 uniform float crowd_time=0.0;
 uniform float danger=0.0;
 uniform float danger_team=0.0;
+uniform float section_age=-1.0;
+uniform float section_origin=0.0;
+uniform float event_origin=0.0;
 uniform float event_age=100.0;
 uniform float event_duration=0.0;
 uniform float event_strength=0.0;
@@ -37,7 +40,9 @@ void vertex(){
  float quiet=hush*step(0.5,1.0-abs(fan_team-hush_team));
  float supporting=1.0-step(0.5,abs(fan_team-event_team));
  if(event_entrance) supporting=1.0;
- float delay=INSTANCE_CUSTOM.r*0.32+INSTANCE_CUSTOM.b*0.14;
+ float section=floor(INSTANCE_CUSTOM.a*24.0)/24.0;
+ float event_distance=min(abs(section-event_origin),1.0-abs(section-event_origin));
+ float delay=INSTANCE_CUSTOM.r*0.22+INSTANCE_CUSTOM.b*0.20+event_distance*1.4;
  float age=event_age-delay;
  float envelope=0.0;
  if(event_duration>0.0){
@@ -52,6 +57,11 @@ void vertex(){
  float anticipation=danger*(0.28+0.50*with_attack);
  float home_drive=(1.0-fan_team)*surge;
  anticipation+=home_drive*(0.34+personality*0.16);
+ // Nearby blocks stand first; the reaction travels into neighbouring sections.
+ float section_distance=min(abs(section-section_origin),1.0-abs(section-section_origin));
+ float section_delay=section_distance*2.4+INSTANCE_CUSTOM.b*.45+INSTANCE_CUSTOM.r*.10;
+ float section_rise=smoothstep(section_delay,section_delay+.55,section_age);
+ anticipation*=section_age<0.0 ? .25 : section_rise;
  // A single crest travels around the stadium, with rows following each other.
  float distance=fract(INSTANCE_CUSTOM.a-wave_origin+1.0);
  float passage=wave_age-distance*7.2-INSTANCE_CUSTOM.b*0.20;
@@ -74,6 +84,7 @@ void vertex(){
  anticipation*=1.0-quiet*0.8;
  // Home attacks lift the whole terrace, not only the stand nearest the ball.
  float home_lift=home_drive*(0.52+personality*0.30)*(1.0-INSTANCE_CUSTOM.b*0.16);
+ home_lift*=section_age<0.0 ? .25 : section_rise;
  float ball_az=fract(atan(ball_focus.z/60.0,ball_focus.x/45.0)/6.2831853);
  float around=min(abs(INSTANCE_CUSTOM.a-ball_az),1.0-abs(INSTANCE_CUSTOM.a-ball_az));
  float near_stand=smoothstep(0.22,0.04,around)*(1.0-INSTANCE_CUSTOM.b*0.42);
@@ -82,7 +93,27 @@ void vertex(){
  float local_stand=track*near_stand;
  float local_sit=track*far_stand*0.42;
  float raise=clamp(max(wave,max(chant,max(cheer,max(anticipation,max(local_stand,home_lift))))),0.0,1.0);
+ float regret=event_style==3 ? envelope*supporting : 0.0;
+ raise=max(raise,regret*.84);
  if(!supporter_prop) VERTEX+=vec3(UV,UV2.x)*raise;
+ if(!supporter_prop) {
+  float shape=UV2.y;
+  float build=fract(INSTANCE_CUSTOM.r*31.73+INSTANCE_CUSTOM.g*9.13);
+  if(shape>.5 && shape<2.5) {
+   // Head width varies independently of shoulder width and adult height.
+   VERTEX.x*=mix(.88,1.12,build);
+   NORMAL.x/=mix(.88,1.12,build);
+   if(shape>1.5) {
+    float fringe=step(.76,build)*smoothstep(-.03,.08,VERTEX.z);
+    VERTEX.y-=fringe*.075;
+   }
+  } else if(shape>2.5) {
+   float jacket=mix(.90,1.10,build);
+   VERTEX.z*=jacket;
+   NORMAL.z/=jacket;
+  }
+  NORMAL=normalize(NORMAL);
+ }
  float weight=smoothstep(0.18,1.5,VERTEX.y);
  float sway=sin(crowd_time*(0.7+INSTANCE_CUSTOM.r*0.55)+phase);
  // Each person's weight shift has its own tempo, independent of group chants.
@@ -112,7 +143,10 @@ void vertex(){
   VERTEX.z-=envelope*0.08*weight;
  }
  if(event_style==3){
-  float regret=envelope*supporting;
+  // Raised hands close toward the temples while shoulders sag after the miss.
+  float disappointed_hands=smoothstep(1.38,1.95,VERTEX.y)*smoothstep(.12,.24,abs(VERTEX.x));
+  VERTEX.x=mix(VERTEX.x,sign(VERTEX.x)*.16,regret*disappointed_hands);
+  VERTEX.y-=regret*disappointed_hands*.23;
   VERTEX.z-=regret*0.18*weight;
   VERTEX.y-=regret*0.16*weight;
  }

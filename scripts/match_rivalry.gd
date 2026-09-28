@@ -10,13 +10,9 @@ func preview(clubs) -> Dictionary:
 
 func begin(game,practice: bool,background: bool) -> void:
 	info=preview(game.clubs); active=not info.is_empty() and not practice and not background
-	home_team=0
-	if game.career.in_match and not practice and not background:
-		for f in game.career.cups.all_fixtures():
-			if f.id==game.career.fixture_id:
-				home_team=0 if f.home==game.clubs.match_id(0) else 1
-				break
+	home_team=0 if practice or background else host_side(game)
 	var home: Dictionary=game.clubs.data(home_team); var away: Dictionary=game.clubs.data(1-home_team)
+	game.stadium.select_home(home,game.clubs.match_id(home_team),practice)
 	profiles=[Rivals.supporters(game.clubs.match_id(home_team),home),Rivals.supporters(game.clubs.match_id(1-home_team),away)]
 	var heat: float=float(info.get("heat",0)) if active else 0.0
 	game.audio.derby_heat=heat; game.audio.home_team=home_team
@@ -31,3 +27,10 @@ func begin(game,practice: bool,background: bool) -> void:
 
 func caption() -> String:
 	return str(info.get("title","")) if active else ""
+
+func host_side(game) -> int:
+	if game.career.in_match:
+		for fixture in game.career.cups.all_fixtures():
+			if fixture.id==game.career.fixture_id:
+				return 0 if fixture.home==game.clubs.match_id(0) else 1
+	return 0

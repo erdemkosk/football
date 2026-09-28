@@ -1,0 +1,13 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:1035)
+PASS: The model has no extra strip of leg surface on its centre plane
+PASS: Neck, torso, both arms and both legs form one welded body
+PASS: All body surfaces retain finite normals and normalized weights in the shared 15-bone budget
+PASS: Skin/shorts/sock seams use identical bindings and cannot split while bending
+PASS: Cloth-covered skin stays masked while neck, wrists and bare knees remain opaque
+SKIN maximum deformed edge=0.18845593929291
+PASS: Running and either-foot shots keep normalized, finite skin without wrist/thigh or calf/calf bridges
+PASS: Bare arms and knees share one skin material
+PLAYER SKIN BINDING CHECK: 7 checks, 0 failures

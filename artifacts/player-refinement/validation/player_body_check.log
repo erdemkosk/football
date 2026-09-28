@@ -1,0 +1,31 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+Metal 4.0 - Forward Mobile - Using Device #0: Apple - Apple M4 Pro (Apple9)
+
+PASS: torso: finite smooth normals, closed seams and outward triangles
+PASS: torso: shared geometry within the per-part triangle budget
+PASS: pelvis: finite smooth normals, closed seams and outward triangles
+PASS: pelvis: shared geometry within the per-part triangle budget
+PASS: shorts: finite smooth normals, closed seams and outward triangles
+PASS: shorts: shared geometry within the per-part triangle budget
+PASS: thigh: finite smooth normals, closed seams and outward triangles
+PASS: thigh: shared geometry within the per-part triangle budget
+PASS: knee: finite smooth normals, closed seams and outward triangles
+PASS: knee: shared geometry within the per-part triangle budget
+PASS: calf: finite smooth normals, closed seams and outward triangles
+PASS: calf: shared geometry within the per-part triangle budget
+PASS: sleeve: finite smooth normals, closed seams and outward triangles
+PASS: sleeve: shared geometry within the per-part triangle budget
+PASS: upper_arm: finite smooth normals, closed seams and outward triangles
+PASS: upper_arm: shared geometry within the per-part triangle budget
+PASS: forearm: finite smooth normals, closed seams and outward triangles
+PASS: forearm: shared geometry within the per-part triangle budget
+PASS: neck: finite smooth normals, closed seams and outward triangles
+PASS: neck: shared geometry within the per-part triangle budget
+PASS: Adult head/body proportions preserve roster height: 166 cm
+PASS: Header contact remains inside the resized head
+PASS: Adult head/body proportions preserve roster height: 180 cm
+PASS: Header contact remains inside the resized head
+PASS: Adult head/body proportions preserve roster height: 199 cm
+PASS: Header contact remains inside the resized head
+PASS: Visible palm retains an articulated save/ball attachment anchor
+PLAYER BODY CHECK: 27 checks, 0 failures

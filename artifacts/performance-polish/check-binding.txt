@@ -1,0 +1,9 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:1035)
+PASS: The model has no extra strip of leg surface on its centre plane
+SKIN maximum deformed edge=0.23506386578083
+PASS: Running and either-foot shots keep normalized, finite skin without wrist/thigh or calf/calf bridges
+PASS: Bare arms and knees share one skin material
+PLAYER SKIN BINDING CHECK: 3 checks, 0 failures

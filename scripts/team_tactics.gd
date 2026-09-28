@@ -21,6 +21,8 @@ var counter_time := [0.0,0.0]
 var score_fixture := ""
 var aggregate_offset := [0,0]
 var held_keeper := -1
+var flight_age := 0.0
+var flight_kicker := -1
 
 func reset() -> void:
 	targets.clear(); roles.clear(); pressers=[-1,-1]; age=0; last_opponent_plan=-1
@@ -29,6 +31,20 @@ func reset() -> void:
 	clear_transition()
 	score_fixture=""; aggregate_offset=[0,0]
 	held_keeper=-1
+	flight_age=0; flight_kicker=-1
+
+func read_ready(index: int) -> bool:
+	var p=game.players[index]
+	return flight_age>=lerpf(.24,.045,p.Attributes.defensive_read(p))
+
+func observe_flight(delta: float) -> void:
+	# One shared observation per simulation tick, including spectator and
+	# multiplayer matches. A queued kick is not information about its flight.
+	if game.state!="playing" or game.dribbler>=0 or game.ball.held_by!=null or game.ball.pending_kick or game.ball.linear_velocity.length()<3:
+		flight_age=0; flight_kicker=-1
+	else:
+		if flight_kicker!=game.last_kicker: flight_age=0; flight_kicker=game.last_kicker
+		flight_age+=delta
 
 func clear_transition() -> void:
 	possession_team=-1; counter_time=[0.0,0.0]
@@ -81,6 +97,7 @@ func press_level(team: int) -> int:
 	return intent+1 if intent!=0 else game.management.pressing
 
 func update(delta: float) -> void:
+	observe_flight(delta)
 	if game.state=="playing" and game.ball.held_by!=null:
 		keeper_shape(game.ball.held_by)
 		return
@@ -117,7 +134,7 @@ func update(delta: float) -> void:
 		return
 	var defending_team: int=1-game.players[owner].team
 	age=(game.management.pick([.48,.32,.22],.17) if defending_team==1 else .28)*lerpf(1.30,.74,game.management.identity.team_quality(defending_team,true))
-	var previous_presser: int=pressers[1]
+	var previous_presser: int=pressers[defending_team]
 	targets.clear(); roles.clear(); pressers=[-1,-1]
 	observed_owner=-1
 	for team in range(2): plans[team]=plan_for(team)
@@ -182,13 +199,11 @@ func update(delta: float) -> void:
 	var hold_gap: float=challenge_gap if observed_velocity.length()<4.5 else (1.35 if in_box else 1.12)
 	targets[presser]=ball+goal_side*(.65 if exposed else hold_gap)
 	var press_gap: float=game.flat_distance(game.players[presser].position,ball)
-	if team==1:
-		# The opponent reads the carrier's visible travel with level-scaled
-		# sharpness; the user's side usually presses with the human anyway.
-		var anticipation: float=game.management.pick([.10,.24,.34],.05,.40)*clampf(press_gap/4,.5,1.5)*lerpf(.70,1.22,game.management.identity.quality(presser,true))
-		# Read visible travel, never the human's pending input. Meet the running
-		# lane from the goal side instead of following yesterday's ball position.
-		targets[presser]+=observed_velocity*anticipation
+	var marker=game.players[presser]
+	var anticipation: float=(game.management.pick([.10,.24,.34],.05,.40) if team==1 else .24)*clampf(press_gap/4,.5,1.5)*lerpf(.45,1.35,marker.Attributes.defensive_read(marker))
+	# Both sides anticipate visible movement according to the individual
+	# defender's reading, without looking at a queued pass or human input.
+	targets[presser]+=observed_velocity*anticipation
 	roles[presser]="press"
 	var covering := -1
 	var cover_cost := INF
@@ -214,12 +229,13 @@ func update(delta: float) -> void:
 			# A narrow low block concedes a harmless wide outlet instead of
 			# dragging its midfield away from the central route to goal.
 			if compact_block and absf(q.position.x)>18 and q.position.z*forward> -30: continue
-			var screen: Vector3=ball.lerp(q.position,.72)
+			var screen: Vector3=screen_point(i,j,ball)
 			var gap: float=game.flat_distance(targets[i],screen)
 			if gap<best: best=gap; choice=j
 		if choice>=0:
 			assigned.append(choice)
-			targets[i]=targets[i].lerp(ball.lerp(game.players[choice].position,.72),.65)
+			var reader=game.players[i]
+			targets[i]=targets[i].lerp(screen_point(i,choice,ball),lerpf(.38,.82,reader.Attributes.defensive_read(reader)))
 			roles[i]="screen"
 	defensive_duties(team,owner,presser,covering,trigger,in_box)
 	spread_cover(ball,in_box,presser)
@@ -227,6 +243,13 @@ func update(delta: float) -> void:
 	for i in targets:
 		targets[i].x=clampf(targets[i].x,-(P.HALF_WIDTH-1),(P.HALF_WIDTH-1))
 		targets[i].z=clampf(targets[i].z,-48,48)
+
+func screen_point(index: int,receiver: int,ball: Vector3) -> Vector3:
+	var p=game.players[index]
+	var q=game.players[receiver]
+	var reading: float=p.Attributes.defensive_read(p)
+	var motion: Vector3=(q.velocity*Vector3(1,0,1)).limit_length(10.4)
+	return ball.lerp(q.position+motion*lerpf(.03,.48,reading),.72)
 
 func keeper_target(index: int,keeper) -> Vector3:
 	var p=game.players[index]
@@ -337,18 +360,26 @@ func defensive_movement(index: int,target: Vector3) -> Vector3:
 	p.sprinting=(p.sprinting or chasing or covering) and not hold_distance and p.energy>.3 and not p.exhausted
 	p.jockeying=mark and gap<3.4 and not p.sprinting
 	if p.jockeying: p.facing=((observed_ball-p.position)*Vector3(1,0,1)).normalized()
+	var beside := Vector3.INF
+	if duty in ["press","contain"] and observed_owner==game.dribbler:
+		beside=game.duels.pressure_target(index,observed_owner)
+		if beside.is_finite(): target=beside
 	# Match the runner's velocity while holding the blocking position. Pure
 	# arrival steering slows to a walk precisely when the attacker runs past.
 	var offset: Vector3=(target-p.position)*Vector3(1,0,1)
 	if mark:
 		# At arm's length, follow the visible ball between tactical scans. This
 		# does not read the carrier's input or remove a committed runner's turn.
-		if gap<2.4 and speed<4.5:
+		if not beside.is_finite() and gap<2.4 and speed<4.5:
 			offset+=(game.ball.position-observed_ball)*Vector3(1,0,1)
 			if p.jockeying: p.facing=((game.ball.position-p.position)*Vector3(1,0,1)).normalized()
-		offset+=observed_velocity*minf(observation_age,.26)
-		var tracking: Vector3=observed_velocity+offset*4.2
+		if not beside.is_finite(): offset+=observed_velocity*minf(observation_age,.26)
+		var follow: Vector3=game.players[observed_owner].velocity*Vector3(1,0,1) if beside.is_finite() else observed_velocity
+		var tracking: Vector3=follow+offset*4.2
 		var pace: float=10.4 if p.sprinting else 6.2
+		# Beside a carrier, match his real travel at this player's available
+		# pace. Dividing by the unscaled run speed makes the marker drift away.
+		if beside.is_finite(): pace=maxf(1,p.movement_speed())
 		var movement := (tracking/pace).limit_length(1)
 		# A committed running defender must plant before reversing. Standing
 		# jockeys remain responsive; no skill button grants a stun or immunity.
@@ -434,7 +465,8 @@ func defensive_duties(team: int,owner: int,presser: int,covering: int,trigger: b
 		if runner>=0 and (sharp>0 or in_box):
 			assigned.append(runner)
 			var q=game.players[runner]
-			var target: Vector3=q.position+q.velocity*lead+Vector3(0,0,-forward*1.3)
+			var defender=game.players[i]
+			var target: Vector3=q.position+q.velocity*lead*lerpf(.45,1.35,defender.Attributes.defensive_read(defender))+Vector3(0,0,-forward*1.3)
 			targets[i]=Vector3(clampf(target.x,-(P.HALF_WIDTH-4),(P.HALF_WIDTH-4)),0,forward*clampf(target.z*forward,-47,15))
 			roles[i]="recover" if game.players[i].position.z*forward>target.z*forward+2 else "track"
 	# Only the opponent learns the user's favourite wing.

@@ -1,0 +1,25 @@
+ERROR: Failed to open 'user://logs/godot2026-09-28T15.37.52.log'.
+   at: copy (core/io/dir_access.cpp:429)
+ERROR: Failed to open log file for writing: user://logs/godot.log
+   at: rotate_file (core/io/logger.cpp:169)
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+ERROR: Condition "ret != noErr" is true. Returning: ""
+   at: get_system_ca_certificates (platform/macos/os_macos.mm:1035)
+PASS: Players use ten distinct natural skin tones
+PASS: Five eye shapes have mirrored, anatomically consistent left and right forms
+PASS: All twelve boot colourways appear across player identities
+PASS: Appearance changes preserve body proportions, football attributes, boot contact geometry and collision
+PASS: Boot accents share twelve cached meshes with one surface each and no extra draw calls
+PASS: Changing shirt, nationality metadata and strip preserves the same person and boots
+PASS: Cosmetic identity is independent of nationality labels
+PASS: Eye tracking and animation reset retain the player's eye shape
+PASS: A substitute brings his own skin, eye shape and boots into the pitch model
+PASS: Undoing a lineup swap restores the full original appearance
+PASS: The generated tactics portrait uses exactly the same appearance as the match actor
+PASS: Existing appearance IDs reproduce the same face and boots after a career save/reload
+PASS: New academy players receive the same appearance variety automatically
+PASS: Referees retain neutral black boots
+PLAYER APPEARANCE CHECK: 14 checks, 0 failures
+WARNING: 4 ObjectDB instances were leaked at exit (run with `--verbose` for details).
+   at: cleanup (core/object/object.cpp:2536)

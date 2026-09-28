@@ -1156,7 +1156,9 @@ func draw_comparison() -> void:
 func draw_match_brief() -> void:
 	var club: Dictionary=game.clubs.data(0)
 	SelectionArt.fitted(self,club.name.to_upper(),Vector2(978,207),27,398)
-	text("MAÇ GÜNÜ  /  SEFC ARENA",Vector2(980,234),11,SelectionArt.MUTE)
+	var host: int=game.clubs.rivalry.host_side(game)
+	var venue:=preload("res://scripts/stadium_catalog.gd").assignment(game.clubs.data(host),game.clubs.match_id(host))
+	SelectionArt.fitted(self,venue.name,Vector2(980,234),12,390,SelectionArt.MUTE)
 	for i in range(5): draw_arc(Vector2(1176,344),94+i*9,-PI*.9,PI*.6,56,Color(SelectionArt.MINT,.10-i*.014),1,true)
 	badge(Vector2(1176,338),club,2.3)
 	badge(Vector2(1002,455),game.clubs.data(1),.63)
