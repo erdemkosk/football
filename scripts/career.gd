@@ -83,6 +83,7 @@ func valid(w) -> bool:
 	for key in ["clubs","players","fixtures","table","news","date","year","user","rng","offers","ledger","history","scorers","results","deals","next_player","pending_fixture","season_done"]:
 		if not w.has(key): return false
 	if not w.clubs.has(w.user) or not w.clubs.size() in [36,48,92,World.CLUB_COUNT]: return false
+	if not World.Equipment.valid(w): return false
 	if not World.Rankings.valid(w): return false
 	if not training.valid(w): return false
 	if not offers.valid(w): return false
@@ -268,6 +269,7 @@ func advance_one() -> String:
 	training.daily()
 	terms.daily()
 	for p in world.players.values(): p.fitness=minf(1,p.fitness+.055)
+	World.Equipment.recover(world)
 	var date:=World.calendar(world.date)
 	if date.day==1:
 		contracts.review_retirements()
@@ -277,6 +279,7 @@ func advance_one() -> String:
 			transaction(id,-wages,"Aylık oyuncu maaşları")
 			if world.clubs[id].cash<0:
 				for pid in world.clubs[id].roster: player(pid).morale=maxf(.15,player(pid).morale-.08)
+		World.Equipment.salary(world,"%d-%d" % [date.year,date.month])
 		news("AYLIK HESAP",money(payroll(world.user))+" maaş ödendi. Kasa: "+money(club().cash),"finance")
 		if date.month in [7,1]: news("TRANSFER DÖNEMİ AÇILDI","Kulüpler yeni oyuncularını kaydedebilir. Son gün: bu ayın sonu." if date.month==1 else "Yaz transfer dönemi ağustos sonuna kadar açık.","transfer")
 		if date.month in [9,2]: news("TRANSFER DÖNEMİ KAPANDI","Kulüpler mevcut kadrolarıyla sezona devam ediyor.","transfer")
@@ -363,7 +366,7 @@ func apply_result(f: Dictionary,result: Array,scorers: Dictionary={},played: boo
 				if attackers.is_empty(): break
 				var pid: String=attackers[rng.randi_range(0,attackers.size()-1)]
 				player(pid).goals+=1; add_scorer(f,pid,1)
-		director.match_progress(id,eleven,gf>ga,match_minutes if played else {})
+		director.match_progress(id,eleven,gf>ga,match_minutes if played else {},f.id)
 		if side==0: transaction(id,int(45000+world.clubs[id].reputation*1200),"Maç günü hasılatı")
 	for pid in scorers:
 		if world.players.has(pid): player(pid).goals+=int(scorers[pid]); add_scorer(f,pid,int(scorers[pid]))
@@ -691,6 +694,7 @@ func next_season() -> bool:
 		c.lineup=selection(c.id); c.reputation=roundi(strength(c.id)); c.budget=maxi(c.budget,int(maxi(0,c.cash-payroll(c.id)*3)*.65))
 		transaction(c.id,int(c.reputation*1900),"Aylık sponsor geliri")
 		transaction(c.id,-payroll(c.id),"Aylık oyuncu maaşları")
+	World.Equipment.salary(world,"%d-7" % world.year)
 	World.fixtures(world)
 	cups.start(world,qualified,super_pair,overseas)
 	World.Rankings.rollover(world)
@@ -750,6 +754,7 @@ func prepare_match() -> bool:
 		for pid in chosen:
 			var identity: Dictionary=player(pid).duplicate(true)
 			for stat in ["control","passing","finishing","positioning"]: identity.attributes[stat]=clampi(roundi(identity.attributes[stat]+(identity.morale-.7)*4),35,95)
+			World.Equipment.apply(world,identity)
 			game.clubs.career_rosters[side].append(identity)
 		game.clubs.lineups[side]=range(11); game.clubs.reserves[side]=range(11,18)
 		game.clubs.alternate[side]=false

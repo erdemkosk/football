@@ -29,6 +29,7 @@ func begin() -> void:
 	position_time=0; good_position=0; previous_owner=-1; sample=0
 	for i in range(11):
 		if game.players[i].career_id==legend.data().player: index=i; break
+	for p in game.players: Progress.World.Equipment.present(legend.career.world,p)
 	enforce_control()
 
 func enforce_control() -> void:
@@ -39,6 +40,7 @@ func enforce_control() -> void:
 
 func entered_player(p) -> void:
 	if not legend.match_active() or p.career_id!=legend.data().player: return
+	Progress.World.Equipment.present(legend.career.world,p)
 	index=game.players.find(p); entered=game.match_time
 	enforce_control()
 	game.announce("OYUNDASIN · "+Progress.POSITIONS[int(legend.data().position)]+" · S ile pas iste")

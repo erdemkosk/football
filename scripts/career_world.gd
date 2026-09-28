@@ -7,6 +7,7 @@ const Turkey = preload("res://scripts/career_turkey.gd")
 const Talent = preload("res://scripts/player_talent.gd")
 const SEFC = preload("res://scripts/sefc_identity.gd")
 const Rivalries = preload("res://scripts/rivalries.gd")
+const Equipment = preload("res://scripts/legend_equipment.gd")
 const Rankings = preload("res://scripts/career_rankings.gd")
 const VERSION:=5
 const CLUB_COUNT:=110
@@ -78,6 +79,7 @@ static func upgrade(w: Dictionary) -> void:
 		p.potential=maxi(int(p.potential),ovr(p))
 	Rivalries.ensure(w)
 	Rankings.ensure(w)
+	Equipment.ensure(w)
 	w.version=VERSION
 
 static func create(year: int=2026) -> Dictionary:

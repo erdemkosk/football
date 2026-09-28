@@ -32,6 +32,8 @@ static func valid(w: Dictionary) -> bool:
 	if not d.positions.has(str(int(d.primary))) or not d.positions.has(str(int(d.position))): return false
 	if d.positions.size()>3 or d.positions[str(int(d.primary))]!=100: return false
 	if d.learning>=0 and (not d.positions.has(str(int(d.learning))) or d.positions[str(int(d.learning))]>=100): return false
+	for key in ["last_offer_day","transfer_day"]:
+		if d.has(key) and (not d[key] is int or d[key]<0): return false
 	if not d.last.is_empty():
 		for key in ["rating","minutes","trust_change","xp"]:
 			if not d.last.has(key) or not (d.last[key] is int or d.last[key] is float) or not is_finite(float(d.last[key])): return false

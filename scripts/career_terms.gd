@@ -75,7 +75,9 @@ func result_bonuses(f: Dictionary) -> void:
 			var previous: int=p.get("paid_goals",0)
 			amount+=maxi(0,int(p.goals)-previous)*int(p.terms.goal)
 			p.paid_goals=p.goals
-			if amount>0: c.transaction(id,-amount,"Performans primi: "+p.name)
+			if amount>0:
+				c.transaction(id,-amount,"Performans primi: "+p.name)
+				if f.has("id"): World.Equipment.credit(c.world,pid,"performance:"+str(f.id),amount,"Performans primi")
 
 func daily() -> void:
 	var c=career; var d: Dictionary=c.deal

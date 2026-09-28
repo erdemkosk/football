@@ -60,7 +60,9 @@ func run() -> void:
 	p=l.player()
 	for key in World.Talent.STATS: p.attributes[key]=67
 	l.data().games=12; l.data().minutes=650; l.data().form=7.6
-	for n in range(3): c.world.date+=7; c.offers.week()
+	for n in range(6):
+		c.world.date+=7; c.offers.week()
+		if not c.offers.active(true).is_empty(): break
 	var entries: Array=c.offers.active(true)
 	check(not entries.is_empty(),"A developed player's offers appear in the personal inbox")
 	if entries.is_empty(): game.free(); quit(1); return

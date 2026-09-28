@@ -20,6 +20,7 @@ var portrait: Dictionary={}
 var selected_drill:="passing"
 var learn_position:=5
 var transfer_ui:=preload("res://scripts/transfer_offer_screen.gd").new()
+var shop_ui:=preload("res://scripts/legend_shop_screen.gd").new()
 var rankings_ui:=preload("res://scripts/world_rankings_screen.gd").new()
 
 func _ready() -> void:
@@ -102,9 +103,9 @@ func build() -> void:
 			button(Rect2(75+i*458,580,370,48),"YENİ EFSANE",choose.bind(i+1))
 	elif page=="create": build_create()
 	else:
-		var labels:=["FUTBOLCUM","ANTRENMAN","MEVKİLER","LİG & FİKSTÜR","TEKLİFLER (%d)" % game.career.offers.active(true).size()]
-		var pages:=["hub","training","positions","league","transfers"]
-		for i in range(pages.size()): button(Rect2(52+i*270,216,254,43),labels[i],go.bind(pages[i]),page==pages[i])
+		var labels:=["FUTBOLCUM","ANTRENMAN","MEVKİLER","LİG & FİKSTÜR","TEKLİFLER (%d)" % game.career.offers.active(true).size(),"EKİPMAN & CÜZDAN"]
+		var pages:=["hub","training","positions","league","transfers","equipment"]
+		for i in range(pages.size()): button(Rect2(52+i*226,216,214,43),labels[i],go.bind(pages[i]),page==pages[i])
 		match page:
 			"hub": build_hub()
 			"training": build_training()
@@ -112,6 +113,7 @@ func build() -> void:
 			"league": button(Rect2(796,761,600,42),"DÜNYA SIRALAMASI  ·  KULÜPLER & LİGLER",go.bind("world"))
 			"world": rankings_ui.build(self,true)
 			"transfers": transfer_ui.build(self,true)
+			"equipment": shop_ui.build(self)
 	button(Rect2(52,823,260,46),"← ANA MENÜ" if page in ["entry","hub"] else "← GERİ",close if page in ["entry","hub"] else go.bind("entry" if page=="create" else "league" if page=="world" else "hub"))
 	if game.legend.active() and page!="create": button(Rect2(1130,823,266,46),"KAYDET",save_game)
 	var items: Array=controls.get_children().filter(func(child): return child is LineEdit or (child is BaseButton and not child.disabled))
@@ -205,7 +207,7 @@ func paragraph(value: String,at: Vector2,width: float,size: int=16,color: Color=
 
 func _draw() -> void:
 	if not visible: return
-	var titles:={"entry":"BİR EFSANE DOĞUYOR","create":"SAHADAKİ HİKÂYENİ YARAT","hub":"FUTBOLCUM","training":"HER ÇALIŞMA BİR ADIM","positions":"OYUNUNU GENİŞLET","league":"SEZONUN HİKÂYESİ","world":"DÜNYA SIRALAMASI","transfers":"KARİYERİNİN SONRAKİ ADIMI"}
+	var titles:={"entry":"BİR EFSANE DOĞUYOR","create":"SAHADAKİ HİKÂYENİ YARAT","hub":"FUTBOLCUM","training":"HER ÇALIŞMA BİR ADIM","positions":"OYUNUNU GENİŞLET","league":"SEZONUN HİKÂYESİ","world":"DÜNYA SIRALAMASI","equipment":"KAZANDIĞINLA GÜÇLEN","transfers":"KARİYERİNİN SONRAKİ ADIMI"}
 	var subtitle:="Tek oyuncu. İlk sözleşmeden ilk 11'e. Kendi emeğinle yüksel."
 	if game.legend.active() and page!="create": subtitle=game.career.club().name+" · "+World.date_label(int(game.career.world.date))+" · DÜNYA #%d" % int(game.career.world.rankings.clubs[game.career.world.user].rank)
 	backdrop(titles.get(page,"EFSANE"),subtitle,"E F S A N E   M O D U")
@@ -218,6 +220,7 @@ func _draw() -> void:
 		"league": draw_league()
 		"world": rankings_ui.draw(self)
 		"transfers": transfer_ui.draw(self)
+		"equipment": shop_ui.draw(self)
 	if not game.legend.status.is_empty(): fit(game.legend.status,Vector2(330,850),765,14,GOLD)
 
 func draw_entry() -> void:
@@ -280,7 +283,8 @@ func draw_hub() -> void:
 		text("%.1f NOT · %d DAKİKA" % [d.last.rating,d.last.minutes],Vector2(980,588),23,PAPER,true)
 		text("Güven %+.1f · +%d gelişim puanı" % [d.last.trust_change,roundi(d.last.xp)],Vector2(980,624),16,GOLD)
 		text("Pas %d/%d · Top kaybı %d" % [d.last.get("completed",0),d.last.get("passes",0),d.last.get("losses",0)],Vector2(980,657),15)
-	text("Antrenmanla yeteneğini artır; maç katkınla süre kazan.",Vector2(490,720),15,MUTE)
+	World.Equipment.ensure(c.world)
+	fit("CÜZDAN "+c.money(d.equipment.balance)+" · MAAŞ "+c.money(p.wage)+" / ay · MAÇ PRİMİ "+c.money(int(p.terms.appearance)),Vector2(490,720),872,14,GOLD)
 
 func draw_training() -> void:
 	var d: Dictionary=game.legend.data()

@@ -42,6 +42,8 @@ func create(club: String,slot: int,config: Dictionary,settings: Dictionary={}) -
 	career.director.player_fields(p)
 	career.world.players[p.id]=p; career.club().roster.append(p.id); career.assign_shirt(p.id)
 	career.world.legend=Progress.create_data(p.id,position,int(career.world.date))
+	World.Equipment.ensure(career.world)
+	p.terms.appearance=150
 	career.world.news.clear()
 	career.news("İLK İMZA",p.name+" · "+career.club().name+". Önce yedek kulübesi; forma için çalış.","club")
 	game.career=career; coach_selection()
@@ -90,7 +92,10 @@ func play() -> bool:
 
 func advance() -> void:
 	if not active() or player().get("retired",false): return
+	var previous: Array=career.offers.active(true).duplicate()
 	status=career.advance_to_event()
+	for offer in career.offers.active(true):
+		if offer not in previous: status=career.world.clubs[offer.buyer].name+" seni istiyor. Teklifler bölümünü aç."; break
 	Progress.refresh_week(data(),int(career.world.date))
 	coach_selection(); career.save()
 
@@ -103,7 +108,9 @@ func train(mode: String) -> bool:
 	career.training.active={"legend":true,"player":player().id,"drill":mode,"week":data().week,"save":career.slot}
 	game.legend_screen.hide(); game.legend_screen.clear_controls(); game.camera.cull_mask=game.legend_screen.world_mask
 	game.audio.set_process(true); game.start_match(true,false,false,mode)
-	game.players[9].apply_identity(player().duplicate(true)); game.players[9].apply_kit(World.kit(career.club()))
+	var identity: Dictionary=player().duplicate(true); World.Equipment.apply(career.world,identity)
+	game.players[9].apply_identity(identity); game.players[9].apply_kit(World.kit(career.club()))
+	World.Equipment.present(career.world,game.players[9])
 	return true
 
 func training_skills(mode: String) -> Array:
@@ -137,7 +144,7 @@ func prefer(position: int) -> bool:
 
 func finish_match() -> void:
 	if not active(): return
-	var row:=live.result()
+	var row:=live.result(); row.day=career.world.date
 	Progress.match_result(data(),player(),career.fixture_id,row,bool(selection.get("starter",false)))
 	coach_selection()
 

@@ -1,5 +1,6 @@
 extends RefCounted
 ## Quotes and negotiation rounds live in the save, never in a UI-only counter.
+const PERSONAL_INTERVAL:=21
 const World=preload("res://scripts/career_world.gd")
 var ref: WeakRef
 var career:
@@ -65,12 +66,16 @@ func add(pid: String,buyer: String,fee: int,wage: int,role: int,personal: bool=f
 	var o:={"player":pid,"seller":p.club,"buyer":buyer,"fee":fee,"wage":wage,"role":role,"years":3,"signing":0,"created":c.world.date,"expires":c.world.date+7,"closed":false,"expired":false,"rounds":0,"history":[],"response":"Teklifimizi değerlendirebilirsiniz.","kind":"personal" if personal else "sale"}
 	o.ceiling=mini(capacity(buyer,wage),maxi(fee,roundi(c.market.asking_price(p)*(1.06+clampf((World.ovr(p)-competition(pid,buyer))*.01,0,.08))/10000)*10000))
 	if personal:
+		var date:=World.calendar(c.world.date)
+		o.expires=mini(int(c.world.date)+10,World.day(date.year,1 if date.month==1 else 8,31))
+		o.reason="%d maç · %.1f form · %s için izleniyorsun." % [c.world.legend.games,c.world.legend.form,"İlk 11" if role==2 else "Rotasyon"]
 		o.max_wage=ceili(minf(wage*1.3,World.wage(p)*1.9)/500.0)*500
 		o.max_role=2 if World.ovr(p)>=competition(pid,buyer)-3 else 1 if World.ovr(p)>=competition(pid,buyer)-7 else 0
 		o.signing=wage; o.max_bonus=wage*3
 		o.response="Kulüpler bonserviste anlaştı. Maaş, süre ve beklenen rolü görüşebiliriz."
 		if capacity(buyer,wage)<fee+int(o.signing): return {}
 	o.history.append({"day":c.world.date,"text":"İlk teklif · "+c.money(wage)+" / ay" if personal else "İlk teklif · "+c.money(fee)})
+	if personal: c.world.legend.last_offer_day=c.world.date
 	c.world.offers.push_front(o)
 	c.news("SANA TRANSFER TEKLİFİ" if personal else "TRANSFER TEKLİFİ",c.world.clubs[buyer].name+", "+p.name+" için "+c.money(fee)+" önerdi.","transfer")
 	return o
@@ -131,7 +136,12 @@ func week() -> void:
 func personal_week() -> void:
 	var c=career; var d: Dictionary=c.world.legend; var p: Dictionary=c.player(d.player)
 	if d.games<3 or d.minutes<90 or d.form<5.8 or p.get("retired",false) or c.contracts.transfer_lock(p.id)!="" or not c.sale_allowed(p.id,true): return
-	if c.world.date-int(d.get("transfer_day",-100))<45 or active(true).size()>=3: return
+	if c.world.date-int(d.get("transfer_day",-100))<45 or not active(true).is_empty(): return
+	var last_contact: int=int(d.get("last_offer_day",-100))
+	for old in c.world.offers:
+		if old.get("kind","")=="personal" and old.player==p.id: last_contact=maxi(last_contact,int(old.get("created",old.expires-7)))
+	if c.world.date-last_contact<PERSONAL_INTERVAL: return
+	if not d.last.is_empty() and c.world.date-int(d.last.get("day",c.world.date))>60: return
 	var random:=RandomNumberGenerator.new(); random.seed=(p.id+"|"+str(int(c.world.date)/7)+"|offers").hash()
 	var candidates: Array=[]
 	for buyer in c.world.clubs:
@@ -148,6 +158,16 @@ func personal_week() -> void:
 		var wage:=ceili(minf(World.wage(p)*1.5,maxi(World.wage(p),int(p.wage))*clampf(1.05+(float(d.form)-6)*.06,1.0,1.22))/500)*500
 		var role:=2 if World.ovr(p)>=competition(p.id,buyer) else 1
 		if not add(p.id,buyer,c.market.asking_price(p),wage,role,true).is_empty(): return
+
+func personal_status() -> String:
+	var c=career; var d: Dictionary=c.world.legend
+	if not c.window_open(): return "Transfer dönemi kapalı. Sonraki döneme kadar maçlarda kendini göster."
+	if c.player(d.player).get("retired",false): return "Futbolculuk kariyerin tamamlandı."
+	if c.world.date-int(d.get("transfer_day",-100))<45: return "Yeni takımına alışma dönemi. Önce burada kendini göster."
+	if d.games<3 or d.minutes<90: return "İlgi için en az 3 maç ve toplam 90 dakika oyna."
+	if d.form<5.8: return "Son formun düşük. İstikrarlı maçlarla ilgiyi yeniden artır."
+	if not d.last.is_empty() and c.world.date-int(d.last.get("day",c.world.date))>60: return "Kulüpler güncel performans görmek istiyor. Yeniden süre al."
+	return "Kulüpler seni izliyor. Uygun kadro, lig seviyesi ve bütçe eşleşirse teklif gelir."
 
 func counter_personal(o: Dictionary,wage: int,years: int,role: int,bonus: int) -> String:
 	var c=career
@@ -181,6 +201,7 @@ func accept_personal(o: Dictionary) -> bool:
 	c.world.user=o.buyer
 	c.transaction(o.buyer,-int(o.signing),"İmza parası: "+c.player(o.player).name); c.club().budget-=int(o.signing)
 	c.player(o.player).terms.signing=o.signing
+	World.Equipment.credit(c.world,o.player,"signing:%s:%d" % [o.buyer,int(o.get("created",o.expires-7))],int(o.signing),"İmza parası")
 	c.contracts.close_offers(o.player)
 	o.response="İmzalar atıldı. Yeni kulübüne hoş geldin."
 	if c.world.rival_bids.has(o.player): c.world.rival_bids[o.player].closed=true

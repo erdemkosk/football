@@ -48,7 +48,7 @@ func gain(p: Dictionary,xp: float,exercise_skills: Array=[]) -> void:
 		var key: String=keys[int(d.gains)%keys.size()]
 		p.attributes[key]=mini(95,int(p.attributes.get(key,60))+1); d.gains+=1
 
-func match_progress(id: String,eleven: Array,won: bool,minutes: Dictionary={}) -> void:
+func match_progress(id: String,eleven: Array,won: bool,minutes: Dictionary={},fixture: String="") -> void:
 	var c=career
 	for pid in c.world.clubs[id].roster:
 		var p: Dictionary=c.player(pid); player_fields(p)
@@ -59,7 +59,9 @@ func match_progress(id: String,eleven: Array,won: bool,minutes: Dictionary={}) -
 		if id==c.world.user and p.promoted: c.world.manager.youth_minutes+=played
 		if played>0:
 			var bonus: int=int(p.terms.appearance)
-			if bonus>0: c.transaction(id,-bonus,"Maç primi: "+p.name)
+			if bonus>0:
+				c.transaction(id,-bonus,"Maç primi: "+p.name)
+				if fixture!="": World.Equipment.credit(c.world,pid,"appearance:"+fixture,bonus,"Maç primi")
 		if p.recent_minutes.size()>=4 and p.injury<=c.world.date and p.banned==0:
 			var total:=0
 			for value in p.recent_minutes: total+=int(value)

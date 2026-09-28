@@ -87,8 +87,7 @@ func draw(s) -> void:
 		if entries.is_empty():
 			wrapped(s,"Şu anda açık teklif yok.",Vector2(76,379),345)
 			fit(s,"Form, süre ve mevcut gücün belirleyici.",Vector2(76,427),345,15,Style.MUTE)
-			var recent: bool=c.world.date-int(s.game.legend.data().get("transfer_day",-100))<45
-			fit(s,"Yeni takımına alışma dönemi." if recent else "En az 3 maç ve 90 dakika oyna.",Vector2(76,454),345,15,Style.MUTE)
+			wrapped(s,c.offers.personal_status(),Vector2(76,461),345,4)
 		s.text("MEVCUT MAAŞIN",Vector2(76,646),12,Style.MUTE)
 		s.text(c.money(s.game.legend.player().wage)+" / ay",Vector2(76,677),24,Style.PAPER,true)
 		fit(s,"TRANSFER DÖNEMİ AÇIK" if c.window_open() else "TRANSFER DÖNEMİ KAPALI",Vector2(76,703),345,12,Style.ACCENT)
@@ -135,6 +134,8 @@ func draw(s) -> void:
 			s.text("BONSERVİS TALEBİN",Vector2(507,455),11,Style.MUTE)
 			s.center(c.money(fee),Vector2(939,500),26,Style.PAPER,true)
 		wrapped(s,o.get("response","Teklifinizi bekliyoruz."),Vector2(507,689 if personal else 641),850,2 if personal else 3)
-		if personal: fit(s,"Bonservis: "+c.money(o.fee)+" · Kulüpler arasında ödenir.",Vector2(507,746),850,12,Style.MUTE)
+		if personal:
+			fit(s,o.get("reason","Form, süre ve kadro ihtiyacına uygun teklif."),Vector2(507,595),850,12,Style.MUTE)
+			fit(s,"Bonservis kulübe; maaş ve imza parası kişisel cüzdanına gider.",Vector2(507,746),850,12,Style.MUTE)
 	else:
 		wrapped(s,"TEKLİFİN SÜRESİ DOLDU" if o.expires<c.world.date else o.get("response","Görüşme kapandı."),Vector2(507,500),850,4)
