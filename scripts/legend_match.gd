@@ -169,5 +169,5 @@ func draw(h) -> void:
 			h.text("Değişiklik bekleniyor · Birazdan oyundasın",Vector2(1077,225),13,h.GOLD)
 		else:
 			h.text("Hazırlan · Hedef giriş %d. dakika" % int(legend.selection.get("minute",75)),Vector2(1077,221),13,h.MUTE)
-			h.button(SKIP_RECT,"OYUNA GİR","ENTER",true)
+			h.button(SKIP_RECT,"ZAMANI İLERLET","ENTER",true,game.ui.edge_offset(1,-1))
 	h.draw_set_transform(Vector2.ZERO)

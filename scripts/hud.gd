@@ -494,19 +494,21 @@ func team_symbols() -> void:
 func menu() -> void:
 	home_menu.draw(self)
 
-func button(rect: Rect2,title: String,key: String,primary: bool) -> void:
+func button(rect: Rect2,title: String,key: String,primary: bool,draw_offset: Vector2=Vector2.ZERO) -> void:
 	if game.controller.using_gamepad:
-		key="A" if nav_buttons.any(func(item): return item.has_focus() and item.position==rect.position) else ""
-	var hover = rect.has_point(get_global_mouse_position())
+		key="A" if nav_buttons.any(func(item): return item.has_focus() and item.position==rect.position+draw_offset) else ""
+	var hover = rect.has_point(get_global_mouse_position()-draw_offset)
 	var color = GOLD.lightened(0.1) if hover else GOLD
 	if not primary: color = Color(0.14,0.23,0.24,0.98) if hover else Color(0.09,0.16,0.17,0.92)
 	panel(rect,color,UI.RADIUS,Color(GOLD,0.25) if not primary else Color.TRANSPARENT)
-	text(title,rect.position+Vector2(22,rect.size.y*0.5+7),18,INK if primary else PAPER,true)
+	# Reserve the shortcut column before fitting the title, including keyboard labels.
+	var key_width: float=30.0 if game.controller.using_gamepad else bold.get_string_size(key,HORIZONTAL_ALIGNMENT_LEFT,-1,10).x
+	var title_width: float=rect.size.x-44-(key_width+12 if key!="" else 0.0)
+	UI.fit(self,bold,title,rect.position+Vector2(22,rect.size.y*0.5+7),maxf(0,title_width),18,INK if primary else PAPER)
 	if game.controller.using_gamepad and key!="":
 		draw_texture_rect(game.controller.Glyphs.icon(JOY_BUTTON_A,game.controller.family),Rect2(rect.position+Vector2(rect.size.x-51,rect.size.y*0.5-15),Vector2(30,30)),false)
 	else:
-		var w = font.get_string_size(key,HORIZONTAL_ALIGNMENT_LEFT,-1,10).x
-		text(key,rect.position+Vector2(rect.size.x-w-22,rect.size.y*0.5+4),10,INK if primary else MUTE,true)
+		text(key,rect.position+Vector2(rect.size.x-key_width-22,rect.size.y*0.5+4),10,INK if primary else MUTE,true)
 
 func goal_banner() -> void:
 	draw_set_transform(game.ui.edge_offset(0,1))
@@ -584,6 +586,8 @@ func sync_navigation() -> void:
 			item.focus_next=item.focus_neighbor_bottom
 			item.focus_previous=item.focus_neighbor_top
 	if state=="menu": home_menu.layout(self)
+	elif state=="legend_bench" and not nav_buttons.is_empty():
+		nav_buttons[0].position=game.legend.live.SKIP_RECT.position+game.ui.edge_offset(1,-1)
 	elif state=="replay" and not nav_buttons.is_empty():
 		nav_buttons[0].position=Vector2(game.ui.bounds().end.x-225,game.ui.bounds().position.y+8)
 	elif state=="ceremony" and not nav_buttons.is_empty():
