@@ -53,8 +53,8 @@ func try_execute() -> void:
 	if not game.kick_contact.pending.is_empty(): return
 	var command := pending.duplicate()
 	reset("consumed")
-	if not command.through and not command.lob:
-		game.quick_pass(command.direction,command.driven)
+	if game.ball.held_by!=game.players[command.player]:
+		game.quick_pass(command.direction,command.driven,command.through,command.lob)
 	else:
 		game.begin_pass(command.through,command.lob,command.driven)
 		if not game.pass_charging: return

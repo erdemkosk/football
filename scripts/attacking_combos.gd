@@ -1,5 +1,5 @@
 extends RefCounted
-## Crosses share the pass/shot contract: hold to aim, release to commit once.
+## Hold to choose crossing distance; release commits one physical delivery.
 const CROSS_CHARGE_TIME := .95
 var game
 var consumed: Dictionary = {}
@@ -83,7 +83,7 @@ func begin_cross() -> void:
 	game.charging=false; game.charge=0
 	cross_player=game.controlled; cross_age=0; cross_power=0
 	var movement: Vector3=game.aiming_input()
-	cross_direction=movement.normalized() if movement.length()>.1 else game.last_direction
+	cross_direction=movement.normalized() if movement.length()>.1 else game.pass_heading()
 	cross_driven=game.controller.action_held(KEY_W) or Input.is_physical_key_pressed(game.match_menu.key_for(KEY_W))
 
 func release_cross() -> void:

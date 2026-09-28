@@ -109,7 +109,7 @@ static func assisted_plan(origin: Vector3,direction: Vector3,power: float,team: 
 static func directional_receiver(origin: Vector3,direction: Vector3,team: int,passer: int,players: Array,assistance: float,through: bool=false,forward: float=-1,offside: float=100,preferred: int=-1) -> int:
 	var aim := (direction*Vector3(1,0,1)).normalized()
 	if aim.length_squared()<.1 or assistance<=0: return -1
-	var cone := deg_to_rad(lerpf(32,50,assistance))
+	var cone := deg_to_rad(lerpf(24,36,assistance))
 	var best := INF
 	var selected := -1
 	var preferred_cost := INF
@@ -132,21 +132,26 @@ static func directional_receiver(origin: Vector3,direction: Vector3,team: int,pa
 	if preferred_cost<INF and preferred_cost<=best+2.0: return preferred
 	return selected
 
-static func quick_plan(origin: Vector3,direction: Vector3,team: int,passer: int,players: Array,assistance: float,forward: float,offside: float,surface=null,driven: bool=false) -> Dictionary:
+static func quick_plan(origin: Vector3,direction: Vector3,team: int,passer: int,players: Array,assistance: float,forward: float,offside: float,surface=null,driven: bool=false,through: bool=false,lob: bool=false) -> Dictionary:
 	var aim := (direction*Vector3(1,0,1)).normalized()
 	if aim.length_squared()<.1: aim=Vector3(0,0,forward)
-	var receiver := directional_receiver(origin,aim,team,passer,players,assistance,false,forward,offside)
+	var receiver := directional_receiver(origin,aim,team,passer,players,assistance,through,forward,offside)
 	var route: Dictionary
 	if receiver>=0:
 		var p=players[receiver]
-		route=driven_pass(origin,p.position,p.velocity,surface) if driven else plan(origin,p.position,p.velocity,false,surface)
+		if through:
+			route=through_to(origin,p,.35,forward,surface)
+			if lob: route=plan(origin,route.target,Vector3.ZERO,true,surface)
+		else:
+			route=driven_pass(origin,p.position,p.velocity,surface) if driven else plan(origin,p.position,p.velocity,lob,surface)
 	else:
-		route=free_plan(origin,aim,.2,false,surface)
+		route=switch_plan(origin,aim,.35,team,passer,players,0,forward,offside,surface,true) if lob else free_plan(origin,aim,.2,through,surface)
 		if driven:
 			route.velocity=aim*19+Vector3.UP*.12
 			route.flight=flight_time(origin,route.target,19,surface)
 	route.receiver=receiver
 	route.driven=driven
+	route.through=through
 	return route
 
 static func free_plan(origin: Vector3,aim: Vector3,power: float,through: bool,surface=null) -> Dictionary:

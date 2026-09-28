@@ -118,7 +118,15 @@ var stadium: Node3D
 var camera := Camera3D.new()
 var hud: Control
 var audio: Node
-var state := "menu"
+const MATCH_TIME_SCALE := 0.80
+var state := "menu":
+	set(value):
+		state=value
+		# Scale the engine clock so rigid-body ball physics, player movement,
+		# AI decisions and animation all advance together. Menus and replay
+		# retain their own timing, including the menu's background simulation.
+		if is_inside_tree():
+			Engine.time_scale=MATCH_TIME_SCALE if value in ["playing","restart","set_piece","goal","shootout"] and not menu_match.running else 1.0
 var ending_reason := ""
 var before_pause := "playing"
 var score := [0,0]
@@ -196,6 +204,9 @@ func attack_sign(team: int) -> float:
 
 func team_name(side: int) -> String:
 	return clubs.data(side).name
+
+func _exit_tree() -> void:
+	Engine.time_scale=1.0
 
 func _ready() -> void:
 	experience.game=self; playtest.game=self; match_report.game=self
@@ -1118,9 +1129,10 @@ func update_control(delta: float) -> void:
 	for p in players: p.shot_preparation=0; p.wrapping=0; p.aerial_preparing=false
 	var movement = movement_input()
 	players[controlled].desired = movement*(0.62 if charging and not aerial_shot_active(controlled) else (0.72 if pass_charging else 1.0))
+	players[controlled].sprinting = key_held(KEY_W) or controller.action_held(KEY_W)
 	if movement.length()<0.01 and not charging and not pass_charging:
 		players[controlled].desired=team_control.reception_direction()
-	players[controlled].sprinting = key_held(KEY_W) or controller.action_held(KEY_W)
+		players[controlled].sprinting=players[controlled].sprinting or team_control.reception_sprint
 	for p in players: p.protecting=false; p.jockeying=false; p.strafing=false; p.controlled_sprint=false
 	var user=players[controlled]
 	var sprint_held: bool=user.sprinting
@@ -1572,7 +1584,7 @@ func pass_ball(lob: bool) -> void:
 		return
 	if kick_lock>0 and last_kicker>=0: return
 	clear_pass_request()
-	execute_player_pass(cross_plan(aim_direction()))
+	execute_player_pass(cross_plan(pass_heading()))
 	charging = false
 	charge = 0
 
@@ -1593,11 +1605,11 @@ func pass_heading() -> Vector3:
 	if direction.length()>.1: return direction.normalized()
 	return (players[controlled].facing*Vector3(1,0,1)).normalized()
 
-func quick_pass(direction: Vector3,driven: bool=false) -> void:
+func quick_pass(direction: Vector3,driven: bool=false,through: bool=false,lob: bool=false) -> void:
 	if state!="playing" or not has_ball_control(controlled) or not kick_contact.pending.is_empty(): return
 	if kick_lock>0 and last_kicker>=0: return
 	var team: int=players[controlled].team
-	var route := Passing.quick_plan(ball.position,direction,team,controlled,players,[0.0,.65,1.0][pass_assistance],attack_sign(team),rules.offside_line(team),weather,driven)
+	var route := Passing.quick_plan(ball.position,direction,team,controlled,players,[0.0,.65,1.0][pass_assistance],attack_sign(team),rules.offside_line(team),weather,driven,through,lob)
 	charging=false; charge=0
 	last_direction=direction
 	execute_player_pass(route)
@@ -1614,8 +1626,8 @@ func begin_pass(through: bool=false,lob: bool=false,driven: bool=false) -> void:
 		call_for_pass(false,through)
 		return
 	if kick_lock>0 and last_kicker>=0: return
-	if not through and not lob and ball.held_by!=players[controlled]:
-		quick_pass(pass_heading(),driven)
+	if ball.held_by!=players[controlled]:
+		quick_pass(pass_heading(),driven,through,lob)
 		return
 	charging = false
 	charge = 0
@@ -1697,22 +1709,27 @@ func one_two_pass() -> void:
 
 func cross_plan(heading: Vector3,driven: bool=false,power: float=.6) -> Dictionary:
 	var aim := (heading*Vector3(1,0,1)).normalized()
-	if aim.length()<0.1: aim=last_direction
-	var reach := lerpf(12,42,clampf(power,0,1))
+	if aim.length()<0.1: aim=pass_heading()
+	# Assistance can refine direction, but cannot replace charged distance
+	# with the position of a nearby receiver and swallow a far-post cross.
+	var reach := lerpf(3,58,clampf(power,0,1))
 	aim=Passing.nudge_heading(ball.position,aim,reach,players[controlled].team,controlled,players,[0.0,0.65,1.0][pass_assistance])
 	var target: Vector3=ball.position+aim*reach
 	target.y=Ball.GROUND_HEIGHT
-	var route := Passing.driven_cross(ball.position,target,Vector3.ZERO,weather) if driven else Passing.plan(ball.position,target,Vector3.ZERO,true,weather)
-	if not driven and route.velocity.length()<0.1:
-		route.velocity=aim*16+Vector3.UP*7.5
-		route.flight=1.5
+	var flight := lerpf(.65,2.85,clampf(power,0,1))
+	var route := {"target":target,"velocity":Passing.Motion.lob_velocity(ball.position,target,flight,weather),"flight":flight,"lob":true}
+	if driven:
+		var speed := Passing.Motion.passing_speed(lerpf(10,30,clampf(power,0,1)),reach,Passing.Motion.along(weather,ball.position,target))
+		route.velocity=aim*speed+Vector3.UP*.12
+		route.flight=Passing.flight_time(ball.position,target,speed,weather)
+		route.lob=false; route.driven=true
 	route.receiver=-1
 	route.cross=true
 	return route
 
 func driven_cross() -> void:
 	if state!="playing" or not has_ball_control(controlled) or (kick_lock>0 and last_kicker>=0): return
-	var route := cross_plan(last_direction,true)
+	var route := cross_plan(pass_heading(),true)
 	charging=false; charge=0
 	if execute_player_pass(route):
 		controller.rumble(0.6)
@@ -2049,7 +2066,10 @@ func update_contacts(delta: float) -> void:
 		if p.ball_actions.contact_pending: continue
 		if i!=dribbler and (p.touch_cooldown>0 or p.ball_actions.contact_cooldown>0 or (kick_lock>0 and i==last_kicker) or (p.keeper and not is_user_player(i))): continue
 		var distance: float=flat_distance(p.position,ball.position)
-		var closer: bool=distance<nearest_distance if dribbler<0 else (p.team!=players[dribbler].team and distance<duels.steal_reach(dribbler) and distance+duels.steal_margin(dribbler)<nearest_distance)
+		# Proximity alone cannot take a controlled ball. Standing tackles,
+		# slides and shoulder challenges release it through actual contact;
+		# only then may a player collect the resulting loose ball.
+		var closer: bool=dribbler<0 and distance<nearest_distance
 		if closer and ball.position.y<1.05 and duels.ball_exposed(i,dribbler):
 			nearest_distance=distance
 			carrier=i

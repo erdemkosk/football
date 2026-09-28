@@ -204,9 +204,9 @@ func rows() -> Array:
 			advanced_entry("Koşuya gönder","Yönündeki arkadaşına ileri koşu yaptır. Pasın yönü ve zamanlaması sende.","LB + R3","N"),
 			advanced_entry("Ayağına çağır","Yönündeki arkadaşın kısa pas mesafesine yaklaşır.","LB + L3","I"),
 			advanced_entry("Sert düz pas","Yön ver ve bir kez bas. Mesafeye göre sert pas; kontrolü daha zordur.","RB + "+binding(KEY_S),"CTRL + "+binding(KEY_S)),
-			advanced_entry("Yerden sert ara pas","Savunma arasına hızlı yerden pas. Mesafeyi basılı tutarak ayarla.","RB + "+binding(KEY_Y),"CTRL + "+binding(KEY_Y)),
+			advanced_entry("Yerden sert ara pas","Yön ver ve bir kez bas. Koşu yoluna sert pasın gücü otomatik ayarlanır.","RB + "+binding(KEY_Y),"CTRL + "+binding(KEY_Y)),
 			advanced_entry("Dummy / bırak geç","Takım arkadaşının alçak pasını kontrol etmeden arkandaki oyuncuya bırak.","L3","U"),
-			entry("Ara pas","Yönü serbestçe seç; gücü basılı tutup bırak. Ok oyuncuya kilitlenmez.",binding(KEY_Y)),
+			entry("Ara pas","Yön ver ve bir kez bas. Sistem o yöndeki arkadaşının koşusuna göre pası ayarlar.",binding(KEY_Y)),
 			advanced_entry("Verkaç","Pas veren oyuncu sınırlı bir koşu yapar; dönüş pasını sen verirsin.","LB + "+binding(KEY_S),"KONTROLCÜ: LB + A")]
 	if page==7:
 		return [
@@ -221,11 +221,11 @@ func rows() -> Array:
 		0:
 			return [
 				entry("Pas","Yön ver, bir kez bas. Mesafe otomatik; top gelmeden hemen önce de basabilirsin.",binding(KEY_S)),
-				entry("Ara pas","Yönü serbestçe seç; gücü tutup bırak. Daha fazla güç topu aynı yönde ileri gönderir.",binding(KEY_Y)),
+				entry("Ara pas","Yön ver ve bir kez bas. Koşu yoluna pasın mesafesi otomatik ayarlanır.",binding(KEY_Y)),
 				combo("Aşırtma şut","Şutu kalecinin üzerinden yumuşak bir kavisle gönder.","LB + X",lb),
-				combo("Havadan uzun pas","Sol omuz tuşunu tut; pas tuşuyla gücü ayarla, bırakarak gönder.","LB + Y",lb),
-				entry("Orta","Basılı tut: yön ve güç ayarla. Bırak: ortayı gönder.",binding(KEY_A)),
-				entry("Yerden sert orta","Hızlı koş tuşunu tutarken ortayı hazırla; orta tuşunu bırakarak gönder.",binding(KEY_W)+" + "+binding(KEY_A)),
+				combo("Havadan uzun pas","Sol omuz tuşunu tut ve pas tuşuna bas. Yönündeki oyuncuya havadan pas gönderilir.","LB + Y",lb),
+				entry("Orta","Yön ver, basılı tut ve bırak. Kısa basış yakın; daha fazla güç arka direğe kadar uzatır.",binding(KEY_A)),
+				entry("Yerden sert orta","Hızlı koş tuşunu tutarken ortayı basılı tut; mesafeyi güçle ayarlayıp bırak.",binding(KEY_W)+" + "+binding(KEY_A)),
 				entry("Şut","Sol analogla nişan; koşudan bağımsız yön: D-pad / sağ analog." if use_pad else "Basılı tut → bırak. Yönle küçük nişan düzeltmeleri yap.",binding(KEY_D)),
 				entry("Vole / kafa","Top gelirken şuta bas, vuruş yönünü seç. Tuşu erken bıraksan da temasa kadar yönü değiştirebilirsin; yönü bırakınca son seçim korunur.",binding(KEY_D)),
 				entry("Falsolu şut","Şutu hazırlarken top koruma tuşunu da basılı tut.",binding(KEY_E)+" + "+binding(KEY_D)),

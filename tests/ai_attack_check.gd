@@ -89,8 +89,13 @@ func run() -> void:
 	check(kind()=="feint" and act_and_contact(20) and game.players[20].feint_time>0 and game.players[20].energy<stamina,"Close pressure and lateral space trigger a stamina-consuming body feint")
 	check(game.charging and game.charge==.4 and not act_and_contact(20),"An opponent feint does not cancel user input or repeat every simulation tick")
 	setup()
+	check(not act_and_contact(20) and not game.ball.pending_kick,"Standing in open grass keeps the ball close until a run develops")
+	game.ai_attack.think_in.clear()
+	game.players[20].velocity=Vector3.BACK*4
+	game.players[20].desired=Vector3.BACK
+	game.ball.linear_velocity=Vector3.BACK*4
 	stamina=game.players[20].energy
-	check(kind()=="push" and act_and_contact(20) and game.ball.pending_kick and game.players[20].energy<stamina,"Open grass allows the AI to push the real ball ahead at a stamina cost")
+	check(kind()=="push" and act_and_contact(20) and game.ball.pending_kick and game.players[20].energy<stamina,"An established run into open grass allows the AI to push the real ball ahead at a stamina cost")
 	setup(); player(18,Vector3(10,0,-10)); player(4,Vector3(-1.8,0,0)); game.ai_attack.skill_in[20]=2
 	check(kind()=="pass" and act_and_contact(20) and game.passes[1]==1,"The AI can recycle possession with an ordinary safe pass")
 	setup(Vector3(0,0,-40)); player(4,Vector3(1.8,0,-40))

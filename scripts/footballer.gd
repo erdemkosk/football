@@ -698,9 +698,12 @@ func movement_speed() -> float:
 	return base_movement_speed()*INJURY_PACE[injury_level]
 
 func base_movement_speed() -> float:
+	return base_movement_speed_for(active_sprint)
+
+func base_movement_speed_for(sprint: bool) -> float:
 	if exhausted: return 3.4*movement_pace()
 	var recovery := .62 if tackle_recovery>0 else 1.0
-	if active_sprint: return (.9 if controlled_sprint else 1.0)*sprint_scale*movement_pace()*SPRINT_SPEED_SCALE*lerpf(8.8,10.4,smoothstep(0.08,0.4,energy))*Attributes.multiplier(attributes.pace,.17)*(1-match_fatigue*.36)*recovery
+	if sprint: return (.9 if controlled_sprint else 1.0)*sprint_scale*movement_pace()*SPRINT_SPEED_SCALE*lerpf(8.8,10.4,smoothstep(0.08,0.4,energy))*Attributes.multiplier(attributes.pace,.17)*(1-match_fatigue*.36)*recovery
 	return movement_pace()*lerpf(4.6,6.5 if keeper else 6.2,smoothstep(0.08,0.3,energy))*Attributes.multiplier(attributes.pace,.055)*(1-match_fatigue*.12)*recovery
 
 func begin_kick(power: float,duration: float,style: String="laces",point: Vector3=Vector3.INF,direction: Vector3=Vector3.ZERO,pressure: float=0) -> void:

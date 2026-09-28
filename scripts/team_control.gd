@@ -15,6 +15,8 @@ var previous_contacts: Array[int] = []
 var previous_velocity := Vector3.ZERO
 var predicted_receiver := -1
 var predicted_point := Vector3.ZERO
+var predicted_time := INF
+var reception_sprint := false
 var departing_player := -1
 var defence_candidate := -1
 var defence_candidate_age := 0.0
@@ -30,6 +32,7 @@ func reset() -> void:
 	touch_hold=0; prediction_in=0
 	previous_contacts.clear(); previous_velocity=Vector3.ZERO
 	predicted_receiver=-1
+	predicted_time=INF; reception_sprint=false
 	departing_player=-1
 	defence_candidate=-1; defence_candidate_age=0
 
@@ -104,7 +107,10 @@ func select(index: int,manual: bool=false) -> void:
 		for i in range(game.players.size()): game.players[i].chosen=i==index
 	cooldown=0.75
 	defence_candidate=-1; defence_candidate_age=0
-	if manual: manual_hold=1.0
+	if manual:
+		manual_hold=1.0
+		# A deliberate switch must not inherit the previous receiver's run.
+		run_receiver=-1; reception_sprint=false
 
 func opponent_possession() -> bool:
 	if game.ball.held_by!=null: return game.ball.held_by.team==1-team
@@ -202,6 +208,7 @@ func select_defender(delta: float) -> void:
 		cooldown=.28
 
 func update(delta: float) -> void:
+	predicted_time=maxf(0,predicted_time-delta)
 	cooldown=maxf(0,cooldown-delta)
 	manual_hold=maxf(0,manual_hold-delta)
 	touch_hold=maxf(0,touch_hold-delta)
@@ -257,6 +264,7 @@ func update(delta: float) -> void:
 		var reception := predict_receiver(velocity)
 		predicted_receiver=reception.index
 		predicted_point=reception.point
+		predicted_time=reception.time
 		if reception.index>=0 and reception.index!=game.controlled:
 			var imminent: bool=reception.time<=.30
 			var take: bool=not current_available or reception.advantage>(.24 if game.last_touch==1-team else .12)
@@ -268,6 +276,23 @@ func update(delta: float) -> void:
 	if in_flight and predicted_receiver>=0: return
 	predicted_receiver=-1
 	select_defender(delta)
+
+func arrival_time(index: int,point: Vector3) -> float:
+	var p=game.players[index]
+	var offset: Vector3=(point-p.position)*Vector3(1,0,1)
+	var distance := maxf(0,offset.length()-.85)
+	if distance<=0: return 0
+	var sprint: bool=distance>2.5 and p.energy>.25 and not p.exhausted
+	var speed: float=maxf(.1,p.base_movement_speed_for(sprint)*p.INJURY_PACE[p.injury_level])
+	var acceleration: float=maxf(1,12*p.accel_pace()*p.accel_scale)
+	var along: float=(p.velocity*Vector3(1,0,1)).dot(offset.normalized())
+	var turn_delay: float=clampf(-along/acceleration,0,.45)
+	var initial := clampf(along,0,speed)
+	var ramp := (speed-initial)/acceleration
+	var ramp_distance := initial*ramp+.5*acceleration*ramp*ramp
+	if distance<ramp_distance:
+		return turn_delay+(sqrt(initial*initial+2*acceleration*distance)-initial)/acceleration
+	return turn_delay+ramp+(distance-ramp_distance)/speed
 
 func predict_receiver(velocity: Vector3) -> Dictionary:
 	if game.last_touch==1-team and opponent_carrier()>=0:
@@ -308,14 +333,11 @@ func predict_receiver(velocity: Vector3) -> Dictionary:
 		var time := sample*STEP
 		for i in costs:
 			var p=game.players[i]
-			var gap: float=game.flat_distance(p.position,point)
-			var speed: float=maxf(.1,p.movement_speed())
-			var travel := maxf(0,gap-.85)/speed
-			# Standing players need a short acceleration step before an interception.
-			travel+=.12*(1-clampf(p.velocity.length()/speed,0,1))
+			var travel := arrival_time(i,point)
 			if travel>time+.16: continue
 			var cost := time+maxf(0,travel-time)*2
 			if own_pass and game.ai_receivers[team]==i: cost-=.10
+			if i==game.controlled: cost-=.04
 			if cost<costs[i]: costs[i]=cost; targets[i]=point; times[i]=time
 	var best := -1
 	var best_cost := INF
@@ -324,22 +346,23 @@ func predict_receiver(velocity: Vector3) -> Dictionary:
 	return {"index":best,"point":targets.get(best,game.ball.position),"advantage":float(costs.get(game.controlled,INF))-best_cost,"time":times.get(best,INF)}
 
 func awaiting_delivery() -> bool:
-	if game.player_lock or game.dribbler>=0 or game.ball.held_by!=null: return false
+	if not automatic() or game.dribbler>=0 or game.ball.held_by!=null: return false
+	if opponent_carrier()>=0: return false
 	if game.incoming_receiver==game.controlled and game.incoming_time>0: return true
 	if game.ai_receivers[team]==game.controlled and game.ai_pass_time[team]>0 and game.last_touch==team: return true
-	return predicted_receiver==game.controlled
+	return predicted_receiver==game.controlled and eligible(predicted_receiver)
 
 func reception_direction() -> Vector3:
-	# FIFA-style: jog to the drop / meeting point. Sprint only changes pace.
+	reception_sprint=false
 	if not awaiting_delivery(): return Vector3.ZERO
 	var p=game.players[game.controlled]
 	if p.action_timer>0: return Vector3.ZERO
 	var distance: float=game.flat_distance(p.position,game.ball.position)
 	var velocity: Vector3=game.ball.kick_velocity if game.ball.pending_kick else game.ball.linear_velocity
 	var target: Vector3=game.ai_attack.receiving_target(game.controlled)
-	if predicted_receiver==game.controlled and game.ai_receivers[team]!=game.controlled and game.incoming_receiver!=game.controlled:
+	if predicted_receiver==game.controlled:
 		target=predicted_point
-	if run_receiver==game.controlled and velocity.dot(run_target-game.ball.position)>0 and distance>1.1:
+	if predicted_receiver!=game.controlled and run_receiver==game.controlled and velocity.dot(run_target-game.ball.position)>0 and distance>1.1:
 		# A through-pass preview predates the live surface/drag. Lead the run
 		# only while the physical ball can still reach that point; otherwise
 		# meet the slowing pass instead of running away from it indefinitely.
@@ -351,5 +374,9 @@ func reception_direction() -> Vector3:
 	target.x=clampf(target.x,-(P.HALF_WIDTH-2),(P.HALF_WIDTH-2)); target.z=clampf(target.z,-48,48)
 	var offset: Vector3=(target-p.position)*Vector3(1,0,1)
 	if offset.length()<0.28: return Vector3.ZERO
-	if offset.length()>1.35: return offset.normalized()
+	# Accelerate for a distant meeting, then brake before the first touch.
+	# The same live interception point drives selection and the approach run.
+	var jog_speed: float=maxf(.1,p.base_movement_speed_for(false)*p.INJURY_PACE[p.injury_level])
+	var hurry: bool=predicted_receiver!=game.controlled or predicted_time<offset.length()/jog_speed+.3
+	reception_sprint=hurry and offset.length()>3 and distance>2 and p.energy>.25 and not p.exhausted
 	return game.ai_attack.receiving_movement(game.controlled,target)

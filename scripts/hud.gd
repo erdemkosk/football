@@ -234,16 +234,8 @@ func _draw() -> void:
 		elif game.aerial_assist.active(game.controlled): label="GELİŞİNE VURUŞ"
 		elif game.finishing.style!="": label=game.finishing.LABELS.get(game.finishing.style,label)
 		draw_shot_guide(launch,curve,color,power,label)
-	if game.pass_charging and not game.pass_preview.is_empty():
-		var route: Dictionary = game.pass_preview
-		var color := Color("a0cfe7") if route.get("lob",false) else Color("a7d9bb")
-		draw_pass_guide(route,pass_guide.pass_preview(game.ball.position,route,game.weather),color)
-	elif game.state=="playing" and game.controller.combos.cross_player>=0:
-		var combo=game.controller.combos
-		var plan: Dictionary=game.cross_plan(combo.cross_direction,combo.cross_driven,combo.cross_power)
-		draw_pass_guide(plan,pass_guide.pass_preview(game.ball.position,plan,game.weather),Color("8ec6e8"))
-	elif game.state=="playing" and pass_trail_time>0 and not game.charging:
-		draw_pass_guide(last_pass.plan,last_pass.route,Color("8ec6e8") if last_pass.plan.get("lob",false) else Color("a7d9bb"),clampf(pass_trail_time/0.3,0,1)*0.85)
+	if game.controller.combos.cross_player==game.controlled and game.has_ball_control(game.controlled):
+		aim_indicator.draw_meter(self,game.controller.combos.cross_power,"ORTA",Color("a0cfe7"))
 	if game.state in ["restart","set_piece"]: set_piece_overlay()
 	if not game.legend.match_active(): game.coaching.draw(self)
 	if game.state in ["paused","finished"]: modal()
@@ -285,6 +277,7 @@ func draw_aim_guide(route: Dictionary,power: float,color: Color,lob: bool=false)
 		aim_indicator.draw_arrow(self,route.points,power,color)
 
 func draw_shot_guide(launch: Vector3,spin: float,color: Color,power: float=-1.0,label: String="ŞUT") -> void:
+	if not shot_guide_visible(): return
 	# Like aerial deliveries, restart shots reveal only the flight before the
 	# first landing. The endpoint marker must not disclose a later bounce.
 	var route: Dictionary=shot_guide.preview(game.ball.position,launch,spin,game.attack_sign(0)*50,game.weather,Vector3.INF,game.state=="set_piece")
@@ -296,23 +289,13 @@ func draw_shot_guide(launch: Vector3,spin: float,color: Color,power: float=-1.0,
 	if warning=="" and not game.shot_chip and game.strike_quality.overhit_risk(power,range_to_goal,shooter.Attributes.has_style(shooter,"power_shot"))>.3: warning="AŞIRI GÜÇ · TOP HAVALANABİLİR"
 	aim_indicator.draw_meter(self,power,label,color,warning,game.shot_chip,game.strike_quality.OVERHIT_START)
 
-func draw_pass_guide(plan: Dictionary,route: Dictionary,color: Color,opacity: float=1.0) -> void:
-	color.a*=opacity
-	var power: float=game.set_pieces.preview_power() if game.state=="set_piece" else (game.pass_power if game.pass_charging else .55)
-	if game.controller.combos.cross_player>=0: power=game.controller.combos.cross_power
-	var lob: bool=plan.get("lob",false)
-	var label := "HAVADAN PAS" if lob else "PAS"
-	if plan.get("cross",false): label="ORTA"
-	if game.controller.combos.cross_player>=0 and game.controller.combos.cross_driven: label="YERDEN ORTA"
-	elif game.pass_through or plan.get("through",false): label="HAVADAN ARA PAS" if lob else "ARA PAS"
-	if game.pass_driven: label="SERT ARA PAS" if game.pass_through else "SERT PAS"
-	if plan.has("distribution"): label="EL ATIŞI" if plan.distribution=="throw" else "ELLE PAS"
-	if game.state=="set_piece": label=game.restart_type
-	var warning := ""
-	if absf(route.target.x)>P.HALF_WIDTH or absf(route.target.z)>50: warning="SAHA DIŞINA YÖNELİYOR"
-	elif game.pass_charging and game.pass_risk>0.48: warning="PAS YOLUNDA RAKİP"
-	draw_aim_guide(route,power,color,lob)
-	aim_indicator.draw_meter(self,power,label,color,warning,lob)
+func shot_guide_visible() -> bool:
+	# Buffered commands remain active without painting an aim on a distant ball.
+	return game.state=="set_piece" or (game.has_ball_control(game.controlled) and game.flat_distance(game.players[game.controlled].position,game.ball.position)<1.35)
+
+func draw_pass_guide(_plan: Dictionary,_route: Dictionary,_color: Color,_opacity: float=1.0) -> void:
+	# Passes use directional assistance; only shots display an aiming guide.
+	return
 
 func action_hints() -> Array:
 	if game.ball.held_by==game.players[game.controlled]:
@@ -424,9 +407,8 @@ func set_piece_overlay() -> void:
 	if setup.kind()=="shot":
 		draw_shot_guide(setup.pending_velocity,setup.pending_curve,GOLD,setup.preview_power(),"PENALTI" if game.restart_type=="PENALTI" else "FRİKİK")
 		return
-	var lob: bool=setup.kind() in ["cross","throw"]
-	var plan := {"target":setup.target,"velocity":setup.pending_velocity,"lob":lob,"receiver":setup.receiver,"flight":4.0,"cross":setup.kind()=="cross"}
-	draw_pass_guide(plan,pass_guide.pass_preview(game.ball.position,plan,game.weather,setup.pending_curve),Color("a0cfe7") if lob else Color("a7d9bb"))
+	if setup.button!=0 and setup.kind() in ["cross","throw"]:
+		aim_indicator.draw_meter(self,setup.preview_power(),"TAÇ" if setup.kind()=="throw" else "ORTA",Color("a0cfe7"))
 
 func crest(p: Vector2,away: bool,scale_value: float=1) -> void:
 	var club: Dictionary=game.clubs.data(1 if away else 0)
@@ -687,6 +669,6 @@ func draw_other_people() -> void:
 		var color: Color=game.humans.COLORS[slot]
 		center("P%d" % (slot+1),at+Vector2(0,-10),12,color)
 		var fill: float=float(state.get("charge",0.0)) if state.get("charging",false) else (float(state.get("pass_power",0.0)) if state.get("pass_charging",false) else -1.0)
-		if fill>=0:
+		if fill>=0 and game.has_ball_control(index) and state.get("charging",false):
 			panel(Rect2(at+Vector2(-30,-2),Vector2(60,6)),Color(0,0,0,.55),2)
 			panel(Rect2(at+Vector2(-30,-2),Vector2(60*clampf(fill,0,1),6)),color,2)

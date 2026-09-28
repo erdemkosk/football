@@ -393,8 +393,25 @@ func decide(index: int) -> Dictionary:
 	decisions.game=game
 	return decisions.select(index,options(index))
 
+func settled_skill_ball(index: int) -> bool:
+	var p=game.players[index]
+	if game.dribbler!=index or game.ball.pending_kick or p.receive_timer>0 or p.ball_actions.contact_pending or p.ball_actions.control_grace>0: return false
+	var relative: Vector3=(game.ball.linear_velocity-p.velocity)*Vector3(1,0,1)
+	return game.ball.position.y<.4 and game.flat_distance(p.position,game.ball.position)<.95 and relative.length()<2.5
+
+func can_open_touch(index: int,direction: Vector3) -> bool:
+	var p=game.players[index]
+	if not settled_skill_ball(index) or p.exhausted or p.energy<.4 or p.protecting: return false
+	var motion: Vector3=p.velocity*Vector3(1,0,1)
+	# A long touch needs an established run. Opening the ball while standing,
+	# braking or turning leaves the AI chasing its own unnecessary loose ball.
+	if motion.length()<3.2 or motion.normalized().dot(direction)<.9: return false
+	if p.desired.length()>.1 and p.desired.normalized().dot(direction)<.75: return false
+	return (game.ball.position-p.position).dot(direction)>.15
+
 func skill_choice(index: int,read: Dictionary) -> Dictionary:
 	var p=game.players[index]
+	if not settled_skill_ball(index): return {}
 	if team_skill_in[p.team]>0 or read.gap<1.25 or read.gap>3.5 or p.position.z*game.attack_sign(p.team)<-20: return {}
 	var nearby := 0
 	for q in game.players:
@@ -404,7 +421,7 @@ func skill_choice(index: int,read: Dictionary) -> Dictionary:
 	if nearby!=1: return {}
 	var kinds: Array[String]=["roll"]
 	if p.velocity.length()>2.5 and read.closing>1: kinds.append("stop_go")
-	if read.gap>1.7 and p.attributes.pace>=74 and p.energy>.4: kinds.append("knock_around")
+	if read.gap>1.7 and p.attributes.pace>=74 and can_open_touch(index,p.facing): kinds.append("knock_around")
 	if level(p.team)==2 and p.attributes.control>=83:
 		if read.gap<2.15 and read.closing>1: kinds.append("roulette")
 		if p.velocity.length()>3.8: kinds.append("elastico")
@@ -536,8 +553,9 @@ func options(index: int) -> Array[Dictionary]:
 	if game.dribbler==index and skill_in.get(index,0.0)<=0 and p.skill_cooldown<=0 and p.energy>.25:
 		var skill := skill_choice(index,read)
 		if not skill.is_empty(): result.append(skill)
-		if pressure>7 and position.z*forward<28 and clearance(position+Vector3(0,0,forward*7),p.team)>5:
-			result.append({"kind":"push"})
+		var push_direction := Vector3(clampf(-p.position.x*.015,-.3,.3),0,forward).normalized()
+		if pressure>7 and position.z*forward<28 and can_open_touch(index,push_direction) and clearance(position+push_direction*7,p.team)>5:
+			result.append({"kind":"push","direction":push_direction})
 	if position.z*forward< -28 and pressure<3.2:
 		var outlet := delivery.clearance(index)
 		result.append(pass_choice("clearance",outlet.route,outlet.receiver))

@@ -466,14 +466,14 @@ func preview(delta: float=0.0) -> void:
 		target=route.target
 		pending_velocity=route.velocity
 		if kind() in ["cross","throw"]:
-			var long_delivery: bool=game.restart_type in ["SERBEST VURUŞ","ENDİREKT VURUŞ"] and point.z*game.attack_sign(game.restart_team)<18
-			target=point+direction*lerpf(10,48 if long_delivery else 32,strength)
-			var flight := lerpf(0.85,2.8 if long_delivery else 2.2,strength)
+			var throwing: bool=game.restart_type=="TAÇ"
+			target=point+direction*lerpf(2.5 if throwing else 3.0,36.0 if throwing else 58.0,strength)
+			var flight := lerpf(.65,2.4 if throwing else 2.85,strength)
 			var start_y: float = game.ball.position.y if game.restart_type=="TAÇ" else game.ball.GROUND_HEIGHT
 			pending_velocity=Passing.Motion.lob_velocity(Vector3(point.x,start_y,point.z),Vector3(target.x,game.ball.GROUND_HEIGHT,target.z),flight,game.weather)
 		if game.restart_type=="TAÇ":
 			# A legal throw must enter the field; forward/backward aiming is bounded.
-			pending_velocity.x=-signf(point.x)*maxf(3,absf(pending_velocity.x))
+			pending_velocity.x=-signf(point.x)*maxf(.5,absf(pending_velocity.x))
 
 func commit() -> void:
 	if ai_choice.is_empty(): preview()
