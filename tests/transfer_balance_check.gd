@@ -34,11 +34,13 @@ func run() -> void:
 	p.potential=90
 	check(c.market.value(p)>ordinary*1.6,"A young high-potential prospect commands a premium")
 	check(World.wage(p)==salary,"Potential resale value does not multiply the current salary")
-	var prestige: int=c.world.clubs.c36.reputation
-	c.world.clubs.c36.reputation=45; var small: int=c.market.value(p)
-	c.world.clubs.c36.reputation=90
-	check(c.market.value(p)>small*1.5,"The selling club's stature affects price for the same player")
-	c.world.clubs.c36.reputation=prestige
+	var prestige: Dictionary=c.world.rankings.clubs.c36
+	var original_points: float=prestige.points
+	prestige.points=prestige.seed_points+(45-prestige.seed_reputation)*12; World.Rankings.refresh(c.world)
+	var small: int=c.market.value(p)
+	prestige.points=prestige.seed_points+(90-prestige.seed_reputation)*12; World.Rankings.refresh(c.world)
+	check(c.market.value(p)>small*1.5,"The selling club's earned sporting stature affects price for the same player")
+	prestige.points=original_points; World.Rankings.refresh(c.world)
 	p.contract=2027; var expiring: int=c.market.value(p)
 	p.contract=2030
 	check(c.market.value(p)>expiring*1.4,"A long contract costs more than its final year")

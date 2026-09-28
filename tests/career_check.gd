@@ -62,7 +62,8 @@ func run() -> void:
 	for jersey in jerseys: unique[jersey]=true
 	check(jerseys.size()==unique.size(),"The new signing is assigned a unique shirt number")
 	var swap: String=c.club().roster[18]
-	var target: String="p0050"
+	# Exercise a mutually suitable swap; higher-tier players can now decline this league.
+	var target: String=c.world.clubs.c02.roster.filter(func(id): return not c.player(id).keeper and World.ovr(c.player(id))<=65)[0]
 	var swap_seller: String=c.player(target).club
 	check(c.transfer(target,c.world.user,100000,9000,3,1,swap),"A player-plus-cash swap can complete")
 	check(c.player(swap).club==swap_seller and swap in c.world.clubs[swap_seller].roster and not swap in c.club().roster,"The exchange player moves in the opposite direction")

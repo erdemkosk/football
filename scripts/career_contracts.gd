@@ -200,7 +200,7 @@ func market_week() -> void:
 			var id: String=clubs[(first+offset)%clubs.size()]
 			if id==career.world.user or loan_reason(p.id,id)!="": continue
 			var buyer: Dictionary=career.world.clubs[id]
-			if World.ovr(p)<career.strength(id,p.role)-3 or World.ovr(p)>buyer.reputation+16: continue
+			if World.ovr(p)<career.strength(id,p.role)-3 or World.ovr(p)>career.market.level(id)+16: continue
 			var fee:=minimum_fee(p.id,1); var share:=75
 			if fee>buyer.budget or buyer.cash-fee<(career.payroll(id)+roundi(p.wage*share/100.0))*2: continue
 			if p.club==career.world.user:

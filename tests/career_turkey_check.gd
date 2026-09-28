@@ -61,6 +61,8 @@ func run() -> void:
 	c.new_career("c00",1)
 	c.transfer(c.world.clubs.c01.roster[4],"c00",250000,7000,3,1,"")
 	var old: Dictionary=c.world.duplicate(true); old.version=4
+	old.erase("rankings")
+	for club in old.clubs.values(): club.erase("sporting_reputation")
 	for id in ids:
 		for pid in old.clubs[id].roster: old.players.erase(pid)
 		old.clubs.erase(id); old.table.erase(id)
@@ -83,7 +85,8 @@ func run() -> void:
 	var retained_fixtures: Array=old.fixtures.duplicate(true)
 	var file:=FileAccess.open(c.path_for(2),FileAccess.WRITE); file.store_var(old); file.close()
 	check(c.valid(old) and c.load_slot(2) and c.world.version==World.VERSION,"A real 92-club version-4 save migrates to the new league")
-	check(c.world.clubs.c00==retained_club and retained_players.keys().all(func(pid): return c.player(pid)==retained_players[pid]),"Migration preserves existing rosters, player identities, academy prospects, contracts and finances")
+	var migrated_club: Dictionary=c.world.clubs.c00.duplicate(true); migrated_club.erase("sporting_reputation")
+	check(migrated_club==retained_club and retained_players.keys().all(func(pid): return c.player(pid)==retained_players[pid]),"Migration preserves existing rosters, player identities, academy prospects, contracts and finances")
 	check(c.world.cups==retained_cups and c.world.fixtures.filter(func(f): return f.league!=9)==retained_fixtures,"Migration keeps played results, original fixture IDs and the current cup draw")
 	check(c.world.clubs.size()==110 and c.world.fixtures.size()==1310 and c.valid(c.world),"Migrated clubs receive a table, calendar and all career fields")
 	var migrated: Dictionary=c.world.duplicate(true)

@@ -7,6 +7,7 @@ const Turkey = preload("res://scripts/career_turkey.gd")
 const Talent = preload("res://scripts/player_talent.gd")
 const SEFC = preload("res://scripts/sefc_identity.gd")
 const Rivalries = preload("res://scripts/rivalries.gd")
+const Rankings = preload("res://scripts/career_rankings.gd")
 const VERSION:=5
 const CLUB_COUNT:=110
 const ROLES := ["KL","DEF","OS","FV"]
@@ -42,7 +43,7 @@ static func value(p: Dictionary,owner: Dictionary={},year: int=0) -> int:
 	var age_factor := 1.12 if age<=26 else maxf(.18,1.12-(age-26)*.10)
 	var growth := clampf(float(p.get("potential",ovr(p)))-ovr(p),0,20)
 	var potential_factor := 1.0+growth*(.035 if age<=21 else .018 if age<=25 else 0.0)
-	var club_factor := clampf(.82+(float(owner.get("reputation",65))-45)*.012,.82,1.45)
+	var club_factor := clampf(.82+(float(owner.get("sporting_reputation",owner.get("reputation",65)))-45)*.012,.82,1.45)
 	var contract_factor := 1.0
 	if year>0 and p.get("club","")!="":
 		contract_factor=[.55,.72,.90,1.0,1.08][clampi(int(p.contract)-year,0,4)]
@@ -76,6 +77,7 @@ static func upgrade(w: Dictionary) -> void:
 		Talent.rebalance(p)
 		p.potential=maxi(int(p.potential),ovr(p))
 	Rivalries.ensure(w)
+	Rankings.ensure(w)
 	w.version=VERSION
 
 static func create(year: int=2026) -> Dictionary:

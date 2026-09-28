@@ -118,7 +118,7 @@ func run() -> void:
 	# Migration preserves old domestic identities/results and never inserts missed cup games.
 	fresh()
 	var old: Dictionary=c.world.duplicate(true); old.version=2; old.date=World.day(2027,1,1)
-	for key in ["cups","cup_history","cup_fixtures","cups_pending"]: old.erase(key)
+	for key in ["cups","cup_history","cup_fixtures","cups_pending","rankings"]: old.erase(key)
 	for id in old.clubs.keys():
 		if old.clubs[id].league<2: continue
 		for pid in old.clubs[id].roster: old.players.erase(pid)

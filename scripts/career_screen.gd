@@ -4,6 +4,7 @@ const Portraits=preload("res://scripts/squad_portraits.gd")
 const Office=preload("res://scripts/career_office.gd")
 const TABS := ["MERKEZ","KADRO","TAKTİK","LİG & KUPALAR","TRANSFER","KULÜP"]
 var transfer_ui:=preload("res://scripts/transfer_offer_screen.gd").new()
+var rankings_ui:=preload("res://scripts/world_rankings_screen.gd").new()
 const PAGES := ["hub","squad","tactics","league","market","finance"]
 const Card=preload("res://scripts/career_card.gd")
 var art:=preload("res://scripts/career_art.gd").new()
@@ -215,6 +216,7 @@ func back() -> void:
 	elif page=="comparison": page=comparison.origin; build()
 	elif page=="talks": go("market")
 	elif page=="offer": go("finance")
+	elif page=="world": go("league")
 	elif page=="choose": page="entry"; build()
 	elif page=="entry" or page=="hub": close()
 	else: go("hub")
@@ -273,6 +275,7 @@ func build() -> void:
 		"hub": build_hub()
 		"squad","market": build_players()
 		"league": build_league()
+		"world": rankings_ui.build(self)
 		"tactics": build_tactics()
 		"finance": build_finance()
 		"offer": transfer_ui.build(self)
@@ -543,6 +546,7 @@ func portrait_data(pid: String) -> Dictionary:
 	return p
 
 func build_league() -> void:
+	button_at(Rect2(284,827,602,43),"DÜNYA SIRALAMASI  ·  KULÜPLER & LİGLER",go.bind("world"))
 	option_at(Rect2(54,177,423,41),World.LEAGUES+game.career.cups.TITLES.values(),division,func(v): division=v; list_page=0; cup_group=0; build())
 	var award: Dictionary=game.finale.award_for_division(division)
 	if division==World.LEAGUES.size()+1 and not game.career.world.cups.is_empty():
@@ -655,6 +659,7 @@ func _draw() -> void:
 		"hub": art.hub(self)
 		"squad","market": art.players(self)
 		"league": draw_league()
+		"world": rankings_ui.draw(self)
 		"tactics": art.tactics(self)
 		"finance": draw_finance()
 		"offer": transfer_ui.draw(self)
@@ -875,7 +880,7 @@ func draw_talks() -> void:
 	wrapped(d.response,Vector2(934,662),400,16,GOLD,4)
 	box(Rect2(52,714,822,69),Color("1a3343"),8)
 	text("OVR %d  ·  %s  ·  %d YAŞ" % [World.ovr(p),World.ROLES[p.role],p.age],Vector2(77,744),17,PAPER,true)
-	text("Bedel: güç, yaş, potansiyel, kulüp ve kalan sözleşme süresi.",Vector2(77,769),13,MUTE)
+	text("KULÜP İTİBARI %.1f · LİG İTİBARI %.1f · Maaş ve rol beklentisini etkiler." % [World.Rankings.prestige(c.world,c.world.user),c.world.rankings.leagues[str(c.club().league)].points],Vector2(77,769),13,MUTE)
 
 func wrapped(value: String,at: Vector2,width: float,size_value: int,color: Color,limit: int) -> void:
 	var line := ""; var row:=0

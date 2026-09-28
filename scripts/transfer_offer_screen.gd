@@ -118,6 +118,7 @@ func draw(s) -> void:
 	s.badge(Vector2(536,326),buyer,.72)
 	fit(s,buyer.name,Vector2(580,325),750,24,Style.PAPER,true)
 	fit(s,"SON GÜN "+World.date_label(o.expires)+" · "+str(3-int(o.get("rounds",0)))+" PAZARLIK TURU" if c.offers.live(o) else "GÖRÜŞME TAMAMLANDI",Vector2(580,348),750,12,Style.MUTE)
+	fit(s,"DÜNYA #%d · LİG #%d · KULÜP İTİBARI %.1f" % [c.world.rankings.clubs[o.buyer].rank,c.world.rankings.leagues[str(buyer.league)].rank,World.Rankings.prestige(c.world,o.buyer)],Vector2(580,367),750,11,Style.ACCENT)
 	var labels: Array=["KULÜBÜN MAAŞ TEKLİFİ","İMZA PARASI","SÜRE / BEKLENEN ROL"] if personal else ["KULÜBÜN BONSERVİS TEKLİFİ","OYUNCUNUN MAAŞI","BEKLENEN ROL"]
 	var values: Array=[c.money(o.wage)+" / ay",c.money(o.get("signing",0)),str(o.get("years",3))+" yıl · "+ROLES[o.get("role",1)]] if personal else [c.money(o.fee),c.money(o.get("wage",0))+" / ay",ROLES[o.get("role",1)]]
 	for i in range(3):

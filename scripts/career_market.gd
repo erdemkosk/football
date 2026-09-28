@@ -24,7 +24,7 @@ func level(id: String) -> float:
 	ratings.sort(); ratings.reverse()
 	var total := 0.0
 	for rating in ratings.slice(0,11): total+=rating
-	return float(club.reputation)*.55+(total/maxi(1,mini(11,ratings.size())))*.45
+	return World.Rankings.prestige(career.world,id)*.55+(total/maxi(1,mini(11,ratings.size())))*.45+World.Rankings.league_effect(career.world,int(club.league))
 
 func interest(p: Dictionary,buyer: String) -> Dictionary:
 	var ambition := float(World.ovr(p))-6.0
@@ -46,7 +46,7 @@ func interest(p: Dictionary,buyer: String) -> Dictionary:
 	var label := "GÖRÜŞMEYE AÇIK"
 	if gap>4: label="DAHA YÜKSEK MAAŞ VE ROL BEKLİYOR"
 	if rare: label="GELMESİ ÇOK ZOR · ÜST DÜZEY KULÜP İSTİYOR"
-	return {"gap":gap,"rare":rare,"premium":premium,"willing":willing,"label":label}
+	return {"gap":gap,"rare":rare,"premium":premium,"willing":willing,"label":label,"club_prestige":World.Rankings.prestige(career.world,buyer),"league_prestige":career.world.rankings.leagues[str(career.world.clubs[buyer].league)].points}
 
 func base_salary(p: Dictionary) -> int:
 	return maxi(World.wage(p),roundi(p.wage*1.1))

@@ -83,6 +83,7 @@ func valid(w) -> bool:
 	for key in ["clubs","players","fixtures","table","news","date","year","user","rng","offers","ledger","history","scorers","results","deals","next_player","pending_fixture","season_done"]:
 		if not w.has(key): return false
 	if not w.clubs.has(w.user) or not w.clubs.size() in [36,48,92,World.CLUB_COUNT]: return false
+	if not World.Rankings.valid(w): return false
 	if not training.valid(w): return false
 	if not offers.valid(w): return false
 	if player_mode!=w.has("legend") or not preload("res://scripts/legend_progression.gd").valid(w): return false
@@ -368,6 +369,7 @@ func apply_result(f: Dictionary,result: Array,scorers: Dictionary={},played: boo
 		if world.players.has(pid): player(pid).goals+=int(scorers[pid]); add_scorer(f,pid,int(scorers[pid]))
 	remember_random()
 	cups.record(f)
+	World.Rankings.record(world,f)
 	terms.result_bonuses(f)
 	world.results.push_front(f.duplicate(true))
 	if world.results.size()>80: world.results.resize(80)
@@ -440,7 +442,7 @@ func market_week() -> void:
 		for id in world.clubs:
 			if id==world.user: continue
 			var buyer: Dictionary=world.clubs[id]; var bid:=roundi(market.value(p)*rng.randf_range(.88,1.07))
-			if buyer.roster.size()>=28 or World.ovr(p)<buyer.reputation-4 or World.ovr(p)>buyer.reputation+12: continue
+			if buyer.roster.size()>=28 or World.ovr(p)<market.level(id)-4 or World.ovr(p)>market.level(id)+12: continue
 			var salary: int=market.salary(p,id); var role: int=market.wanted_role(p,id)
 			if market.refusal(p,id,salary,role,3)!="": continue
 			if bid>minf(buyer.budget,buyer.cash-(payroll(id)+salary)*2): continue
@@ -638,6 +640,7 @@ func settle_league_prizes(league: int) -> bool:
 		world.clubs[id].budget+=roundi(amount*.8)
 		awards[id]=amount
 	world.league_prizes[key]={"year":world.year,"league":league,"champion":order[0],"awards":awards}
+	World.Rankings.league_awards(world,league,order)
 	if world.user in order:
 		var position: int=order.find(world.user)+1
 		var amount: int=awards[world.user]
@@ -690,6 +693,7 @@ func next_season() -> bool:
 		transaction(c.id,-payroll(c.id),"Aylık oyuncu maaşları")
 	World.fixtures(world)
 	cups.start(world,qualified,super_pair,overseas)
+	World.Rankings.rollover(world)
 	director.targets(world)
 	var qualification: String=(", ".join(local_qualifiers.map(func(id): return world.clubs[id].short)))+" Şampiyonlar Kupası'na katılıyor. " if not local_qualifiers.is_empty() else ""
 	news(movement,World.LEAGUES[previous_league]+" şampiyonu: "+world.clubs[league_champion].name+". "+qualification+"Yeni fikstür açıklandı.")
